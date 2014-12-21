@@ -522,8 +522,8 @@ function sqlForTableCreation(tableMapping, defaultDatabaseName, engine) {
     if (meta) {
       columnMeta = meta.doit(translateMeta);
       sql += columnMeta;
-      sql += meta.isPrimaryKey? ' PRIMARY KEY ' : '';
-      sql += meta.isUniqueKey? ' UNIQUE KEY ': '';
+      sql += meta.isPrimaryKey? ' PRIMARY KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : '') : '';
+      sql += meta.isUniqueKey?   ' UNIQUE KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : ''): '';
       udebug.log('sqlForTableCreation field:', field.fieldName, 'column:', field.columnName, 'meta:', meta, 'columnMeta:', columnMeta);
     } else {
       sql += defaultFieldMeta(field);
