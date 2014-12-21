@@ -36,6 +36,11 @@ function Meta() {
   this.isUnsigned = false;
 }
 
+Meta.prototype.autoincrement = function() {
+  this.isAutoincrement = true;
+  return this;
+};
+
 Meta.prototype.isMeta = function() {
   return true;
 };
