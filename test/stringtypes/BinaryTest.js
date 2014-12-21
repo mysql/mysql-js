@@ -142,9 +142,9 @@ t7.run = function() {
   fail_openSession(this, function(session, testCase) {
     session.persist(data, function(err) {
      if(err) {
-        testCase.errorIfNotEqual("Expected Error", "0F001", err.sqlstate);
+        testCase.errorIfNotEqual("Expected Error", "22000", err.sqlstate);
       } else {
-        testCase.appendErrorMessage("Expected error 0F001 on insert");
+        testCase.appendErrorMessage("Expected error 22000 on insert");
       }
       testCase.failOnError();
     });
