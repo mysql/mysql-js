@@ -76,6 +76,6 @@ exports.fromDB = function(dbValue, jsObject, fieldMapping) {
     // do not need "if (dbValues.hasOwnProperty(sparse)) {" because JSON.parse returns a "naked" object
     jsObject[sparse] = dbValues[sparse];
   }
-  return dbValues;
+  // do not return dbValues because then we would create a field in the domain object that wasn't there originally
 };
 

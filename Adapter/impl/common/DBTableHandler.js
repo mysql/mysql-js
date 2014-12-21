@@ -419,7 +419,11 @@ DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
     if(f.domainTypeConverter) {
       value = obj[f.fieldName];
       convertedValue = f.domainTypeConverter.fromDB(value, obj, f);
-      obj[f.fieldName] = convertedValue;
+      if (typeof convertedValue === 'undefined') {
+        delete obj[f.fieldName];
+      } else {
+        obj[f.fieldName] = convertedValue;
+      }
     }
   }
 };
@@ -663,7 +667,12 @@ DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
     if(f.domainTypeConverter) {
       userValue = f.domainTypeConverter.fromDB(userValue, obj, f);
     }
-    obj[f.fieldName] = userValue;
+    udebug.log_detail('DBTableHandler.set', f.fieldName, 'value', userValue);
+    if (typeof userValue === 'undefined') {
+      delete obj[f.fieldName];
+    } else {
+      obj[f.fieldName] = userValue;
+    }
     return true; 
   }
   return false;
