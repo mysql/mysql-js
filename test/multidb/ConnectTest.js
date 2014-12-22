@@ -73,8 +73,9 @@ var badtbl9 = function(i, j) {
 var properties = mynode.ConnectionProperties(global.adapter);
 // make a local copy of the properties
 var propertiesList = [];
-var p, x, props = {};
+var p, x, props;
 for (p = mindb; p < mindb + numberOfDBs; ++p) {
+  props = {};
   for (x in properties) if (properties.hasOwnProperty(x)) {
     props[x] = properties[x];
   }
