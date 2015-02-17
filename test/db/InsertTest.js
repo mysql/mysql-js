@@ -81,6 +81,7 @@ t1.run = function() {
   var object4 = {id:4074, name:'Employee 4074', age:4074, magic:4074}; ++count;
   var object5 = {id:4075, name:'Employee 4075', age:4075, magic:4075}; ++count;
   function check(err) {
+    console.log('InsertTest.t1');
     if (err) testCase.appendErrorMessage(err.message);
     if (--count == 0) {
       // all done with insert
@@ -90,11 +91,13 @@ t1.run = function() {
   
   fail_connect(testCase, function(sessionFactory) {
     db = sessionFactory.db();
-    db.db_basic.insert(object1, check);
+    testCase.session = db;
+    db.db_basic.insert(object1, check).then(function(){console.log(db);});
     db.db_basic.insert(object2, check);
     db.db_basic.insert(object3, check);
     db.db_basic.insert(object4, check);
     db.db_basic.insert(object5, check);
+    console.log(db);
     
   });
 };
@@ -178,5 +181,24 @@ t4.run = function() {
   });
 };
 
+/***** persist with default table mapping ***/
+var t5 = new harness.SerialTest("testPersistWithDefaultTableMappingAndLiteral");
+t5.run = function() {
+  var testCase = this;
+  // create the literal 100
+  var object = {id:100, name:'Employee 100', age:100, magic:100};
+  fail_openSession(testCase, function(session) {
+    session.allowCreateUnmappedTable = true;
+    session.persist('db_new_schema4', object, function(err) {
+      if (err) {
+        testCase.fail(err);
+      } else {
+        // verify will end the test case
+        session.find('db_new_schema4', 100, verify, 100, testCase, false);
+      }
+    });
+  });
+};
+
 /*************** EXPORT THE TOP-LEVEL GROUP ********/
-module.exports.tests = [t1, t2, t3, t4];
+module.exports.tests = [t1, t2, t3, t4, t5];

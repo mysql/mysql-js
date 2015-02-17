@@ -34,12 +34,14 @@ function handlerMaker (obj) {
      var desc = Object.getOwnPropertyDescriptor(obj, name);
      // a trapping proxy's properties must always be configurable
      if (desc !== undefined) { desc.configurable = true; }
+     udebug.log('ProxyFactory.getOwnPropertyDescriptor for', name, 'is', desc);
      return desc;
    },
    getPropertyDescriptor:  function(name) {
      var desc = Object.getPropertyDescriptor(obj, name); // not in ES5
      // a trapping proxy's properties must always be configurable
      if (desc !== undefined) { desc.configurable = true; }
+     udebug.log('ProxyFactory.getPropertyDescriptor for', name, 'is', desc);
      return desc;
    },
    getOwnPropertyNames: function() {
@@ -69,7 +71,7 @@ function handlerMaker (obj) {
    hasOwn:       function(name) { return ({}).hasOwnProperty.call(obj, name); },
    get:          function(receiver, name) {
      if (!obj.hasOwnProperty(name)) {
-       udebug.log('ProxyFactory.handlerMaker.get fail to get ', name);
+       udebug.log('ProxyFactory.handlerMaker.get fail to get ', name, new Error().stack);
        obj.failGet(name);
      }
      return obj[name];

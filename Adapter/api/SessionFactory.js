@@ -29,6 +29,7 @@ var session     = require("./Session.js"),
 
 var SessionFactory = function(key, dbConnectionPool, properties, mappings, delete_callback) {
   this.key = key;
+  this.database = properties.database;
   this.dbConnectionPool = dbConnectionPool;
   this.properties = properties;
   this.mappings = mappings;
@@ -188,6 +189,23 @@ SessionFactory.prototype.mapTable = function(tableMapping) {
   var qualifiedTableName = database + '.' + tableMapping.table;
   this.tableMappings[qualifiedTableName] = tableMapping;
   udebug.log('mapTable', util.inspect(tableMapping), this.properties, qualifiedTableName);
+};
+
+SessionFactory.prototype.userSessionFactory = function() {
+  var sf = this;
+  return {
+    tableMetadatas:          sf.tableMetadatas,
+    database:                sf.database,
+    key:                     sf.key,
+
+    db:                      function() {return sf.db.apply(sf,arguments);},
+    close:                   function() {return sf.close.apply(sf, arguments);},
+    mapTable:                function() {return sf.mapTable.apply(sf, arguments);},
+    getTableMetadata:        function() {return sf.getTableMetadata.apply(sf, arguments);},
+    inspect:                 function() {return sf.inspect.apply(sf, arguments);},
+    openSession:             function() {return sf.openSession.apply(sf, arguments);},
+    registerTypeConverter:   function() {return sf.registerTypeConverter.apply(sf, arguments);}
+  };
 };
 
 exports.SessionFactory = SessionFactory;

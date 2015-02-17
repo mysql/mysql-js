@@ -37,6 +37,8 @@ var util           = require("util"),
     query          = require("./Query.js"),
     spi            = require(mynode.spi),
     udebug         = unified_debug.getLogger("UserContext.js"),
+    TableMapping   = require("./TableMapping.js"),
+    meta           = require("./Meta.js"),
     stats_module   = require(mynode.api.stats);
 
 stats_module.register(stats, "api", "UserContext");
@@ -411,7 +413,32 @@ function constructDatabaseDotTable(databaseName, tableName) {
   return result;
 }
 
-/** Get the table handler for a domain object, table name, or constructor.
+/** Create a table mapping for the default case (id, sparse_fields)
+ */
+function createDefaultTableMapping(qualified_table_name) {
+  var tableMapping;
+  udebug.log('UserContext.createDefaultTableMapping for', qualified_table_name);
+  tableMapping = new TableMapping.TableMapping(qualified_table_name);
+  tableMapping.mapField('id', meta.int(32).primaryKey().autoincrement());
+  tableMapping.mapSparseFields('SPARSE_FIELDS', meta.varchar(11111));
+  return tableMapping;
+}
+
+/** Get the table handler for a table name, constructor, or domain object.
+ * Table handler merges table mapping with table metadata from database.
+ * Table Name: check session factory for cached table handler. if cached, return it.
+ *   if table handler not cached, get metadata for table; 
+ *     if exists, create table handler
+ *     if table does not exist, check session factory for cached table metadata.
+ *       if cached table metadata, create the table.
+ *       if no cached table metadata, and session.allowCreateUnmappedTable, create the table.
+ *         otherwise, error.
+ * Constructor: check constructor for table handler. if table handler, return it.
+ *   if no table handler, check for table mapping. if table mapping, goto table name algorithm.
+ *     if no table mapping, set table name to constructor name; go to table name algorithm.
+ *       otherwise, error.
+ * Domain Object:
+ *   get constructor from domain object prototype. goto constructor algorithm.
  */
 var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTableHandler) {
 
@@ -434,7 +461,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
       var tableMetadata;
       var tableMapping;
       
-      var onTableMetadata = function(err, tableMetadata) {
+      var onExistingTableMetadata = function(err, tableMetadata) {
         var tableHandler;
         var tableKey = tableHandlerFactory.tableSpecification.qualifiedTableName;
         if(udebug.is_detail()) {
@@ -495,13 +522,31 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
 
       function tableHandlerFactoryOnCreateTable(err) {
         if (err) {
-          onTableMetadata(err, null);
+          onExistingTableMetadata(err, null);
         } else {
           sessionFactory.dbConnectionPool.getTableMetadata(tableHandlerFactory.tableSpecification.dbName,
-              tableHandlerFactory.tableSpecification.unqualifiedTableName, session.dbSession, onTableMetadata);
+              tableHandlerFactory.tableSpecification.unqualifiedTableName, session.dbSession, onExistingTableMetadata);
         }
       }
       
+      function onTableMetadata(err, tableMetadata) {
+        if (err) {
+          // create the schema if it does not already exist
+          tableMapping = sessionFactory.tableMappings[tableSpecification.qualifiedTableName];
+          if (!tableMapping && session.allowCreateUnmappedTable) {
+            udebug.log('TableHandlerFactory.onTableMetadata creating table for',tableSpecification.qualifiedTableName);             
+            // create the table from the default table mapping
+            tableMapping = createDefaultTableMapping(tableSpecification.qualifiedTableName);
+            sessionFactory.tableMappings[tableSpecification.qualifiedTableName] = tableMapping;
+          }
+          if (tableMapping) {
+            sessionFactory.dbConnectionPool.createTable(tableMapping, session, sessionFactory,
+                tableHandlerFactoryOnCreateTable);
+            return;
+          }
+        }
+        onExistingTableMetadata(err, tableMetadata);
+      }
       // start of createTableHandler
       
       // get the table metadata from the cache of table metadatas in session factory
@@ -509,15 +554,8 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
         tableHandlerFactory.sessionFactory.tableMetadatas[tableHandlerFactory.tableSpecification.qualifiedTableName];
       if (tableMetadata) {
         // we already have cached the table metadata
-        onTableMetadata(null, tableMetadata);
+        onExistingTableMetadata(null, tableMetadata);
       } else {
-        // create the schema if it does not already exist
-        tableMapping = sessionFactory.tableMappings[tableSpecification.qualifiedTableName];
-        if (tableMapping) {
-          udebug.log('tableHandlerFactory.createTableHandler creating schema using tableMapping: ', tableMapping);
-          sessionFactory.createTable(tableMapping, tableHandlerFactoryOnCreateTable);
-          return;
-        }
         // get the table metadata from the db connection pool
         // getTableMetadata(dbSession, databaseName, tableName, callback(error, DBTable));
         udebug.log('TableHandlerFactory.createTableHandler for ', 
@@ -533,8 +571,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
   // start of getTableHandler 
   var err, mynode, tableHandler, tableMapping, tableHandlerFactory, tableIndicatorType, tableSpecification, databaseDotTable;
 
-  tableIndicatorType = typeof(domainObjectTableNameOrConstructor);
-  if (tableIndicatorType === 'string') {
+  function tableIndicatorTypeString() {
     if(udebug.is_detail()) {
       udebug.log('UserContext.getTableHandler for table ', domainObjectTableNameOrConstructor); 
     }
@@ -561,14 +598,17 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
       }
       // send back the tableHandler
       onTableHandler(null, tableHandler);
-    }
-  } else if (tableIndicatorType === 'function') {
+    }    
+  }
+
+  function tableIndicatorTypeFunction() {
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for constructor.'); }
     mynode = domainObjectTableNameOrConstructor.prototype.mynode;
     // parameter is a constructor; it must have been annotated already
     if (typeof(mynode) === 'undefined') {
-      err = new Error('User exception: constructor for ' +  domainObjectTableNameOrConstructor.prototype.constructor.name +
-      ' must have been annotated (call TableMapping.applyToClass).');
+      err = new Error('User exception: constructor for ' + 
+          domainObjectTableNameOrConstructor.prototype.constructor.name +
+          ' must have been annotated (call TableMapping.applyToClass).');
       onTableHandler(err, null);
     } else {
       tableHandler = mynode.tableHandler;
@@ -589,8 +629,10 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
         // prototype has been annotated; return the table handler
         onTableHandler(null, tableHandler);
       }
-    }
-  } else if (tableIndicatorType === 'object') {
+    }    
+  }
+
+  function tableIndicatorTypeObject() {
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for domain object.'); }
     // parameter is a domain object; it must have been mapped already
     mynode = domainObjectTableNameOrConstructor.constructor.prototype.mynode;
@@ -619,7 +661,16 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
         // prototype has been annotated; return the table handler
         onTableHandler(null, tableHandler);
       }
-    }
+    }    
+  }
+
+  tableIndicatorType = typeof(domainObjectTableNameOrConstructor);
+  if (tableIndicatorType === 'string') {
+    tableIndicatorTypeString();
+  } else if (tableIndicatorType === 'function') {
+    tableIndicatorTypeFunction();
+  } else if (tableIndicatorType === 'object') {
+    tableIndicatorTypeObject();
   } else {
     err = new Error('User error: parameter must be a domain object, string, or constructor function.');
     onTableHandler(err, null);
@@ -786,6 +837,9 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   };
 
   // getSessionFactory starts here
+  if (typeof properties == 'undefined') {
+    properties = global.MySQLngDefaultConnectionProperties;
+  }
   database = properties.database;
   connectionKey = mynode.getConnectionKey(properties);
   connection = mynode.getConnection(connectionKey);
@@ -1672,7 +1726,7 @@ exports.UserContext.prototype.persist = function() {
   var object;
 
   function persistOnResult(err, dbOperation) {
-    udebug.log('persist.persistOnResult');
+    udebug.log('persist.persistOnResult with err', err);
     // return any error code
     var error = checkOperation(err, dbOperation);
     if (error) {

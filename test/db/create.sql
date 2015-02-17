@@ -2,7 +2,9 @@ use test;
 drop table if exists db_new_schema1;
 drop table if exists db_new_schema2;
 drop table if exists db_new_schema3;
+drop table if exists db_new_schema4;
 drop table if exists db_freeform;
+
 create table if not exists db_freeform (
   id int not null AUTO_INCREMENT,
   SPARSE_FIELDS varchar(1000),

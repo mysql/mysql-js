@@ -1,0 +1,40 @@
+#!/usr/local/bin/node --harmony
+
+  var repl = require("./jrepl");
+  var server = repl.start();
+  var context = server.context;
+  var conf = require("../Adapter/adapter_config.js");
+    
+    
+  // Configure what's available in the REPL
+  context.util = require("util");
+  context.jones = require(conf.api_module);
+  global.MySQLngDefaultConnectionProperties = context.jones.ConnectionProperties('mysql');
+    
+global.t_basic = function(id, name, age, magic) {
+  if (typeof id !== 'undefined') this.id = id;
+  if (typeof name !== 'undefined') this.name = name;
+  if (typeof age !== 'undefined') this.age = age;
+  if (typeof magic !== 'undefined') this.magic = magic;
+};
+
+global.t_basic.prototype.getAge = function() {return this.age;};
+
+/** The t_basic key */
+global.t_basic_key = function(id) {
+  this.id = id;
+};
+
+/** The t_basic unique key */
+global.t_basic_magic_key = function(id) {
+  this.magic = id;
+};
+
+//map t_basic domain object
+context.tablemapping = new context.jones.TableMapping("test.t_basic")
+.mapField("id")
+.mapField("age")
+.mapField("name")
+.mapField("magic")
+.applyToClass(global.t_basic)
+  context.openSession = context.jones.openSession;

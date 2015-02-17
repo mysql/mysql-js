@@ -35,7 +35,25 @@ var session     = require("./Session.js"),
  */
 function DbImpl(sessionFactory, db_name) {
   this.sessionFactory = sessionFactory;
-  this.db_name = db_name || sessionFactory.properties.database;
+  this.db_name = db_name || sessionFactory.database;
+  this.session = null;
+  this.close = function() {
+    if (this.session) {
+      this.session.close();
+      this.session = null;
+    }
+  };
+  this.isClosed = function() {
+    return typeof this.session !== 'object' || this.session == null;
+  };
+  this.currentTransaction = function() {
+    return this.session.currentTransaction();
+  };
+  this.inspect = function() {
+    var index = this.session?this.session.index : 'not assigned';
+    return 'DbImpl session ' + index;
+  };
+  udebug.log_detail('DbImpl <ctor> db_name: ', this.db_name, 'sessionFactory:', sessionFactory);
 }
 
 /** Table for db object implements insert and find
@@ -65,15 +83,15 @@ function DB(sessionFactory, db_name) {
   return createProxy(dbImpl);
 }
 
-function createDefaultTableMapping(db_name, table_name) {
-  udebug.log('Db.createDefaultTableMapping for', db_name, table_name);
-  var dbDotTable, tableMapping;
-  dbDotTable = db_name?db_name + '.' + table_name: table_name;
-  tableMapping = new TableMapping.TableMapping(dbDotTable);
-  tableMapping.mapField('id', meta.int(32).primaryKey());
-  tableMapping.mapSparseFields('SPARSE_FIELDS', meta.varchar(11000));
-  return tableMapping;
-}
+//function createDefaultTableMapping(db_name, table_name) {
+//  udebug.log('Db.createDefaultTableMapping for', db_name, table_name);
+//  var dbDotTable, tableMapping;
+//  dbDotTable = db_name?db_name + '.' + table_name: table_name;
+//  tableMapping = new TableMapping.TableMapping(dbDotTable);
+//  tableMapping.mapField('id', meta.int(32).primaryKey());
+//  tableMapping.mapSparseFields('SPARSE_FIELDS', meta.varchar(11000));
+//  return tableMapping;
+//}
 
 Table.prototype.resolveTable = function(callback) {
   var table = this;
@@ -100,59 +118,32 @@ Table.prototype.resolveTable = function(callback) {
 
 Table.prototype.insert = function(obj, callback) {
   var table = this;
-  var sessionForInsert;
-  function insertOnPersist(persistErr) {
-    sessionForInsert.close(function(closeErr) {
-      if (persistErr) {
-        callback(persistErr);
-      } else {
-        callback(closeErr);
-      }
-    });
-  }
-  function insertOnCreateTable(err) {
-    if (err) {
-      callback(err);
-    } else {
-      udebug.log('Db.insert.insertOnCreateTable created table for: ', table.dbImpl.db_name, table.table_name);
-      sessionForInsert.persist(table.table_name, obj, insertOnPersist);
-    }
-  }
-  function insertOnResolveTable(err) {
-    var tableMapping;
-    if (err) {
-      //  no table; create it from either session factory table mappings or the default table mapping
-      tableMapping = table.sessionFactory.tableMappings[table.dbImpl.db_name + '.' + table.table_name];
-      if (!tableMapping) {
-        udebug.log('Db.insert.insertOnResolveTable creating table for: ', table.dbImpl.db_name, table.table_name);
-        tableMapping = createDefaultTableMapping(table.dbImpl.db_name, table.table_name);
-      }
-      udebug.log('Db.insert.insertOnResolveTable tableMapping: ', util.inspect(tableMapping));
-      table.dbImpl.sessionFactory.createTable(tableMapping, insertOnCreateTable);
-    } else {
-      // if table exists, persist with table name
-      sessionForInsert.persist(table.table_name, obj, insertOnPersist);
-    }
-  }
+  var dbImpl = table.dbImpl;
+
   function insertOnSession(err, session) {
-    sessionForInsert = session;
-    udebug.log_detail('Table.insert.insertOnSession for', table.table_name, ' with err', err);
     if (err) {
-      // we did not get a session so return the error
       callback(err);
       return;
     }
-    table.resolveTable(insertOnResolveTable);
+    dbImpl.session = session;
+    dbImpl.session.allowCreateUnmappedTable = true;
+    return dbImpl.session.persist(table.table_name, obj, callback);
   }
 
   // insert starts here
-  udebug.log_detail('Table.insert for', this.table_name);
+  // if we have a session already, use it
+  if (dbImpl.session) {
+    return insertOnSession(null, dbImpl.session);
+  }
+  // this needs to delegate to UserContext so the promise is for the insert not the openSession
   table.sessionFactory.openSession(null, insertOnSession);
+//  openSessionPromise = table.sessionFactory.openSession();
+//  return openSessionPromise.then(insertOnSession);
+//  return dbImpl.session.persist(table.table_name, obj, callback);
 };
 
 Table.prototype.find = function(params, callback) {
   var table = this;
-  console.log('Table.find for', table.table_name);
   callback(new Error('Table.find not implemented'));
 };
 
