@@ -84,6 +84,7 @@ exports.Session.prototype.persist = function(tableIndicator) {
   return context.persist();
 };
 
+exports.Session.prototype.insert = exports.Session.prototype.persist;
 
 exports.Session.prototype.remove = function(tableIndicator) {
   var context;
@@ -98,6 +99,7 @@ exports.Session.prototype.remove = function(tableIndicator) {
   return context.remove();
 };
 
+exports.Session.prototype['delete'] = exports.Session.prototype.remove;
 
 exports.Session.prototype.update = function(tableIndicator) {
   var context;
