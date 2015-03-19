@@ -44,7 +44,7 @@ Projection(constructor);
  * ASYNC
  * 
  * Connect to the data source. 
- * This is a "superheavyweight" call:  it could involve connecting to many 
+ * This is a "super-heavyweight" call:  it could involve connecting to many 
  * other nodes on the network, waiting for them to become ready, and making 
  * multiple requests to them. 
  *
@@ -53,20 +53,20 @@ Projection(constructor);
  * SessionFactory.  Any extra arguments passed after the callback function will
  * be returned to the callback verbatim.
  *
- * The "implementation" member of the properties object determines the backend 
- * driver implementating the SessionFactory.
+ * The "implementation" member of the properties object determines the back end 
+ * driver implementing the SessionFactory.
  *
- * The "mappings" parameter can be used to preload metadata for application 
- * tables and to validate the defind mappings between stored data and 
- * JavaScript objects.  If mappings contains a string table name, a Domain 
+ * The "constructorsOrTableNames" parameter can be used to preload metadata for application 
+ * tables and to validate the defined mappings between stored data and 
+ * JavaScript objects.  If constructorsOrTableNames contains a string table name, a Domain 
  * Object Constructor function, or an array of these, then metadata is loaded 
  * from the database and validated against the requirements of the mapping.
- * If mappings is undefined, null, or an empty array, no mappings will be 
+ * If constructorsOrTableNames is undefined, null, or an empty array, no mappings will be 
  * loaded or validated; this means validation is deferred until tables are 
  * used in application code.
  *  
  *  @param properties  properties object describing the session
- *  @param mappings    mappings to validate when connection is made
+ *  @param constructorsOrTableNames constructors or table names to validate when connection is made
  *  @param callback    function called after connection is complete.
  *  @return a promise
  */
@@ -86,12 +86,12 @@ connect(properties, mappings, [callback], [...]);
  * The "implementation" member of the properties object determines the 
  * implementation of the Session.
  *
- * The "mappings" parameter can be used to preload metadata for application 
- * tables and to validate the defind mappings between stored data and 
- * JavaScript objects.  If mappings contains a string table name, a Domain 
+ * The "constructorsOrTableNames" parameter can be used to preload metadata for application 
+ * tables and to validate the defined mappings between stored data and 
+ * JavaScript objects.  If constructorsOrTableNames contains a string table name, a Domain 
  * Object Constructor function, or an array of these, then metadata is loaded 
  * from the database and validated against the requirements of the mapping.
- * If mappings is undefined, null, or an empty array, no mappings will be 
+ * If constructorsOrTableNames is undefined, null, or an empty array, no mappings will be 
  * loaded or validated; this means validation is deferred until tables are 
  * used in application code.
  *
@@ -102,11 +102,11 @@ connect(properties, mappings, [callback], [...]);
  *
  *  
  *  @param properties  properties object describing the session
- *  @param mappings    mappings to validate when connection is made
+ *  @param constructorsOrTableNames    constructorsOrTableNames to validate when connection is made
  *  @param callback    function called after connection is complete.
  *  @return a promise
  */
-openSession(Properties, mappings, [callback], [...]);
+openSession(Properties, constructorsOrTableNames, [callback], [...]);
 
 
 /** Get all SessionFactories that have been created by this module.

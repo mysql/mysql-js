@@ -1,8 +1,7 @@
-
 /*   
-   Converter classes convert between JavaScript types and MySQL types.
-   If a user supplies a javascript converter, and it will be used to read 
-   and write the database.
+   Converters convert between JavaScript types and database types.
+   If a user supplies a converter, it will be used both when 
+   reading and writing values to and from the database.
 
    Converters have several purposes:
     - To convert between MySQL DECIMAL types and a user's preferred JavaScript
@@ -11,15 +10,15 @@
       big number utility library
     - To serialize arbitrary application objects into character or binary columns
     - To facilitate handling of DATETIME, TIME, DATE, and TIMESTAMP     
-    - The emulate the MySQL server's handling of SET and ENUM columns in 
-       non-SQL adapters
+    - To emulate the MySQL server's handling of SET and ENUM columns in 
+       non-SQL adapters such as the ndb adapter
  
-   A converter class implements two functions: 
+   A converter object implements two functions: 
       toDB(obj)  : convert obj, an application object, 
                    into the intermediate type representation of a column
       fromDB(val): convert val, an intermediate type,
                    into an application object form
-   Each function returns the result of the conversion.   
+   Each function explicitly returns the result of the conversion.   
    
    A TypeConverter registered by the user takes precedence over the adapter's 
    default converter for a type (if any).
@@ -28,9 +27,12 @@
    any typeConverters.
 */ 
 
-function Converter() {}:
+function GenderConverter() {}:
 
-Converter.prototype = {
-  "toDB"    : function(obj) {  },
-  "fromDB"  : function(val) {  }
+// Convert database 1 into 'M'; 2 into 'F'
+GenderConverter.prototype = {
+  "toDB"    : function(obj) { return obj === 'M'? 1: 2;},
+  "fromDB"  : function(val) { return val === 1? 'M': 'F;}
 };
+// register this object with the TableMapping or SessionFactory
+var converter = new GenderConverter(); 

@@ -14,7 +14,7 @@ TableMapping = {
   database               :  "" ,  /** Database name @type String */
   mapAllColumns          : true,  /** Create a default FieldMapping for
                                       all columns not listed in fields[].
-                                      Specifies that all columns, not explicitly
+                                      Specifies that all columns not explicitly
                                       mapped, should be given a default mapping 
                                       to a field of the same name.
                                       @property mapAllColumns @type Boolean 
@@ -45,7 +45,7 @@ FieldMapping = {
                                @type String */
   persistent    : true,    /** Whether this field should be stored in database.
                                @type Boolean @default true */
-  converter     : null,    /** Converter class to use with this field  
+  converter     : null,    /** Converter object to use with this field  
                                @type Converter @default null */
   sparseFieldNames: null,  /** sparse field names to store in this column 
                                @type array @default null */
@@ -78,7 +78,7 @@ function TableMapping(tableName_or_tableMapping) {};
                             --------------------                      *****/
   
 /* @method mapField
-   mapField(fieldName, [columnName], [converterClass], [persistent])
+   mapField(fieldName, [columnName], [converter], [persistent])
    IMMEDIATE
    
    Create a fieldMapping for a named field of a mapped object. 
@@ -93,27 +93,25 @@ function TableMapping(tableName_or_tableMapping) {};
    columnName specifies the name of the database column that maps to this object
    field.  If omitted, it defaults to a column with the same name as the field.
 
-   @param converterClass {Converter}
-   converterClass can be used to supply a class to perform custom conversion
+   @param converter {Converter}
+   converter can be used to supply an object to perform custom conversions
    between JavaScript values and database values.  It defaults to null.  If 
    supplied, it must conform to the description of a Converter.
 
    @param persistent {Boolean=true}
    Persistent specifies whether the field will be persisted to the database.
    It defaults to true.  If persistent is given as false, then the columnName 
-   and converterClass parameters may not be supplied.  
-   Note that the persistent parameter to mapField() is the inverse of the 
-   notPersistent 
+   and converter parameters may not be supplied.  
    
     @return {TableMapping} @chainable
     mapField() returns the current TableMapping object, so that method
     invocations can be chained.
 */
-  function mapField(fieldName, columnName, converterClass, persistent) {};
+  function mapField(fieldName, columnName, converter, persistent) {};
 
 
 /* @method applyToClass
-   applyToClass(constuctor)
+   applyToClass(constructor)
    IMMEDIATE 
    
    Attach a TableMapping to the constructor for mapped objects.
@@ -130,7 +128,7 @@ function TableMapping(tableName_or_tableMapping) {};
    object.
    
    @param constructor {Function} Constructor of mapped class
-   @return TableMapping @chainable
+   @return constructor
 */
   function applyToClass(constructor) {};
 
