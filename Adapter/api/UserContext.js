@@ -108,14 +108,16 @@ var thenPromiseFulfilledOrRejected = function(original_promise, fulfilled_or_rej
           then.call(new_result,
             // 2.3.3.3.1 If/when resolvePromise is called with a value y, run [[Resolve]](promise, y).
             function(result) {
-            if(udebug.is_detail()) { udebug.log(original_promise.name, 'thenPromiseFulfilledOrRejected deferred fulfill callback', new_result); }
+            if(udebug.is_detail()) { udebug.log(original_promise.name, 
+                'thenPromiseFulfilledOrRejected deferred fulfill callback', new_result); }
               if (!new_promise.resolved) {
                 new_promise.fulfill(result);
               }
             },
             // 2.3.3.3.2 If/when rejectPromise is called with a reason r, reject promise with r.
             function(err) {
-              if(udebug.is_detail()) { udebug.log(original_promise.name, 'thenPromiseFulfilledOrRejected deferred reject callback', new_result); }
+              if(udebug.is_detail()) { udebug.log(original_promise.name, 
+                  'thenPromiseFulfilledOrRejected deferred reject callback', new_result); }
               if (!new_promise.resolved) {
                 new_promise.reject(err);
               }
@@ -160,16 +162,20 @@ Promise.prototype.then = function(fulfilled_callback, rejected_callback, progres
     if(udebug.is_detail()) { udebug.log(this.name, 'UserContext.Promise.then resolved; err:', self.err); }
     if (self.err) {
       // this promise was already rejected
-      if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then resolved calling (delayed) rejected_callback', rejected_callback); }
+      if(udebug.is_detail()) { udebug.log(self.name, 
+          'UserContext.Promise.then resolved calling (delayed) rejected_callback', rejected_callback); }
       global.setImmediate(function() {
-        if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then resolved calling rejected_callback', fulfilled_callback); }
+        if(udebug.is_detail()) { udebug.log(self.name, 
+            'UserContext.Promise.then resolved calling rejected_callback', fulfilled_callback); }
         thenPromiseFulfilledOrRejected(self, rejected_callback, new_promise, self.err, true);
       });
     } else {
       // this promise was already fulfilled, possibly with a null or undefined result
-      if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then resolved calling (delayed) fulfilled_callback', fulfilled_callback); }
+      if(udebug.is_detail()) { udebug.log(self.name, 
+          'UserContext.Promise.then resolved calling (delayed) fulfilled_callback', fulfilled_callback); }
       global.setImmediate(function() {
-        if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then resolved calling fulfilled_callback', fulfilled_callback); }
+        if(udebug.is_detail()) { udebug.log(self.name, 
+            'UserContext.Promise.then resolved calling fulfilled_callback', fulfilled_callback); }
         thenPromiseFulfilledOrRejected(self, fulfilled_callback, new_promise, self.result);
       });
     }
@@ -178,7 +184,8 @@ Promise.prototype.then = function(fulfilled_callback, rejected_callback, progres
   // create a closure for each fulfilled_callback
   // the closure is a function that when called, calls setImmediate to call the fulfilled_callback with the result
   if (typeof fulfilled_callback === 'function') {
-    if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then with fulfilled_callback', fulfilled_callback); }
+    if(udebug.is_detail()) { udebug.log(self.name, 
+        'UserContext.Promise.then with fulfilled_callback', fulfilled_callback); }
     // the following function closes (this, fulfilled_callback, new_promise)
     // and is called asynchronously when this promise is fulfilled
     this.fulfilled_callbacks.push(function(result) {
@@ -187,7 +194,8 @@ Promise.prototype.then = function(fulfilled_callback, rejected_callback, progres
       });
     });
   } else {
-    if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then with no fulfilled_callback'); }
+    if(udebug.is_detail()) { udebug.log(self.name, 
+        'UserContext.Promise.then with no fulfilled_callback'); }
     // create a dummy function for a missing fulfilled callback per 2.2.7.3 
     // If onFulfilled is not a function and promise1 is fulfilled, promise2 must be fulfilled with the same value.
     this.fulfilled_callbacks.push(function(result) {
@@ -200,7 +208,8 @@ Promise.prototype.then = function(fulfilled_callback, rejected_callback, progres
   // create a closure for each rejected_callback
   // the closure is a function that when called, calls setImmediate to call the rejected_callback with the error
   if (typeof rejected_callback === 'function') {
-    if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then with rejected_callback', rejected_callback); }
+    if(udebug.is_detail()) { udebug.log(self.name, 
+        'UserContext.Promise.then with rejected_callback', rejected_callback); }
     this.rejected_callbacks.push(function(err) {
       global.setImmediate(function() {
         thenPromiseFulfilledOrRejected(self, rejected_callback, new_promise, err);
@@ -485,13 +494,17 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
             }
             tableHandler = new DBTableHandler(tableMetadata, tableHandlerFactory.mapping,
                 tableHandlerFactory.ctor);
-            tableHandlerFactory.sessionFactory.tableHandlers[tableKey] = tableHandler;
+            if (tableHandler.isValid) {
+              udebug.log('UserContext caching the table handler in the session factory.');
+              tableHandlerFactory.sessionFactory.tableHandlers[tableKey] = tableHandler;
+            } else {
+              tableHandlerFactory.err = tableHandler.err;
+              udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages);          
+            }
           } else {
             tableHandler = tableHandlerFactory.sessionFactory.tableHandlers[tableKey];
-            if(udebug.is_detail()) {
-              udebug.log('UserContext got tableHandler but someone else put it in the cache first for ', 
+            udebug.log('UserContext got tableHandler but someone else put it in the cache first for ', 
                 tableHandlerFactory.tableName);
-            }
           }
           if (tableHandlerFactory.ctor) {
             if (typeof(tableHandlerFactory.ctor.prototype.mynode.tableHandler) === 'undefined') {
@@ -616,6 +629,12 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
         udebug.log('UserContext.getTableHandler did not find cached tableHandler for constructor.',
             domainObjectTableNameOrConstructor);
         // create the tableHandler
+        if (!mynode.mapping.isValid) {
+          console.log('UserContext.getTableHandler found invalid table mapping:', mynode.mapping.error);
+          err = new Error(mynode.mapping.error);
+          onTableHandler(err);
+          return;
+        }
         // getTableMetadata(dbSession, databaseName, tableName, callback(error, DBTable));
         databaseDotTable = constructDatabaseDotTable(mynode.mapping.database, mynode.mapping.table);
         tableSpecification = getTableSpecification(session.sessionFactory.properties.database, databaseDotTable);

@@ -10,6 +10,7 @@
  * field mapping functions, are reported via the error field. 
  */
 TableMapping = {
+  isValid                : true,
   table                  :  "" ,  /** Table name @type String */
   database               :  "" ,  /** Database name @type String */
   mapAllColumns          : true,  /** Create a default FieldMapping for

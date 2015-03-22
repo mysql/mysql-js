@@ -101,8 +101,21 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       stubFields,      // fields created through default mapping
       foreignKey,      // foreign key object from dbTable
       nMappedFields;
-
+  
+  var ctorName = 'none';
+  if (ctor && ctor.name) {
+    ctorName = (ctor.name.length === 0)?'anonymous '+ctor:ctor.name;
+  }
+  
   stats.constructor_calls++;
+
+  if (tablemapping && !tablemapping.isValid) {
+    // bad table mapping
+    this.err = new Error(tablemapping.error);
+    console.log('DBTableHandler<ctor>.err:', this.err, 
+        'errorMessages:', this.errorMessages, 'tablemapping.error:', tablemapping.error);
+    this.isValid = false;
+  }
 
   if(! ( dbtable && dbtable.columns)) {
     stats.return_null++;
@@ -253,7 +266,11 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   });
   
   if (nMappedFields !== this.fieldNumberToColumnMap.length + this.relationshipFields.length) {
-    this.appendErrorMessage('Mismatch between number of mapped fields and columns for ' + ctor.prototype.constructor.name);
+    this.appendErrorMessage(
+        'Mismatch between number of mapped fields and columns for ' + ctorName + 
+        '\n mapped fields: ' + nMappedFields +
+        ', mapped columns: ' + this.fieldNumberToColumnMap.length +
+        ', mapped relationships: ' + this.relationshipFields.length);
   }
 
   // build dbIndexHandlers; one for each dbIndex, starting with primary key index 0
@@ -264,6 +281,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     if (typeof(index.name) === 'undefined') {
       index.name = 'PRIMARY';
     }
+    // make sure all index columns are mapped
     this.dbIndexHandlers.push(new DBIndexHandler(this, index));
   }
   // build foreign key map

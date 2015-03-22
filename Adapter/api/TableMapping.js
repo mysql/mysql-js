@@ -170,7 +170,7 @@ function verifyProperty(property, value, verifiers) {
 }
 
 function isValidMapping(m, verifiers) {
-  var property, isValid = '';
+  var property = '', isValid = '';
   for(property in m) {
     if(m.hasOwnProperty(property)) {
       isValid += verifyProperty(property, m[property], verifiers);
@@ -180,6 +180,10 @@ function isValidMapping(m, verifiers) {
 }    
 
 function isValidFieldMapping(fm, number) {
+  if (fm && typeof fm.persistent === 'undefined') {
+    udebug.log('TableMapping.isValidFieldMapping persistent undefined; setting persistent to true');
+    fm.persistent = true;
+  }
   var reason = isValidMapping(fm, fieldMappingProperties);
   number = number || '';
   if(reason.length) {
@@ -210,6 +214,7 @@ function isStringOrStringArray(arg) {
 
 
 var tableMappingProperties = {
+  "isValid"       : isBool,
   "error"         : isString,
   "table"         : isNonEmptyString,
   "database"      : isString, 
@@ -225,7 +230,7 @@ var tableMappingProperties = {
 function isValidTableMapping(tm) {
   var err = isValidMapping(tm, tableMappingProperties);
   if (!err) {
-    // make sure there is a valid table
+    // no errors, but make sure there is a valid table
     if (!tm.hasOwnProperty('table')) {
       return '\nRequired property \'table\' is missing.';
     }
@@ -304,7 +309,7 @@ function TableMapping(tableNameOrLiteral) {
       break;
     
     default: 
-      this.error = "MappingError: string tableName or literal tableMapping is a required parameter.";
+      this.error = "MappingError: TableMapping<ctor> string tableName or literal tableMapping is a required parameter.";
   }
   err = isValidTableMapping(this);
    if (err) {
@@ -564,8 +569,9 @@ TableMapping.prototype.mapSparseFields = function() {
           }
           break;
         default:
-          this.error += "\nmapSparseFields: Argument must be a field name, a meta, an array of field names, or a converter object: \"" + 
-            util.inspect(arg) + "\"";
+          this.error += "\nmapSparseFields: Argument must be a field name, " +
+              "a meta, an array of field names, or a converter object: \"" + 
+              util.inspect(arg) + "\"";
       }
     }
     if (!fieldMapping.converter) {
