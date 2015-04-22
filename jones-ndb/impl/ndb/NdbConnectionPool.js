@@ -31,18 +31,19 @@ var stats = {
   "get_table_metadata"      : 0
 };
 
-var path             = require("path"),
+var conf             = require("./path_config"),
+    path             = require("path"),
     assert           = require("assert"),
-    adapter          = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")),
+    adapter          = require(conf.binary),
     ndbsession       = require("./NdbSession.js"),
     NdbConnection    = require("./NdbConnection.js"),
-    dbtablehandler   = require(mynode.common.DBTableHandler),
+    dbtablehandler   = require(jones.common.DBTableHandler),
     autoincrement    = require("./NdbAutoIncrement.js"),
     udebug           = unified_debug.getLogger("NdbConnectionPool.js"),
-    stats_module     = require(mynode.api.stats),
-    ColumnTypes      = require(path.join(mynode.fs.api_doc_dir,"TableMetadata")).ColumnTypes,
-    isValidConverterObject = require(mynode.api.TableMapping).isValidConverterObject,
-    QueuedAsyncCall  = require(mynode.common.QueuedAsyncCall).QueuedAsyncCall,
+    stats_module     = require(jones.api.stats),
+    ColumnTypes      = require(path.join(jones.fs.api_doc_dir,"TableMetadata")).ColumnTypes,
+    isValidConverterObject = require(jones.api.TableMapping).isValidConverterObject,
+    QueuedAsyncCall  = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     baseConnections  = {},
     initialized      = false;
 

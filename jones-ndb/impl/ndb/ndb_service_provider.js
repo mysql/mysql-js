@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -22,9 +22,11 @@
 
 var path = require("path");
 var fs = require("fs");
-var DatetimeConverter = require(path.join(mynode.fs.converters_dir, "NdbDatetimeConverter"));
-var TimeConverter = require(path.join(mynode.fs.converters_dir, "NdbTimeConverter"));
-var DateConverter = require(path.join(mynode.fs.converters_dir, "NdbDateConverter"));
+var conf = require("./path_config");
+
+var DatetimeConverter = require(path.join(conf.converters_dir, "NdbDatetimeConverter"));
+var TimeConverter = require(path.join(conf.converters_dir, "NdbTimeConverter"));
+var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
 
 try {
   var DBConnectionPool = require("./NdbConnectionPool.js").DBConnectionPool;
@@ -36,8 +38,7 @@ catch(e) {
 
 var udebug  = unified_debug.getLogger("ndb_service_provider.js");
 
-var NdbDefaultConnectionProperties = 
-  require(path.join(mynode.fs.backend_doc_dir, "ndb_properties"));
+var NdbDefaultConnectionProperties = require(path.join(conf.docs_dir, "ndb_properties"));
 
 /* Rely on MySQL SPI for MetadataManager */
 var mysqlService = require(mynode.spi).getDBServiceProvider("mysql"),
@@ -45,18 +46,17 @@ var mysqlService = require(mynode.spi).getDBServiceProvider("mysql"),
 
 
 exports.loadRequiredModules = function() {
-  var err, ldp, module, msg;
-  module = path.join(mynode.fs.build_dir, "ndb_adapter.node");
+  var err, ldp, msg;
   var existsSync = fs.existsSync || path.existsSync;
+
+  /* Load the binary */
   try {
-    require(module);
-    return true;
-  }
-  catch(e) {
+    require(conf.binary);
+  } catch(e) {
     ldp = process.platform === 'darwin' ? 'DYLD_LIBRARY_PATH' : 'LD_LIBRARY_PATH';
     msg = "\n\n" +
       "  The ndb adapter cannot load the native code module ndb_adapter.node.\n";
-    if(existsSync(module)) {
+    if(existsSync(conf.binary)) {
       msg += 
       "  This module has been built, but was not succesfully loaded.  Perhaps \n" +
       "  setting " + ldp + " to the mysql lib directory (containing \n" +

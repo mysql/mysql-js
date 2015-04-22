@@ -28,11 +28,11 @@ var stats = {
 	"simultaneous_disconnects"  : 0  // this should always be zero
 };
 
-var path             = require("path"),
-    adapter          = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")),
+var conf             = require("./path_config"),
+    adapter          = require(conf.binary),
     udebug           = unified_debug.getLogger("NdbConnection.js"),
-    stats_module     = require(mynode.api.stats),
-    QueuedAsyncCall  = require("../common/QueuedAsyncCall.js").QueuedAsyncCall,
+    stats_module     = require(jones.api.stats),
+    QueuedAsyncCall  = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     logReadyNodes;
 
 stats_module.register(stats, "spi","ndb","NdbConnection");

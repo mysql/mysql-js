@@ -20,10 +20,11 @@
 
 "use strict";
 
-var path            = require("path"),
-    adapter         = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")).ndb,
-    stats_module    = require(mynode.api.stats),
-    QueuedAsyncCall = require(mynode.common.QueuedAsyncCall).QueuedAsyncCall,
+
+var conf            = require("./path_config"),
+    adapter         = require(conf.binary).ndb,
+    stats_module    = require(jones.api.stats),
+    QueuedAsyncCall = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     udebug          = unified_debug.getLogger("NdbAutoIncrement.js");
 
 

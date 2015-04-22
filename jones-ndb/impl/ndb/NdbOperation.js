@@ -37,13 +37,14 @@ var index_stats = {};
 
 var path          = require("path"),
     assert        = require("assert"),
-    adapter       = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")).ndb,
-    doc           = require(path.join(mynode.fs.spi_doc_dir, "DBOperation")),
-    stats_module  = require(mynode.api.stats),
-    QueuedAsyncCall = require(mynode.common.QueuedAsyncCall).QueuedAsyncCall,
+    conf          = require("./path_config"),
+    adapter       = require(conf.binary).ndb,
+    doc           = require(path.join(jones.fs.spi_doc_dir, "DBOperation")),
+    stats_module  = require(jones.api.stats),
+    QueuedAsyncCall = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     prepareFilterSpec = require("./NdbScanFilter.js").prepareFilterSpec,
-    getIndexBounds = require(mynode.common.IndexBounds).getIndexBounds,
-    markQuery     = require(mynode.common.IndexBounds).markQuery,
+    getIndexBounds = require(jones.common.IndexBounds).getIndexBounds,
+    markQuery     = require(jones.common.IndexBounds).markQuery,
     bufferForText = adapter.impl.bufferForText,
     textFromBuffer = adapter.impl.textFromBuffer,
     COMMIT        = adapter.ndbapi.Commit,
@@ -873,7 +874,7 @@ function newUpdateOperation(tx, dbIndexHandler, keys, row) {
 
 
 function newScanOperation(tx, QueryTree, properties) {
-  var queryHandler = QueryTree.mynode_query_domain_type.queryHandler;
+  var queryHandler = QueryTree.jones_query_domain_type.queryHandler;
   var op = new DBOperation(opcodes.OP_SCAN, tx, 
                            queryHandler.dbIndexHandler, 
                            queryHandler.dbTableHandler);
