@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -19,49 +19,32 @@
 */
 
 
-var path               = require("path");
-var fs                 = require("fs");
-var mynode, parent_dir, udebug_module;
+var path                  = require("path");
+var fs                    = require("fs");
+var jones, parent_dir, udebug_module;
 
-mynode                     = {};
-mynode.fs                  = {};
-parent_dir                 = path.dirname(__dirname);
+jones                     = {};
+jones.fs                  = {};
+parent_dir                = path.dirname(__dirname);
 
-mynode.fs.adapter_dir      = __dirname;
-mynode.fs.api_dir          = path.join(mynode.fs.adapter_dir, "api");
-mynode.fs.spi_dir          = path.join(mynode.fs.adapter_dir, "impl");
+jones.fs.adapter_dir      = __dirname;
 
-mynode.fs.spi_doc_dir      = path.join(mynode.fs.spi_dir, "SPI-documentation");
-mynode.fs.api_doc_dir      = path.join(parent_dir, "API-documentation");
-mynode.fs.backend_doc_dir  = path.join(parent_dir, "Backend-documentation");
-mynode.fs.converters_dir   = path.join(parent_dir, "Converters");
+jones.fs.api_dir          = path.join(jones.fs.adapter_dir, "api");
+jones.fs.spi_dir          = path.join(jones.fs.adapter_dir, "spi");
+jones.fs.spi_common_dir   = path.join(jones.fs.adapter_dir, "common");
 
-mynode.fs.spi_module       = path.join(mynode.fs.spi_dir, "SPI.js");
-mynode.fs.api_module       = path.join(mynode.fs.api_dir, "mynode.js");
+jones.fs.spi_doc_dir      = path.join(parent_dir, "SPI-documentation");
+jones.fs.api_doc_dir      = path.join(parent_dir, "API-documentation");
 
-mynode.fs.suites_dir       = path.join(parent_dir, "test");
-mynode.fs.samples_dir      = path.join(parent_dir, "samples");
+jones.fs.converters_dir   = path.join(parent_dir, "Converters");
 
-udebug_module              = path.join(mynode.fs.api_dir, "unified_debug.js");
+jones.fs.api_module       = path.join(jones.fs.api_dir, "jones.js");
 
+jones.fs.suites_dir       = path.join(parent_dir, "test");
+jones.fs.samples_dir      = path.join(parent_dir, "samples");
 
-/* Find the build directory */
-var build1 = path.join(mynode.fs.spi_dir, "build");
-var build2 = path.join(parent_dir, "build");
-var existsSync = fs.existsSync || path.existsSync;
+udebug_module             = path.join(jones.fs.api_dir, "unified_debug.js");
 
-if(existsSync(path.join(build1, "Release", "ndb_adapter.node"))) {
-  mynode.fs.build_dir = path.join(build1, "Release");
-}
-else if(existsSync(path.join(build2, "Release", "ndb_adapter.node"))) {
-  mynode.fs.build_dir = path.join(build2, "Release");
-}
-else if(existsSync(path.join(build1, "Debug", "ndb_adapter.node"))) {
-  mynode.fs.build_dir = path.join(build1, "Debug");
-}
-else if(existsSync(path.join(build2, "Debug", "ndb_adapter.node"))) {
-  mynode.fs.build_dir = path.join(build2, "Debug");
-}
 
 /* Some compatibility with older versions of node */
 if(typeof global.setImmediate !== 'function') {
@@ -69,11 +52,11 @@ if(typeof global.setImmediate !== 'function') {
 }
 
 /* Export the filesystem config */
-module.exports = mynode.fs;
+module.exports = jones.fs;
 
 /* Also make it available globally */
-if(!global.mynode) { global.mynode = {} };
-global.mynode.fs = mynode.fs;
+if(!global.jones) { global.jones = {} };
+global.jones.fs = jones.fs;
 
 /* And export unified_debug globally */
 global.unified_debug   = require(udebug_module);
