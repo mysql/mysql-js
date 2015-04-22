@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -54,20 +54,10 @@ var lf = '\n';
 
 var greeting = 
 '# '                                                                        +lf+
-'#                 MySQL Cluster NoSQL API for Node.JS'                     +lf+
-'#  April, 2013'                                                            +lf+
+'#                 MySQL Cluster Driver for Jones'                          +lf+
 '# '                                                                        +lf+
-'#  The NoSQL API for Node.JS provides lightweight object mapping for '     +lf+
-'#  JavaScript.  The API can be used with two separate backend adapters:'   +lf+
-'#    - The "ndb" adapter, which uses the C++ NDB API to provide'           +lf+
-'#      high-performance native access to MySQL Cluster. '                  +lf+
-'#    - The "mysql" adapter, which uses the node-mysql driver '             +lf+ 
-'#      available from http://github.com/felixge/node-mysql'                +lf+
-'# '                                                                        +lf+
-'#  The mysql backend translates API calls into SQL statements and sends '  +lf+
-'#  them to a MySQL server.  The ndb backend communicates directly with '   +lf+ 
-'#  NDB data nodes, without translating to SQL or making any use of a '     +lf+ 
-'#  MySQL Server.'                                                          +lf+
+'#  This Driver provides high-performance native access to MySQL Cluster  ' +lf+
+'#  using the NDB API.'                                                     +lf+
 '# '                                                                        +lf+
 '#  In order to build and run the ndb adapter, you must have: '             +lf+
 '#    - An installation of MySQL Cluster 7.x or MySQL 5.6 '                 +lf+

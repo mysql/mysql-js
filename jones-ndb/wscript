@@ -1,8 +1,8 @@
 import os
 import string
 
-srcdir = 'Adapter/impl'
-blddir = 'Adapter/impl/build'
+srcdir = 'impl'
+blddir = 'build'
 VERSION = '0.35'
 
 def set_options(opt):
@@ -37,8 +37,8 @@ def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
 
-  conf.recurse("Adapter/impl/")
+  conf.recurse("impl/")
 
 def build(ctx):
-  ctx.recurse("Adapter/impl/")
+  ctx.recurse("impl/")
 

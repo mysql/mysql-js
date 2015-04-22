@@ -41,7 +41,7 @@
 // TODO:  default values?  undefined?
 
 var path = require("path"),
-    MySQLTime = require(path.join(mynode.fs.spi_dir,"common","MySQLTime.js")),
+    MySQLTime = require(jones.common.MySQLTime),
     udebug = unified_debug.getLogger("NdbTimeConverter.js");
 
 exports.toDB = function(jsValue) {

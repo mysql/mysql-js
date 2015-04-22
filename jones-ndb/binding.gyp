@@ -22,47 +22,47 @@
         '<(mysql_path)/include/mysql/storage/ndb/ndbapi',
         '<(mysql_path)/include/storage/ndb',
         '<(mysql_path)/include/storage/ndb/ndbapi',
-        'Adapter/impl/common/include',
-        'Adapter/impl/ndb/include'
+        'impl/include/common',
+        'impl/include/ndb'
       ],
         
       'sources': 
       [
-         "Adapter/impl/common/src/async_common.cpp",
-         "Adapter/impl/common/src/unified_debug.cpp",
-         "Adapter/impl/common/src/common_v8_values.cpp",
+         "impl/src/common/async_common.cpp",
+         "impl/src/common/unified_debug.cpp",
+         "impl/src/common/common_v8_values.cpp",
 
-         "Adapter/impl/ndb/src/AsyncNdbContext_wrapper.cpp",
-         "Adapter/impl/ndb/src/AsyncNdbContext.cpp",
-         "Adapter/impl/ndb/src/BlobHandler.cpp",
-         "Adapter/impl/ndb/src/ColumnHandler.cpp",
-         "Adapter/impl/ndb/src/ColumnProxy.cpp",
-         "Adapter/impl/ndb/src/DBDictionaryImpl.cpp",
-         "Adapter/impl/ndb/src/DBOperationHelper.cpp",
-         "Adapter/impl/ndb/src/DBOperationSet_wrapper.cpp",
-         "Adapter/impl/ndb/src/DBOperationSet.cpp",
-         "Adapter/impl/ndb/src/DBSessionImpl_wrapper.cpp",
-         "Adapter/impl/ndb/src/DBSessionImpl.cpp",
-         "Adapter/impl/ndb/src/DBTransactionContext_wrapper.cpp",
-         "Adapter/impl/ndb/src/DBTransactionContext.cpp",
-         "Adapter/impl/ndb/src/EncoderCharset.cpp",
-         "Adapter/impl/ndb/src/IndexBoundHelper.cpp",
-         "Adapter/impl/ndb/src/KeyOperation.cpp",
-         "Adapter/impl/ndb/src/Ndb_cluster_connection_wrapper.cpp",
-         "Adapter/impl/ndb/src/Ndb_init_wrapper.cpp",
-         "Adapter/impl/ndb/src/Ndb_util_wrapper.cpp",
-         "Adapter/impl/ndb/src/Ndb_wrapper.cpp",
-         "Adapter/impl/ndb/src/NdbError_wrapper.cpp",
-         "Adapter/impl/ndb/src/NdbInterpretedCode_wrapper.cpp",
-         "Adapter/impl/ndb/src/NdbRecordObject.cpp",
-         "Adapter/impl/ndb/src/NdbScanFilter_wrapper.cpp",
-         "Adapter/impl/ndb/src/NdbTypeEncoders.cpp",
-         "Adapter/impl/ndb/src/Record_wrapper.cpp",
-         "Adapter/impl/ndb/src/Record.cpp",
-         "Adapter/impl/ndb/src/ScanOperation_wrapper.cpp",
-         "Adapter/impl/ndb/src/ScanOperation.cpp", 
-         "Adapter/impl/ndb/src/ValueObject.cpp",
-         "Adapter/impl/ndb/src/node_module.cpp"
+         "impl/src/ndb/AsyncNdbContext_wrapper.cpp",
+         "impl/src/ndb/AsyncNdbContext.cpp",
+         "impl/src/ndb/BlobHandler.cpp",
+         "impl/src/ndb/ColumnHandler.cpp",
+         "impl/src/ndb/ColumnProxy.cpp",
+         "impl/src/ndb/DBDictionaryImpl.cpp",
+         "impl/src/ndb/DBOperationHelper.cpp",
+         "impl/src/ndb/DBOperationSet_wrapper.cpp",
+         "impl/src/ndb/DBOperationSet.cpp",
+         "impl/src/ndb/DBSessionImpl_wrapper.cpp",
+         "impl/src/ndb/DBSessionImpl.cpp",
+         "impl/src/ndb/DBTransactionContext_wrapper.cpp",
+         "impl/src/ndb/DBTransactionContext.cpp",
+         "impl/src/ndb/EncoderCharset.cpp",
+         "impl/src/ndb/IndexBoundHelper.cpp",
+         "impl/src/ndb/KeyOperation.cpp",
+         "impl/src/ndb/Ndb_cluster_connection_wrapper.cpp",
+         "impl/src/ndb/Ndb_init_wrapper.cpp",
+         "impl/src/ndb/Ndb_util_wrapper.cpp",
+         "impl/src/ndb/Ndb_wrapper.cpp",
+         "impl/src/ndb/NdbError_wrapper.cpp",
+         "impl/src/ndb/NdbInterpretedCode_wrapper.cpp",
+         "impl/src/ndb/NdbRecordObject.cpp",
+         "impl/src/ndb/NdbScanFilter_wrapper.cpp",
+         "impl/src/ndb/NdbTypeEncoders.cpp",
+         "impl/src/ndb/Record_wrapper.cpp",
+         "impl/src/ndb/Record.cpp",
+         "impl/src/ndb/ScanOperation_wrapper.cpp",
+         "impl/src/ndb/ScanOperation.cpp", 
+         "impl/src/ndb/ValueObject.cpp",
+         "impl/src/ndb/node_module.cpp"
         ],
 
       'conditions': 
@@ -91,7 +91,7 @@
           {
             'sources' : 
             [
-               "Adapter/impl/ndb/src/mysqlclient_wrapper.cpp"
+               "impl/src/ndb/mysqlclient_wrapper.cpp"
             ],
             'libraries':
             [
