@@ -1,0 +1,34 @@
+
+{
+  "name"        : "jones-promise"
+  ,
+  "version"     : "1.0.2"
+  ,  
+  "description" : "Promises Library"
+  ,
+  "keywords"    : ["promise" , "promises" , "promises/a+" ]
+  ,
+  "homepage"    : "http://github.com/jdduncan/jones-promise/"
+  ,
+  "bugs"        : { "url" : "http://github.com/jdduncan/jones-promise/issues"}
+  ,
+  "license"     : "GPL2"
+  ,
+  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
+                    "Craig Russell <craig.russell@oracle.com>" ]
+  ,
+  "main"        : "lib/Promise.js"
+  ,
+  "repository"  : {  "type" : "git",
+                     "url": "https://github.com/jdduncan/jones-promise.git"
+                  }
+  ,
+  "readmeFilename": "README.md"
+  ,
+  "dependencies" : {  "unified_debug" : "",
+                      "jones-test" : "" ,
+                      "promises-aplus-tests" : ""
+                   }
+}
+
+

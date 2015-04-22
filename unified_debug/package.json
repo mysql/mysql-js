@@ -1,0 +1,26 @@
+
+{
+  "name"        : "unified_debug"
+  ,
+  "version"     : "1.0.1"
+  ,  
+  "description" : "Unified Trace Debugging for Native Code and JavaScript"
+  ,
+  "keywords"    : ["printf" , "debug" , "trace" , "dbug"]
+  ,
+  "homepage"    : "http://github.com/jdduncan/unified_debug/"
+  ,
+  "bugs"        : { "url" : "http://github.com/jdduncan/unified_debug/issues"}
+  ,
+  "license"     : "GPL2"
+  ,
+  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ]
+  ,
+  "main"        : "unified_debug"
+  ,
+  "repository"  : {  "type" : "git",
+                     "url": "https://github.com/jdduncan/unified_debug.git"
+                  }
+}
+
+
