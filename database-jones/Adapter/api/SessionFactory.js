@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -26,10 +26,8 @@ var session     = require("./Session.js"),
     util        = require("util"),
     Db          = require("./Db.js");
 
-
 var SessionFactory = function(key, dbConnectionPool, properties, mappings, delete_callback) {
   this.key = key;
-  this.database = properties.database;
   this.dbConnectionPool = dbConnectionPool;
   this.properties = properties;
   this.mappings = mappings;
@@ -118,8 +116,7 @@ SessionFactory.prototype.close = function(user_callback) {
   }
     
   function closeConnection() {
-    if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('closeConnection calling mynode.delete_callback for key', self.key,
-        'database', self.properties.database);
+    if(udebug.is_detail()) udebug.log('closeConnection calling jones.delete_callback for key', self.key, 'database', self.properties.database);
     self.delete_callback(self.key, self.properties.database, closeOnConnectionClose);
   }
   

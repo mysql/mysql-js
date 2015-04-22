@@ -1,6 +1,6 @@
  
 /*
- Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 var udebug       = unified_debug.getLogger("TableMapping.js"),
     path         = require("path"),
     util         = require("util"),
-    doc          = require(path.join(mynode.fs.api_doc_dir, "TableMapping"));
+    doc          = require(path.join(jones.fs.api_doc_dir, "TableMapping"));
 
 /* file scope mapping id used to uniquely identify a mapped domain object */
 var mappingId = 0;
@@ -212,7 +212,6 @@ function isStringOrStringArray(arg) {
   return true;
 }
 
-
 var tableMappingProperties = {
   "isValid"       : isBool,
   "error"         : isString,
@@ -312,7 +311,7 @@ function TableMapping(tableNameOrLiteral) {
       this.error = "MappingError: TableMapping<ctor> string tableName or literal tableMapping is a required parameter.";
   }
   err = isValidTableMapping(this);
-   if (err) {
+  if (err) {
     this.error += err;
   }
 }
@@ -597,10 +596,10 @@ TableMapping.prototype.mapSparseFields = function() {
 */
 TableMapping.prototype.applyToClass = function(ctor) {
   if (typeof ctor === 'function') {
-    ctor.prototype.mynode = {};
-    ctor.prototype.mynode.mapping = this;
-    ctor.prototype.mynode.constructor = ctor;
-    ctor.prototype.mynode.mappingId = ++mappingId;
+    ctor.prototype.jones = {};
+    ctor.prototype.jones.mapping = this;
+    ctor.prototype.jones.constructor = ctor;
+    ctor.prototype.jones.mappingId = ++mappingId;
   } else {
     this.error += '\nMappingError: applyToClass() parameter must be constructor';
   }

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 var udebug       = unified_debug.getLogger("Projection.js"),
     path         = require("path"),
-    doc          = require(path.join(mynode.fs.api_doc_dir, "Projection"));
+    doc          = require(path.join(jones.fs.api_doc_dir, "Projection"));
 
 function Projection(domainObject) {
   if (typeof domainObject === 'function') {

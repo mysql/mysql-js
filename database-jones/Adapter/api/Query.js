@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 "use strict";
 
 var        util    = require("util");
-var     BitMask    = require(mynode.common.BitMask);
+var     BitMask    = require(jones.common.BitMask);
 var      udebug    = unified_debug.getLogger("Query.js");
 var userContext    = require("./UserContext.js");
 
@@ -39,17 +39,17 @@ var param = function(name) {
 
 /** QueryDomainType function where */
 var where = function(predicate) {
-  var mynode = this.mynode_query_domain_type;
-  mynode.predicate = predicate;
-  mynode.queryHandler = new QueryHandler(mynode.dbTableHandler, predicate);
-  mynode.queryType = mynode.queryHandler.queryType;
+  var jones = this.jones_query_domain_type;
+  jones.predicate = predicate;
+  jones.queryHandler = new QueryHandler(jones.dbTableHandler, predicate);
+  jones.queryType = jones.queryHandler.queryType;
   this.prototype = {};
   return this;
 };
 
 /** QueryDomainType function execute */
 var execute = function() {
-  var session = this.mynode_query_domain_type.session;
+  var session = this.jones_query_domain_type.session;
   var context = new userContext.UserContext(arguments, 2, 2, session, session.sessionFactory);
   // delegate to context's execute for execution
   return context.executeQuery(this);
@@ -129,13 +129,13 @@ QueryField.prototype.inspect = function() {
  */
 var QueryDomainType = function(session, dbTableHandler, domainObject) {
   udebug.log('QueryDomainType<ctor>', dbTableHandler.dbTable.name);
-  // avoid most name conflicts: put all implementation artifacts into the property mynode_query_domain_type
-  this.mynode_query_domain_type = {};
+  // avoid most name conflicts: put all implementation artifacts into the property jones_query_domain_type
+  this.jones_query_domain_type = {};
   this.field = {};
-  var mynode = this.mynode_query_domain_type;
-  mynode.session = session;
-  mynode.dbTableHandler = dbTableHandler;
-  mynode.domainObject = domainObject;
+  var jones = this.jones_query_domain_type;
+  jones.session = session;
+  jones.dbTableHandler = dbTableHandler;
+  jones.domainObject = domainObject;
   var queryDomainType = this;
   // initialize the functions (may be overridden below if a field has the name of a keyword)
   queryDomainType.where = where;
@@ -144,7 +144,7 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
   
   var fieldName, queryField;
   // add a property for each field in the table mapping
-  mynode.dbTableHandler.fieldNumberToFieldMap.forEach(function(field) {
+  jones.dbTableHandler.fieldNumberToFieldMap.forEach(function(field) {
     fieldName = field.fieldName;
     queryField = new QueryField(queryDomainType, field);
     if (keywords.indexOf(fieldName) === -1) {
@@ -167,10 +167,10 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
 };
 
 QueryDomainType.prototype.inspect = function() { 
-  var mynode = this.mynode_query_domain_type;
-  return "[[API Query on table: " + mynode.dbTableHandler.dbTable.name + 
-    ", type: " + mynode.queryType + ", predicate: " + 
-    util.inspect(mynode.predicate) + "]]\n";
+  var jones = this.jones_query_domain_type;
+  return "[[API Query on table: " + jones.dbTableHandler.dbTable.name + 
+    ", type: " + jones.queryType + ", predicate: " + 
+    util.inspect(jones.predicate) + "]]\n";
 };
 
 QueryDomainType.prototype.not = function(queryPredicate) {

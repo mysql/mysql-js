@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -84,7 +84,6 @@ exports.Session.prototype.persist = function(tableIndicator) {
   return context.persist();
 };
 
-exports.Session.prototype.insert = exports.Session.prototype.persist;
 
 exports.Session.prototype.remove = function(tableIndicator) {
   var context;
@@ -99,7 +98,6 @@ exports.Session.prototype.remove = function(tableIndicator) {
   return context.remove();
 };
 
-exports.Session.prototype['delete'] = exports.Session.prototype.remove;
 
 exports.Session.prototype.update = function(tableIndicator) {
   var context;
@@ -160,37 +158,3 @@ exports.Session.prototype.currentTransaction = function() {
   return this.tx;
 };
 
-exports.Session.prototype.toString = function() {
-  return 'Session ' + this.index + ' for ' + this.sessionFactory.key;
-};
-
-/** userSession implements all of the functionality of Session without
- * exposing internal implementation details (e.g connect string of 
- * session factory.
- */
-exports.Session.prototype.userSession = function() {
-  var s = this;
-  return {
-    sessionFactory:     s.sessionFactory.userSessionFactory(),
-    index:              s.index,
-
-    allowCreateUnmappedTable: s.allowCreateUnmappedTable,
-  
-    close:              function() {return s.close.apply(s, arguments);},
-    createBatch:        function() {return s.createBatch.apply(s, arguments);},
-    createQuery:        function() {return s.createQuery.apply(s, arguments);},
-    currentTransaction: function() {return s.currentTransaction(s, arguments);},
-    find:               function() {return s.find.apply(s, arguments);},
-    getMapping:         function() {return s.getMapping.apply(s, arguments);},
-    getTableMetadata:   function() {return s.getTableMetadata.apply(s, arguments);},
-    isBatch:            function() {return s.isBatch(s, arguments);},
-    isClosed:           function() {return s.isClosed(s, arguments);},
-    listTables:         function() {return s.listTables.apply(s, arguments);},
-    load:               function() {return s.load.apply(s, arguments);},
-    persist:            function() {return s.persist.apply(s, arguments);},
-    remove:             function() {return s.remove.apply(s, arguments);},
-    save:               function() {return s.save.apply(s, arguments);},
-    toString:           function() {return s.toString.apply(s, arguments);},
-    update:             function() {return s.update.apply(s, arguments);}
-  };
-};

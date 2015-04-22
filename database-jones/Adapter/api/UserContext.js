@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -29,255 +29,22 @@ var stats = {
 	}
 };
 
+var jonesConnections = {};   // a hash of connectionKey to Connection
+
 var util           = require("util"),
-    mynode         = require("./mynode.js"),
-    DBTableHandler = require(mynode.common.DBTableHandler).DBTableHandler,
+    jones          = require("./jones.js"),
+    DBTableHandler = require(jones.common.DBTableHandler).DBTableHandler,
     apiSession     = require("./Session.js"),
     sessionFactory = require("./SessionFactory.js"),
     query          = require("./Query.js"),
-    spi            = require(mynode.spi),
     udebug         = unified_debug.getLogger("UserContext.js"),
     TableMapping   = require("./TableMapping.js"),
     meta           = require("./Meta.js"),
-    stats_module   = require(mynode.api.stats);
+    Promise        = require("../../jones-promises"),
+    stats_module   = require(jones.api.stats);
 
 stats_module.register(stats, "api", "UserContext");
 
-function Promise() {
-  // implement Promises/A+ http://promises-aplus.github.io/promises-spec/
-  // until then is called, this is an empty promise with no performance impact
-}
-
-function emptyFulfilledCallback(result) {
-  return result;
-}
-function emptyRejectedCallback(err) {
-  throw err;
-}
-/** Fulfill or reject the original promise via "The Promise Resolution Procedure".
- * original_promise is the Promise from this implementation on which "then" was called
- * new_promise is the Promise from this implementation returned by "then"
- * if the fulfilled or rejected callback provided by "then" returns a promise, wire the new_result (thenable)
- *  to fulfill the new_promise when new_result is fulfilled
- *  or reject the new_promise when new_result is rejected
- * otherwise, if the callback provided by "then" returns a value, fulfill the new_promise with that value
- * if the callback provided by "then" throws an Error, reject the new_promise with that Error
- */
-var thenPromiseFulfilledOrRejected = function(original_promise, fulfilled_or_rejected_callback, new_promise, result, isRejected) {
-  var new_result;
-  try {
-    if(udebug.is_detail()) { udebug.log(original_promise.name, 'thenPromiseFulfilledOrRejected before'); }
-    if (fulfilled_or_rejected_callback) {
-      new_result = fulfilled_or_rejected_callback.call(undefined, result);
-    } else {
-      if (isRejected) {
-        // 2.2.7.4 If onRejected is not a function and promise1 is rejected, promise2 must be rejected with the same reason.
-        new_promise.reject(result);
-      } else {
-        // 2.2.7.3 If onFulfilled is not a function and promise1 is fulfilled, promise2 must be fulfilled with the same value.
-        new_promise.fulfill(result);
-      }
-      return;
-    }
-    if(udebug.is_detail()) { udebug.log(original_promise.name, 'thenPromiseFulfilledOrRejected after', new_result); }
-    var new_result_type = typeof new_result;
-    if ((new_result_type === 'object' && new_result_type != null) | new_result_type === 'function') { 
-      // 2.3.3 if result is an object or function
-      // 2.3 The Promise Resolution Procedure
-      // 2.3.1 If promise and x refer to the same object, reject promise with a TypeError as the reason.
-      if (new_result === original_promise) {
-        throw new Error('TypeError: Promise Resolution Procedure 2.3.1');
-      }
-      // 2.3.2 If x is a promise, adopt its state; but we don't care since it's also a thenable
-      var then;
-      try {
-        then = new_result.then;
-      } catch (thenE) {
-        // 2.2.3.2 If retrieving the property x.then results in a thrown exception e, 
-        // reject promise with e as the reason.
-        new_promise.reject(thenE);
-        return;
-      }
-      if (typeof then === 'function') {
-        // 2.3.3.3 If then is a function, call it with x as this, first argument resolvePromise, 
-        // and second argument rejectPromise
-        // 2.3.3.3.3 If both resolvePromise and rejectPromise are called, 
-        // or multiple calls to the same argument are made, the first call takes precedence, 
-        // and any further calls are ignored.
-        try {
-          then.call(new_result,
-            // 2.3.3.3.1 If/when resolvePromise is called with a value y, run [[Resolve]](promise, y).
-            function(result) {
-            if(udebug.is_detail()) { udebug.log(original_promise.name, 
-                'thenPromiseFulfilledOrRejected deferred fulfill callback', new_result); }
-              if (!new_promise.resolved) {
-                new_promise.fulfill(result);
-              }
-            },
-            // 2.3.3.3.2 If/when rejectPromise is called with a reason r, reject promise with r.
-            function(err) {
-              if(udebug.is_detail()) { udebug.log(original_promise.name, 
-                  'thenPromiseFulfilledOrRejected deferred reject callback', new_result); }
-              if (!new_promise.resolved) {
-                new_promise.reject(err);
-              }
-            }
-          );
-        } catch (callE) {
-          // 2.3.3.3.4 If calling then throws an exception e,
-          // 2.3.3.3.4.1 If resolvePromise or rejectPromise have been called, ignore it.
-          if (!new_promise.resolved) {
-            // 2.3.3.3.4.2 Otherwise, reject promise with e as the reason.
-            new_promise.reject(callE);
-          }
-        }
-      } else {
-        // 2.3.3.4 If then is not a function, fulfill promise with x.
-        new_promise.fulfill(new_result);
-      }
-    } else {
-      // 2.3.4 If x is not an object or function, fulfill promise with x.
-      new_promise.fulfill(new_result);
-    }
-  } catch (fulfillE) {
-    // 2.2.7.2 If either onFulfilled or onRejected throws an exception e,
-    // promise2 must be rejected with e as the reason.
-    new_promise.reject(fulfillE);
-  }
-  
-};
-
-Promise.prototype.then = function(fulfilled_callback, rejected_callback, progress_callback) {
-  var self = this;
-  if (!self) udebug.log('Promise.then called with no this');
-  // create a new promise to return from the "then" method
-  var new_promise = new Promise();
-  if (typeof self.fulfilled_callbacks === 'undefined') {
-    self.fulfilled_callbacks = [];
-    self.rejected_callbacks = [];
-    self.progress_callbacks = [];
-  }
-  if (self.resolved) {
-    var resolved_result;
-    if(udebug.is_detail()) { udebug.log(this.name, 'UserContext.Promise.then resolved; err:', self.err); }
-    if (self.err) {
-      // this promise was already rejected
-      if(udebug.is_detail()) { udebug.log(self.name, 
-          'UserContext.Promise.then resolved calling (delayed) rejected_callback', rejected_callback); }
-      global.setImmediate(function() {
-        if(udebug.is_detail()) { udebug.log(self.name, 
-            'UserContext.Promise.then resolved calling rejected_callback', fulfilled_callback); }
-        thenPromiseFulfilledOrRejected(self, rejected_callback, new_promise, self.err, true);
-      });
-    } else {
-      // this promise was already fulfilled, possibly with a null or undefined result
-      if(udebug.is_detail()) { udebug.log(self.name, 
-          'UserContext.Promise.then resolved calling (delayed) fulfilled_callback', fulfilled_callback); }
-      global.setImmediate(function() {
-        if(udebug.is_detail()) { udebug.log(self.name, 
-            'UserContext.Promise.then resolved calling fulfilled_callback', fulfilled_callback); }
-        thenPromiseFulfilledOrRejected(self, fulfilled_callback, new_promise, self.result);
-      });
-    }
-    return new_promise;
-  }
-  // create a closure for each fulfilled_callback
-  // the closure is a function that when called, calls setImmediate to call the fulfilled_callback with the result
-  if (typeof fulfilled_callback === 'function') {
-    if(udebug.is_detail()) { udebug.log(self.name, 
-        'UserContext.Promise.then with fulfilled_callback', fulfilled_callback); }
-    // the following function closes (this, fulfilled_callback, new_promise)
-    // and is called asynchronously when this promise is fulfilled
-    this.fulfilled_callbacks.push(function(result) {
-      global.setImmediate(function() {
-        thenPromiseFulfilledOrRejected(self, fulfilled_callback, new_promise, result);
-      });
-    });
-  } else {
-    if(udebug.is_detail()) { udebug.log(self.name, 
-        'UserContext.Promise.then with no fulfilled_callback'); }
-    // create a dummy function for a missing fulfilled callback per 2.2.7.3 
-    // If onFulfilled is not a function and promise1 is fulfilled, promise2 must be fulfilled with the same value.
-    this.fulfilled_callbacks.push(function(result) {
-      global.setImmediate(function() {
-        thenPromiseFulfilledOrRejected(self, emptyFulfilledCallback, new_promise, result);
-      });
-    });
-  }
-
-  // create a closure for each rejected_callback
-  // the closure is a function that when called, calls setImmediate to call the rejected_callback with the error
-  if (typeof rejected_callback === 'function') {
-    if(udebug.is_detail()) { udebug.log(self.name, 
-        'UserContext.Promise.then with rejected_callback', rejected_callback); }
-    this.rejected_callbacks.push(function(err) {
-      global.setImmediate(function() {
-        thenPromiseFulfilledOrRejected(self, rejected_callback, new_promise, err);
-      });
-    });
-  } else {
-    if(udebug.is_detail()) { udebug.log(self.name, 'UserContext.Promise.then with no rejected_callback');  }
-    // create a dummy function for a missing rejected callback per 2.2.7.4 
-    // If onRejected is not a function and promise1 is rejected, promise2 must be rejected with the same reason.
-    this.rejected_callbacks.push(function(err) {
-      global.setImmediate(function() {
-        thenPromiseFulfilledOrRejected(self, emptyRejectedCallback, new_promise, err);
-      });
-    });
-  }
-  // todo: progress_callbacks
-  if (typeof progress_callback === 'function') {
-    this.progress_callbacks.push(progress_callback);
-  }
-
-  return new_promise;
-};
-
-Promise.prototype.fulfill = function(result) {
-  var name = this?this.name: 'no this';
-  if (udebug.is_detail()) {
-    udebug.log_detail(new Error(name, 'Promise.fulfill').stack);
-  }
-  if (this.resolved) {
-    throw new Error('Fatal User Exception: fulfill called after fulfill or reject');
-  }
-  if(udebug.is_detail()) { 
-    udebug.log(name, 'Promise.fulfill with result', result, 'fulfilled_callbacks length:', 
-      this.fulfilled_callbacks?  this.fulfilled_callbacks.length: 0); 
-  }
-  this.resolved = true;
-  this.result = result;
-  var fulfilled_callback;
-  if (this.fulfilled_callbacks) {
-    while(this.fulfilled_callbacks.length > 0) {
-      fulfilled_callback = this.fulfilled_callbacks.shift();
-      if(udebug.is_detail()) { udebug.log('Promise.fulfill for', result); }
-      fulfilled_callback(result);
-    }
-  }
-};
-
-Promise.prototype.reject = function(err) {
-  if (this.resolved) {
-    throw new Error('Fatal User Exception: reject called after fulfill or reject');
-  }
-  var name = this?this.name: 'no this';
-  if(udebug.is_detail()) {
-    udebug.log(name, 'Promise.reject with err', err, 'rejected_callbacks length:', 
-      this.rejected_callbacks?  this.rejected_callbacks.length: 0);
-  }
-  this.resolved = true;
-  this.err = err;
-  var rejected_callback;
-  if (this.rejected_callbacks) {
-    while(this.rejected_callbacks.length > 0) {
-      rejected_callback = this.rejected_callbacks.shift();
-      if(udebug.is_detail()) { udebug.log('Promise.reject for', err); }
-      rejected_callback(err);
-    }
-  }
-//  throw err;
-};
 
 /** Create a function to manage the context of a user's asynchronous call.
  * All asynchronous user functions make a callback passing
@@ -366,6 +133,26 @@ exports.UserContext.prototype.listTables = function() {
   return userContext.promise;
 };
 
+
+/** getOpenSessionFactories(): an IMMEDIATE call
+*/
+exports.UserContext.prototype.getOpenSessionFactories = function() {
+  var result = [];
+  var x, y;
+  for (x in jonesConnections) {
+    if (jonesConnections.hasOwnProperty(x)) {
+      for (y in jonesConnections[x].factories) {
+        if (jonesConnections[x].factories.hasOwnProperty(y)) {
+          var factory = jonesConnections[x].factories[y];
+          result.push(factory);
+        }
+      }
+    }
+  }
+  return result;
+};
+
+
 /** Create schema from a table mapping. 
  * promise = createTable(tableMapping, callback);
  */
@@ -388,13 +175,14 @@ exports.UserContext.prototype.createTable = function() {
  * If null, use all default properties. If a name, use default properties
  * of the named service provider. Otherwise, return the properties object.
  */
+// FIXME Should not default to NDB
 var resolveProperties = function(properties) {
   // Properties can be a string adapter name.  It defaults to 'ndb'.
   if(typeof properties === 'string') {
-    properties = spi.getDBServiceProvider(properties).getDefaultConnectionProperties();
+    properties = jones.getDBServiceProvider(properties).getDefaultConnectionProperties();
   }
   else if (properties === null) {
-    properties = spi.getDBServiceProvider('ndb').getDefaultConnectionProperties();
+    properties = jones.getDBServiceProvider('ndb').getDefaultConnectionProperties();
   }
   return properties;
 };
@@ -453,13 +241,13 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
 
   // the table name might be qualified if the mapping specified a qualified table name
   // if unqualified, use sessionFactory.properties.database to qualify the table name
-  var TableHandlerFactory = function(mynode, tableSpecification,
+  var TableHandlerFactory = function(jones, tableSpecification,
       sessionFactory, dbSession, mapping, ctor, onTableHandler) {
     this.sessionFactory = sessionFactory;
     this.dbSession = dbSession;
     this.onTableHandler = onTableHandler;
     this.mapping = mapping;
-    this.mynode = mynode;
+    this.jones = jones;
     this.ctor = ctor;
     this.tableSpecification = tableSpecification;
     stats.TableHandlerFactory++;
@@ -507,13 +295,13 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
                 tableHandlerFactory.tableName);
           }
           if (tableHandlerFactory.ctor) {
-            if (typeof(tableHandlerFactory.ctor.prototype.mynode.tableHandler) === 'undefined') {
+            if (typeof(tableHandlerFactory.ctor.prototype.jones.tableHandler) === 'undefined') {
               // if a domain object mapping, cache the table handler in the prototype
               stats.TableHandler.success++;
               tableHandler = new DBTableHandler(tableMetadata, tableHandlerFactory.mapping,
                   tableHandlerFactory.ctor);
               if (tableHandler.isValid) {
-                tableHandlerFactory.ctor.prototype.mynode.tableHandler = tableHandler;
+                tableHandlerFactory.ctor.prototype.jones.tableHandler = tableHandler;
                 if(udebug.is_detail()) {
                   udebug.log('UserContext caching the table handler in the prototype for constructor.');
                 }
@@ -522,7 +310,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
                 if(udebug.is_detail()) { udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages); }
               }
             } else {
-              tableHandler = tableHandlerFactory.ctor.prototype.mynode.tableHandler;
+              tableHandler = tableHandlerFactory.ctor.prototype.jones.tableHandler;
               stats.TableHandler.idempotent++;
               if(udebug.is_detail()) {
                 udebug.log('UserContext got tableHandler but someone else put it in the prototype first.');
@@ -582,7 +370,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
   };
     
   // start of getTableHandler 
-  var err, mynode, tableHandler, tableMapping, tableHandlerFactory, tableIndicatorType, tableSpecification, databaseDotTable;
+  var err, jones, tableHandler, tableMapping, tableHandlerFactory, tableIndicatorType, tableSpecification, databaseDotTable;
 
   function tableIndicatorTypeString() {
     if(udebug.is_detail()) {
@@ -616,31 +404,31 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
 
   function tableIndicatorTypeFunction() {
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for constructor.'); }
-    mynode = domainObjectTableNameOrConstructor.prototype.mynode;
+    jones = domainObjectTableNameOrConstructor.prototype.jones;
     // parameter is a constructor; it must have been annotated already
-    if (typeof(mynode) === 'undefined') {
+    if (typeof(jones) === 'undefined') {
       err = new Error('User exception: constructor for ' + 
           domainObjectTableNameOrConstructor.prototype.constructor.name +
           ' must have been annotated (call TableMapping.applyToClass).');
       onTableHandler(err, null);
     } else {
-      tableHandler = mynode.tableHandler;
+      tableHandler = jones.tableHandler;
       if (typeof(tableHandler) === 'undefined') {
         udebug.log('UserContext.getTableHandler did not find cached tableHandler for constructor.',
             domainObjectTableNameOrConstructor);
         // create the tableHandler
-        if (!mynode.mapping.isValid) {
-          console.log('UserContext.getTableHandler found invalid table mapping:', mynode.mapping.error);
-          err = new Error(mynode.mapping.error);
+        if (!jones.mapping.isValid) {
+          console.log('UserContext.getTableHandler found invalid table mapping:', jones.mapping.error);
+          err = new Error(jones.mapping.error);
           onTableHandler(err);
           return;
         }
         // getTableMetadata(dbSession, databaseName, tableName, callback(error, DBTable));
-        databaseDotTable = constructDatabaseDotTable(mynode.mapping.database, mynode.mapping.table);
+        databaseDotTable = constructDatabaseDotTable(jones.mapping.database, jones.mapping.table);
         tableSpecification = getTableSpecification(session.sessionFactory.properties.database, databaseDotTable);
         tableHandlerFactory = new TableHandlerFactory(
-            mynode, tableSpecification, session.sessionFactory, session.dbSession, 
-            mynode.mapping, domainObjectTableNameOrConstructor, onTableHandler);
+            jones, tableSpecification, session.sessionFactory, session.dbSession, 
+            jones.mapping, domainObjectTableNameOrConstructor, onTableHandler);
         tableHandlerFactory.createTableHandler();
       } else {
         stats.TableHandler.cache_hit++;
@@ -654,26 +442,26 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
   function tableIndicatorTypeObject() {
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for domain object.'); }
     // parameter is a domain object; it must have been mapped already
-    mynode = domainObjectTableNameOrConstructor.constructor.prototype.mynode;
-    if (typeof(mynode) === 'undefined') {
+    jones = domainObjectTableNameOrConstructor.constructor.prototype.jones;
+    if (typeof(jones) === 'undefined') {
       err = new Error('User exception: constructor for ' +  domainObjectTableNameOrConstructor.constructor.name +
           ' must have been annotated (call TableMapping.applyToClass).');
       onTableHandler(err, null);
     } else {
-      tableHandler = mynode.tableHandler;
+      tableHandler = jones.tableHandler;
       if (typeof(tableHandler) === 'undefined') {
         if(udebug.is_detail()) {
           udebug.log('UserContext.getTableHandler did not find cached tableHandler for object\n',
                       util.inspect(domainObjectTableNameOrConstructor),
                      'constructor\n', domainObjectTableNameOrConstructor.constructor);
         }
-        databaseDotTable = constructDatabaseDotTable(mynode.mapping.database, mynode.mapping.table);
+        databaseDotTable = constructDatabaseDotTable(jones.mapping.database, jones.mapping.table);
         tableSpecification = getTableSpecification(session.sessionFactory.properties.database, databaseDotTable);
         // create the tableHandler
         // getTableMetadata(dbSession, databaseName, tableName, callback(error, DBTable));
         tableHandlerFactory = new TableHandlerFactory(
-            mynode, tableSpecification, session.sessionFactory, session.dbSession, 
-            mynode.mapping, domainObjectTableNameOrConstructor.constructor, onTableHandler);
+            jones, tableSpecification, session.sessionFactory, session.dbSession, 
+            jones.mapping, domainObjectTableNameOrConstructor.constructor, onTableHandler);
         tableHandlerFactory.createTableHandler();
       } else {
         if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler found cached tableHandler for constructor.'); }
@@ -703,6 +491,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
  */
 var getSessionFactory = function(userContext, properties, tableMappings, callback) {
   var database;
+  var dbServiceProvider;
   var connectionKey;
   var connection;
   var factory;
@@ -710,6 +499,42 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   var sp;
   var i;
   var m;
+
+  function Connection(connectionKey) {
+    this.connectionKey = connectionKey;
+    this.factories = {};
+    this.count = 0;
+    this.isConnecting = true;
+    this.waitingForConnection = [];
+  }
+
+  function newConnection(connectionKey) {
+    var connection = new Connection(connectionKey);
+    jonesConnections[connectionKey] = connection;
+    return connection;
+  }
+
+  function getConnection(connectionKey) {
+    return jonesConnections[connectionKey];
+  }
+
+  function deleteFactory(key, database, callback) {
+    udebug.log('deleteFactory for key', key, 'database', database);
+    var connection = jonesConnections[key];
+    var factory = connection.factories[database];
+    var dbConnectionPool = factory.dbConnectionPool;
+    
+    delete connection.factories[database];
+    if (--connection.count === 0) {
+      // no more factories in this connection
+      udebug.log('deleteFactory closing dbConnectionPool for key', key, 'database', database);
+      dbConnectionPool.close(callback);
+      dbConnectionPool = null;
+      delete jonesConnections[key];
+    } else {
+      callback();
+    }
+  }
 
   var resolveTableMappingsOnSession = function(err, session) {
     var mappings = [];
@@ -814,7 +639,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
     var newFactory;
     udebug.log('connect createFactory creating factory for', connectionKey, 'database', database);
     newFactory = new sessionFactory.SessionFactory(connectionKey, dbConnectionPool,
-        properties, tableMappings, mynode.deleteFactory);
+        properties, tableMappings, deleteFactory);
     return newFactory;
   };
   
@@ -856,19 +681,17 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   };
 
   // getSessionFactory starts here
-  if (typeof properties == 'undefined') {
-    properties = global.MySQLngDefaultConnectionProperties;
-  }
   database = properties.database;
-  connectionKey = mynode.getConnectionKey(properties);
-  connection = mynode.getConnection(connectionKey);
+  dbServiceProvider = jones.getDBServiceProvider(properties.implementation);
+  connectionKey = dbServiceProvider.getFactoryKey(properties);
+  connection = getConnection(connectionKey);
 
   if(typeof(connection) === 'undefined') {
     // there is no connection yet using this connection key    
     udebug.log('connect connection does not exist; creating factory for',
                connectionKey, 'database', database);
-    connection = mynode.newConnection(connectionKey);
-    sp = spi.getDBServiceProvider(properties.implementation);
+    connection = newConnection(connectionKey);
+    sp = jones.getDBServiceProvider(properties.implementation);
     sp.connect(properties, dbConnectionPoolCreated_callback);
   } else {
     // there is a connection, but is it already connected?
@@ -972,7 +795,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
   sector.keyFieldNames = [];
   sector.projection = projection;
   sector.offset = offset;
-  tableHandler = projection.domainObject.prototype.mynode.tableHandler;
+  tableHandler = projection.domainObject.prototype.jones.tableHandler;
   udebug.log_detail('createSector for table handler', tableHandler.dbTable.name);
   sector.tableHandler = tableHandler;
 
@@ -1222,7 +1045,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     
     domainObject = projection.domainObject;
     domainObjectName = domainObject.prototype.constructor.name;
-    domainObjectMynode = domainObject.prototype.mynode;
+    domainObjectMynode = domainObject.prototype.jones;
     if (domainObjectMynode && domainObjectMynode.mapping.error) {
       // remember errors in mapping
       errors += domainObjectMynode.mapping.error;
@@ -1231,10 +1054,10 @@ exports.UserContext.prototype.validateProjection = function(callback) {
       projection.dbTableHandler = dbTableHandler;
       // validate using table handler
       if (typeof(domainObject) === 'function' &&
-          typeof(domainObject.prototype.mynode) === 'object' &&
-          typeof(domainObject.prototype.mynode.mapping) === 'object') {
+          typeof(domainObject.prototype.jones) === 'object' &&
+          typeof(domainObject.prototype.jones.mapping) === 'object') {
         // good domainObject; have we seen this one before?
-        mappingId = domainObject.prototype.mynode.mappingId;
+        mappingId = domainObject.prototype.jones.mappingId;
         if (mappingIds.indexOf(mappingId) === -1) {
           // have not seen this one before; add its mappingId to list of mappingIds to prevent cycles (recursion)
           mappingIds.push(mappingId);
@@ -1322,9 +1145,9 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     // are there any more?
     if (projections.length > ++index) {
       // do the next projection
-      if (projections[index].domainObject.prototype.mynode.dbTableHandler) {
+      if (projections[index].domainObject.prototype.jones.dbTableHandler) {
         udebug.log('validateProjection with cached tableHandler for', projections[index].domainObject.name);
-        validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.mynode.dbTableHandler);
+        validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.jones.dbTableHandler);
       } else {
         udebug.log('validateProjection with no cached tableHandler for', projections[index].domainObject.name);
         getTableHandler(projections[index].domainObject, session, validateProjectionOnTableHandler);
@@ -1385,7 +1208,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     mappingIds = [];                        // mapping ids seen so far
 
     // the projection is not already validated; check to see if the domain object already has its dbTableHandler
-    domainObjectMynode = projections[0].domainObject.prototype.mynode;
+    domainObjectMynode = projections[0].domainObject.prototype.jones;
     if (domainObjectMynode && domainObjectMynode.dbTableHandler) {
       udebug.log('validateProjection with cached tableHandler for', projections[0].domainObject.name);
       validateProjectionOnTableHandler(null, domainObjectMynode.dbTableHandler);
@@ -1565,7 +1388,7 @@ exports.UserContext.prototype.createQuery = function() {
   // createQuery starts here
   // session.createQuery(constructorOrTableName, callback)
   // if the first parameter is a query object then copy the interesting bits and create a new object
-  if (this.user_arguments[0].mynode_query_domain_type) {
+  if (this.user_arguments[0].jones_query_domain_type) {
     // TODO make sure this sessionFactory === other.sessionFactory
     queryDomainType = new query.QueryDomainType(userContext.session);
   }
@@ -1598,9 +1421,9 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     if (error) {
       userContext.applyCallback(error, null);
     } else {
-      if (userContext.queryDomainType.mynode_query_domain_type.domainObject) {
+      if (userContext.queryDomainType.jones_query_domain_type.domainObject) {
         values = dbOperation.result.value;
-        result = userContext.queryDomainType.mynode_query_domain_type.dbTableHandler.newResultObject(values);
+        result = userContext.queryDomainType.jones_query_domain_type.dbTableHandler.newResultObject(values);
       } else {
         result = dbOperation.result.value;
       }
@@ -1689,8 +1512,8 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     // create the find operation and execute it
     dbSession = userContext.session.dbSession;
     transactionHandler = dbSession.getTransactionHandler();
-    var dbIndexHandler = queryDomainType.mynode_query_domain_type.queryHandler.candidateIndex.dbIndexHandler;
-    var keys = queryDomainType.mynode_query_domain_type.queryHandler.getKeys(userContext.user_arguments[0]);
+    var dbIndexHandler = queryDomainType.jones_query_domain_type.queryHandler.candidateIndex.dbIndexHandler;
+    var keys = queryDomainType.jones_query_domain_type.queryHandler.getKeys(userContext.user_arguments[0]);
     userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys, transactionHandler,
         executeQueryKeyOnResult);
     // TODO: this currently does not support batching
@@ -1708,10 +1531,10 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
   
   // executeQuery starts here
   // query.execute(parameters, callback)
-  udebug.log('QueryDomainType.execute', queryDomainType.mynode_query_domain_type.predicate, 
+  udebug.log('QueryDomainType.execute', queryDomainType.jones_query_domain_type.predicate, 
       'with parameters', userContext.user_arguments[0]);
   // execute the query and call back user
-  queryType = queryDomainType.mynode_query_domain_type.queryType;
+  queryType = queryDomainType.jones_query_domain_type.queryType;
   switch(queryType) {
   case 0: // primary key
     executeKeyQuery();
@@ -1997,11 +1820,11 @@ exports.UserContext.prototype.load = function() {
   // load starts here
   // session.load(instance, callback)
   // get DBTableHandler for instance constructor
-  if (typeof(userContext.user_arguments[0].mynode) !== 'object') {
+  if (typeof(userContext.user_arguments[0].jones) !== 'object') {
     userContext.applyCallback(new Error('Illegal argument: load requires a mapped domain object.'));
     return;
   }
-  var ctor = userContext.user_arguments[0].mynode.constructor;
+  var ctor = userContext.user_arguments[0].jones.constructor;
   getTableHandler(ctor, userContext.session, loadOnTableHandler);
   return userContext.promise;
 };
@@ -2204,7 +2027,7 @@ exports.UserContext.prototype.rollback = function() {
 /** Open a session. Allocate a slot in the session factory sessions array.
  * Call the DBConnectionPool to create a new DBSession.
  * Wrap the DBSession in a new Session and return it to the user.
- * This function is called by both mynode.openSession (without a session factory)
+ * This function is called by both jones.openSession (without a session factory)
  * and SessionFactory.openSession (with a session factory).
  */
 exports.UserContext.prototype.openSession = function() {
@@ -2274,7 +2097,7 @@ exports.UserContext.prototype.closeAllOpenSessionFactories = function() {
   var userContext, openFactories, nToClose;
 
   userContext   = this;
-  openFactories = mynode.getOpenSessionFactories();
+  openFactories = jones.getOpenSessionFactories();
   nToClose      = openFactories.length;
 
   function onFactoryClose() {
