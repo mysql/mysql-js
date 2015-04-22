@@ -130,12 +130,6 @@ getOpenSessionFactories();
 closeAllOpenSessionFactories();
 
 
-// The following functions are part of the public API but are not intended for
-// application use.  They form part of the contract between mynode and 
-// SessionFactory.
-
-Connection();
-getConnectionKey();
-getConnection();
-newConnection();
-deleteFactory();
+/** getDBServiceProvider
+ */
+getDBServiceProvider();

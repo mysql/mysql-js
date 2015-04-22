@@ -7,7 +7,6 @@
 */
 
 var DatabaseError = {
-  code           : null,   // MySQL Error Code number (number)
   sqlstate       : null,   // SQLSTATE (string)
   message        : null,   // Error message (string)
   cause          : null,   // The underlying cause of this error

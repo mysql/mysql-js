@@ -501,6 +501,6 @@ getTableMetadata(databaseName, tableName, callback);
 
 /* 
  * Users may find useful a "user" property of session and batch.
- * The mynode implementation will not ever define a property called "user".
+ * The jones implementation will not ever define a property called "user".
  */
 
