@@ -26,6 +26,8 @@ var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
   var t = this;
+  var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
+
   sqlCreate(this.suite, function(error) {
     if (error) {
       t.fail('createSQL failed: ' + error);
