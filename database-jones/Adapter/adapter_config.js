@@ -28,6 +28,7 @@ jones.fs                  = {};
 parent_dir                = path.dirname(__dirname);
 
 jones.fs.adapter_dir      = __dirname;
+jones.fs.super_dir        = path.dirname(parent_dir);
 
 jones.fs.api_dir          = path.join(jones.fs.adapter_dir, "api");
 jones.fs.spi_dir          = path.join(jones.fs.adapter_dir, "spi");

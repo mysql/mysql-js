@@ -55,9 +55,16 @@ exports.api = {
   "UserContext"      : path.join(conf.api_dir, "UserContext")
 };
 
+exports.require = function(module) {
+  var r;
 
-//exports.spi = {
-//};
+  try {
+    r = require(module);
+  } catch(e) {
+    r = require(path.join(conf.super_dir, module));
+  }
+  return r;
+}
 
 
 function getDBServiceProvider(impl_name) {
