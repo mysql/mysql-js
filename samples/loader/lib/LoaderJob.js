@@ -21,7 +21,8 @@
 "use strict";
 
 var assert     = require("assert"),
-    udebug     = require(mynode.api.unified_debug).getLogger("LoaderJob.js"),
+    jones      = require("database-jones"),
+    udebug     = require("unified_debug").getLogger("LoaderJob.js"),
     machine    = require("./control_file.js"),
     Controller = require("./Controller.js").Controller;
 
@@ -62,7 +63,7 @@ LoaderJobDestination.prototype.createTableMapping = function() {
     database      : this.database,
     mapAllColumns : (this.columnDefinitions.length === 0)
   };
-  mapping = new mynode.TableMapping(literalMapping);
+  mapping = new jones.TableMapping(literalMapping);
 
   /* A ``function() {}'' for constructing mapped objects */
   this.rowConstructor = new Function();
@@ -86,7 +87,7 @@ LoaderJobDestination.prototype.setColumnsFromArray = function(columnArray) {
 
 LoaderJobDestination.prototype.getTableHandler = function() {
   // FIXME this uses undocumented path to access the dbTableHandler:
-  return this.rowConstructor.prototype.mynode.tableHandler;
+  return this.rowConstructor.prototype.jones.tableHandler;
 };
 
 // LoaderJob
