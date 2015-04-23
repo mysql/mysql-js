@@ -1,5 +1,12 @@
-MySQL-JS
-========
+Database Jones
+==============
+
+READ ME FIRST
+-------------
+This is a prototype based on mysql-js.
+For production use see https://github.com/mysql/mysql-js
+
+
 
 Introduction
 ------------
@@ -10,7 +17,7 @@ read from and written to a database.
 
 This example uses a session to store a single object into a MySQL table:
 ```
-var nosql = require("mysql-js");
+var jones = require("jones");
 
 var connectionProperties = {
   "implementation" : "mysql",
@@ -21,7 +28,7 @@ var connectionProperties = {
   "mysql_password" : "",    
 };
 
-nosql.openSession(connectionProperties).then(
+jones.openSession(connectionProperties).then(
   function(session) {
     var user = { id: 1, name: "Database Jones"};
     return session.persist("user", user);
@@ -29,7 +36,7 @@ nosql.openSession(connectionProperties).then(
 ).then(
   function() { 
     console.log("Complete");
-    nosql.closeAllOpenSessionFactories();
+    jones.closeAllOpenSessionFactories();
   }
 );
 ```
@@ -37,28 +44,32 @@ nosql.openSession(connectionProperties).then(
 
 Quick Install
 -------------
-```
-npm install https://github.com/mysql/mysql-js/archive/2014-10-06.tar.gz
-```
 
+*Not Ready Yet*: Use npm to install the Jones Adapter for a desired database.
+This will install Jones as a dependency.
+
+To install Jones itself:
+```
+npm install https://github.com/jdduncan/beta-jones/archive/2014-10-16.tar.gz
+```
 
 Supported Databases and Connection Properties
 ---------------------------------------------
-MySQL-JS provides a common data management API over a variety of back-end
-database connections.  Two database adapters are currently supported.
-The *mysql* adapter provides generic support for any MySQL database,
-based on all-JavaScript mysql connector node-mysql.
-The *ndb* adapter provides optimized high-performance access to MySQL Cluster
-using the NDB API.
+Jones provides a common data management API over a variety of back-end
+database connections.  It does not include any backend adapters.  At least one
+adapter must be installed separately.  
 
 Each backend adapter supports its own set of connection properties.
-+ [MySQL Connection Properties](Backend-documentation/mysql_properties.js)
-+ [NDB Connection Properties](Backend-documentation/ndb_properties.js)
+
++ The **mysql** adapter supports any MySQL database and uses the all-JavaScript mysql
+connector https://github.com/felixge/node-mysql.
++ An *ndb* adapter, which optimized high-performance access to MySQL Cluster
+using the NDB API, is also available.   See https://github.com/jdduncan/beta-jones-ndb
 
 
 Session
 -------
-The central concept of mysql-js is the **Session**.  A session provides
+The central concept of Jones is the **Session**.  A session provides
 a context for database operations and transactions.  Each independent user 
 context should have a distinct session.  For instance, in a web application, 
 handling each HTTP request involves opening a session, using the session to
@@ -128,7 +139,7 @@ closed.
 
 Promises and Callbacks
 ----------------------
-The majority of the asynchronous API methods in mysql-js return a 
+The majority of the asynchronous API methods in Jones return a
 [Promises/A+ compatible promise](http://promisesaplus.com).  
 
 These promises are objects that implement the method **then(onFulfilled, onRejected)**:
@@ -141,15 +152,14 @@ Async calls also support standard node.js callbacks.  If a callback is provided,
 it will be called with parameters *(error, value)* on the completion of the call.
 
 
-The top level mysql-js API
+The top level API
 --------------------------
-Idiomatically the top-level API is often referred to as *nosql*:
 ```
-var nosql = require("mysql-js");
-var properties = new nosql.ConnectionProperties("mysql");
+var jones = require("mysql-js");
+var properties = new jones.ConnectionProperties("mysql");
 properties.mysql_host = "productiondb";
-var mapping = new nosql.TableMapping("webapp.users");
-nosql.connect(properties, mapping, onConnectedCallback);
+var mapping = new jones.TableMapping("webapp.users");
+jones.connect(properties, mapping, onConnectedCallback);
 ```
 
 + *ConnectionProperties(adapterName)*: *Constructor*.  Creates a ConnectionProperties
@@ -163,7 +173,7 @@ SessionFactory is opened if needed; the callback or promise receives a Session.
 + *getOpenSessionFactories()* Returns an array
 + *closeAllOpenSessionFactories()* Returns undefined
 
-See the [complete documentation for the top-level API](API-documentation/Mynode)
+See the [complete documentation for the top-level API](API-documentation/Jones)
 
 
 Mapped Objects
@@ -185,7 +195,7 @@ created from a particular constructor, and connected to a class prototype.
   function User() {     // Constructor for application object
   }
 
-  var userTable = new nosql.TableMapping("webapp.user");  // map a table
+  var userTable = new jones.TableMapping("webapp.user");  // map a table
   userTable.mapField("firstName","first_name"); // customize the mapping
   userTable.applyToClass(User);  // apply the mapping to the constructor
 ``` 
