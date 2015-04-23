@@ -56,7 +56,7 @@ exports.loadRequiredModules = function() {
 
 
 exports.getDefaultConnectionProperties = function() {
-  return require(path.join(mynode.fs.backend_doc_dir,"mysql_properties.js"));
+  return require("../Documentation/mysql_properties.js");
 };
 
 

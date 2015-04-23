@@ -50,8 +50,8 @@ var op_stats = {
 
 var mysql  = require("mysql"),
     udebug = unified_debug.getLogger("MySQLConnection.js"),
-    stats_module  = require(mynode.api.stats),
-    mysql_code_to_sqlstate_map = require("../common/MysqlErrToSQLStateMap");
+    stats_module  = require(jones.api.stats),
+    mysql_code_to_sqlstate_map = require("./MysqlErrToSQLStateMap");
 
 stats_module.register(session_stats, "spi","mysql","DBSession");
 stats_module.register(transaction_stats, "spi","mysql","DBTransactionHandler");

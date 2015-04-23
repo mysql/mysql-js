@@ -37,10 +37,10 @@ var mysqlConnection = require("./MySQLConnection.js");
 var mysqlDictionary = require("./MySQLDictionary.js");
 var udebug = unified_debug.getLogger("MySQLConnectionPool.js");
 var util = require('util');
-var stats_module = require(mynode.api.stats);
-var MySQLTime = require("../common/MySQLTime.js");
-var DBTableHandler = require("../common/DBTableHandler.js").DBTableHandler;
-var meta = require("../../api/TableMapping.js").meta;
+var stats_module = require(jones.api.stats);
+var MySQLTime = require(path.join(jones.fs.spi_common_dir,"MySQLTime.js"));
+var DBTableHandler = require(path.join(jones.fs.spi_common_dir,"DBTableHandler.js")).DBTableHandler;
+var meta = require(path.join(jones.fs.api_dir,"Meta"));
 
 stats_module.register(stats, "spi","mysql","DBConnectionPool");
 
