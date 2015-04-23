@@ -34,7 +34,7 @@
 var http   = require('http'),
     assert = require('assert'),
     url    = require('url'),
-    nosql  = require('../../database-jones'),
+    nosql  = require('database-jones'),
     udebug = unified_debug.getLogger("tweet.js"),
     getProperties = require("./tweet.properties.js").getProperties,
     getDefaultAdapter = require("./tweet.properties.js").getDefaultAdapter,

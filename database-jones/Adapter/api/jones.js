@@ -30,48 +30,53 @@ var path           = require("path"),
     existsSync     = fs.existsSync || path.existsSync;
 
 
+function common(file) { return path.join(conf.spi_common_dir, file); }
+function api_dir(file) { return path.join(conf.api_dir, file); }
+function api_doc_dir(file) { return path.join(conf.api_doc_dir, file); }
+function spi_doc_dir(file) { return path.join(conf.spi_doc_dir, file); }
+
+exports.common = {
+  "BitMask"                   : common("BitMask"),
+  "DBTableHandler"            : common("DBTableHandler"),
+  "IndexBounds"               : common("IndexBounds"),
+  "QueuedAsyncCall"           : common("QueuedAsyncCall"),
+  "MySQLTime"                 : common("MySQLTime"),
+  "SQLBuilder"                : common("SQLBuilder"),
+  "SQLTransactionHandler"     : common("SQLTransactionHandler"),
+  "FieldValueDefinedListener" : common("FieldValueDefinedListener")
+};
+
+exports.api = {
+  "TableMapping"              : api_dir("TableMapping"),
+  "stats"                     : api_dir("stats"),
+  "UserContext"               : api_dir("UserContext"),
+  "Meta"                      : api_dir("Meta"),
+};
+
+exports.spi_doc = {
+  "DBOperation"               : spi_doc_dir("DBOperation"),
+  "DBConnectionPool"          : spi_doc_dir("DBConnectionPool"),
+  "DBServiceProvider"         : spi_doc_dir("DBServiceProvider"),
+  "DBTransactionHandler"      : spi_doc_dir("DBTransactionHandler")
+};
+
+exports.api_doc = {
+  "TableMetadata"             : api_doc_dir("TableMetadata"),
+  "TableMapping"              : api_doc_dir("TableMapping")
+};
+
 exports.fs = conf;    // Export path helpers under jones.fs
 
 exports.TableMapping = require("./TableMapping").TableMapping;
 
 exports.Projection   = require("./Projection").Projection;
 
-exports.common = {
-  "BitMask"          : path.join(conf.spi_common_dir, "BitMask"),
-  "DBTableHandler"   : path.join(conf.spi_common_dir, "DBTableHandler"),
-  "IndexBounds"      : path.join(conf.spi_common_dir, "IndexBounds"),
-  "QueuedAsyncCall"  : path.join(conf.spi_common_dir, "QueuedAsyncCall"),
-  "MySQLTime"        : path.join(conf.spi_common_dir, "MySQLTime"),
-  "SQLBuilder"       : path.join(conf.spi_common_dir, "SQLBuilder"),
-  "SQLTransactionHandler" : path.join(conf.spi_common_dir, "SQLTransactionHandler"),
-  "FieldValueDefinedListener" : path.join(conf.spi_common_dir, "FieldValueDefinedListener"),
-};
-
-exports.api = {
-  "TableMapping"     : path.join(conf.api_dir, "TableMapping"),
-  "unified_debug"    : path.join(conf.api_dir, "unified_debug"),
-  "stats"            : path.join(conf.api_dir, "stats"),
-  "UserContext"      : path.join(conf.api_dir, "UserContext")
-};
-
-exports.require = function(module) {
-  var r;
-
-  try {
-    r = require(module);
-  } catch(e) {
-    r = require(path.join(conf.super_dir, module));
-  }
-  return r;
-}
-
-
 function getDBServiceProvider(impl_name) {
   var externalModule = "jones-" + impl_name;
   var service;
   
   try {
-    service = exports.require(externalModule);
+    service = require(externalModule);
   }
   catch(e) {
     console.log("Cannot load module " + externalModule);

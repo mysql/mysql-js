@@ -21,7 +21,7 @@
 
 'use strict';
 
-var nosql = require("../../database-jones");
+var nosql = require("database-jones");
 
 function getDefaultAdapter() {
   return "ndb";

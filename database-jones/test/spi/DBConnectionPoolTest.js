@@ -20,8 +20,7 @@
 
 "use strict";
 
-var path = require("path"),
-    fs   = require("fs");
+var fs   = require("fs");
 
 try {
   require("./suite_config.js");
@@ -63,7 +62,7 @@ t3.run = function() {
     var dbConnPool, docFile, functionList, tester;
     try {
       dbConnPool = dbSession.getConnectionPool();
-      docFile = path.join(mynode.fs.spi_doc_dir, "DBConnectionPool");
+      docFile = jones.spi_doc.DBConnectionPool;
       functionList = doc_parser.listFunctions(docFile);
       tester = new doc_parser.ClassTester(dbConnPool, "DBConnectionPool");
       tester.test(functionList, t3);

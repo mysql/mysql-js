@@ -30,12 +30,11 @@ var stats = {
   "rollback"     : 0
 };
 
-var path            = require("path"),
-    assert          = require("assert"),
+var assert          = require("assert"),
     conf             = require("./path_config"),
     adapter         = require(conf.binary).ndb,
     ndboperation    = require("./NdbOperation.js"),
-    doc             = require(path.join(jones.fs.spi_doc_dir, "DBTransactionHandler")),
+    doc             = require(jones.spi_doc.DBTransactionHandler),
     stats_module    = require(jones.api.stats),
     udebug          = unified_debug.getLogger("NdbTransactionHandler.js"),
     QueuedAsyncCall = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,

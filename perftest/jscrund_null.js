@@ -20,9 +20,9 @@
 
 'use strict';
 
-var path           = require("path"),
-    spi            = require(mynode.spi),
-    adapter        = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")).ndb,
+var jones          = require("database-jones"),
+    ndb_bin_path   = require("jones-ndb").config.binary,
+    ndb_adapter    = require(ndb_bin_path),
     os             = require('os'),
     udebug         = unified_debug.getLogger('jscrund_null.js');
 
@@ -58,7 +58,7 @@ implementation.prototype.close = function(callback) {
 
 implementation.prototype.initialize = function(options, callback) {
   var n;
-  spi.getDBServiceProvider("ndb");   // To call ndb_init()
+  jones.getDBServiceProvider("ndb");   // To call ndb_init()
   this.properties = options.properties;
   while(this.debug_msg.length < this.properties.debug_message_length) {
     this.debug_msg += "x";
@@ -77,7 +77,7 @@ implementation.prototype.execOneOperation = function(callback, value) {
   /* NDBAPI calls */
   /* Marshal/Unmarshal arguments and call into native code */
   for(n = 0 ; n < this.properties.ndbapi_calls ; n++) {
-    adapter.impl.IndexBound.create(this.bounds_helper);
+    ndb_adapter.impl.IndexBound.create(this.bounds_helper);
   }
 
   /* System calls */

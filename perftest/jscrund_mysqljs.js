@@ -20,7 +20,7 @@
 
 'use strict';
 
-var mynode = require('..');
+var mynode = require("database-jones");
 var DEBUG, DETAIL;
 
 var implementation = function() {

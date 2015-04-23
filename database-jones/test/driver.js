@@ -21,14 +21,12 @@
 "use strict";
 
 var path = require("path"),
-    fs   = require("fs"),
-    conf = require("../Adapter/adapter_config.js"),
-    suites_dir = conf.suites_dir;
+    fs   = require("fs");
 
 // Setup globals:
-global.mynode     = require(conf.api_module);
+global.mynode     = require("database-jones");
 global.adapter    = "ndb";
-global.harness    = require(path.join(suites_dir, "lib", "harness"));
+global.harness    = require("jones-test");
 
 
 var udebug = unified_debug.getLogger("Driver.js");

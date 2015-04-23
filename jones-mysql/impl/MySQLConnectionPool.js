@@ -31,16 +31,15 @@ var stats = {
   "connections"         : { "successful" : 0, "failed" : 0 }	
 };
 
-var path = require("path");
 var mysql = require("mysql");
 var mysqlConnection = require("./MySQLConnection.js");
 var mysqlDictionary = require("./MySQLDictionary.js");
 var udebug = unified_debug.getLogger("MySQLConnectionPool.js");
 var util = require('util');
 var stats_module = require(jones.api.stats);
-var MySQLTime = require(path.join(jones.fs.spi_common_dir,"MySQLTime.js"));
-var DBTableHandler = require(path.join(jones.fs.spi_common_dir,"DBTableHandler.js")).DBTableHandler;
-var meta = require(path.join(jones.fs.api_dir,"Meta"));
+var MySQLTime = require(jones.common.MySQLTime);
+var DBTableHandler = require(jones.common.DBTableHandler).DBTableHandler;
+var meta = require(jones.api.Meta);
 
 stats_module.register(stats, "spi","mysql","DBConnectionPool");
 

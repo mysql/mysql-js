@@ -103,3 +103,6 @@ exports.getDBMetadataManager = function() {
   var mysqlService = require(jones.spi).getDBServiceProvider("mysql");
   return mysqlService.getDBMetadataManager();
 };
+
+exports.config = conf;
+

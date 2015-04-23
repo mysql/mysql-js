@@ -24,10 +24,10 @@
 global.JSCRUND = {};
 
 // Modules:
-JSCRUND.mynode = require("..");
-JSCRUND.unified_debug = require("../Adapter/api/unified_debug");
+JSCRUND.mynode = require("database-jones");
+JSCRUND.unified_debug = require("unified_debug");
 JSCRUND.udebug = JSCRUND.unified_debug.getLogger("jscrund.js");
-JSCRUND.stats  = require("../Adapter/api/stats");
+JSCRUND.stats  = require(JSCRUND.mynode.api.stats);
 JSCRUND.lib    = require("./lib");
 
 // Backends:

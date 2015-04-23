@@ -17,7 +17,7 @@ read from and written to a database.
 
 This example uses a session to store a single object into a MySQL table:
 ```
-var jones = require("jones");
+var jones = require("database-jones");
 
 var connectionProperties = {
   "implementation" : "mysql",
@@ -155,7 +155,7 @@ it will be called with parameters *(error, value)* on the completion of the call
 The top level API
 --------------------------
 ```
-var jones = require("mysql-js");
+var jones = require("database-jones");
 var properties = new jones.ConnectionProperties("mysql");
 properties.mysql_host = "productiondb";
 var mapping = new jones.TableMapping("webapp.users");

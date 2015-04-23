@@ -32,7 +32,6 @@ var stats = {
 };
 
 var conf             = require("./path_config"),
-    path             = require("path"),
     assert           = require("assert"),
     adapter          = require(conf.binary),
     ndbsession       = require("./NdbSession.js"),
@@ -41,7 +40,7 @@ var conf             = require("./path_config"),
     autoincrement    = require("./NdbAutoIncrement.js"),
     udebug           = unified_debug.getLogger("NdbConnectionPool.js"),
     stats_module     = require(jones.api.stats),
-    ColumnTypes      = require(path.join(jones.fs.api_doc_dir,"TableMetadata")).ColumnTypes,
+    ColumnTypes      = require(jones.api_doc.TableMetadata).ColumnTypes,
     isValidConverterObject = require(jones.api.TableMapping).isValidConverterObject,
     QueuedAsyncCall  = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     baseConnections  = {},

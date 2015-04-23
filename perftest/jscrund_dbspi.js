@@ -20,10 +20,9 @@
 
 'use strict';
 
-var spi            = require('../Adapter/impl/SPI.js'),
-    dbt_module     = require('../Adapter/impl/common/DBTableHandler.js'),
-    DBTableHandler = dbt_module.DBTableHandler,
-    unified_debug  = require('../Adapter/api/unified_debug.js'),
+var jones          = require("database-jones"),
+    DBTableHandler = require(jones.common.DBTableHandler).DBTableHandler,
+    unified_debug  = require("unified_debug"),
     udebug         = unified_debug.getLogger('jscrund_dbspi.js');
 
 function implementation() {
@@ -38,7 +37,7 @@ implementation.prototype = {
 };
 
 implementation.prototype.getDefaultProperties = function(adapter) {
-  this.dbServiceProvider = spi.getDBServiceProvider(adapter);
+  this.dbServiceProvider = jones.getDBServiceProvider(adapter);
   return this.dbServiceProvider.getDefaultConnectionProperties();
 };
 
@@ -57,7 +56,7 @@ implementation.prototype.initialize = function(options, callback) {
     function gotMapping(err, tableMetadata) {
       udebug.log("gotMapping", n);
       nmappings--;
-      var dbt = new DBTableHandler(tableMetadata, mappings[n].prototype.mynode.mapping, 
+      var dbt = new DBTableHandler(tableMetadata, mappings[n].prototype.jones.mapping,
                                    mappings[n]);
       udebug.log("Got DBTableHandler", dbt);
       mappings[n].dbt = dbt;
@@ -67,7 +66,7 @@ implementation.prototype.initialize = function(options, callback) {
     }
 
     impl.dbConnPool.getTableMetadata(options.properties.database, 
-                                     mappings[n].prototype.mynode.mapping.table,
+                                     mappings[n].prototype.jones.mapping.table,
                                      impl.dbSession, gotMapping);
   }
 
