@@ -20,9 +20,6 @@
 
 'use strict';
 
-var path = require("path"),
-    doc_parser  = require(path.join(mynode.fs.suites_dir, 'lib', 'doc_parser'));
-
 /** Error conditions tested:
  * t1 mapField with no parameters
  * t2 mapField with empty string

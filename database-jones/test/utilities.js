@@ -24,7 +24,7 @@
 
 var path = require("path"),
     fs = require("fs"),
-    dbServiceProvider = require(mynode.spi).getDBServiceProvider(adapter),
+    dbServiceProvider = mynode.getDBServiceProvider(adapter),
     metadataManager = dbServiceProvider.getDBMetadataManager();
 
 

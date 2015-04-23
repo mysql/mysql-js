@@ -20,9 +20,6 @@
 
 "use strict";
 
-var path = require("path");
-var doc_parser  = require(path.join(mynode.fs.suites_dir, "lib", "doc_parser"));
-
 var t1 = new harness.ConcurrentTest("PublicFunctions");
 t1.run = function() {
   var docFile = path.join(mynode.fs.api_doc_dir, "Mynode");

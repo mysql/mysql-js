@@ -20,9 +20,6 @@
 
 'use strict';
 
-var path = require("path");
-var doc_parser  = require(path.join(mynode.fs.suites_dir, 'lib', 'doc_parser'));
-
 /** Error conditions tested:
  * t1 missing table in TableMapping constructor using literal
  * t2 TableMapping constructor with bad table 'a.b.c'

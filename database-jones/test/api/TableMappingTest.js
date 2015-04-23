@@ -20,9 +20,6 @@
 
 "use strict";
 
-var path = require("path");
-var doc_parser  = require(path.join(mynode.fs.suites_dir, "lib", "doc_parser"));
-
 var domainClass = function(id, name, age, magic) {
   this.id = id;
   this.name = name;

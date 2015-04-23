@@ -21,6 +21,9 @@
 /*jslint newcap: true */
 /*global t_basic, verify_t_basic, fail_verify_t_basic */
 
+
+/// FIXME move this test to jones-ndb/test
+
 var path = require("path");
 var ndbimpl;
 try {

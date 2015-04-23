@@ -100,7 +100,7 @@ exports.getFactoryKey = function(properties) {
 
 exports.getDBMetadataManager = function() {
   /* Rely on MySQL SPI for MetadataManager */
-  var mysqlService = require(jones.spi).getDBServiceProvider("mysql");
+  var mysqlService = jones.getDBServiceProvider("mysql");
   return mysqlService.getDBMetadataManager();
 };
 
