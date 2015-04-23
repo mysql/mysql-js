@@ -3,12 +3,11 @@
   var repl = require("./jrepl");
   var server = repl.start();
   var context = server.context;
-  var conf = require("../Adapter/adapter_config.js");
-    
+
     
   // Configure what's available in the REPL
   context.util = require("util");
-  context.jones = require(conf.api_module);
+  context.jones = require("database-jones");
   global.MySQLngDefaultConnectionProperties = context.jones.ConnectionProperties('mysql');
     
 global.t_basic = function(id, name, age, magic) {

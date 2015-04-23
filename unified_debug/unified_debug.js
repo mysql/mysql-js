@@ -115,10 +115,10 @@ if(global.global_unified_debug === undefined) {
 _global_ = global.global_unified_debug;
 
 // This is the default logListener; it writes the message on destinationStream.
-function write_log_message(level, file, message) {
+write_log_message = function(level, file, message) {
   message += "\n";
   _global_.destinationStream.write(message, 'ascii');
-}
+};
 
 
 // Send a log message to all listeners.
