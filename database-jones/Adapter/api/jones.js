@@ -24,7 +24,6 @@ var path           = require("path"),
     fs             = require("fs"),
 
     conf           = require("../adapter_config"),
-    unified_debug  = require("./unified_debug"),
     UserContext    = null,   // loaded later to prevent circular dependency
 
     udebug         = unified_debug.getLogger("jones.js"),
@@ -68,11 +67,11 @@ exports.require = function(module) {
 
 
 function getDBServiceProvider(impl_name) {
-  var externalModule = "beta-jones-" + impl_name;
+  var externalModule = "jones-" + impl_name;
   var service;
   
   try {
-    service = require(externalModule);
+    service = exports.require(externalModule);
   }
   catch(e) {
     console.log("Cannot load module " + externalModule);

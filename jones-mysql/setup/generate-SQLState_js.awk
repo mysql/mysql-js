@@ -19,7 +19,7 @@
 
 # 
 # The input to this script is {MYSQL TREE}/sql/share/errmsg-utf8.txt
-# The output is {NODEJS ADAPTER TREE}/Adapter/impl/common/MysqlErrToSQLStateMap.js
+# The output is {JONES MYSQL TREE}/impl/MysqlErrToSQLStateMap.js
 #
 
  BEGIN  { errno = 1000 

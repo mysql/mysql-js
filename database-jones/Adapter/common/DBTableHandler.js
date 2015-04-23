@@ -31,9 +31,9 @@ var stats = {
 };
 
 var assert          = require("assert"),
-    TableMapping    = require(mynode.api.TableMapping).TableMapping,
-    FieldMapping    = require(mynode.api.TableMapping).FieldMapping,
-    stats_module    = require(mynode.api.stats),
+    TableMapping    = jones.TableMapping,
+    FieldMapping    = require(jones.api.TableMapping).FieldMapping,
+    stats_module    = require(jones.api.stats),
     util            = require("util"),
     udebug          = unified_debug.getLogger("DBTableHandler.js");
 
@@ -295,12 +295,12 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   }
   
   if (ctor) {
-    // cache this in ctor.prototype.mynode.dbTableHandler
-    if (!ctor.prototype.mynode) {
-      ctor.prototype.mynode = {};
+    // cache this in ctor.prototype.jones.dbTableHandler
+    if (!ctor.prototype.jones) {
+      ctor.prototype.jones = {};
     }
-    if (!ctor.prototype.mynode.dbTableHandler) {
-      ctor.prototype.mynode.dbTableHandler = this;
+    if (!ctor.prototype.jones.dbTableHandler) {
+      ctor.prototype.jones.dbTableHandler = this;
     }
   }
   udebug.log("new completed");

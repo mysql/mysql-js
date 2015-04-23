@@ -26,7 +26,6 @@ var assert    = require("assert"),
 
 var global_stats;
 var running_servers = {};
-var unified_debug = require("./unified_debug");
 var udebug = unified_debug.getLogger("STATS");
 var DETAIL = udebug.is_detail();
 

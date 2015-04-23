@@ -44,7 +44,7 @@ jones.fs.api_module       = path.join(jones.fs.api_dir, "jones.js");
 jones.fs.suites_dir       = path.join(parent_dir, "test");
 jones.fs.samples_dir      = path.join(parent_dir, "samples");
 
-udebug_module             = path.join(jones.fs.api_dir, "unified_debug.js");
+udebug_module             = path.join(jones.fs.super_dir, "unified_debug");
 
 
 /* Some compatibility with older versions of node */
