@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -23,6 +23,6 @@
    This script attempts to load the compiled part of mysql-js
 */
 
-var conf = require("./Adapter/adapter_config.js");
-var adapter = require(path.join(conf.build_dir, "ndb_adapter.node"));
+var conf = require("./impl/ndb/path_config.js");
+var adapter = require(conf.binary);
 console.log(adapter);
