@@ -1,0 +1,30 @@
+
+{
+  "name"        : "beta-jones-mysql"
+  ,
+  "version"     : "0.0.1"
+  ,  
+  "description" : "Lightweight database mapping"
+  ,
+  "keywords"    : ["mysql", "orm", "mapping" ]
+  ,
+  "homepage"    : "http://github.com/mysql/mysql-js/"
+  ,
+  "bugs"        : { "url" : "http://github.com/jdduncan/beta-jones-mysql/issues"}
+  ,
+  "license"     : "GPL2"
+  ,
+  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
+                    "Craig Russell <craig.russell@oracle.com>" ]
+  ,
+  "main"        : "impl/mysql_service_provider"
+  ,
+  "dependencies": { "mysql" : ">=2.0.0"
+                  }
+  ,
+  "repository"  : {  "type" : "git",
+                     "url": "https://github.com/jdduncan/beta-jones.git"
+                  }
+}
+
+
