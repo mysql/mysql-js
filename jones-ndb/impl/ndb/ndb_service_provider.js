@@ -40,11 +40,6 @@ var udebug  = unified_debug.getLogger("ndb_service_provider.js");
 
 var NdbDefaultConnectionProperties = require(path.join(conf.docs_dir, "ndb_properties"));
 
-/* Rely on MySQL SPI for MetadataManager */
-var mysqlService = require(mynode.spi).getDBServiceProvider("mysql"),
-    mysqlMetadataManager = mysqlService.getDBMetadataManager();
-
-
 exports.loadRequiredModules = function() {
   var err, ldp, msg;
   var existsSync = fs.existsSync || path.existsSync;
@@ -104,5 +99,7 @@ exports.getFactoryKey = function(properties) {
 
 
 exports.getDBMetadataManager = function() {
-  return mysqlMetadataManager;
+  /* Rely on MySQL SPI for MetadataManager */
+  var mysqlService = require(jones.spi).getDBServiceProvider("mysql");
+  return mysqlService.getDBMetadataManager();
 };

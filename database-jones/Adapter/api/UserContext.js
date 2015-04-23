@@ -40,7 +40,7 @@ var util           = require("util"),
     udebug         = unified_debug.getLogger("UserContext.js"),
     TableMapping   = require("./TableMapping.js"),
     meta           = require("./Meta.js"),
-    Promise        = require("../../jones-promises"),
+    Promise        = jones.require("jones-promises"),
     stats_module   = require(jones.api.stats);
 
 stats_module.register(stats, "api", "UserContext");

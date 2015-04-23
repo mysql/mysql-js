@@ -27,7 +27,7 @@ var ndb_dir        = __dirname;   /* /impl/ndb */
 var impl_dir       = path.dirname(ndb_dir);  /* /impl */
 var root_dir       = path.dirname(impl_dir); /* / */
 var converters_dir = path.join(root_dir, "Converters");
-var docs_dir       = path.join(ndb_dir, "Documentation");
+var docs_dir       = path.join(root_dir, "Documentation");
 
 /* Find the build directory */
 var binary_dir;

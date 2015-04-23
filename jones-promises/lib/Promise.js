@@ -22,8 +22,9 @@
 
 // implement Promises/A+ http://promises-aplus.github.io/promises-spec/
 
-var unified_debug = require("unified_debug"),
-    udebug        = unified_debug.getLogger("Promise.js");
+var unified_debug = global.unified_debug ? global.unified_debug :
+                    require("unified_debug");
+var udebug        = unified_debug.getLogger("Promise.js");
 
 function Promise() {
   // until then is called, this is an empty promise with no performance impact
