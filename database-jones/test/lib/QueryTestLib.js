@@ -20,7 +20,7 @@
 
 "use strict";
 
-var udebug = unified_debug.getLogger("lib/QueryTest.js");
+var udebug = unified_debug.getLogger("lib/QueryTestLib.js");
 var mysql = require("mysql");
 
 /** This is a generic query test. It runs a number of queries and reports results.

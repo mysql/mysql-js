@@ -21,7 +21,7 @@
 "use strict";
 
 var udebug = unified_debug.getLogger("integraltypes/QueryTimestampTest.js");
-var QueryTest = require('../lib/QueryTest.js');
+var QueryTest = require('../lib/QueryTestLib.js');
 
 /** equal query should use index scan */
 var q1 = {name: 'q1', p1: new Date('2001-01-01 01:01:01'), expected: [1], queryType: 2, ordered: false, predicate: function(qdt) {

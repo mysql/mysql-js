@@ -20,8 +20,7 @@
 
 "use strict";
 
-var spi        = require(mynode.spi),
-    service    = spi.getDBServiceProvider(global.adapter),
+var service    = mynode.getDBServiceProvider(global.adapter),
     properties = global.test_conn_properties;
     
 var spi_test_connection = null,

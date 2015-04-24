@@ -24,8 +24,7 @@
 
 var path = require("path"),
     fs   = require("fs"),
-    spi  = require(mynode.spi),
-    service = spi.getDBServiceProvider(global.adapter),
+    service = mynode.getDBServiceProvider(global.adapter),
     doc_parser  = require("../lib/doc_parser");
 
 var t1 = new harness.ConcurrentTest("getDefaultConnectionProperties");

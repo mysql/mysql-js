@@ -20,7 +20,7 @@
 "use strict";
 
 var udebug = unified_debug.getLogger("multipartkeys/QueryScanTest.js");
-var QueryTest = require('../lib/QueryTest.js');
+var QueryTest = require('../lib/QueryTestLib.js');
 
 var q2 = {
   name: 'q2',
