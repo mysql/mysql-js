@@ -237,7 +237,7 @@ DocsTest.prototype.testObjectsVsFunctionList = function(functionList) {
   }
 };
 
-DocsTest.prototype.run = function() {
+DocsTest.prototype.runDocsTest = function() {
   var file = path.resolve(this.suite.driver.baseDirectory, this.docFileName);
   var text = fs.readFileSync(file, 'utf8');
   if(this.isMarkdown){
@@ -250,6 +250,12 @@ DocsTest.prototype.run = function() {
     this.appendErrorMessage("Use DocsTest.addTestObject to supply a testObject");
   }
   return true;          // Synchronous tests return true from run()
+};
+
+// Run can be overriden by a particular test if needed;
+// the test should call runDocsTest()
+DocsTest.prototype.run = function() {
+  return this.runDocsTest();
 };
 
 
