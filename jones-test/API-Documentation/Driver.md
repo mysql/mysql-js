@@ -74,12 +74,14 @@ function addSuitesFromDirectory(directory);
 
 ### Creating Lint Tests
 ```JavaScript
-/* Create a suite of LintTests for each JavaScript source file 
-   in directory (relative to baseDirectory).
-   A LintTest is created for every file whose name ends in .js and does not
-   begin with a dot.
+/* Create a suite called "lint" consisting of LintTests for each JavaScript 
+   source file in directory.  If directory is unrooted, it is interpreted 
+   relative to baseDirectory.  Additional arguments are interpreted as pathname
+   components beyond directory.
+   After the directory name is fully resolved, a LintTest is created for every 
+   file in that directory whose name ends in .js and does not begin with a dot.
 */
-function addLintTestsForDirectory(directory);
+function addLintTestsForDirectory(directory, ... );
 
 /* Tell the linter to ignore an error in filename, at position
    horizontalPos, matching the message message, and (optionally)

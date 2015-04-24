@@ -53,7 +53,7 @@ function handlerMaker (obj) {
    defineProperty: function(name, desc) {
      Object.defineProperty(obj, name, desc);
    },
-   delete:       function(name) { return delete obj[name]; },   
+   "delete":     function(name) { return delete obj[name]; },
    fix:          function() {
      if (Object.isFrozen(obj)) {
        var result = {};

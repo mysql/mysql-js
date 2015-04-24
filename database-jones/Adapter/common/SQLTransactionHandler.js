@@ -78,7 +78,7 @@ function TransactionRolledBackError(err) {
   this.cause = err;
   this.sqlstate = 'HY000';
   this.message = 'Transaction was aborted due to operation failure. See this.cause for underlying error.';
-};
+}
 
 
 function SQLTransactionHandler(dbSession, sqlSocket, autocommit) {
@@ -120,7 +120,7 @@ SQLTransactionHandler.prototype.execute = function(operationsList, transactionEx
     }
     transactionHandler.firstTime = false;
     transactionHandler.executeOperations();
-  };
+  }
 
   // execute begin operation the first time for non-autocommit
   if (this.firstTime) {

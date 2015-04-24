@@ -71,11 +71,15 @@ Driver.prototype.processCommandLineOptions = function() {
   }
 };
 
-Driver.prototype.addLintTestsForDirectory = function(directory) {
-  directory = path.resolve(this.baseDirectory, directory);
-  var suite, files, file, i, useFile;
+Driver.prototype.addLintTestsForDirectory = function() {
+  var directory, suite, files, file, i, useFile;
 
-  suite = new Suite(this, "LintTest");
+  directory = path.resolve(this.baseDirectory, arguments[0]);
+  for(i = 1 ; i < arguments.length ; i++) {
+    directory = path.resolve(directory, arguments[i]);
+  }
+
+  suite = new Suite(this, "lint");
 
   /* Add the smoke test */
   suite.addTest(directory, new LintTest.LintSmokeTest());
@@ -256,11 +260,11 @@ Driver.prototype.setCommandLineFlags = function() {
   ));
 
   opts.addOption(new CommandLine.Option(
-     "-df <sourcefile>", null, "enable all debug output from <sourcefile>",
-     function(thisArg, nextArg) {
+     "-df=<sourcefile>", null, "enable all debug output from <sourcefile>",
+     function(thisArg) {
        unified_debug.on();
-       unified_debug.set_file_level(nextArg, 5);
-       return 2;
+       unified_debug.set_file_level(thisArg, 5);
+       return 1;
      }
   ));
 
@@ -320,6 +324,10 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--suite <suite>", "only run the named suite",
     function(thisArg, nextArg) {
+      if(thisArg) {
+        driver.suitesToRun = thisArg;
+        return 1;
+      }
       driver.suitesToRun = nextArg;
       return 2;
     }
@@ -328,6 +336,10 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--suites <suite,suite,...>", "only run the named suites",
     function(thisArg, nextArg) {
+      if(thisArg) {
+        driver.suitesToRun = thisArg;
+        return 1;
+      }
       driver.suitesToRun = nextArg;
       return 2;
     }
@@ -336,7 +348,11 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--test <testFile>", "only run the named test file",
     function(thisArg, nextArg) {
-      driver.fileToRun = nextArg;
+      if(thisArg) {  // --test=x
+        driver.fileToRun = thisArg;
+        return 1;
+      }
+      driver.fileToRun = nextArg; // --test x
       return 2;
     }
   ));

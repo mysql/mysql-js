@@ -103,7 +103,7 @@ function isIgnored(file, pos, msg) {
   var list;
   var ignoreAlways = "Expected \'{\' and instead saw";
   list = ignoredErrors[file];
-  if(list && list[0] && (list[0].pos === pos) && (list[0].msg == msg)) {
+  if(list && list[0] && (list[0].pos === pos) && (msg.search(list[0].msg) > -1)) {
     list.shift();
     return true;
   }

@@ -31,7 +31,6 @@ jones.fs.adapter_dir      = __dirname;
 jones.fs.super_dir        = path.dirname(parent_dir);
 
 jones.fs.api_dir          = path.join(jones.fs.adapter_dir, "api");
-jones.fs.spi_dir          = path.join(jones.fs.adapter_dir, "spi");
 jones.fs.spi_common_dir   = path.join(jones.fs.adapter_dir, "common");
 
 jones.fs.spi_doc_dir      = path.join(parent_dir, "SPI-documentation");
@@ -42,7 +41,6 @@ jones.fs.converters_dir   = path.join(parent_dir, "Converters");
 jones.fs.api_module       = path.join(jones.fs.api_dir, "jones.js");
 
 jones.fs.suites_dir       = path.join(parent_dir, "test");
-jones.fs.samples_dir      = path.join(parent_dir, "samples");
 
 
 /* Some compatibility with older versions of node */

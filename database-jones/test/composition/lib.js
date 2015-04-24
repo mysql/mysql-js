@@ -147,7 +147,7 @@ function mapDiscount() {
   discountMapping.mapManyToMany( { 
     fieldName:  'customers',
     target:      Customer,
-    joinTable:  'customerdiscount',
+    joinTable:  'customerdiscount'
   } ); 
 
   discountMapping.applyToClass(Discount);

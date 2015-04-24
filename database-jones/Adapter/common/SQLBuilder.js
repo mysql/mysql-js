@@ -25,7 +25,7 @@ var udebug = unified_debug.getLogger("SQLBuilder.js"),
 
 
 function SQLBuilder() {
-};
+}
 
 
 /** Create the INSERT and INSERT... DUPLICATE SQL statements corresponding to the fieldValueDefinedKey.
@@ -233,7 +233,7 @@ SQLBuilder.prototype.getMetadata = function(dbTableHandler) {
     dbTableHandler[this.name].selectSQL[index.name] = this.createSelectSQL(dbTableHandler, index.name);
     dbTableHandler[this.name].whereSQL[index.name] = this.createWhereSQL(dbTableHandler, index.name);
   }
-}
+};
 
 /** Initialize the projection object for use with a SQL adapter.
  * The projection object is organized into sectors, one for each domain object.
@@ -371,7 +371,7 @@ SQLBuilder.prototype.initializeProjection = function(projection) {
   }
   // mark this as having been processed
   mysql.id = projection.id;
-}
+};
 
 
 module.exports = SQLBuilder;

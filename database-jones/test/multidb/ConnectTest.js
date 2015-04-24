@@ -100,7 +100,7 @@ var connectWithDefaultDb = function(testCase, db, callback) {
 
 var verifyTableMetadataCached = function(testCase, sessionFactory, qualifiedTableName) {
   // look in sessionFactory to see if there is a cached table metadata
-  var split = qualifiedTableName.split('\.'); 
+  var split = qualifiedTableName.split(".");
   var databaseName = split[0];
   var tableName = split[1];
   var tableMetadata = sessionFactory.tableMetadatas[qualifiedTableName];
@@ -115,7 +115,7 @@ var verifyTableMetadataCached = function(testCase, sessionFactory, qualifiedTabl
 var verifyConstructorMetadataCached = function(testCase, sessionFactory, qualifiedTableName, constructor) {
   verifyTableMetadataCached(testCase, sessionFactory, qualifiedTableName);
     // look in constructor to see if there is a cached table handler
-  var split = qualifiedTableName.split('\.');
+  var split = qualifiedTableName.split(".");
   var databaseName = split[0];
   var tableName = split[1];
   var tableHandler = constructor.prototype.mynode.tableHandler;

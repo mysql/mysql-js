@@ -50,7 +50,7 @@ exports.api = {
   "TableMapping"              : api_dir("TableMapping"),
   "stats"                     : api_dir("stats"),
   "UserContext"               : api_dir("UserContext"),
-  "Meta"                      : api_dir("Meta"),
+  "Meta"                      : api_dir("Meta")
 };
 
 exports.spi_doc = {

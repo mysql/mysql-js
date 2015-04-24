@@ -188,7 +188,7 @@ var resolveProperties = function(properties) {
 };
 
 function getTableSpecification(defaultDatabaseName, tableName) {
-  var split = tableName.split('\.');
+  var split = tableName.split(".");
   var result = {};
   if (split.length == 2) {
     result.dbName = split[0];
