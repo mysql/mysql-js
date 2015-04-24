@@ -91,6 +91,12 @@ var path = require("path"),
     _global_;
 
 
+// This is the default logListener; it writes the message on destinationStream.
+write_log_message = function(level, file, message) {
+  message += "\n";
+  _global_.destinationStream.write(message, 'ascii');
+};
+
 /* NPM can cause problems.
    It is possible that one module loads unified_debug from one path, but
    another module loads it from a different path.  Setting the debug level in
@@ -113,12 +119,6 @@ if(global.global_unified_debug === undefined) {
 }
 
 _global_ = global.global_unified_debug;
-
-// This is the default logListener; it writes the message on destinationStream.
-write_log_message = function(level, file, message) {
-  message += "\n";
-  _global_.destinationStream.write(message, 'ascii');
-};
 
 
 // Send a log message to all listeners.
