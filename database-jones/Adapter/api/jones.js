@@ -62,7 +62,8 @@ exports.spi_doc = {
 
 exports.api_doc = {
   "TableMetadata"             : api_doc_dir("TableMetadata"),
-  "TableMapping"              : api_doc_dir("TableMapping")
+  "TableMapping"              : api_doc_dir("TableMapping"),
+  "Jones"                     : api_doc_dir("Jones")
 };
 
 exports.fs = conf;    // Export path helpers under jones.fs

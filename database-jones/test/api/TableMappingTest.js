@@ -45,14 +45,7 @@ t1.run = function() {
   return true; // test is complete
 };
 
-var t2 = new harness.ConcurrentTest("PublicFunctions");
-t2.run = function() {
-  var tableMapping = new mynode.TableMapping("t_basic");
-  var tableMappingDocumentedFunctions = doc_parser.listFunctions(
-    path.join(mynode.fs.api_doc_dir, "TableMapping"));
-  var tester = new doc_parser.ClassTester(tableMapping, "TableMapping");
-  tester.test(tableMappingDocumentedFunctions, t2);
-  return true; // test is complete
-};
+var t2 = new harness.DocsTest(mynode.api_doc.TableMapping);
+t2.addTestObject(new mynode.TableMapping("t_basic"));
 
 module.exports.tests = [t1,t2];

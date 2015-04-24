@@ -20,13 +20,7 @@
 
 "use strict";
 
-var t1 = new harness.ConcurrentTest("PublicFunctions");
-t1.run = function() {
-  var docFile = path.join(mynode.fs.api_doc_dir, "Mynode");
-  var functionList = doc_parser.listFunctions(docFile);
-  var tester = new doc_parser.ClassTester(mynode, "Mynode");
-  tester.test(functionList, t1);
-  return true;
-};
+var t1 = new harness.DocsTest(mynode.api_doc.Jones);
+t1.addTestObject(mynode);
 
 module.exports.tests = [t1];
