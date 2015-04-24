@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2013, 2014 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ var stats_module = require(mynode.api.stats);
  *****************************************************************************/
 var storageEngine = null;
 
-var driver = new harness.Driver(mynode.fs.suites_dir);
+var driver = new harness.Driver();
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
   function(nextArg) {
@@ -85,5 +85,6 @@ if(storageEngine && global.test_conn_properties) {
 
 
 /* Find and run all tests */
+driver.addSuitesFromDirectory(mynode.fs.suites_dir);
 driver.runAllTests();
 

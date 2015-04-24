@@ -26,8 +26,7 @@ try {
   require("./suite_config.js");
 } catch(e) {} 
 
-var spi_lib    = require("./lib.js"),
-    doc_parser = require("../lib/doc_parser");
+var spi_lib    = require("./lib.js");
     
 /***** 
   t1:  get a connection
@@ -37,7 +36,7 @@ var spi_lib    = require("./lib.js"),
 
 var t1 = new harness.ConcurrentTest("connect");
 var t2 = new harness.ConcurrentTest("openDBSession");
-var t3 = new harness.SerialTest("PublicFunctions");
+var t3 = new harness.DocsTest(mynode.spi_doc.DBConnectionPool);
 
 
 t1.run = function() {  
@@ -59,21 +58,14 @@ t2.run = function() {
 
 t3.run = function() {
   spi_lib.fail_openDBSession(t3, function(err, dbSession) {
-    var dbConnPool, docFile, functionList, tester;
-    try {
-      dbConnPool = dbSession.getConnectionPool();
-      docFile = jones.spi_doc.DBConnectionPool;
-      functionList = doc_parser.listFunctions(docFile);
-      tester = new doc_parser.ClassTester(dbConnPool, "DBConnectionPool");
-      tester.test(functionList, t3);
-      dbSession.close(function() {
-        t3.failOnError();
-      });
-    } catch(e) {
-      t3.fail(e);
-    }  
-  });
-};
+    var dbConnPool = dbSession.getConnectionPool();
+    t3.addTestObject(dbConnPool);
+    t3.runDocsTest();
+    dbSession.close(function() {
+      t3.failOnError();
+    });
+   });
+ };
 
 
 /*************** EXPORT THE TOP-LEVEL GROUP ********/
