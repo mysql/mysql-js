@@ -22,10 +22,7 @@
 
 "use strict";
 
-var path = require("path"),
-    fs   = require("fs"),
-    service = mynode.getDBServiceProvider(global.adapter),
-    doc_parser  = require("../lib/doc_parser");
+var service = mynode.getDBServiceProvider(global.adapter);
 
 var t1 = new harness.ConcurrentTest("getDefaultConnectionProperties");
 t1.run = function() {
@@ -45,13 +42,7 @@ t2.run = function() {
 /* TEST THAT ALL FUNCTIONS PUBLISHED IN THE DOCUMENTATION 
    ACTUALLY EXIST IN THE IMPLEMENTATION
 */
-var t4 = new harness.ConcurrentTest("PublicFunctions");
-t4.run = function() {
-  var docFile = jones.spi_doc.DBServiceProvider;
-  var functionList = doc_parser.listFunctions(docFile);
-  var tester = new doc_parser.ClassTester(service, "DBServiceProvider");
-  tester.test(functionList);
-  return true; // test is complete
-};
+var t3 = new harness.DocsTest(mynode.spi_doc.DBServiceProvider);
+t3.addTestObject(service);
 
-module.exports.tests = [t1, t2, t4];
+module.exports.tests = [t1, t2, t3];
