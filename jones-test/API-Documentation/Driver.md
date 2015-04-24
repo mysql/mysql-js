@@ -31,9 +31,12 @@ function Driver(baseDirectory);
    First three arguments are the short form option, long form option,
    and option help text.
    The last argument is the callback that processes the option.
-   The callback receives argument "nextArg", containing the next element of 
-   process.argv after the option itself, and returns the number of arguments 
-   consumed.
+   The callback receives two arguments "thisArg" and "nextArg".  
+   thisArg contains any text that trailing an "=" sign in the invocation of 
+   this option.  
+   nextArg contains the next element of 
+   process.argv after the option itself.
+   The callback returns the number of arguments consumed.
    If the option consumes nextArg, it should return the numeric value 2.
    Otherwise it should return the numeric value 1.  Any other return value is
    taken to indicate an error.

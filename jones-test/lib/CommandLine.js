@@ -72,15 +72,16 @@ FlagHandler.prototype.addOption = function(option) {
 };
 
 FlagHandler.prototype.processArguments = function() {
-  var i, len, opt, nextArg, flag, consumed;
+  var i, len, opts, thisArg, nextArg, flag, consumed;
   i = 2;
   len = process.argv.length;
   while(i < len) {
-    opt = process.argv[i];
+    thisArg = process.argv[i];
+    opts = thisArg.split("=",2);
     nextArg = (i + 1 < len) ? process.argv[i+1] : null;
-    flag = this.flags[opt];
+    flag = this.flags[opts[0]];
     if(flag) {
-      consumed = flag.callback(nextArg);
+      consumed = flag.callback(opts[1], nextArg);
       if(consumed > 0) {
         i += consumed;
       } else {

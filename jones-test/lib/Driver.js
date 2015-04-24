@@ -257,7 +257,7 @@ Driver.prototype.setCommandLineFlags = function() {
 
   opts.addOption(new CommandLine.Option(
      "-df <sourcefile>", null, "enable all debug output from <sourcefile>",
-     function(nextArg) {
+     function(thisArg, nextArg) {
        unified_debug.on();
        unified_debug.set_file_level(nextArg, 5);
        return 2;
@@ -292,7 +292,7 @@ Driver.prototype.setCommandLineFlags = function() {
   // --timeout takes a value in milliseconds
   opts.addOption(new CommandLine.Option(
     null, "--timeout <msec>", "set timeout in msec.",
-    function(nextArg) { 
+    function(thisArg, nextArg) {
       driver.timeoutMillis = nextArg;
       return 2;
     }
@@ -319,7 +319,7 @@ Driver.prototype.setCommandLineFlags = function() {
   
   opts.addOption(new CommandLine.Option(
     null, "--suite <suite>", "only run the named suite",
-    function(nextArg) {
+    function(thisArg, nextArg) {
       driver.suitesToRun = nextArg;
       return 2;
     }
@@ -327,7 +327,7 @@ Driver.prototype.setCommandLineFlags = function() {
   
   opts.addOption(new CommandLine.Option(
     null, "--suites <suite,suite,...>", "only run the named suites",
-    function(nextArg) {
+    function(thisArg, nextArg) {
       driver.suitesToRun = nextArg;
       return 2;
     }
@@ -335,7 +335,7 @@ Driver.prototype.setCommandLineFlags = function() {
   
   opts.addOption(new CommandLine.Option(
     null, "--test <testFile>", "only run the named test file",
-    function(nextArg) {
+    function(thisArg, nextArg) {
       driver.fileToRun = nextArg;
       return 2;
     }
@@ -343,7 +343,7 @@ Driver.prototype.setCommandLineFlags = function() {
   
   opts.addOption(new CommandLine.Option(
     null, "--case <n,m,...>","only run test cases numbered n, m, etc. in <testFile>\n",
-    function(nextArg) {
+     function(thisArg, nextArg) {
       driver.testInFile = nextArg;
       return 2;
     }
