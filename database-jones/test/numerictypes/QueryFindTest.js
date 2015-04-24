@@ -19,7 +19,7 @@
  */
 "use strict";
 /*global fail_verify_integraltypes_array */
-/* TODO: replace qint.mynode_query_domain_type.queryType with appropriate EXPLAIN once EXPLAIN is implemented */
+/* TODO: replace qint.jones_query_domain_type.queryType with appropriate EXPLAIN once EXPLAIN is implemented */
 
 /***** Query by primary key id ***/
 var t1 = new harness.ConcurrentTest("testQueryByConstructorAndPrimaryKey");
@@ -37,7 +37,7 @@ t1.run = function() {
       }
       var p_id = qint.param('p_id');
       qint.where(qint.id.eq(p_id));
-      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.jones_query_domain_type.queryType);
       qint.execute({p_id: key}, fail_verify_integraltypes_array, [key], testCase, true);
     });
   });
@@ -59,7 +59,7 @@ t2.run = function() {
       }
       var p_int = qint.param('p_int');
       qint.where(qint.tint.eq(p_int));
-      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.jones_query_domain_type.queryType);
       qint.execute({p_int: key}, fail_verify_integraltypes_array, [key], testCase, true);
     });
   });
@@ -81,7 +81,7 @@ t3.run = function() {
       }
       var p_id = qint.param('p_id');
       qint.where(qint.id.eq(p_id));
-      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.jones_query_domain_type.queryType);
       qint.execute({p_id: key}, fail_verify_integraltypes_array, [key], testCase, true);
     });
   });
@@ -103,7 +103,7 @@ t4.run = function() {
       }
       var p_int = qint.param('p_int');
       qint.where(qint.tint.eq(p_int));
-      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.jones_query_domain_type.queryType);
       qint.execute({p_int: key}, fail_verify_integraltypes_array, [key], testCase, true);
     });
   });
@@ -125,7 +125,7 @@ t5.run = function() {
       }
       var p_id = qint.param('p_id');
       qint.where(qint.id.eq(p_id));
-      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 0, qint.jones_query_domain_type.queryType);
       qint.execute({p_id: key}, fail_verify_integraltypes_array, [key], testCase, false);
     });
   });
@@ -147,7 +147,7 @@ t6.run = function() {
       }
       var p_int = qint.param('p_int');
       qint.where(qint.tint.eq(p_int));
-      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.mynode_query_domain_type.queryType);
+      testCase.errorIfNotEqual('Incorrect queryType', 1, qint.jones_query_domain_type.queryType);
       qint.execute({p_int: key}, fail_verify_integraltypes_array, [key], testCase, false);
     });
   });

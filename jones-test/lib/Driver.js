@@ -297,8 +297,15 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--timeout <msec>", "set timeout in msec.",
     function(thisArg, nextArg) {
-      driver.timeoutMillis = nextArg;
-      return 2;
+      if(thisArg) {
+        driver.timeoutMillis = thisArg;
+        return 1;
+      }
+      if(nextArg) {
+        driver.timeoutMillis = nextArg;
+        return 2;
+      }
+      return 0;
     }
   ));
   

@@ -94,6 +94,10 @@ function getDBServiceProvider(impl_name) {
 
 exports.getDBServiceProvider = getDBServiceProvider;
 
+exports.converters = {
+  "JSONConverter"        : require(path.join(conf.converters_dir, "JSONConverter")),
+  "JSONSparseConverter"  : require(path.join(conf.converters_dir, "JSONSparseConverter"))
+};
 
 /*jslint forin: true */
 exports.ConnectionProperties = function(nameOrProperties) {

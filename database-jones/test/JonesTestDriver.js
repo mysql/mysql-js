@@ -26,6 +26,10 @@ var driver = new harness.Driver();
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
   function(thisArg, nextArg) {
+    if(thisArg) {
+      global.adapter = thisArg;
+      return 1;
+    }
     global.adapter = nextArg;
     return 2;
   });

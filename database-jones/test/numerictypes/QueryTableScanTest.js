@@ -87,7 +87,7 @@ testQueries.run = function() {
           }
           q.where(queryTest.predicate(q));
           testCase.errorIfNotEqual('Wrong query type for ' + queryTest.testName,
-              queryTest.queryType, q.mynode_query_domain_type.queryType);
+              queryTest.queryType, q.jones_query_domain_type.queryType);
           q.execute(queryTest, function(err, results, queryTest) {
             testCase.errorIfNull("NoResults:q"+i+" ", results);
             if(results) {

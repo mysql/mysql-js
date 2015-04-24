@@ -1367,19 +1367,19 @@ var MAX_LIMIT = Math.pow(2, 52);
 exports.DBSession.prototype.buildScanOperation = function(queryDomainType, parameterValues, transaction, callback) {
   udebug.log_detail('dbSession.buildScanOperation with queryDomainType:', queryDomainType,
       'parameterValues', parameterValues);
-  var dbTableHandler = queryDomainType.mynode_query_domain_type.dbTableHandler;
+  var dbTableHandler = queryDomainType.jones_query_domain_type.dbTableHandler;
   var order = parameterValues.order;
   var skip = parameterValues.skip;
   var limit = parameterValues.limit;
-  var queryHandler = queryDomainType.mynode_query_domain_type.queryHandler;
+  var queryHandler = queryDomainType.jones_query_domain_type.queryHandler;
   var err;
   getMetadata(dbTableHandler);
   // add the WHERE clause to the sql
-  var whereSQL = ' WHERE ' + queryDomainType.mynode_query_domain_type.predicate.getSQL().sqlText;
+  var whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
   var scanSQL = dbTableHandler.mysql.selectTableScanSQL + whereSQL;
   udebug.log_detail('dbSession.buildScanOperation sql', scanSQL, 'parameter values', parameterValues);
   // resolve parameters
-  var sql = queryDomainType.mynode_query_domain_type.predicate.getSQL();
+  var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
   var formalParameters = sql.formalParameters;
   var sqlParameters = [];
   udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);

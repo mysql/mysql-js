@@ -118,7 +118,7 @@ var verifyConstructorMetadataCached = function(testCase, sessionFactory, qualifi
   var split = qualifiedTableName.split(".");
   var databaseName = split[0];
   var tableName = split[1];
-  var tableHandler = constructor.prototype.mynode.tableHandler;
+  var tableHandler = constructor.prototype.jones.tableHandler;
   if (tableHandler === undefined) {
     testCase.appendErrorMessage(tableName + 'table handler was not cached in constructor.');
   } else {

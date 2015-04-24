@@ -25,16 +25,16 @@
 /// FIXME move this test to jones-ndb/test
 
 var path = require("path");
-var ndbimpl;
+var ndbimpl = "";
 try {
-  ndbimpl = require(path.join(mynode.fs.build_dir, "ndb_adapter.node")).ndb.impl;
+  ndbimpl = require(require("jones-ndb").binary).ndb.impl;
 }
 catch(e) {}
 
 function assertVO(testCase, object, expected) {
   if(global.adapter == "ndb") {
     testCase.errorIfNotEqual("Expected NDB Value Object", expected,
-                            ndbimpl.isValueObject(object));
+                             ndbimpl.isValueObject(object));
   }
 }
 
