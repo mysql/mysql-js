@@ -41,7 +41,8 @@ var lintOptions = {
   "eqeq"      : true,     // allow ==
   "bitwise"   : true,     // allow bitwise operators
   "ass"       : true,     // allow assignment expressions
-  "todo"      : true      // allow TODO comments
+  "todo"      : true,     // allow TODO comments
+  "regexp"    : true      // allow . and [^ ...] in regular expressions
 };
 
 try { 
@@ -176,15 +177,13 @@ var skipFilePatterns = [
   /~[1-9]~$/    // bzr leaves these around
 ];
 
-function getLintTestsForDirectory() {
-  var directory, tests, files, file, i, useFile;
+function getLintTestsForDirectory(directory) {
+  var tests, files, file, i, useFile;
+  tests = [];
 
-  directory = arguments[0];
   for(i = 1 ; i < arguments.length ; i++) {
     directory = path.resolve(directory, arguments[i]);
   }
-
-  tests = [];
 
   /* Add the individual file lint tests */
   files = fs.readdirSync(directory);
@@ -201,7 +200,7 @@ function getLintTestsForDirectory() {
   }
 
   return tests;
-};
+}
 
 
 exports.forDirectory           = getLintTestsForDirectory;

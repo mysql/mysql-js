@@ -162,6 +162,7 @@ function DocsTest(docFileName) {
   this.undocMap     = {};
   this.hasTests     = false;
   this.isMarkdown   = (docFileName.match(/\.md$/));
+  this.topLevel     = false;
 }
 
 DocsTest.prototype = new Test.Test();
@@ -174,6 +175,7 @@ DocsTest.prototype.addTestObject = function(testObject, className, undocFlag) {
   this.hasTests = true;
   if(className === undefined) {
     className = 0;
+    this.topLevel = true;
   }
   this.testClassMap[className] = testObject;
   if(undocFlag) {
@@ -196,12 +198,18 @@ DocsTest.prototype.testObjectsVsFunctionList = function(functionList) {
     udebug.log_detail("verified %s.%s", docFunc.className, docFunc.functionName);
   }
 
-  // Verify documented functions from list
+  /* Iterate the functions found in the documentation.
+     For each one, try to find a corresponding member of the testObject.
+  */
   for(i = 0 ; i < functionList.length ; i++) {
     docFunction = functionList[i];
-    name = docFunction.className;
-    testObject = this.testClassMap[name];
-    if(testObject) { 
+
+    if(this.topLevel) {
+      testObject = this.testClassMap[0];
+    } else {
+      testObject = this.testClassMap[docFunction.className];
+    }
+    if(testObject) {
       func = testObject[docFunction.functionName];
       if(typeof func === 'function') {
         verify(docFunction);
@@ -211,7 +219,7 @@ DocsTest.prototype.testObjectsVsFunctionList = function(functionList) {
         missing += 1;      
       }
     } else {
-      udebug.log("No Class %s in object", name);
+      udebug.log("No %s in object", name);
       missing += 1;
     }
   }

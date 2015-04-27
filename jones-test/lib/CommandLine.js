@@ -49,12 +49,12 @@ FlagHandler.prototype.addOption = function(option) {
   */
   if(option.shortForm) {
     shortFlag = option.shortForm;
-    key = shortFlag.split(/[^-\w]/)[0];
+    key = shortFlag.split(/[^\-\w]/)[0];
     this.flags[key] = option;
   }
   if(option.longForm) {
     longFlag = option.longForm;
-    key = longFlag.split(/[^-\w]/)[0];
+    key = longFlag.split(/[^\-\w]/)[0];
     this.flags[key] = option;
   }
 
@@ -86,7 +86,7 @@ FlagHandler.prototype.processArguments = function() {
       if(consumed > 0) {
         i += consumed;
       } else {
-        console.log("Error processing option", thisArg)
+        console.log("Error processing option", thisArg);
         this.usage(1);
       }
     } else {

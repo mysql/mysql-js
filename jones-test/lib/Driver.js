@@ -71,10 +71,10 @@ Driver.prototype.processCommandLineOptions = function() {
   }
 };
 
-Driver.prototype.addLintTestsForDirectory = function() {
-  var directory, suite, files, file, i, useFile;
+Driver.prototype.addLintTestsForDirectory = function(directory) {
+  var suite, files, file, i, useFile;
 
-  directory = path.resolve(this.baseDirectory, arguments[0]);
+  directory = path.resolve(this.baseDirectory, directory);
   for(i = 1 ; i < arguments.length ; i++) {
     directory = path.resolve(directory, arguments[i]);
   }

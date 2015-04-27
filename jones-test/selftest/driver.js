@@ -30,5 +30,8 @@ driver.addLintTestsForDirectory("../lib");
 driver.ignoreLint("Driver.js", 14,
   "Expected a conditional expression and instead saw an assignment.");
 
+driver.ignoreLint("LintTest.js", 14,
+  "Expected a conditional expression and instead saw an assignment.");
+
 driver.runAllTests();
 
