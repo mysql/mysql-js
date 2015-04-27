@@ -26,7 +26,11 @@ var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
   var t = this;
-  var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
+  try {
+    var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
+  } catch(e) {
+    t.fail("Proxy is not available (use node --harmony)");
+  }
 
   sqlCreate(this.suite, function(error) {
     if (error) {
