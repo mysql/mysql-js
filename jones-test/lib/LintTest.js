@@ -171,6 +171,40 @@ function predefine(keywordArray) {
   lintOptions.predef = keywordArray;
 }
 
+var skipFilePatterns = [
+  /^\./,        // skip files starting with .
+  /~[1-9]~$/    // bzr leaves these around
+];
+
+function getLintTestsForDirectory() {
+  var directory, tests, files, file, i, useFile;
+
+  directory = arguments[0];
+  for(i = 1 ; i < arguments.length ; i++) {
+    directory = path.resolve(directory, arguments[i]);
+  }
+
+  tests = [];
+
+  /* Add the individual file lint tests */
+  files = fs.readdirSync(directory);
+  while(file = files.pop()) {
+    useFile = false;
+    for(i = 0 ; i < skipFilePatterns.length ; i++) {
+      if( (file.match(/\.js$/) && (! file.match(skipFilePatterns[i])))) {
+        useFile = true;
+      }
+    }
+    if(useFile) {
+      tests.push(new LintTest(directory, file));
+    }
+  }
+
+  return tests;
+};
+
+
+exports.forDirectory           = getLintTestsForDirectory;
 exports.LintTest               = LintTest;
 exports.LintSmokeTest          = LintSmokeTest;
 exports.ignore                 = ignore;

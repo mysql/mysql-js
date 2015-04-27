@@ -193,7 +193,7 @@ DocsTest.prototype.testObjectsVsFunctionList = function(functionList) {
       verified[docFunc.className] = {};
     }
     verified[docFunc.className][docFunc.functionName] = true;
-    // udebug.log_detail("verified %s.%s", docFunc.className, docFunc.functionName);
+    udebug.log_detail("verified %s.%s", docFunc.className, docFunc.functionName);
   }
 
   // Verify documented functions from list
@@ -210,6 +210,9 @@ DocsTest.prototype.testObjectsVsFunctionList = function(functionList) {
         if(! firstMissing) { firstMissing = name; }
         missing += 1;      
       }
+    } else {
+      udebug.log("No Class %s in object", name);
+      missing += 1;
     }
   }
 

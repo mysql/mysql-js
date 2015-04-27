@@ -21,15 +21,20 @@
 var Driver         = require("./lib/Driver"),
     CommandLine    = require("./lib/CommandLine"),
     _test          = require("./lib/Test"),
-    DocsTest       = require("./lib/DocsTest");
-    
+    DocsTest       = require("./lib/DocsTest"),
+    LintTest       = require("./lib/LintTest");
+
 module.exports = { 
-  "Driver"         : Driver,    
-  "CommandLine"    : CommandLine,
-  "SmokeTest"      : _test.SmokeTest,
-  "SerialTest"     : _test.SerialTest,
-  "ConcurrentTest" : _test.ConcurrentTest,
-  "ClearSmokeTest" : _test.ClearSmokeTest,
-  "DocsTest"       : DocsTest
+  "Driver"                   : Driver,
+  "CommandLine"              : CommandLine,
+  "SmokeTest"                : _test.SmokeTest,
+  "SerialTest"               : _test.SerialTest,
+  "ConcurrentTest"           : _test.ConcurrentTest,
+  "ClearSmokeTest"           : _test.ClearSmokeTest,
+  "DocsTest"                 : DocsTest,
+  "getLintTestsForDirectory" : LintTest.forDirectory,
+  "LintSmokeTest"            : LintTest.LintSmokeTest,
+  "ignoreLint"               : LintTest.ignore,
+  "predefineLint"            : LintTest.predefine
 };
 

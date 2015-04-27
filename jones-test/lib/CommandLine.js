@@ -43,17 +43,18 @@ FlagHandler.prototype.addOption = function(option) {
   var shortFlag, longFlag, key, helpText;
   helpText = "";
  
-  /* Split the flags, and use the part to the left of any whitespace 
-     as a key in FlagHandler.flags 
+  /* Split the flags, and use the part to the left of any
+     character that is not a dash or an alphanumeric character
+     as a key in FlagHandler.flags
   */
   if(option.shortForm) {
     shortFlag = option.shortForm;
-    key = shortFlag.split(/\s/)[0];
+    key = shortFlag.split(/[^-\w]/)[0];
     this.flags[key] = option;
   }
   if(option.longForm) {
     longFlag = option.longForm;
-    key = longFlag.split(/\s/)[0];
+    key = longFlag.split(/[^-\w]/)[0];
     this.flags[key] = option;
   }
 
@@ -85,9 +86,11 @@ FlagHandler.prototype.processArguments = function() {
       if(consumed > 0) {
         i += consumed;
       } else {
+        console.log("Error processing option", thisArg)
         this.usage(1);
       }
     } else {
+      console.log("Invalid option:", thisArg, opts);
       this.usage(1);
     }
   }

@@ -20,8 +20,6 @@
 
 "use strict";
 
-var LintTests = require("./JonesLintTests.js");
-
 var driver = new harness.Driver();
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
@@ -61,10 +59,6 @@ driver.addCommandLineOption("", "--stats=<query>",
     driver.statsDomain = thisArg || "/";
     return 1;
   });
-
-
-
-LintTests.defineLintTests(driver);
-
+ 
 module.exports = driver;
 
