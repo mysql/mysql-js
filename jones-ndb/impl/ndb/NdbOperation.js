@@ -771,7 +771,7 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 }
 
 
-function storeNativeConstructorInMapping(dbTableHandler) {
+storeNativeConstructorInMapping = function(dbTableHandler) {
   var i, nfields, record, fieldNames, typeConverters;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
   if(dbTableHandler.ValueObject) { 
@@ -808,7 +808,7 @@ function storeNativeConstructorInMapping(dbTableHandler) {
 
   /* Store the VOC in the mapping */
   dbTableHandler.ValueObject = VOC;
-}
+};
 
 function verifyIndexHandler(dbIndexHandler) {
   if(! dbIndexHandler.tableHandler) { throw ("Invalid dbIndexHandler"); }

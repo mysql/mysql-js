@@ -58,7 +58,7 @@ function NdbConnection(connectString) {
 }
 
 
-function logReadyNodes(ndb_cluster_connection, nnodes) {
+logReadyNodes = function(ndb_cluster_connection, nnodes) {
   var node_id;
   if(nnodes < 0) {
     stats.wait_until_ready_timeouts++;
@@ -72,7 +72,7 @@ function logReadyNodes(ndb_cluster_connection, nnodes) {
     stats.node_ids.push(node_id);
   }
   return nnodes;
-}
+};
 
 
 NdbConnection.prototype.connect = function(properties, callback) {

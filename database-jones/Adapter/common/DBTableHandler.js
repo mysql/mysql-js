@@ -437,9 +437,7 @@ DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
     if(f.domainTypeConverter) {
       value = obj[f.fieldName];
       convertedValue = f.domainTypeConverter.fromDB(value, obj, f);
-      if (typeof convertedValue === 'undefined') {
-        delete obj[f.fieldName];
-      } else {
+      if (convertedValue !== undefined) {
         obj[f.fieldName] = convertedValue;
       }
     }
