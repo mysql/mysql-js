@@ -20,8 +20,9 @@
 
 "use strict";
 
-global.harness    = require("jones-test");
-var driver = new harness.Driver();
+global.harness   = require("jones-test");
+var driver       = new harness.Driver();
+var stats_module = require(jones.api.stats);
 
 
 /* Hack the prototypes for SerialTest and ConcurrentTest 
@@ -39,6 +40,7 @@ harness.ConcurrentTest.prototype.onComplete = function() {
   }
 };
 
+driver.statsDomain = null;
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
   function(thisArg) {
@@ -71,12 +73,20 @@ driver.addCommandLineOption("", "--stats=<query>",
   "show server statistics after test run",
   function(thisArg) {
     driver.doStats = true;
-    if(typeof thisArg === "string" && thisArg.indexOf("/") === 0) {
+    if(typeof thisArg === "string") {
       driver.statsDomain = thisArg;
       return 1;
     }
+    driver.statsDomain = "/";
     return 0;
   });
- 
+
+
+driver.onReportCallback = function() {
+  if(this.statsDomain !== null) {
+    stats_module.peek(this.statsDomain);
+  }
+};
+
 module.exports = driver;
 

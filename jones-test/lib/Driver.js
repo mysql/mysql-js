@@ -172,6 +172,10 @@ Driver.prototype.testCompleted = function(testCase) {
   } 
 };
 
+Driver.prototype.onReportCallback = function() {
+  return;
+};
+
 Driver.prototype.reportResultsAndExit = function() {
   var driver = this;
 
@@ -180,9 +184,7 @@ Driver.prototype.reportResultsAndExit = function() {
   console.log("Failed:  ", this.result.failed.length);
   console.log("Skipped: ", this.result.skipped.length);
 
-  if(this.onReportCallback) {
-    this.onReportCallback();
-  }
+  this.onReportCallback();
 
   if(this.closeResources) {
     this.closeResources(function() {
