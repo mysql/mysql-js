@@ -60,10 +60,9 @@ Test.prototype.test = function(result) {
   // Test ran synchronously.  Fail if any error messages have been reported.
   if(! this.skipped) {
     if (this.errorMessages === '') {
-      result.pass(this);
+      this.pass();
     } else {
-      this.failed = true;
-      result.fail(this, this.errorMessages);
+      this.fail();
     }
   }
 };
@@ -75,7 +74,7 @@ Test.prototype.onComplete = function() {
 Test.prototype.pass = function() {
   if (this.failed !== null) {
     console.log('Error: pass called with status already '
-                + (this.failed?'failed ':'passed ') + this.suite.name +"."+ this.name);
+                + (this.failed?'failed':'passed') + " for " + this.fullName());
     assert(this.failed === null);
   } else {
     this.onComplete();
@@ -87,7 +86,7 @@ Test.prototype.pass = function() {
 Test.prototype.fail = function(message) {
   if (this.failed !== null) {
     console.log('Error: pass called with status already '
-                + (this.failed?'failed ':'passed ') + this.suite.name +"."+ this.name);
+                + (this.failed?'failed':'passed') + " for " + this.fullName());
     assert(this.failed === null);
   } else {
     this.onComplete();

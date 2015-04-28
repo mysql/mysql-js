@@ -29,23 +29,15 @@ test.run = function() {
   try {
     var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
   } catch(e) {
-    t.fail("Proxy is not available (use node --harmony)");
+    t.appendErrorMessage("Proxy is not available (use node --harmony)");
     return true;
   }
 
   sqlCreate(this.suite, function(error) {
     if (error) {
-      t.fail('createSQL failed: ' + error);
-    } else {
-      var props = new mynode.ConnectionProperties(global.adapter);
-      global.fail_openSession(t, function(session) {
-        if (session) {
-          t.pass();
-        } else {
-          t.fail();
-        }
-      });
+      t.appendErrorMessage('createSQL failed: ' + error);
     }
+    t.failOnError();
   });
 };
 
