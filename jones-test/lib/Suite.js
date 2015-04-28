@@ -171,7 +171,8 @@ Suite.prototype.createTests = function() {
 
 Suite.prototype.runTests = function(result) {
   var tc;
-  if (this.tests.length === 0) { 
+  udebug.log_detail("runTests for", this.name, ":", this.tests.length, "tests");
+  if (this.tests.length === 0) {
     return false;
   }
   this.currentTest = 0;
@@ -267,10 +268,8 @@ Suite.prototype.testCompleted = function(testCase) {
   var result = testCase.result;
   switch (testCase.phase) {
     case 0:     // the smoke test completed
-      if (testCase.failed) {        // if the smoke test failed, we are done
-        return true;          
-      } 
-      return this.startConcurrentTests(result);
+      return testCase.failed ?
+        this.startClearSmokeTest(result) : this.startConcurrentTests(result);
 
     case 1:     // one of the concurrent tests completed
       if (++this.numberOfConcurrentTestsCompleted === this.numberOfConcurrentTests) {
