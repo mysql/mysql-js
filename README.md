@@ -5,7 +5,7 @@
   Jones adapter for MySQL.  Licensed GPL v2.  Requires node-mysql.
   
 * jones-ndb
-  Native Jones adapater for MySQL Cluster.  Licensed GPL v2. 
+  Native Jones adapter for MySQL Cluster.  Licensed GPL v2. 
   Uses the low-level NDBAPI for data operations, but requires jones-mysql
   for certain metadata operations such as creating tables.
 

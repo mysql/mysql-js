@@ -38,7 +38,9 @@ function ErrorVerifier(testCase, sqlState) {
     {
       testCase.errorIfNotEqual("Expected sqlstate", sqlState, err.cause.sqlstate);
     }
-    testCase.failOnError();
+    testCase.session.close(function() {
+      testCase.failOnError();
+    });
   };
 }
 
@@ -55,7 +57,9 @@ function ValueVerifier(testCase, field, value) {
     catch(e) {
       testCase.appendErrorMessage(e);
     }
-    testCase.failOnError();
+    testCase.session.close(function() {
+      testCase.failOnError();
+    });
   };
 }
 

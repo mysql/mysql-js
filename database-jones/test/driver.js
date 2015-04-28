@@ -23,11 +23,9 @@
 // Setup globals:
 global.mynode     = require("database-jones");
 global.adapter    = "ndb";
-global.harness    = require("jones-test");
 
 var stats_module = require(mynode.api.stats);
 var driver       = require("./JonesTestDriver");
-
 
 // var storageEngine = null;
 

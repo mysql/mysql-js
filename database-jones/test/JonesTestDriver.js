@@ -20,7 +20,25 @@
 
 "use strict";
 
+global.harness    = require("jones-test");
 var driver = new harness.Driver();
+
+
+/* Hack the prototypes for SerialTest and ConcurrentTest 
+   to ensure that a test case always closes its session
+*/
+harness.SerialTest.prototype.onComplete = function() {
+  if(this.session && ! this.session.isClosed()) {
+    this.session.close();
+  }
+}
+
+harness.ConcurrentTest.prototype.onComplete = function() {
+  if(this.session && ! this.session.isClosed()) {
+    this.session.close();
+  }
+}
+
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
   function(thisArg, nextArg) {
