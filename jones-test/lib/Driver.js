@@ -30,11 +30,6 @@ var unified_debug = require("unified_debug"),
     path          = require("path"),
     fs            = require("fs");
 
-var skipFilePatterns = [
-  /^\./,        // skip files starting with .
-  /~[1-9]~$/    // bzr leaves these around
-];
-
 
 /** Driver 
 */
@@ -72,7 +67,7 @@ Driver.prototype.processCommandLineOptions = function() {
 };
 
 Driver.prototype.addLintTestsForDirectory = function(directory) {
-  var suite, files, file, i, useFile;
+  var suite, tests, i, useFile;
 
   directory = path.resolve(this.baseDirectory, directory);
   for(i = 1 ; i < arguments.length ; i++) {
@@ -85,17 +80,9 @@ Driver.prototype.addLintTestsForDirectory = function(directory) {
   suite.addTest(directory, new LintTest.LintSmokeTest());
 
   /* Add the individual file lint tests */
-  files = fs.readdirSync(directory);
-  while(file = files.pop()) {
-    useFile = false;
-    for(i = 0 ; i < skipFilePatterns.length ; i++) {
-      if( (file.match(/\.js$/) && (! file.match(skipFilePatterns[i])))) {
-        useFile = true;
-      }
-    }
-    if(useFile) {
-      suite.addTest(file, new LintTest.LintTest(directory, file));
-    }
+  tests = LintTest.forDirectory(directory);
+  for(i = 0 ; i < tests.length ; i++) {
+    suite.addTest(directory, tests[i]);
   }
 
   this.suites.push(suite);
@@ -150,6 +137,22 @@ Driver.prototype.addSuitesFromDirectory = function(directory) {
   return nsuites;
 };
 
+Driver.prototype.setSuitesToRun = function(arg1, arg2) {
+  var argUsed, suites;
+  if(arg1) {
+    argUsed = 1;
+    suites = arg1;
+  } else if(arg2) {
+    argUsed = 2;
+    suites = arg2;
+  } else {
+    return 0;
+  }
+
+  this.suitesToRun = suites.split(",");
+  return argUsed;
+};
+
 Driver.prototype.isSuiteToRun = function(directoryName) {
   var runSuite = false;
 
@@ -157,8 +160,11 @@ Driver.prototype.isSuiteToRun = function(directoryName) {
     return true;
   }
 
-  this.suitesToRun.forEach(function(v) {
-    if(v == directoryName) { runSuite = true; }
+  this.suitesToRun.forEach(function(s) {
+    if((s === directoryName) || (s === directoryName + path.sep)) {
+      runSuite = true;
+      udebug.log_detail("isSuiteToRun:", directoryName);
+    }
   });
   return runSuite;
 };
@@ -199,8 +205,6 @@ Driver.prototype.runAllTests = function() {
   var i;
   var driver = this;
 
-  this.numberOfRunningSuites = this.suites.length;
-
   /* Should we show the help text and exit? */
   if(this.abortAndExit) {
     this.flagHandler.usage(0);
@@ -226,6 +230,7 @@ Driver.prototype.runAllTests = function() {
 
   /* Now start running tests */
   udebug.log_detail("Starting tests from", this.suites.length, "suites");
+  this.numberOfRunningSuites = this.suites.length;
   for(i = 0; i < this.suites.length ; i++) {
     if (! this.suites[i].runTests(this.result)) {
       this.numberOfRunningSuites--;
@@ -340,27 +345,17 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--suite <suite>", "only run the named suite",
     function(thisArg, nextArg) {
-      if(thisArg) {
-        driver.suitesToRun = [ thisArg ];
-        return 1;
-      }
-      driver.suitesToRun = [ nextArg ];
-      return 2;
+      return driver.setSuitesToRun(thisArg, nextArg);
     }
   ));
-  
+
   opts.addOption(new CommandLine.Option(
     null, "--suites <suite,suite,...>", "only run the named suites",
     function(thisArg, nextArg) {
-      if(thisArg) {
-        driver.suitesToRun = thisArg.split(",");
-        return 1;
-      }
-      driver.suitesToRun = nextArg.split(",");
-      return 2;
+      return driver.setSuitesToRun(thisArg, nextArg);
     }
   ));
-  
+
   opts.addOption(new CommandLine.Option(
     null, "--test <testFile>", "only run the named test file",
     function(thisArg, nextArg) {
