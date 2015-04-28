@@ -74,7 +74,8 @@ Test.prototype.onComplete = function() {
 
 Test.prototype.pass = function() {
   if (this.failed !== null) {
-    console.log('Error: pass called with status already ' + (this.failed?'failed':'passed'));
+    console.log('Error: pass called with status already '
+                + (this.failed?'failed ':'passed ') + this.suite.name +"."+ this.name);
     assert(this.failed === null);
   } else {
     this.onComplete();
@@ -85,7 +86,8 @@ Test.prototype.pass = function() {
 
 Test.prototype.fail = function(message) {
   if (this.failed !== null) {
-    console.log('Error: pass called with status already ' + (this.failed?'failed':'passed'));
+    console.log('Error: pass called with status already '
+                + (this.failed?'failed ':'passed ') + this.suite.name +"."+ this.name);
     assert(this.failed === null);
   } else {
     this.onComplete();

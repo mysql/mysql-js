@@ -30,6 +30,7 @@ test.run = function() {
     var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
   } catch(e) {
     t.fail("Proxy is not available (use node --harmony)");
+    return true;
   }
 
   sqlCreate(this.suite, function(error) {

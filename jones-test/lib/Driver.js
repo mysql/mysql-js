@@ -46,7 +46,7 @@ function Driver(baseDirectory) {
   this.suites                = [];
   this.fileToRun             = "";
   this.testInFile            = null;
-  this.suitesToRun           = "";
+  this.suitesToRun           = null;
   this.skipSmokeTest         = false;
   this.skipClearSmokeTest    = false;
   this.onReportCallback      = null;    // callback at report 
@@ -151,7 +151,16 @@ Driver.prototype.addSuitesFromDirectory = function(directory) {
 };
 
 Driver.prototype.isSuiteToRun = function(directoryName) {
-  return (this.suitesToRun === "" || this.suitesToRun.indexOf(directoryName) > -1);
+  var runSuite = false;
+
+  if(this.suitesToRun === null) {
+    return true;
+  }
+
+  this.suitesToRun.forEach(function(v) {
+    if(v == directoryName) { runSuite = true; }
+  });
+  return runSuite;
 };
 
 Driver.prototype.testCompleted = function(testCase) {
@@ -332,10 +341,10 @@ Driver.prototype.setCommandLineFlags = function() {
     null, "--suite <suite>", "only run the named suite",
     function(thisArg, nextArg) {
       if(thisArg) {
-        driver.suitesToRun = thisArg;
+        driver.suitesToRun = [ thisArg ];
         return 1;
       }
-      driver.suitesToRun = nextArg;
+      driver.suitesToRun = [ nextArg ];
       return 2;
     }
   ));
@@ -344,10 +353,10 @@ Driver.prototype.setCommandLineFlags = function() {
     null, "--suites <suite,suite,...>", "only run the named suites",
     function(thisArg, nextArg) {
       if(thisArg) {
-        driver.suitesToRun = thisArg;
+        driver.suitesToRun = thisArg.split(",");
         return 1;
       }
-      driver.suitesToRun = nextArg;
+      driver.suitesToRun = nextArg.split(",");
       return 2;
     }
   ));
