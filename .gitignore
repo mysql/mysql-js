@@ -2,4 +2,5 @@ jones-ndb/build/
 jones-ndb/config.gypi
 jones-ndb/config.waf
 .DS_Store
+database-jones/test/test_connection.js
 

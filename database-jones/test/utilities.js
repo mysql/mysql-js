@@ -34,7 +34,7 @@ var path = require("path"),
 */
 function getTestConnectionProperties() {
   var props_file     = path.join(mynode.fs.suites_dir, "test_connection.js");
-  var props_template = path.join(mynode.fs.suites_dir, "lib", "test_connection_js.dist");
+  var props_template = path.join(mynode.fs.suites_dir, "lib", "test_connection_dist.js");
   var existsSync     = fs.existsSync || path.existsSync;
   var properties     = null;
   var f1, f2; 
