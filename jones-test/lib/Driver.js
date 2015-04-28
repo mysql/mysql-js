@@ -137,20 +137,12 @@ Driver.prototype.addSuitesFromDirectory = function(directory) {
   return nsuites;
 };
 
-Driver.prototype.setSuitesToRun = function(arg1, arg2) {
-  var argUsed, suites;
-  if(arg1) {
-    argUsed = 1;
-    suites = arg1;
-  } else if(arg2) {
-    argUsed = 2;
-    suites = arg2;
-  } else {
-    return 0;
+Driver.prototype.setSuitesToRun = function(suites) {
+  if(typeof suites === 'string') {
+    this.suitesToRun = suites.split(",");
+    return 1;
   }
-
-  this.suitesToRun = suites.split(",");
-  return argUsed;
+  return -1;
 };
 
 Driver.prototype.isSuiteToRun = function(directoryName) {
@@ -251,7 +243,7 @@ Driver.prototype.setCommandLineFlags = function() {
     "-h", "--help", "print this message",
     function() {
       driver.abortAndExit = true;
-      return 1;
+      return 0;
     }
   ));
 
@@ -260,7 +252,7 @@ Driver.prototype.setCommandLineFlags = function() {
      function() {
        unified_debug.level_debug();
        unified_debug.on();
-       return 1;
+       return 0;
      }
   ));
 
@@ -269,7 +261,7 @@ Driver.prototype.setCommandLineFlags = function() {
      function() {
        unified_debug.level_detail();
        unified_debug.on();
-       return 1;
+       return 0;
      }
   ));
 
@@ -287,7 +279,7 @@ Driver.prototype.setCommandLineFlags = function() {
     "-t", "--trace", "print stack trace from failing tests",
     function() {
       driver.result.listener.printStackTraces = true;
-      return 1;
+      return 0;
     }
   ));
   
@@ -295,7 +287,7 @@ Driver.prototype.setCommandLineFlags = function() {
     null,  "--skip-smoke", "do not run SmokeTest",
     function() {
       driver.skipSmokeTest = true;
-      return 1;
+      return 0;
     }
   ));
 
@@ -303,23 +295,19 @@ Driver.prototype.setCommandLineFlags = function() {
     null, "--skip-clear", "do not run ClearSmokeTest",
     function() {
       driver.skipClearSmokeTest = true;
-      return 1;      
+      return 0;
     }
   ));
   
   // --timeout takes a value in milliseconds
   opts.addOption(new CommandLine.Option(
     null, "--timeout <msec>", "set timeout in msec.",
-    function(thisArg, nextArg) {
+    function(thisArg) {
       if(thisArg) {
         driver.timeoutMillis = thisArg;
         return 1;
       }
-      if(nextArg) {
-        driver.timeoutMillis = nextArg;
-        return 2;
-      }
-      return 0;
+      return -1;  // timeout value is required
     }
   ));
   
@@ -329,7 +317,7 @@ Driver.prototype.setCommandLineFlags = function() {
     function() {
       driver.result.listener = new Listener.QuietListener();
       driver.timeoutMillis = 10000;
-      return 1;
+      return 0;
     }
   ));
 
@@ -338,41 +326,43 @@ Driver.prototype.setCommandLineFlags = function() {
     function() {
       driver.result.listener = new Listener.FailOnlyListener();
       driver.timeoutMillis = 10000;
-      return 1;
+      return 0;
     }
   ));
   
   opts.addOption(new CommandLine.Option(
     null, "--suite <suite>", "only run the named suite",
-    function(thisArg, nextArg) {
-      return driver.setSuitesToRun(thisArg, nextArg);
+    function(thisArg) {
+      return driver.setSuitesToRun(thisArg);
     }
   ));
 
   opts.addOption(new CommandLine.Option(
     null, "--suites <suite,suite,...>", "only run the named suites",
-    function(thisArg, nextArg) {
-      return driver.setSuitesToRun(thisArg, nextArg);
+    function(thisArg) {
+      return driver.setSuitesToRun(thisArg);
     }
   ));
 
   opts.addOption(new CommandLine.Option(
     null, "--test <testFile>", "only run the named test file",
-    function(thisArg, nextArg) {
-      if(thisArg) {  // --test=x
+    function(thisArg) {
+      if(thisArg) {
         driver.fileToRun = thisArg;
         return 1;
       }
-      driver.fileToRun = nextArg; // --test x
-      return 2;
+      return -1;  // argument is required
     }
   ));
   
   opts.addOption(new CommandLine.Option(
     null, "--case <n,m,...>","only run test cases numbered n, m, etc. in <testFile>\n",
-     function(thisArg, nextArg) {
-      driver.testInFile = nextArg;
-      return 2;
+     function(thisArg) {
+      if(thisArg) {
+        driver.testInFile = thisArg;
+        return 1;
+      }
+      return -1;  // test number is required
     }
   ));
 };

@@ -31,23 +31,22 @@ harness.SerialTest.prototype.onComplete = function() {
   if(this.session && ! this.session.isClosed()) {
     this.session.close();
   }
-}
+};
 
 harness.ConcurrentTest.prototype.onComplete = function() {
   if(this.session && ! this.session.isClosed()) {
     this.session.close();
   }
-}
+};
 
 
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
-  function(thisArg, nextArg) {
+  function(thisArg) {
     if(thisArg) {
       global.adapter = thisArg;
       return 1;
     }
-    global.adapter = nextArg;
-    return 2;
+    return -1;  // adapter is required
   });
 
 // THIS SHOULD MOVE INTO jones-mysql driver
@@ -58,24 +57,25 @@ driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
 //  });
 
 driver.addCommandLineOption("", "--set <var>=<value>", "set a global variable",
-  function(thisArg, nextArg) {
+  function(nextArg) {
     var pair = nextArg.split('=');
     if(pair.length === 2) {
       global[pair[0]] = pair[1];
+      return 1;
     }
-    else {
-      console.log("Invalid --set option " + nextArg);
-      return 0;
-    }
-    return 2;
+    console.log("Invalid --set option " + nextArg);
+    return -1;
   });
 
 driver.addCommandLineOption("", "--stats=<query>",
   "show server statistics after test run",
   function(thisArg) {
     driver.doStats = true;
-    driver.statsDomain = thisArg || "/";
-    return 1;
+    if(typeof thisArg === "string" && thisArg.indexOf("/") === 0) {
+      driver.statsDomain = thisArg;
+      return 1;
+    }
+    return 0;
   });
  
 module.exports = driver;

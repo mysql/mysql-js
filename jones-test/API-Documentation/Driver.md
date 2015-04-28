@@ -31,15 +31,15 @@ function Driver(baseDirectory);
    First three arguments are the short form option, long form option,
    and option help text.
    The last argument is the callback that processes the option.
-   The callback receives two arguments "thisArg" and "nextArg".  
-   thisArg contains any text that trailing an "=" sign in the invocation of 
-   this option.  
-   nextArg contains the next element of 
-   process.argv after the option itself.
-   The callback returns the number of arguments consumed.
-   If the option consumes nextArg, it should return the numeric value 2.
-   Otherwise it should return the numeric value 1.  Any other return value is
-   taken to indicate an error.
+   The callback receives the argument "nextArg".  
+   If the option was invoked with an equals sign, as in "--stats=/root", 
+   then nextArg contains the text following the "=" character.  Otherwise,
+   nextArg contains the next command-line parameter after the current one.
+
+   If the callback succesfully consumes nextArg, it must return 1.
+   If the callback succesfully processes the option, without consuming nextArg,
+   it must return 0.
+   Otherwise, the callback must return -1, to indicate an error.
    
    See also: Option() in CommandLine.js
 */

@@ -72,22 +72,40 @@ FlagHandler.prototype.addOption = function(option) {
   this.helpText += helpText;
 };
 
+/* Handle arguments and invoke their callbacks.
+   Callbacks must return 1, 0, or -1.
+*/
 FlagHandler.prototype.processArguments = function() {
-  var i, len, opts, thisArg, nextArg, flag, consumed;
-  i = 2;
+  var i, len, opts, optHasEq, thisArg, nextArg, flag, consumed;
   len = process.argv.length;
-  while(i < len) {
+  for (i = 2; i < len; i++) {
     thisArg = process.argv[i];
     opts = thisArg.split("=",2);
-    nextArg = (i + 1 < len) ? process.argv[i+1] : null;
     flag = this.flags[opts[0]];
+
     if(flag) {
-      consumed = flag.callback(opts[1], nextArg);
-      if(consumed > 0) {
-        i += consumed;
-      } else {
-        console.log("Error processing option", thisArg);
-        this.usage(1);
+      optHasEq = (opts[1] !== undefined);
+      nextArg = optHasEq ? opts[1] : process.argv[i+1];
+
+      consumed = flag.callback(nextArg);    // invoke callback
+      switch(consumed) {
+        case 1:  // nextArg was consumed
+          if(! optHasEq) { i++; }
+          break;
+        case 0:  // nextArg was not consumed
+          if(optHasEq) {  // user said opt=value, but option did not use value
+            console.log(thisArg, "is not a valid usage for option", flag);
+            this.usage(1);
+          }
+          break;
+        case -1:
+          console.log("Error processing option", thisArg);
+          this.usage(1);
+          break;
+        default:
+          console.log("Erroneous return from option handler ", thisArg,
+                      " -- this is a bug.");
+          process.exit(1);
       }
     } else {
       console.log("Invalid option:", thisArg, opts);
