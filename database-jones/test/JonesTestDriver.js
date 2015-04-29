@@ -78,7 +78,7 @@ driver.onReportCallback = function() {
 */
 driver.loadUtilities = function() {
   require("./utilities.js");
-}
+};
 
 module.exports = driver;
 

@@ -41,4 +41,8 @@ harness.ignoreLint("CharsetTest.js", 26, "Missing \'new\'.", 14);
 harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 
+//mysql56types
+harness.ignoreLint("CharsetTest.js", 0, "Unsafe character.");
+
+
 module.exports.tests = tests;

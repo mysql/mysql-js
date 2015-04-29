@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -57,17 +57,17 @@ function ValueVerifier(testCase, field, value) {
   };
 }
 
-function ReadFunction(testCase, session) { 
+function getReadFunction(testCase, session) {
   return function onPersist(err) {
     testCase.errorIfError(err);
     session.find(TestData, testCase.data.id, testCase.verifier.run);
-  }
+  };
 }
 
-function InsertFunction(data) {
+function getInsertFunction(data) {
   return function onSession(session, testCase) {
     testCase.data = data;
-    session.persist(data, ReadFunction(testCase, session));
+    session.persist(data, getReadFunction(testCase, session));
   };
 }
 
@@ -77,8 +77,8 @@ t1.run = function() {
   var data = new TestData(1);
   data.Time1 = "1.622";   // Milliseconds; will be rounded.
   this.verifier = new ValueVerifier(this, "Time1", "00:00:01.6");
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 // Datetime2.  Hundredths of a second.
 // Mapped to a JavaScript date.
@@ -88,8 +88,8 @@ t2.run = function() {
   data.Datetime2 = new Date("Thu, 09 Nov 1989 17:00:00.1622");
   var expect = new Date("Thu, 09 Nov 1989 17:00:00.16"); // Round down
   this.verifier = new ValueVerifier(this, "Datetime2", expect);
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 // Timestamp3.  Thousandths of a second (Milliseconds).
 // Mapped to a JavaScript date.
@@ -98,8 +98,8 @@ t3.run = function() {
   var data = new TestData(3);
   data.Timestamp3 = new Date("Thu, 09 Nov 1989 17:00:00.116");
   this.verifier = new ValueVerifier(this, "Timestamp3", data.Timestamp3);
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 // Time4.  S.xxxxZZZ
 var t4 = new harness.ConcurrentTest("t4_time_even");
@@ -107,8 +107,8 @@ t4.run = function() {
   var data = new TestData(4);
   data.Time4 = "1.1116222";
   this.verifier = new ValueVerifier(this, "Time4", "00:00:01.1116");
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 /* TODO: TEST 5 IS WAITING FOR DECISIONS ABOUT THE CONVERTER APIS */
 
@@ -120,8 +120,8 @@ t5.run = function() {
   var data = new TestData(5);
   //data.Datetime5 = new Date("
   // this.verifier = new ValueVerifier(this, "Datetime5", ... );
-  //fail_openSession(this, InsertFunction(data));
-}
+  //fail_openSession(this, getInsertFunction(data));
+};
 
 // Timestamp6.  Precision will be lost.
 var t6 = new harness.ConcurrentTest("t6_timestamp_even");
@@ -130,8 +130,8 @@ t6.run = function() {
   data.Timestamp6 = new Date("Thu, 09 Nov 1989 17:00:00.111116");
   var expect = new Date("Thu, 09 Nov 1989 17:00:00.111000");  // lost precision
   this.verifier = new ValueVerifier(this, "Timestamp6", expect);
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 // Time1. Tenths of a second.  Negative
 var t7 = new harness.ConcurrentTest("t7_time_negative");
@@ -139,8 +139,8 @@ t7.run = function() {
   var data = new TestData(7);
   data.Time1 = "-21";
   this.verifier = new ValueVerifier(this, "Time1", "-00:00:21.0");
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 // Time4.  Negative.
 var t8 = new harness.ConcurrentTest("t8_time_fractional_negative");
@@ -148,8 +148,8 @@ t8.run = function() {
   var data = new TestData(8);
   data.Time4 = "-21.0150";
   this.verifier = new ValueVerifier(this, "Time4", "-00:00:21.0150");
-  fail_openSession(this, InsertFunction(data));
-}
+  fail_openSession(this, getInsertFunction(data));
+};
 
 
 module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8];
