@@ -42,15 +42,6 @@ harness.ConcurrentTest.prototype.onComplete = function() {
 
 driver.statsDomain = null;
 
-driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
-  function(thisArg) {
-    if(thisArg) {
-      global.adapter = thisArg;
-      return 1;
-    }
-    return -1;  // adapter is required
-  });
-
 driver.addCommandLineOption("", "--set <var>=<value>", "set a global variable",
   function(nextArg) {
     var pair = nextArg.split('=');
@@ -80,6 +71,14 @@ driver.onReportCallback = function() {
     stats_module.peek(this.statsDomain);
   }
 };
+
+/* loadUtilities() must be called after processing command line options.
+   Read in the utilities library for the test suite;
+   this sets some additional globals.
+*/
+driver.loadUtilities = function() {
+  require("./utilities.js");
+}
 
 module.exports = driver;
 

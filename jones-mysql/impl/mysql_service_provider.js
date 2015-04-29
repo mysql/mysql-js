@@ -37,7 +37,7 @@ catch(e) {
 }
 
 exports.fs = {
-  "suites_dir" : path.relative(path.dirname(), "../test"),
+  "suites_dir" : path.resolve(path.dirname(), "../test"),
   "source_dir" : path.dirname()
 }
 

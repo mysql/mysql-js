@@ -105,6 +105,7 @@ Driver.prototype.addSuitesFromDirectory = function(directory) {
   nsuites = 0;
 
   directory = path.resolve(this.baseDirectory, directory);
+  udebug.log_detail("addSuitesFromDirectory:", directory);
 
   if(this.fileToRun) {
     nsuites++;

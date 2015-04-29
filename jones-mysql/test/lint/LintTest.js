@@ -22,15 +22,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
+var jonesMysql = require("jones-mysql");
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
   Array.prototype.push.apply(tests, more_tests);
 }
 
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "stringtypes"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "mysql56types"));
+more(harness.getLintTestsForDirectory(jonesMysql.fs.suites_dir, "numerictypes"));
+more(harness.getLintTestsForDirectory(jonesMysql.fs.suites_dir, "stringtypes"));
+more(harness.getLintTestsForDirectory(jonesMysql.fs.suites_dir, "mysql56types"));
 
 //stringtypes
 harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");

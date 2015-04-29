@@ -35,13 +35,11 @@ driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
   });
 
 driver.processCommandLineOptions();
+driver.loadUtilities();
 
-/* global.adapter is now set.  Read in the utilities library for the test suite; 
-   it may set some additional globals.
+/* Set storage engine from command-line options 
+   This has to happen *after* loadUtilities()
 */
-require(mynode.fs.suites_dir + "/utilities.js");
-
-/* Set storage engine from command-line options */
 if(storageEngine && global.test_conn_properties) {
    global.test_conn_properties.mysql_storage_engine = storageEngine;
 }

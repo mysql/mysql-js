@@ -41,6 +41,7 @@ jones.fs.converters_dir   = path.join(parent_dir, "Converters");
 jones.fs.api_module       = path.join(jones.fs.api_dir, "jones.js");
 
 jones.fs.suites_dir       = path.join(parent_dir, "test");
+jones.fs.test_lib_dir     = path.join(parent_dir, "test", "lib");
 
 jones.fs.test_driver      = path.join(parent_dir, "test", "JonesTestDriver");
 

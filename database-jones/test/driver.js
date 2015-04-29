@@ -24,20 +24,20 @@
 global.mynode     = require("database-jones");
 global.adapter    = "ndb";
 
-var stats_module = require(mynode.api.stats);
 var driver       = require(mynode.fs.test_driver);
 
-// var storageEngine = null;
+// The --adapter option only applies when you are here in database-jones/test
+driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
+  function(thisArg) {
+    if(thisArg) {
+      global.adapter = thisArg;
+      return 1;
+    }
+    return -1;  // adapter is required
+  });
 
 driver.processCommandLineOptions();
-
-/* global.adapter is now set.  Read in the utilities library for the test suite; 
-   it may set some additional globals.
-*/
-require("./utilities.js");
-
-
-/* Find and run all tests */
+driver.loadUtilities();
 driver.addSuitesFromDirectory(mynode.fs.suites_dir);
 driver.runAllTests();
 
