@@ -162,6 +162,13 @@ Driver.prototype.isSuiteToRun = function(directoryName) {
   return runSuite;
 };
 
+Driver.prototype.listSuites = function() {
+  this.suites.forEach(function(s) {
+    var component = path.basename(path.dirname(path.dirname(s.path)));
+    console.log(component,"\t\t",s.name);
+  });
+};
+
 Driver.prototype.testCompleted = function(testCase) {
   var suite = testCase.suite;
   if (suite.testCompleted(testCase)) {
@@ -203,6 +210,12 @@ Driver.prototype.runAllTests = function() {
   /* Should we show the help text and exit? */
   if(this.abortAndExit) {
     this.flagHandler.usage(0);
+  }
+
+  /* Or list suites and exit? */
+  if(this.listSuitesAndExit) {
+    this.listSuites();
+    process.exit(0);
   }
 
   /* Create tests */
@@ -247,6 +260,14 @@ Driver.prototype.setCommandLineFlags = function() {
     function() {
       driver.abortAndExit = true;
       return 0;
+    }
+  ));
+
+  opts.addOption(new CommandLine.Option(
+   "-l", "--list", "just list test suites",
+   function() {
+     driver.listSuitesAndExit = true;
+     return 0;
     }
   ));
 
