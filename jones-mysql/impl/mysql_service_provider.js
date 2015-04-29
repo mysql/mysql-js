@@ -36,6 +36,11 @@ catch(e) {
   saved_err = e;
 }
 
+exports.fs = {
+  "suites_dir" : path.relative(path.dirname(), "../test"),
+  "source_dir" : path.dirname()
+}
+
 exports.loadRequiredModules = function() {
   var error;
   try {

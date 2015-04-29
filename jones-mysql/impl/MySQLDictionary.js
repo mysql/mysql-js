@@ -463,9 +463,9 @@ exports.MetadataManager = function() {
     if(p) {
       if(p.mysql_socket)     { cmd += " --socket=" + p.mysql_socket; }
       else if(p.mysql_port)  { cmd += " --port=" + p.mysql_port; }
-      if(p.mysql_host)     { cmd += " -h " + p.mysql_host; }
-      if(p.mysql_user)     { cmd += " -u " + p.mysql_user; }
-      if(p.mysql_password) { cmd += " --password=" + p.mysql_password; }
+      if(p.mysql_host)       { cmd += " -h " + p.mysql_host; }
+      if(p.mysql_user)       { cmd += " -u " + p.mysql_user; }
+      if(p.mysql_password)   { cmd += " --password=" + p.mysql_password; }
     }
     udebug.log_detail('harness runSQL forking process...' + cmd);
     var child = child_process.exec(cmd, childProcess);
@@ -473,13 +473,13 @@ exports.MetadataManager = function() {
 
   this.createTestTables = function(connectionProperties, suiteName, callback) {
     udebug.log("createTestTables", suiteName);
-    var sqlPath = path.join(mynode.fs.suites_dir, suiteName, 'create.sql');
+    var sqlPath = path.join("..", "test", suiteName, 'create.sql');
     runSQL(connectionProperties, sqlPath, callback);
   };
 
   this.dropTestTables = function(connectionProperties, suiteName, callback) {
     udebug.log("dropTestTables", suiteName);
-    var sqlPath = path.join(mynode.fs.suites_dir, suiteName, 'drop.sql');
+    var sqlPath = path.join("..", "test", suiteName, 'drop.sql');
     runSQL(connectionProperties, sqlPath, callback);
   };
 };

@@ -22,22 +22,32 @@
 
 // Setup globals:
 global.mynode     = require("database-jones");
-global.adapter    = "ndb";
+global.adapter    = "mysql";
 
-var stats_module = require(mynode.api.stats);
-var driver       = require(mynode.fs.test_driver);
+var jonesMysql    = require("jones-mysql");
+var driver        = require(mynode.fs.suites_dir + "/JonesTestDriver");
+var storageEngine = null;
 
-// var storageEngine = null;
+driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
+  function(thisArg) {
+    storageEngine = thisArg;
+    return 1;
+  });
 
 driver.processCommandLineOptions();
 
 /* global.adapter is now set.  Read in the utilities library for the test suite; 
    it may set some additional globals.
 */
-require("./utilities.js");
+require(mynode.fs.suites_dir + "/utilities.js");
 
+/* Set storage engine from command-line options */
+if(storageEngine && global.test_conn_properties) {
+   global.test_conn_properties.mysql_storage_engine = storageEngine;
+}
 
 /* Find and run all tests */
 driver.addSuitesFromDirectory(mynode.fs.suites_dir);
+driver.addSuitesFromDirectory(jonesMysql.fs.suites_dir);
 driver.runAllTests();
 

@@ -42,6 +42,7 @@ jones.fs.api_module       = path.join(jones.fs.api_dir, "jones.js");
 
 jones.fs.suites_dir       = path.join(parent_dir, "test");
 
+jones.fs.test_driver      = path.join(parent_dir, "test", "JonesTestDriver");
 
 /* Some compatibility with older versions of node */
 if(typeof global.setImmediate !== 'function') {

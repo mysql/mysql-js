@@ -51,13 +51,6 @@ driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
     return -1;  // adapter is required
   });
 
-// THIS SHOULD MOVE INTO jones-mysql driver
-//driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
-//  function(thisArg, nextArg) {
-//    storageEngine = nextArg;
-//    return 2;
-//  });
-
 driver.addCommandLineOption("", "--set <var>=<value>", "set a global variable",
   function(nextArg) {
     var pair = nextArg.split('=');

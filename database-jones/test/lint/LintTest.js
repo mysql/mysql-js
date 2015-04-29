@@ -37,8 +37,6 @@ more(harness.getLintTestsForDirectory(mynode.fs.spi_common_dir));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir));
 
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "spi"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "stringtypes"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "autoincrement"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
@@ -81,14 +79,6 @@ harness.ignoreLint("BasicVarcharTest.js", 19, "Expected \'{\' and instead saw \'
 harness.ignoreLint("BasicVarcharTest.js", 10, "Expected \'{\' and instead saw \'connection\'.");
 harness.ignoreLint("SmokeTest.js", 13, "Expected \'{\' and instead saw \'test\'.");
 harness.ignoreLint("SmokeTest.js", 10, "Expected \'{\' and instead saw \'test\'.");
-
-//stringtypes
-harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");
-harness.ignoreLint("CharsetTest.js", 26, "Missing \'new\'.", 14);
-
-//numerictypes
-harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
-harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 
 // t_basic
 harness.ignoreLint("BatchTest.js", 6, "Don't make functions within a loop.");
