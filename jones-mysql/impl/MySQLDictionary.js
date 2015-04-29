@@ -27,6 +27,8 @@
 
 var util   = require('util'),
     path   = require("path"),
+    fs     = require("fs"),
+    jones  = require("database-jones"),
     child_process = require("child_process"),
     udebug = unified_debug.getLogger("MySQLDictionary.js");
 
@@ -471,15 +473,27 @@ exports.MetadataManager = function() {
     var child = child_process.exec(cmd, childProcess);
   }
 
+  var existsSync = fs.existsSync || path.existsSync;
+
+  function findMetadataScript(suite, file) {
+    var path1, path2, path3;
+    path1 = path.join("..", "test", "standard", suite + "-" + file);
+    path2 = path.join("..", "test", suite, file);
+    path3 = path.join(jones.fs.suites_dir, suite, file);
+    if(existsSync(path1)) return path1;
+    if(existsSync(path2)) return path2;
+    if(existsSync(path3)) return path3;
+  }
+
   this.createTestTables = function(connectionProperties, suiteName, callback) {
     udebug.log("createTestTables", suiteName);
-    var sqlPath = path.join("..", "test", suiteName, 'create.sql');
+    var sqlPath = findMetadataScript(suiteName, 'create.sql');
     runSQL(connectionProperties, sqlPath, callback);
   };
 
   this.dropTestTables = function(connectionProperties, suiteName, callback) {
     udebug.log("dropTestTables", suiteName);
-    var sqlPath = path.join("..", "test", suiteName, 'drop.sql');
+    var sqlPath = findMetadataScript(suiteName,  'drop.sql');
     runSQL(connectionProperties, sqlPath, callback);
   };
 };
