@@ -29,7 +29,8 @@ var TimeConverter = require(path.join(conf.converters_dir, "NdbTimeConverter"));
 var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
 
 try {
-  var DBConnectionPool = require("./NdbConnectionPool.js").DBConnectionPool;
+  var DBConnectionPool   = require("./NdbConnectionPool.js").DBConnectionPool;
+  var ndbMetadataManager = require("./NdbMetadataManager.js");
 }
 catch(e) {
   console.log(e.stack);
@@ -67,6 +68,17 @@ exports.loadRequiredModules = function() {
     err.cause = e;
     throw err;
   }
+
+  /* Load jones-mysql */
+  try {
+    require("jones-mysql");
+  } catch(e) {
+    msg = "jones-ndb requires jones-mysql for metadata operations.\n";
+    msg += "Original error: " + e.message;
+    err = new Error(msg);
+    err.cause = e;
+    throw err;
+  }
 };
 
 exports.getDefaultConnectionProperties = function() {
@@ -99,9 +111,7 @@ exports.getFactoryKey = function(properties) {
 
 
 exports.getDBMetadataManager = function() {
-  /* Rely on MySQL SPI for MetadataManager */
-  var mysqlService = jones.getDBServiceProvider("mysql");
-  return mysqlService.getDBMetadataManager();
+  return ndbMetadataManager;
 };
 
 exports.config = conf;

@@ -22,27 +22,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
-var test_root = require("jones-mysql").config.suites_dir;
+var config = require("../../impl/ndb/path_config");
+
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
   Array.prototype.push.apply(tests, more_tests);
 }
 
-more(harness.getLintTestsForDirectory(test_root, "numerictypes"));
-more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
-more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
-
-//stringtypes
-harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");
-harness.ignoreLint("CharsetTest.js", 26, "Missing \'new\'.", 14);
-
-//numerictypes
-harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
-harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
-
-//mysql56types
-harness.ignoreLint("CharsetTest.js", 0, "Unsafe character.");
+more(harness.getLintTestsForDirectory(config.impl_js_dir));
+more(harness.getLintTestsForDirectory(config.converters_dir));
+more(harness.getLintTestsForDirectory(config.docs_dir));
 
 
 module.exports.tests = tests;

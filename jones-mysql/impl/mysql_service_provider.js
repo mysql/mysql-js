@@ -25,7 +25,13 @@ var udebug = unified_debug.getLogger("mysql_service_provider.js"),
     saved_err,
     mysqlconnection,
     mysqldictionary,
+    fs,
     mysqlmetadatamanager = null;
+
+fs = {};
+fs.impl_dir   = __dirname;
+fs.root_dir   = path.dirname(fs.impl_dir);
+fs.suites_dir = path.resolve(fs.root_dir, "test");
 
 try {
   /* Let unmet module dependencies be caught by loadRequiredModules() */
@@ -34,11 +40,6 @@ try {
 }
 catch(e) {
   saved_err = e;
-}
-
-exports.fs = {
-  "suites_dir" : path.resolve(path.dirname(), "../test"),
-  "source_dir" : path.dirname()
 }
 
 exports.loadRequiredModules = function() {
@@ -95,3 +96,6 @@ exports.getDBMetadataManager = function() {
   }
   return mysqlmetadatamanager;
 };
+
+exports.config = fs;
+

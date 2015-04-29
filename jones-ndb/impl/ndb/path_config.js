@@ -28,6 +28,7 @@ var impl_dir       = path.dirname(ndb_dir);  /* /impl */
 var root_dir       = path.dirname(impl_dir); /* / */
 var converters_dir = path.join(root_dir, "Converters");
 var docs_dir       = path.join(root_dir, "Documentation");
+var suites_dir     = path.join(root_dir, "test");
 
 /* Find the build directory */
 var binary_dir;
@@ -52,7 +53,9 @@ module.exports = {
   "binary"         : path.join(binary_dir, "ndb_adapter.node"),
   "root_dir"       : root_dir,
   "impl_dir"       : impl_dir,
+  "impl_js_dir"    : ndb_dir,
   "docs_dir"       : docs_dir,
-  "converters_dir" : converters_dir
+  "converters_dir" : converters_dir,
+  "suites_dir"     : suites_dir
 };
 
