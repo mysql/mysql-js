@@ -156,7 +156,7 @@ NdbConnection.prototype.close = function(userCallback) {
 
   function disconnect() {
     if(self.asyncNdbContext) { 
-      self.asyncNdbContext.delete();  // C++ Destructor
+      self.asyncNdbContext["delete"]();  // C++ Destructor
       self.asyncNdbContext = null;    
     }
     udebug.log_notice("Node", nodeId, "disconnecting.");
@@ -167,7 +167,7 @@ NdbConnection.prototype.close = function(userCallback) {
       apiCall.description = "DeleteNdbClusterConnection";
       apiCall.ndb_cluster_connection = self.ndb_cluster_connection;
       apiCall.run = function() {
-        this.ndb_cluster_connection.delete(this.callback);
+        this.ndb_cluster_connection["delete"](this.callback);
       };
       apiCall.enqueue();
     }

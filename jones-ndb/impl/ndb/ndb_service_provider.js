@@ -72,11 +72,11 @@ exports.loadRequiredModules = function() {
   /* Load jones-mysql */
   try {
     require("jones-mysql");
-  } catch(e) {
-    msg = "jones-ndb requires jones-mysql for metadata operations.\n";
-    msg += "Original error: " + e.message;
+  } catch(e2) {
+    msg = "jones-ndb requires mysql for metadata operations.\n";
+    msg += "Original error: " + e2.message;
     err = new Error(msg);
-    err.cause = e;
+    err.cause = e2;
     throw err;
   }
 };

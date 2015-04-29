@@ -51,6 +51,7 @@ function NdbMetadataManager() {
 NdbMetadataManager.prototype.runSQL = function(properties, sqlPath, callback) {
   properties.implementation = "mysql";
   assert(sqlPath);
+  udebug.log("runSQL", sqlPath);
   var statement = "set storage_engine=ndbcluster;\n";
   statement += fs.readFileSync(sqlPath, "ASCII");
   jones.openSession(properties).then(function(session) {
@@ -61,7 +62,7 @@ NdbMetadataManager.prototype.runSQL = function(properties, sqlPath, callback) {
       udebug.log("onQuery");
       session.close();
       callback(err);
-    })
+    });
   });
 };
 

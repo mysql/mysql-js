@@ -24,6 +24,7 @@
 "use strict";
 
 var conf               = require("./path_config"),
+    assert             = require("assert"),
     adapter            = require(conf.binary),
     NdbInterpretedCode = adapter.ndb.ndbapi.NdbInterpretedCode,
     NdbScanFilter      = adapter.ndb.ndbapi.NdbScanFilter,

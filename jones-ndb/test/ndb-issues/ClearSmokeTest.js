@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -16,20 +16,18 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  02110-1301  USA
-*/
+ */
+ 
+var test = new harness.ClearSmokeTest("ClearSmokeTest");
 
-"use strict";
+test.run = function() {
+  var t = this;
 
-var path = require("path"),
-    MySQLTime = require(jones.common.MySQLTime),
-    udebug = unified_debug.getLogger("NdbDateConverter.js");
+  function onDrop() {
+    t.pass();
+  }
 
-
-exports.toDB = function(jsdate) {
-  return new MySQLTime().initializeFromDateString(jsdate);
+  sqlDrop(this.suite, onDrop);
 };
 
-exports.fromDB = function(dbTime) {
-  return MySQLTime.initializeFromNdb(dbTime).toDateString();
-};
-
+module.exports.tests = [test];

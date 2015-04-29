@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -19,14 +19,14 @@
  */
 
 /* 
-CREATE TABLE if not exists `towns` (
+CREATE TABLE if not exists `towns2` (
   `town` varchar(50) NOT NULL,
   `county` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`town`)
 );
 */
 
-var nosql = require('../..');
+var jones = require("database-jones");
 
 var t1 = new harness.ConcurrentTest("readTownByPK");
 
@@ -36,7 +36,7 @@ var Town = function(name, county) {
 };
 
 // create basic object<->table mappings                                                                                                  
-var annotations = new nosql.TableMapping('towns').applyToClass(Town);
+var annotations = new jones.TableMapping('towns2').applyToClass(Town);
 
 //check results of find                                                                                                                  
 var onFind = function(err, result) {
@@ -60,20 +60,13 @@ var onSession = function(err, session) {
   session.persist(data, onInsert, data, session);
 };
 
-onFailOpenSession = function(session, testCase) {
-  onSession(null, session);
-}
-
 
 t1.mappings = Town;
 t1.run = function() {
-  if(global.adapter === 'ndb') {
-    fail_openSession(t1, onFailOpenSession);
-  }
-  else {
-    this.skip("Test is for NDB only");
-  }
-}
+  fail_openSession(t1, function(session, testCase) {
+    onSession(null, session)
+  });
+};
 
 
 module.exports.tests = [ t1 ];

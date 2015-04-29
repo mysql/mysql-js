@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
-var config = require("../../impl/ndb/path_config");
+var config = require("jones-ndb").config;
 
 var tests = [ new harness.LintSmokeTest() ];
 
@@ -33,6 +33,9 @@ function more(more_tests) {
 more(harness.getLintTestsForDirectory(config.impl_js_dir));
 more(harness.getLintTestsForDirectory(config.converters_dir));
 more(harness.getLintTestsForDirectory(config.docs_dir));
+
+harness.ignoreLint("NdbOperation.js", 22, "Use the array literal notation [].");
+harness.ignoreLint("NdbOperation.js", 27, "'gather' was used before it was defined.");
 
 
 module.exports.tests = tests;
