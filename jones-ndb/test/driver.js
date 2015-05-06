@@ -23,7 +23,7 @@
 var jones       = require("database-jones"),
     jonesNdb    = require("jones-ndb"),
     jonesMysql  = require("jones-mysql"),
-    driver      = require(jones.fs.suites_dir + "/JonesTestDriver");
+    driver      = require(jones.fs.test_driver);
 
 // Setup globals:
 global.mynode     = jones;

@@ -25,7 +25,7 @@ global.mynode     = require("database-jones");
 global.adapter    = "mysql";
 
 var jonesMysql    = require("jones-mysql");
-var driver        = require(mynode.fs.suites_dir + "/JonesTestDriver");
+var driver        = require(mynode.fs.test_driver);
 var storageEngine = null;
 
 driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
@@ -46,6 +46,6 @@ if(storageEngine && global.test_conn_properties) {
 
 /* Find and run all tests */
 driver.addSuitesFromDirectory(mynode.fs.suites_dir);
-driver.addSuitesFromDirectory(jonesMysql.fs.suites_dir);
+driver.addSuitesFromDirectory(jonesMysql.config.suites_dir);
 driver.runAllTests();
 

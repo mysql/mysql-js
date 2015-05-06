@@ -24,6 +24,8 @@
 
 var path = require("path"),
     fs = require("fs"),
+    assert = require("assert"),
+    udebug = unified_debug.getLogger("utilities.js"),
     dbServiceProvider = mynode.getDBServiceProvider(adapter),
     metadataManager = dbServiceProvider.getDBMetadataManager();
 
@@ -60,26 +62,10 @@ function getTestConnectionProperties() {
   return properties;
 } 
 
-function getAdapterProperties(adapter) {
-  var impl = adapter || global.adapter;
-  var p = new mynode.ConnectionProperties(impl);
-  return p;
-}
-
-function merge(target, m) {
-  var p;
-  for(p in m) {
-    if(m.hasOwnProperty(p)) {
-      target[p] = m[p];
-    }
-  }
-}
-
 function getConnectionProperties() {
-  var adapterProps  = getAdapterProperties();
-  var localConnectionProps = getTestConnectionProperties();
-  merge(adapterProps, localConnectionProps);
-  return adapterProps;
+  var testEnvProperties = getTestConnectionProperties();
+  testEnvProperties.implementation = global.adapter;
+  return new mynode.ConnectionProperties(testEnvProperties);
 }
 
 /** Set global test connection properties */
@@ -103,6 +89,7 @@ global.fail_openSession = function(testCase, callback) {
   }
   var properties = global.test_conn_properties;
   var mappings = testCase.mappings;
+  udebug.log_detail("fail_openSession", properties.implementation);
   promise = mynode.openSession(properties, mappings, function(err, session) {
     if (callback && err) {
       testCase.fail(err);

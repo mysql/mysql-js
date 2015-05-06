@@ -70,7 +70,7 @@ var badtbl9 = function(i, j) {
 };
 
 // create all properties for connecting with different default databases
-var properties = mynode.ConnectionProperties(global.adapter);
+var properties = new mynode.ConnectionProperties(global.adapter);
 // make a local copy of the properties
 var propertiesList = [];
 var p, x, props;

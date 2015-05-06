@@ -70,6 +70,7 @@ NdbSession = function(pool) {
   this.seizeTxQueue          = null;
   this.maxTxContexts         = pool.properties.ndb_session_concurrency;  
   this.openTxContexts        = 0;  // currently opened
+  this.isNdbSession          = true;
 };
 
 /* fetch DBSessionImpl. Undocumented - private to NdbConnectionPool. 

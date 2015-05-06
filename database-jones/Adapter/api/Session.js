@@ -47,7 +47,7 @@ exports.Session.prototype.getTableMetadata = function() {
 
 exports.Session.prototype.listTables = function() {
   var context = new userContext.UserContext(arguments, 2, 2, this, this.sessionFactory);
-  // delegate to context's getTableMetadata for execution
+  // delegate to context's listTables for execution
   return context.listTables();
 };
 

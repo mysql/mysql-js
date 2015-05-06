@@ -107,7 +107,7 @@ if (exit) {
 console.log('Running insert with adapter', adapter, user_args);
 //create a database properties object
 
-var dbProperties = nosql.ConnectionProperties(adapter);
+var dbProperties = new nosql.ConnectionProperties(adapter);
 
 // create a basic mapping
 var annotations = new nosql.TableMapping('tweet').applyToClass(lib.Tweet);

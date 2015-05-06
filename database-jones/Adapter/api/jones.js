@@ -22,6 +22,7 @@
 
 var path           = require("path"),
     fs             = require("fs"),
+    assert         = require("assert"),
 
     conf           = require("../adapter_config"),
     UserContext    = null,   // loaded later to prevent circular dependency
@@ -99,28 +100,29 @@ exports.converters = {
   "JSONSparseConverter"  : require(path.join(conf.converters_dir, "JSONSparseConverter"))
 };
 
-/*jslint forin: true */
 exports.ConnectionProperties = function(nameOrProperties) {
-  var serviceProvider, newProperties, key, value;
+  var serviceProvider, newProperties, key;
+
+  newProperties = {};
+
   if(typeof nameOrProperties === 'string') {
     udebug.log("ConnectionProperties [default for " + nameOrProperties + "]");
     serviceProvider = getDBServiceProvider(nameOrProperties);
     newProperties = serviceProvider.getDefaultConnectionProperties();
+    assert(newProperties.implementation === nameOrProperties);
   }
   else if(typeof nameOrProperties === 'object' && 
           typeof nameOrProperties.implementation === 'string') {
     udebug.log("ConnectionProperties [copy constructor]");
-    newProperties = {};
-    for(key in nameOrProperties) {
-      value = nameOrProperties[key];
-      if(typeof value === 'string' || typeof value === 'number') {
-        newProperties[key] = value;
-      }
-      else {
-        udebug.log(" .. not copying property:",  key);
-      }
+    serviceProvider = getDBServiceProvider(nameOrProperties.implementation);
+    newProperties = serviceProvider.getDefaultConnectionProperties();
+
+    for(key in nameOrProperties) if(nameOrProperties.hasOwnProperty(key)) {
+      newProperties[key] = nameOrProperties[key];
     }
   }
+
+  /* "Normally constructors don't return a value, but they can choose to" */
   return newProperties;
 };
 

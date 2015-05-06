@@ -5,14 +5,13 @@
  * CONSTRUCTOR
  *
  * If implName_or_connectionProperties is the name of a backend adapter,
- * (i.e. either "mysql" or "ndb"), this constructor returns the default
+ * (e.g. "mysql" or "ndb"), this constructor returns the default
  * ConnectionProperties for that adapter.
  * 
- * If implName_or_connectionProperties is a ConnectionProperties object, 
- * then this works as a copy constructor, copying it to and returning a new 
- * ConnectionProperties object.
- * 
- * Otherwise, returns undefined.
+ * If implName_or_connectionProperties is an object which includes a member
+ * property "implementation", then the default ConnectionProperties for 
+ * adapter <implementation> are fetched, and then overridden by any
+ * properties present in implName_or_connectionProperties.
  */
 ConnectionProperties(implName_or_connectionProperties);
 

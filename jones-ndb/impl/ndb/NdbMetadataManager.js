@@ -50,6 +50,7 @@ function NdbMetadataManager() {
 
 NdbMetadataManager.prototype.runSQL = function(properties, sqlPath, callback) {
   properties.implementation = "mysql";
+  properties.isMetadataOnlyConnection = true;
   assert(sqlPath);
   udebug.log("runSQL", sqlPath);
   var statement = "set storage_engine=ndbcluster;\n";

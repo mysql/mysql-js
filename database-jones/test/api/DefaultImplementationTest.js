@@ -18,7 +18,7 @@
  02110-1301  USA
  */
 
-var t1 = new harness.ConcurrentTest("testDefaultImplementation");
+var t1 = new harness.ConcurrentTest("testImplementation");
 t1.run = function() {
   mynode.connect(global.adapter, null, function(err, sessionFactory) {
     if (sessionFactory) {
