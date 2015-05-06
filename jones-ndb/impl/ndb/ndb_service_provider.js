@@ -22,6 +22,7 @@
 
 var path = require("path");
 var fs = require("fs");
+var assert = require("assert");
 var conf = require("./path_config");
 
 var DatetimeConverter = require(path.join(conf.converters_dir, "NdbDatetimeConverter"));
@@ -37,9 +38,8 @@ catch(e) {
   /* Let unmet module dependencies be caught by loadRequiredModules() */
 }
 
+var propertiesDocFile = path.join(conf.docs_dir, "ndb_properties");
 var udebug  = unified_debug.getLogger("ndb_service_provider.js");
-
-var NdbDefaultConnectionProperties = require(path.join(conf.docs_dir, "ndb_properties"));
 
 exports.loadRequiredModules = function() {
   var err, ldp, msg;
@@ -81,9 +81,13 @@ exports.loadRequiredModules = function() {
   }
 };
 
+function NdbConnectionProperties() {
+}
+
+NdbConnectionProperties.prototype = require(propertiesDocFile);
+
 exports.getDefaultConnectionProperties = function() {
-  // Is this a bug?  Use the docs as the constructor, not as the object
-  return NdbDefaultConnectionProperties;
+  return new NdbConnectionProperties();
 };
 
 
@@ -97,6 +101,7 @@ function registerDefaultTypeConverters(dbConnectionPool) {
 
 exports.connect = function(properties, user_callback) {
   udebug.log("connect");
+  assert(properties.implementation === "ndb");
   var dbconn = new DBConnectionPool(properties);
   registerDefaultTypeConverters(dbconn);
   dbconn.connect(user_callback);
@@ -105,6 +110,7 @@ exports.connect = function(properties, user_callback) {
 
 exports.getFactoryKey = function(properties) {
   udebug.log("getFactoryKey");
+  assert(properties.implementation === "ndb");
   var key = properties.implementation + "://" + properties.ndb_connectstring;
   return key;
 };
