@@ -31,7 +31,7 @@ var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
 
 try {
   var DBConnectionPool   = require("./NdbConnectionPool.js").DBConnectionPool;
-  var ndbMetadataManager = require("./NdbMetadataManager.js");
+  var NdbMetadataManager = require("./NdbMetadataManager.js");
 }
 catch(e) {
   console.log(e.stack);
@@ -81,13 +81,9 @@ exports.loadRequiredModules = function() {
   }
 };
 
-function NdbConnectionProperties() {
-}
-
-NdbConnectionProperties.prototype = require(propertiesDocFile);
 
 exports.getDefaultConnectionProperties = function() {
-  return new NdbConnectionProperties();
+  return require(propertiesDocFile);
 };
 
 
@@ -116,8 +112,8 @@ exports.getFactoryKey = function(properties) {
 };
 
 
-exports.getDBMetadataManager = function() {
-  return ndbMetadataManager;
+exports.getDBMetadataManager = function(properties) {
+  return new NdbMetadataManager(properties);
 };
 
 exports.config = conf;

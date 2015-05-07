@@ -30,32 +30,40 @@ var path         = require("path"),
     udebug       = unified_debug.getLogger("NdbMetadataManager.js");
 
 
-function findMetadataScript(suite, file) {
-  var path1, path2, path3, path4;
-  path1 = path.join(ndb_test_dir, suite, file);   // NDB
-  path2 = path.join(jonesMysql.config.suites_dir, suite, file);  // MySQL
-  path3 = path.join(jonesMysql.config.suites_dir, "standard", suite + "-" + file);
+function findMetadataScript(suiteName, suitePath, file) {
+  var path1, path2, path3;
+  path1 = path.join(ndb_test_dir, suiteName, file);   // NDB
+  path2 = path.join(jonesMysql.config.suites_dir, "standard", suiteName + "-" + file);
+  path3 = path.join(suitePath, file);  // MySQL
 
   if(existsSync(path1)) return path1;
   if(existsSync(path2)) return path2;
   if(existsSync(path3)) return path3;
 
-  console.log("No path to:", suite, file);
+  console.log("No path to:", suiteName, file);
 }
 
 
-function NdbMetadataManager() {
+function NdbMetadataManager(properties) {
+  var sqlProps = {
+    "mysql_user"                : properties.sql_user,
+    "mysql_host"                : properties.sql_host,
+    "mysql_port"                : properties.sql_port,
+    "mysql_password"            : properties.sql_password,
+    "implementation"            : "mysql",
+    "isMetadataOnlyConnection"  : true
+  };
+
+  this.sqlConnectionProperties = new jones.ConnectionProperties(sqlProps);
 }
 
 
-NdbMetadataManager.prototype.runSQL = function(properties, sqlPath, callback) {
-  properties.implementation = "mysql";
-  properties.isMetadataOnlyConnection = true;
+NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
   assert(sqlPath);
   udebug.log("runSQL", sqlPath);
   var statement = "set storage_engine=ndbcluster;\n";
   statement += fs.readFileSync(sqlPath, "ASCII");
-  jones.openSession(properties).then(function(session) {
+  jones.openSession(this.sqlConnectionProperties).then(function(session) {
     udebug.log("onSession");
     var driver = session.dbSession.pooledConnection;
     assert(driver);
@@ -68,19 +76,19 @@ NdbMetadataManager.prototype.runSQL = function(properties, sqlPath, callback) {
 };
 
 
-NdbMetadataManager.prototype.createTestTables = function(properties, suite, callback) {
-  udebug.log("createTestTables", suite);
-  var sqlPath = findMetadataScript(suite, "create.sql");
-  this.runSQL(properties, sqlPath, callback);
+NdbMetadataManager.prototype.createTestTables = function(suiteName, suitePath, callback) {
+  udebug.log("createTestTables", suiteName);
+  var sqlPath = findMetadataScript(suiteName, suitePath, "create.sql");
+  this.runSQL(sqlPath, callback);
 };
 
 
-NdbMetadataManager.prototype.dropTestTables = function(properties, suite, callback) {
-  udebug.log("dropTestTables", suite);
-  var sqlPath = findMetadataScript(suite,  "drop.sql");
-  this.runSQL(properties, sqlPath, callback);
+NdbMetadataManager.prototype.dropTestTables = function(suiteName, suitePath, callback) {
+  udebug.log("dropTestTables", suiteName);
+  var sqlPath = findMetadataScript(suiteName, suitePath, "drop.sql");
+  this.runSQL(sqlPath, callback);
 };
 
 
-module.exports = new NdbMetadataManager();
+module.exports = NdbMetadataManager;
 

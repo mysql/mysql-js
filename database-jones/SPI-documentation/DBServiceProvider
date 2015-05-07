@@ -40,8 +40,9 @@
   function loadRequiredModules() {};
 
 
-/* Object getDBMetadataManager()
+/* Object getDBMetadataManager(Object properties)
    IMMEDIATE
-   Returns a DBMetadataManager for this service provider
+   Returns a DBMetadataManager for this service provider using
+   ConnectionProperties object properties
 */
   function getDBMetadataManager() {};

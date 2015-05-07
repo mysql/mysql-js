@@ -20,6 +20,10 @@
 
 "use strict";
 
+console.log("This driver does not currently work.");
+console.log("Use the driver in jones-mysql or jones-ndb");
+process.exit();
+
 // Setup globals:
 global.mynode     = require("database-jones");
 global.adapter    = "ndb";

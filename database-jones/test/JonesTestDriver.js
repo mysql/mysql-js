@@ -23,6 +23,7 @@
 global.harness   = require("jones-test");
 var driver       = new harness.Driver();
 var stats_module = require(jones.api.stats);
+var utilities    = require("./utilities.js");
 
 
 /* Hack the prototypes for SerialTest and ConcurrentTest 
@@ -72,12 +73,10 @@ driver.onReportCallback = function() {
   }
 };
 
-/* loadUtilities() must be called after processing command line options.
-   Read in the utilities library for the test suite;
-   this sets some additional globals.
+/* 
 */
-driver.loadUtilities = function() {
-  require("./utilities.js");
+driver.getConnectionProperties = function(adapter, base_dir) {
+  return utilities.getConnectionProperties(adapter,base_dir);
 };
 
 module.exports = driver;

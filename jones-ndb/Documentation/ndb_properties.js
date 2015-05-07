@@ -6,11 +6,17 @@
 */ 
 
 var NdbDefaultConnectionProperties = {
-  "implementation"    : "ndb",            // This must always be "ndb".
- 
-  "ndb_connectstring" : "localhost:1186", // MySQL Cluster Connect String
-  "database"          : "test",           // MySQL Database name
-  "mysql_user"        : "root",
+  "implementation"      : "ndb",            // This must always be "ndb".
+
+  "ndb_connectstring"   : "localhost:1186", // MySQL Cluster Connect String
+  "database"            : "test",           // MySQL Database name
+
+  /* This set of properties configures the use of a mysql server for 
+     metadata operations (such as creating tables) */
+  "sql_user"            : "root",
+  "sql_password"        : "",
+  "sql_host"            : "localhost",
+  "sql_port"            : 3306,
 
   /* The next 3 properties control the behavior when opening a connection. */
   "ndb_connect_retries" : 4,         // if < 0, keep trying forever

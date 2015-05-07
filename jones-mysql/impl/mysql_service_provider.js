@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -21,21 +21,12 @@
 "use strict";
 
 var udebug = unified_debug.getLogger("mysql_service_provider.js"),
-    path = require("path"),
+    path   = require("path"),
+    config = require("./path_config"),
     saved_err,
     mysqlconnection,
     mysqldictionary,
-    fs,
-    propertiesDocFile,
-    mysqlmetadatamanager = null;
-
-fs = {};
-fs.impl_dir   = __dirname;
-fs.root_dir   = path.dirname(fs.impl_dir);
-fs.suites_dir = path.resolve(fs.root_dir, "test");
-fs.docs_dir   = path.join(fs.root_dir, "Documentation");
-
-propertiesDocFile = path.join(fs.docs_dir, "mysql_properties.js");
+    propertiesDocFile = path.join(config.docs_dir, "mysql_properties.js");
 
 try {
   /* Let unmet module dependencies be caught by loadRequiredModules() */
@@ -65,13 +56,8 @@ exports.loadRequiredModules = function() {
 };
 
 
-function MysqlConnectionProperties() {
-}
-
-MysqlConnectionProperties.prototype = require(propertiesDocFile);
-
 exports.getDefaultConnectionProperties = function() {
-  return new MysqlConnectionProperties();
+  return require(propertiesDocFile);
 };
 
 
@@ -99,12 +85,9 @@ exports.connect = function(properties, sessionFactory_callback) {
 };
 
 
-exports.getDBMetadataManager = function() {
-  if(! mysqlmetadatamanager) {
-    mysqlmetadatamanager = new mysqldictionary.MetadataManager();
-  }
-  return mysqlmetadatamanager;
+exports.getDBMetadataManager = function(properties) {
+  return new mysqldictionary.MetadataManager(properties);
 };
 
-exports.config = fs;
+exports.config = config;
 

@@ -23,14 +23,16 @@
 var jones       = require("database-jones"),
     jonesNdb    = require("jones-ndb"),
     jonesMysql  = require("jones-mysql"),
-    driver      = require(jones.fs.test_driver);
-
-// Setup globals:
-global.mynode     = jones;
-global.adapter    = "ndb";
+    driver      = require(jones.fs.test_driver),
+    properties;
 
 driver.processCommandLineOptions();
-driver.loadUtilities();
+properties = driver.getConnectionProperties("ndb", jonesNdb.config.suites_dir);
+
+// Setup globals:
+global.test_conn_properties = properties;
+global.mynode               = jones;
+global.adapter              = "ndb";
 
 /* Find and run all tests */
 driver.addSuitesFromDirectory(jones.fs.suites_dir);

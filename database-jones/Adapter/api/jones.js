@@ -23,6 +23,7 @@
 var path           = require("path"),
     fs             = require("fs"),
     assert         = require("assert"),
+    util           = require("util"),
 
     conf           = require("../adapter_config"),
     UserContext    = null,   // loaded later to prevent circular dependency
@@ -101,29 +102,40 @@ exports.converters = {
 };
 
 exports.ConnectionProperties = function(nameOrProperties) {
-  var serviceProvider, newProperties, key;
-
-  newProperties = {};
+  var serviceProvider, defaultProps, newProps, key, impl, mergeProps;
 
   if(typeof nameOrProperties === 'string') {
-    udebug.log("ConnectionProperties [default for " + nameOrProperties + "]");
-    serviceProvider = getDBServiceProvider(nameOrProperties);
-    newProperties = serviceProvider.getDefaultConnectionProperties();
-    assert(newProperties.implementation === nameOrProperties);
-  }
-  else if(typeof nameOrProperties === 'object' && 
+    impl = nameOrProperties;
+    mergeProps = {};
+  } else if(typeof nameOrProperties === 'object' &&
           typeof nameOrProperties.implementation === 'string') {
-    udebug.log("ConnectionProperties [copy constructor]");
-    serviceProvider = getDBServiceProvider(nameOrProperties.implementation);
-    newProperties = serviceProvider.getDefaultConnectionProperties();
-
-    for(key in nameOrProperties) if(nameOrProperties.hasOwnProperty(key)) {
-      newProperties[key] = nameOrProperties[key];
-    }
+    impl = nameOrProperties.implementation;
+    mergeProps = nameOrProperties;
+  } else {
+    return {};
   }
+  udebug.log("ConnectionProperties", impl);
+
+  /* Fetch the Service Provider */
+  serviceProvider = getDBServiceProvider(impl);
+  assert(serviceProvider, "Could not fetch service provider " + impl);
+
+  /* Fetch the default connection properties for the service provider */
+  defaultProps = serviceProvider.getDefaultConnectionProperties();
+  assert.strictEqual(defaultProps.implementation, impl,
+                     "invalid implementation name in default connection properties");
+
+  /* Clone them */
+  newProps = JSON.parse(JSON.stringify(defaultProps));
+
+  /* Merge with the supplied properties */
+  for(key in mergeProps) if(mergeProps.hasOwnProperty(key)) {
+    newProps[key] = mergeProps[key];
+  }
+  udebug.log(newProps);
 
   /* "Normally constructors don't return a value, but they can choose to" */
-  return newProperties;
+  return newProps;
 };
 
 

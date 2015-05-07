@@ -28,6 +28,7 @@
 var util   = require('util'),
     path   = require("path"),
     fs     = require("fs"),
+    config = require("./path_config"),
     jones  = require("database-jones"),
     child_process = require("child_process"),
     udebug = unified_debug.getLogger("MySQLDictionary.js");
@@ -435,9 +436,9 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
 /* SQL DDL Utilities
 */
-exports.MetadataManager = function() {
+exports.MetadataManager = function(connectionProperties) {
 
-  function runSQL(connectionProperties, sqlPath, callback) {
+  function runSQL(sqlPath, callback) {
     /* prepend the file containing the engine.sql (ndb.sql or innodb.sql)
        to the file containing the sql commands  */
     var engine = "ndb";
@@ -475,26 +476,28 @@ exports.MetadataManager = function() {
 
   var existsSync = fs.existsSync || path.existsSync;
 
-  function findMetadataScript(suite, file) {
+  function findMetadataScript(suiteName, suitePath, file) {
     var path1, path2, path3;
-    path1 = path.join("..", "test", "standard", suite + "-" + file);
-    path2 = path.join("..", "test", suite, file);
-    path3 = path.join(jones.fs.suites_dir, suite, file);
+    path1 = path.join(config.suites_dir, "standard", suiteName + "-" + file);
+    path2 = path.join(config.suites_dir, suiteName, file);
+    path3 = path.join(suitePath, file);
     if(existsSync(path1)) return path1;
     if(existsSync(path2)) return path2;
     if(existsSync(path3)) return path3;
+
+    console.log("No path to:", suiteName, file);
   }
 
-  this.createTestTables = function(connectionProperties, suiteName, callback) {
+  this.createTestTables = function(suiteName, suitePath, callback) {
     udebug.log("createTestTables", suiteName);
-    var sqlPath = findMetadataScript(suiteName, 'create.sql');
-    runSQL(connectionProperties, sqlPath, callback);
+    var sqlPath = findMetadataScript(suiteName, suitePath, 'create.sql');
+    runSQL(sqlPath, callback);
   };
 
-  this.dropTestTables = function(connectionProperties, suiteName, callback) {
+  this.dropTestTables = function(suiteName, suitePath, callback) {
     udebug.log("dropTestTables", suiteName);
-    var sqlPath = findMetadataScript(suiteName,  'drop.sql');
-    runSQL(connectionProperties, sqlPath, callback);
+    var sqlPath = findMetadataScript(suiteName, suitePath, 'drop.sql');
+    runSQL(sqlPath, callback);
   };
 };
 

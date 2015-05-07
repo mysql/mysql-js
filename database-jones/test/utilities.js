@@ -22,21 +22,23 @@
 
 "use strict";
 
-var path = require("path"),
-    fs = require("fs"),
-    assert = require("assert"),
-    udebug = unified_debug.getLogger("utilities.js"),
-    dbServiceProvider = mynode.getDBServiceProvider(adapter),
-    metadataManager = dbServiceProvider.getDBMetadataManager();
+var path    = require("path"),
+    fs      = require("fs"),
+    assert  = require("assert"),
+    jones   = require("database-jones"),
+    udebug  = unified_debug.getLogger("utilities.js"),
+    test_conn_properties,
+    dbServiceProvider,
+    metadataManager;
 
 
 /* Manage test_connection.js file:
    Read it if it exists.
-   If it doesn't exist, copy it from the standard template in lib/
+   If it doesn't exist, copy it from the standard template
 */
-function getTestConnectionProperties() {
-  var props_file     = path.join(mynode.fs.suites_dir, "test_connection.js");
-  var props_template = path.join(mynode.fs.suites_dir, "lib", "test_connection_dist.js");
+function getTestConnectionProperties(base_dir) {
+  var props_file     = path.join(base_dir, "test_connection.js");
+  var props_template = path.join(base_dir, "test_connection_defaults.js");
   var existsSync     = fs.existsSync || path.existsSync;
   var properties     = null;
   var f1, f2; 
@@ -53,60 +55,58 @@ function getTestConnectionProperties() {
     }
   }
 
-  try {
-    properties = require(props_file);
-  }
-  catch(e2) {
-  }
-
-  return properties;
-} 
-
-function getConnectionProperties() {
-  var testEnvProperties = getTestConnectionProperties();
-  testEnvProperties.implementation = global.adapter;
-  return new mynode.ConnectionProperties(testEnvProperties);
+  return require(props_file);
 }
 
-/** Set global test connection properties */
-global.test_conn_properties = getConnectionProperties();
+function getConnectionProperties(adapter, base_dir) {
+  var testEnvProperties = getTestConnectionProperties(base_dir);
+  testEnvProperties.implementation = adapter;
+
+  dbServiceProvider = jones.getDBServiceProvider(adapter);
+  test_conn_properties = new jones.ConnectionProperties(testEnvProperties);
+  metadataManager = dbServiceProvider.getDBMetadataManager(test_conn_properties);
+
+  return test_conn_properties;
+}
+
 
 /** Metadata management */
 global.sqlCreate = function(suite, callback) {
-  metadataManager.createTestTables(global.test_conn_properties, suite.name, callback);
+  metadataManager.createTestTables(suite.name, suite.path, callback);
 };
 
 global.sqlDrop = function(suite, callback) {
-  metadataManager.dropTestTables(global.test_conn_properties, suite.name, callback);
+  metadataManager.dropTestTables(suite.name, suite.path, callback);
 };
 
+
+function tryCallback(result, testCase, callback) {
+  if (typeof callback !== 'function') {
+    return;
+  }
+  try {
+    callback(result, testCase);
+  }
+  catch(e) {
+    testCase.appendErrorMessage(e);
+    testCase.stack = e.stack;
+    testCase.failOnError();
+  }
+}
 
 /** Open a session or fail the test case */
 global.fail_openSession = function(testCase, callback) {
   var promise;
-  if (arguments.length === 0) {
+  if (arguments.length < 1 || arguments.length > 2) {
     throw new Error('Fatal internal exception: fail_openSession must have  1 or 2 parameters: testCase, callback');
   }
-  var properties = global.test_conn_properties;
-  var mappings = testCase.mappings;
-  udebug.log_detail("fail_openSession", properties.implementation);
-  promise = mynode.openSession(properties, mappings, function(err, session) {
+  promise = jones.openSession(test_conn_properties, testCase.mappings, function(err, session) {
     if (callback && err) {
       testCase.fail(err);
-      return;
+      return;   // why?
     }
     testCase.session = session;
-    if (typeof callback !== 'function') {
-      return;
-    }
-    try {
-      callback(session, testCase);
-    }
-    catch(e) {
-      testCase.appendErrorMessage(e);
-      testCase.stack = e.stack;
-      testCase.failOnError();
-    }
+    tryCallback(session, testCase, callback);
   });
   return promise;
 };
@@ -117,25 +117,19 @@ global.fail_connect = function(testCase, callback) {
   if (arguments.length === 0) {
     throw new Error('Fatal internal exception: fail_connect must have  1 or 2 parameters: testCase, callback');
   }
-  var properties = global.test_conn_properties;
+  var properties = test_conn_properties;
   var mappings = testCase.mappings;
-  promise = mynode.connect(properties, mappings, function(err, sessionFactory) {
+  promise = jones.connect(properties, mappings, function(err, sessionFactory) {
     if (callback && err) {
       testCase.fail(err);
-      return;
+      return;   // why?
     }
     testCase.sessionFactory = sessionFactory;
-    if (typeof callback !== 'function') {
-      return;
-    }
-    try {
-      callback(sessionFactory, testCase);
-    }
-    catch(e) {
-      testCase.appendErrorMessage(e);
-      testCase.stack = e.stack;
-      testCase.failOnError();
-    }
+    tryCallback(sessionFactory, testCase, callback);
   });
   return promise;
 };
+
+
+exports.getConnectionProperties = getConnectionProperties;
+

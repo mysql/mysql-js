@@ -27,6 +27,7 @@ global.adapter    = "mysql";
 var jonesMysql    = require("jones-mysql");
 var driver        = require(mynode.fs.test_driver);
 var storageEngine = null;
+var properties;
 
 driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
   function(thisArg) {
@@ -35,14 +36,17 @@ driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
   });
 
 driver.processCommandLineOptions();
-driver.loadUtilities();
+properties = driver.getConnectionProperties("mysql", jonesMysql.config.suites_dir);
 
-/* Set storage engine from command-line options 
-   This has to happen *after* loadUtilities()
-*/
-if(storageEngine && global.test_conn_properties) {
-   global.test_conn_properties.mysql_storage_engine = storageEngine;
+if(storageEngine) {
+   properties.mysql_storage_engine = storageEngine;
 }
+
+/* Set globals */
+global.test_conn_properties = properties;
+global.mynode               = jones;
+global.adapter              = "mysql";
+
 
 /* Find and run all tests */
 driver.addSuitesFromDirectory(mynode.fs.suites_dir);
