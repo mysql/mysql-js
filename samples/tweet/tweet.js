@@ -21,7 +21,7 @@
 
 /* Simple Twitter-like application for mysql-js
  *
- * This depends on the schema defined in tweet.sql
+ * This depends on the schema defined in create_tweet_tables.sql
  *
  * It connects to the database using the properties defined in
  * tweet.properties.js
