@@ -20,28 +20,59 @@
 
 "use strict";
 
-console.log("This driver does not currently work.");
-console.log("Use the driver in jones-mysql or jones-ndb");
-process.exit();
+var jones       = require("database-jones"),
+    driver      = require(jones.fs.test_driver),
+    adapter     = "ndb",
+    extra,
+    module,
+    properties;
 
-// Setup globals:
-global.mynode     = require("database-jones");
-global.adapter    = "ndb";
 
-var driver       = require(mynode.fs.test_driver);
-
-// The --adapter option only applies when you are here in database-jones/test
 driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
   function(thisArg) {
+    var split;
     if(thisArg) {
-      global.adapter = thisArg;
+      split   = thisArg.split("/");
+      adapter = split[0];
+      extra   = split[1];
       return 1;
     }
     return -1;  // adapter is required
   });
 
 driver.processCommandLineOptions();
-driver.loadUtilities();
-driver.addSuitesFromDirectory(mynode.fs.suites_dir);
-driver.runAllTests();
 
+
+/* Add the standard Jones test suites */
+driver.addSuitesFromDirectory(jones.fs.suites_dir);
+
+
+/* Add the test suite for the specified adapter, and
+   set the Connection Properties for the specified adapter. */
+module = require ("jones-" + adapter);
+driver.addSuitesFromDirectory(module.config.suites_dir);
+properties = driver.getConnectionProperties(adapter, module.config.suites_dir);
+
+
+/* Adapter-specific code goes here */
+switch(adapter) {
+  case "ndb":           /* NDB also runs the MySQL Test suite */
+    module = require("jones-mysql");
+    driver.addSuitesFromDirectory(module.config.suites_dir);
+    break;
+  case "mysql":         /* MySQL uses the extra argument to set engine */
+    if(extra) properties.mysql_storage_engine = extra;
+    break;
+  default:
+    break;
+}
+
+
+/* Set globals */
+global.mynode               = jones;
+global.adapter              = adapter;
+global.test_conn_properties = properties;
+
+
+/* Run all tests */
+driver.runAllTests();

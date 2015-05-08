@@ -445,7 +445,7 @@ exports.MetadataManager = function(connectionProperties) {
     if(connectionProperties.mysql_storage_engine) {
       engine = connectionProperties.mysql_storage_engine;
     }
-    var enginesqlPath = path.join("..", "test", engine + '.sql ');
+    var enginesqlPath = path.join(config.suites_dir, engine + '.sql ');
     var cmd = 'cat ' + enginesqlPath + ' ' + sqlPath + ' | mysql';
     var p = connectionProperties;
 
