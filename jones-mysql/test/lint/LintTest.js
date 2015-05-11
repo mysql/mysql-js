@@ -22,16 +22,22 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
-var test_root = require("jones-mysql").config.suites_dir;
+var config = require("jones-mysql").config;
+var test_root = config.suites_dir;
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
   Array.prototype.push.apply(tests, more_tests);
 }
 
+more(harness.getLintTestsForDirectory(config.impl_dir));
 more(harness.getLintTestsForDirectory(test_root, "numerictypes"));
 more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
 more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
+
+// impl
+harness.ignoreLint("MySQLDictionary.js",7,"Missing 'break' after 'case'.");
+harness.ignoreLint("MysqlErrToSQLStateMap.js", 60, "Unexpected ','");
 
 //stringtypes
 harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");

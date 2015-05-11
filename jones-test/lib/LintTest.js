@@ -24,6 +24,7 @@ var path   = require("path"),
     fs     = require("fs"),
     util   = require("util"),
     assert = require("assert"),
+    udebug = unified_debug.getLogger("LintTest.js"),
     Test   = require("./Test");
 
 var skipTests = false;
@@ -108,7 +109,7 @@ function isIgnored(file, pos, msg) {
     list.shift();
     return true;
   }
-  if(msg.indexOf(ignoreAlways) == 0) {
+  if(msg.indexOf(ignoreAlways) === 0) {
     return true;
   }
   return false;
@@ -123,6 +124,7 @@ LintTest.prototype.run = function() {
   var ok, errors, msg = "";
   var data = fs.readFileSync(this.sourceFile, "utf8");  
   var result = linter(data, lintOptions);
+  var nIgnored = 0;
 
   /* Adapt to differing APIs of jslint and jshint */
   if(typeof result === 'boolean') {
@@ -136,7 +138,12 @@ LintTest.prototype.run = function() {
     errors = result.errors;
   }
 
+  try {
+    nIgnored = ignoredErrors[this.sourceFileName].length;
+  } catch(e) { }
+
   if(! ok) {
+    udebug.log(this.sourceFileName, "errors:", errors.length, "ignored:", nIgnored);
     for (i = 0; i < errors.length; i += 1) {
       e = errors[i];
       if(e && ! isIgnored(this.sourceFileName, e.character, e.reason)) {
@@ -166,6 +173,7 @@ function ignore(file, pos, msg, count) {
       list.push({ 'pos': pos, 'msg': msg});
     }
   }
+  udebug.log("ignore:", file, pos, msg, count ? "x"+count : "");
 }
 
 function predefine(keywordArray) {

@@ -56,23 +56,14 @@ more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
 // Adapter/impl/common
 harness.ignoreLint("IndexBounds.js", 11, /Expected a conditional expression/, 2);
 
-// Adapter/impl/ndb -- FIXME move to jones-ndb/test
-harness.ignoreLint("NdbOperation.js", 22, "Use the array literal notation [].");  // 374
-harness.ignoreLint("NdbOperation.js",27,"\'gather\' was used before it was defined."); //550
-
-harness.ignoreLint("NdbConnectionPool.js",15,"Expected a conditional expression and instead saw an assignment.");
-harness.ignoreLint("NdbConnectionPool.js",17,"Expected a conditional expression and instead saw an assignment.");
 
 harness.ignoreLint("LintTest.js",14,"Expected a conditional expression and instead saw an assignment.");
 harness.ignoreLint("TableMapping.js",3,"The body of a for in should be wrapped in an if statement to filter unwanted properties from the prototype.");
 harness.ignoreLint("stats.js",13,"Expected '{' and instead saw 'r'.");
-harness.ignoreLint("MySQLDictionary.js",7,"Missing 'break' after 'case'.");
 
 harness.ignoreLint("UserContext.js", 33, "Unexpected \'\\.\'.");
 harness.ignoreLint("UserContext.js", 7, "Confusing use of \'!\'.");
 
-harness.ignoreLint("NdbTransactionHandler.js", 32, "Expected \'{\' and instead saw \'scans\'.");
-harness.ignoreLint("NdbScanFilter.js", 34, "Expected \'{\' and instead saw \'return\'.");
 
 // spi
 harness.ignoreLint("BasicVarcharTest.js", 19, "Expected \'{\' and instead saw \'onSession\'.");
@@ -83,8 +74,7 @@ harness.ignoreLint("SmokeTest.js", 10, "Expected \'{\' and instead saw \'test\'.
 // t_basic
 harness.ignoreLint("BatchTest.js", 6, "Don't make functions within a loop.");
 harness.ignoreLint("ParallelOperationTest.js", 6, "Don't make functions within a loop.");
-harness.ignoreLint("SaveTest.js", 8, "Don't make functions within a loop.");
-harness.ignoreLint("SaveTest.js", 8, "Don't make functions within a loop.");
+harness.ignoreLint("SaveTest.js", 8, "Don't make functions within a loop.", 2);
 harness.ignoreLint("SaveTest.js", 10, "Don't make functions within a loop.");
 harness.ignoreLint("UpdateTest.js", 8, "Don't make functions within a loop.");
 harness.ignoreLint("UpdateTest.js", 10, "Don't make functions within a loop.");

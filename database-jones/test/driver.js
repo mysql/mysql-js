@@ -24,7 +24,7 @@ var jones       = require("database-jones"),
     driver      = require(jones.fs.test_driver),
     adapter     = "ndb",
     extra,
-    module,
+    a_module,
     properties;
 
 
@@ -49,16 +49,16 @@ driver.addSuitesFromDirectory(jones.fs.suites_dir);
 
 /* Add the test suite for the specified adapter, and
    set the Connection Properties for the specified adapter. */
-module = require ("jones-" + adapter);
-driver.addSuitesFromDirectory(module.config.suites_dir);
-properties = driver.getConnectionProperties(adapter, module.config.suites_dir);
+a_module = require ("jones-" + adapter);
+driver.addSuitesFromDirectory(a_module.config.suites_dir);
+properties = driver.getConnectionProperties(adapter, a_module.config.suites_dir);
 
 
 /* Adapter-specific code goes here */
 switch(adapter) {
   case "ndb":           /* NDB also runs the MySQL Test suite */
-    module = require("jones-mysql");
-    driver.addSuitesFromDirectory(module.config.suites_dir);
+    a_module = require("jones-mysql");
+    driver.addSuitesFromDirectory(a_module.config.suites_dir);
     break;
   case "mysql":         /* MySQL uses the extra argument to set engine */
     if(extra) properties.mysql_storage_engine = extra;

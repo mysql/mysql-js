@@ -34,8 +34,10 @@ more(harness.getLintTestsForDirectory(config.impl_js_dir));
 more(harness.getLintTestsForDirectory(config.converters_dir));
 more(harness.getLintTestsForDirectory(config.docs_dir));
 
-harness.ignoreLint("NdbOperation.js", 22, "Use the array literal notation [].");
+harness.ignoreLint("NdbOperation.js", 22, "Use the array literal notation");
 harness.ignoreLint("NdbOperation.js", 27, "'gather' was used before it was defined.");
 
+harness.ignoreLint("NdbConnectionPool.js",15,"Expected a conditional expression and instead saw an assignment.");
+harness.ignoreLint("NdbConnectionPool.js",17,"Expected a conditional expression and instead saw an assignment.");
 
 module.exports.tests = tests;

@@ -462,7 +462,7 @@ function DeleteOperation(sql, keys, callback) {
   this.keys = keys;
   this.callback = callback;
   this.result = {};
-  op_stats.delete++;
+  op_stats["delete"]++;
 
   function onDelete(err, status) {
     if (err) {
