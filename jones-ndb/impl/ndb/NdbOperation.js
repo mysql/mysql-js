@@ -342,32 +342,33 @@ function BoundHelperSpec() {
 
 /* Create part of of a bound spec 
 */
-BoundHelperSpec.prototype.buildPartialSpec = function(isLow, bound, 
+BoundHelperSpec.prototype.buildPartialSpec = function(base, bound,
                                                       dbIndexHandler, buffer) {
-  var base, nparts, i;
-
   function countFiniteKeyParts(key) {
+    var i;
     for(i = 0; i < key.length ; i++) {
       if((key[i] == Infinity) || (key[i] == -Infinity)) { break; }
     }
     return i;
   }
 
-  base = isLow ? BoundHelper.low_key : BoundHelper.high_key;
-  nparts = countFiniteKeyParts(bound.key);
+  var nparts = countFiniteKeyParts(bound.key);
+  udebug.log("Finite key parts", (base ? "high" : "low"), nparts);
   if(nparts) {
-    this[base    ] = encodeBounds(bound.key, nparts, dbIndexHandler, buffer);
-    this[base + 1] = nparts;
-    this[base + 2] = bound.inclusive;
+    this[base] = encodeBounds(bound.key, nparts, dbIndexHandler, buffer);
+  } else {
+    this[base] = null;
   }
+  this[base + 1] = nparts;
+  this[base + 2] = bound.inclusive;
 };
 
 BoundHelperSpec.prototype.setLow = function(bound, dbIndexHandler, buffer) {
-  this.buildPartialSpec(true, bound.low, dbIndexHandler, buffer);
+  this.buildPartialSpec(BoundHelper.low_key, bound.low, dbIndexHandler, buffer);
 };
 
 BoundHelperSpec.prototype.setHigh = function(bound, dbIndexHandler, buffer) {
-  this.buildPartialSpec(false, bound.high, dbIndexHandler, buffer);
+  this.buildPartialSpec(BoundHelper.high_key, bound.high, dbIndexHandler, buffer);
 };
 
 
@@ -521,8 +522,9 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
 
   if(this.query.ndbFilterSpec) {
     scanSpec[ScanHelper.filter_code] = 
-      this.query.ndbFilterSpec.getScanFilterCode(this.params); 
+      this.query.ndbFilterSpec.getScanFilterCode(this.params);
     this.scan.filter = scanSpec[ScanHelper.filter_code];
+    udebug.log("Using Scan Filter");
   }
   
   this.scanOp = adapter.impl.Scan.create(scanSpec, 33, dbTransactionContext);
@@ -878,7 +880,7 @@ function newScanOperation(tx, QueryTree, properties) {
   var op = new DBOperation(opcodes.OP_SCAN, tx, 
                            queryHandler.dbIndexHandler, 
                            queryHandler.dbTableHandler);
-  prepareFilterSpec(queryHandler);
+  prepareFilterSpec(queryHandler);  // sets query.ndbFilterSpec
   op.query = queryHandler;
   op.params = properties;
   return op;

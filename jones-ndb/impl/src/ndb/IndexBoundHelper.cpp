@@ -57,7 +57,9 @@ Handle<Value> newIndexBound(const Arguments &args) {
 
   bound->low_key = 0;
   v = spec->Get(BOUND_LOW_KEY);
-  if(! v->IsNull()) {
+  if(v->IsNull()) {
+    bound->low_key = 0;
+  } else {
     o = v->ToObject();
     bound->low_key = node::Buffer::Data(o);
   }
@@ -76,7 +78,9 @@ Handle<Value> newIndexBound(const Arguments &args) {
   
   bound->high_key = 0;
   v = spec->Get(BOUND_HIGH_KEY);
-  if(! v->IsNull()) {
+  if(v->IsNull()) {
+    bound->high_key = 0;
+  } else {
     o = v->ToObject();
     bound->high_key = node::Buffer::Data(o);
   }

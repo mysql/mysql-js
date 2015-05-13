@@ -242,7 +242,7 @@ Endpoint.prototype.compare = function(that) {
   var cmp;
   assert(that.isEndpoint);
  
-  if(this.value.isNonSimple) {
+  if(this.value !== null && this.value.isNonSimple) {
     cmp = this.value.compare(that.value);
   }
   else {
@@ -270,10 +270,12 @@ Endpoint.prototype.push = function(e) {
   this.inclusive = e.inclusive;
 };
 
-/* Create (non-inclusive) endpoints for negative and positive infinity.
+/* Static endpoints for negative and positive infinity
 */
-var negInf = new Endpoint(-Infinity);
-var posInf = new Endpoint(Infinity);
+var negInfInc    = new Endpoint(-Infinity);
+var negInfExc    = new Endpoint(-Infinity, false);
+var posInfInc    = new Endpoint(Infinity);
+var posInfExc    = new Endpoint(Infinity, false);
 
 
 /* Functions to compare two endpoints and return one
@@ -418,13 +420,13 @@ function createSegmentForComparator(operator, value) {
   var segment;
   switch(operator) {   // operation codes are from api/Query.js
     case 0:   // LE
-      return new Segment(negInf, new Endpoint(value, true));
+      return new Segment(negInfExc, new Endpoint(value, true));
     case 1:   // LT 
-      return new Segment(negInf, new Endpoint(value, false));
+      return new Segment(negInfExc, new Endpoint(value, false));
     case 2:   // GE
-      return new Segment(new Endpoint(value, true), posInf);
+      return new Segment(new Endpoint(value, true), posInfInc);
     case 3:   // GT
-      return new Segment(new Endpoint(value, false), posInf);
+      return new Segment(new Endpoint(value, false), posInfInc);
     case 4:   // EQ
       return new Segment(new Endpoint(value), new Endpoint(value));
     case 5:   // NE 
@@ -436,7 +438,7 @@ function createSegmentForComparator(operator, value) {
 
 /* A segment from -Inf to +Inf
 */
-var boundingSegment = new Segment(negInf, posInf);
+var boundingSegment = new Segment(negInfInc, posInfInc);
 
 
 //////// NumberLine                 /////////////////
@@ -474,7 +476,7 @@ NumberLine.prototype.isEmpty = function() {
 };
 
 NumberLine.prototype.setAll = function() {
-  this.transitions = [ negInf, posInf ];
+  this.transitions = [ negInfInc, posInfInc ];
   return this;
 };
 
@@ -483,12 +485,12 @@ NumberLine.prototype.setEqualTo = function(that) {
 };
 
 NumberLine.prototype.upperBound = function() {
-  if(this.isEmpty()) return negInf;
+  if(this.isEmpty()) return negInfInc;
   return this.transitions[this.transitions.length - 1];
 };
 
 NumberLine.prototype.lowerBound = function() {
-  if(this.isEmpty()) return posInf;
+  if(this.isEmpty()) return posInfInc;
   return this.transitions[0];
 };
 
@@ -533,14 +535,14 @@ NumberLine.prototype.complement = function() {
     this.transitions.shift();
   }
   else {
-    this.transitions.unshift(negInf);
+    this.transitions.unshift(negInfInc);
   }
   
   if(! this.upperBound().isFinite) {
     this.transitions.pop();
   }
   else {
-    this.transitions.push(posInf);
+    this.transitions.push(posInfInc);
   }
 
   assert(this.transitions.length % 2 == 0);
@@ -758,17 +760,19 @@ ColumnBoundVisitor.prototype.visitQueryBetweenOperator = function(node) {
   this.store(node, segment);
 };
 
-/** Handle nodes QueryIsNull, QueryIsNotNull */
+/** Handle nodes QueryIsNull, QueryIsNotNull 
+    This implementation assumes that NULL sorts low, so
+    NULL is the range that includes -Inf, and NOT NULL
+    is the range that includes everything but -Inf.
+    */
 ColumnBoundVisitor.prototype.visitQueryUnaryOperator = function(node) {
-  var pt, segment;
+  var segment;
   if(node.operationCode == 7) {  // NULL
-    pt = new Endpoint(null);
-    segment = new Segment(pt, pt);
+    segment = new Segment(negInfInc, negInfInc);
   }
   else {   // NOT NULL
     assert(node.operationCode == 8);
-    pt = new Endpoint(null, false);
-    segment = new Segment(pt, posInf);
+    segment = new Segment(negInfExc, posInfInc);
   }
   this.store(node, segment);
 };
@@ -850,8 +854,6 @@ IndexBoundVisitor.prototype.consolidate = function(node) {
 
     for(i = this.ncol - 1; i >= 0 ; i--) {
       columnBounds = evaluateNodeForColumn(node, this.index.columnNumbers[i]);
-      udebug.log("consolidate predicate:", node);
-      udebug.log("consolidate in:", i, columnBounds);
       thisColumn = new Consolidator(columnBounds, nextColumn);
       nextColumn = thisColumn;
     }

@@ -520,8 +520,7 @@ var AbstractQueryUnaryOperator = function() {
 AbstractQueryUnaryOperator.prototype = new AbstractQueryPredicate();
 
 AbstractQueryUnaryOperator.prototype.inspect = function() {
-  return util.format(this);
-//  return this.queryField.inspect() + this.comparator + this.parameter.inspect();
+  return this.queryField.inspect() + this.operator;
 };
 
 AbstractQueryUnaryOperator.prototype.visit = function(visitor) {

@@ -76,7 +76,7 @@ function FilterSpec(predicate) {
 
 /* Make a note in a node of the predicate tree.
    The note will be used to store all NDB-related analysis.
-   Copy the nodes operator or comparator code into the ndb section.
+   Copy the node's operator or comparator code into the ndb section.
    This should be called in the first-pass visitor.
    TODO: Determine index bounds before scan filter
          Add flags to node.ndb: isIndexBound, isScanFilter
@@ -209,6 +209,7 @@ FilterBuildingVisitor.prototype.visitQueryUnaryOperator = function(node) {
     assert(opcode === 8);
     this.ndbScanFilter.isnotnull(colId);
   }
+  udebug.log("FilterBuildingVisitor visitQueryUnaryOperator", opcode);
 };
 
 /** Handle node QueryBetween */
@@ -224,20 +225,21 @@ FilterBuildingVisitor.prototype.visitQueryBetweenOperator = function(node) {
 };
 
 FilterBuildingVisitor.prototype.finalise = function() {
+  udebug.log("finalise");
   this.ndbScanFilter.end();
 };
 
 /*************************************************/
 
 function prepareFilterSpec(queryHandler) {
-  if(queryHandler.ndbFilterSpec) return;
+  var i, v, spec, bufferManager, constFilterVisitor;
 
-  var i, v;
-  var spec = new FilterSpec(queryHandler.predicate);
-  
+  if(queryHandler.ndbFilterSpec) return;
+  spec = new FilterSpec(queryHandler.predicate);
+
   /* 1st pass.  Mark table and calculate buffer sizes. */
   spec.dbTable = queryHandler.dbTableHandler.dbTable;
-  var bufferManager = new BufferManagerVisitor(spec.dbTable);
+  bufferManager = new BufferManagerVisitor(spec.dbTable);
   spec.predicate.visit(bufferManager);
 
   /* Encode buffer for constant parameters */
@@ -253,10 +255,11 @@ function prepareFilterSpec(queryHandler) {
 
   /* Assembly */
   if(bufferManager.paramBufferSize === 0) {
-    var filterBuildingVisitor = new FilterBuildingVisitor(spec, null);
-    queryHandler.predicate.visit(filterBuildingVisitor);
-    spec.constFilter.ndbScanFilter = filterBuildingVisitor.ndbScanFilter;
-    spec.constFilter.ndbInterpretedCode = filterBuildingVisitor.ndbInterpretedCode;
+    constFilterVisitor = new FilterBuildingVisitor(spec, null);
+    queryHandler.predicate.visit(constFilterVisitor);
+    constFilterVisitor.finalise();
+    spec.constFilter.ndbScanFilter = constFilterVisitor.ndbScanFilter;
+    spec.constFilter.ndbInterpretedCode = constFilterVisitor.ndbInterpretedCode;
   }
   else {
     spec.isConst         = false;
@@ -283,6 +286,7 @@ function encodeParameters(filterSpec, params) {
 
 FilterSpec.prototype.getScanFilterCode = function(params) {
   if(this.isConst) {
+    udebug.log("getScanFilterCode: ScanFilter is const");
     return this.constFilter.ndbInterpretedCode;
   }
 

@@ -25,7 +25,7 @@ var QueryTest = require('../lib/QueryTestLib.js');
 var q2 = {
   name: 'q2',
   queryType: 2,  /* index scan */
-  expected: [16, 17, 18, 19, 20], 
+  expected: [16, 17, 18, 19, 20, 21],
   predicate: function(q) {
     return q.k3.isNull();
   }
@@ -86,6 +86,7 @@ var q7 = {
 };
 
 var q8 = {
+  /* k1 = p1 and (k2 = p1 or k2 = p3) */
   name: 'q8',
   queryType: 2,
   expected: [5,7],
@@ -106,12 +107,12 @@ var q9 = {
   }
 };
 
-// TODO: q7 and q9 fail.  q2 enters endless loop & fails with stack depth exceeded.
+// TODO: q7 and q9 fail.
 // still to test:
 // isNotNull() as first part of key
 // isNull() and isNotNull() as second part of key
 
-var queryTests = [ q3,q4,q5,q6,q7,q8,q9 ];
+var queryTests = [ q2,q3,q4,q5,q6,q7,q8,q9 ];
 
 
 /** Set up domain type */

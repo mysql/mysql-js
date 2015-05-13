@@ -29,6 +29,27 @@
 
 using namespace v8;
 
+void debug_print_flags_and_options(const NdbScanOperation::ScanOptions & opts) {
+  char flags[80];
+  char optsring[80];
+  snprintf(flags, 80, "%s%s%s%s%s%s%s%s",
+    opts.scan_flags & NdbScanOperation::SF_TupScan     ? " TupScan"       : "",
+    opts.scan_flags & NdbScanOperation::SF_DiskScan    ? " DiskScan"      : "",
+    opts.scan_flags & NdbScanOperation::SF_OrderBy     ? " OrderBy"       : "",
+    opts.scan_flags & NdbScanOperation::SF_OrderByFull ? " OrderByFull"   : "",
+    opts.scan_flags & NdbScanOperation::SF_Descending  ? " Descending"    : "",
+    opts.scan_flags & NdbScanOperation::SF_ReadRangeNo ? " ReadRangeNo"   : "",
+    opts.scan_flags & NdbScanOperation::SF_MultiRange  ? " MultiRange"    : "",
+    opts.scan_flags & NdbScanOperation::SF_KeyInfo     ? " KeyInfo"       : "");
+  snprintf(optsring, 80, "%s%s%s%s",
+    opts.optionsPresent & NdbScanOperation::ScanOptions::SO_SCANFLAGS   ? " HasScanFlags": "",
+    opts.optionsPresent & NdbScanOperation::ScanOptions::SO_BATCH       ? " Batch"       : "",
+    opts.optionsPresent & NdbScanOperation::ScanOptions::SO_INTERPRETED ? " Interpreted" : "",
+    opts.optionsPresent & NdbScanOperation::ScanOptions::SO_PARALLEL    ? " Parallel"    : "");
+
+  DEBUG_PRINT("Scan flags:%s  options:%s", flags, optsring);
+}
+
 ScanOperation::ScanOperation(const Arguments &args) : 
   scan_op(0),
   index_scan_op(0),
@@ -62,6 +83,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
   v = spec->Get(SCAN_LOCK_MODE);
   if(! v->IsNull()) {
     int intLockMode = v->Int32Value();
+    DEBUG_PRINT("Scan lock mode %d", intLockMode);
     lmode = static_cast<NdbOperation::LockMode>(intLockMode);
   }
 
@@ -72,6 +94,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
     while(o->Has(nbounds)) {
       nbounds++; 
     }
+    DEBUG_PRINT("Index Scan with %d IndexBounds", nbounds);
     bounds = new NdbIndexScanOperation::IndexBound *[nbounds];
     for(int i = 0 ; i < nbounds ; i++) {
       Local<Object> b = o->Get(i)->ToObject();
@@ -111,6 +134,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
   }
   
   /* Done defining the object */
+  debug_print_flags_and_options(scan_options);
 }
 
 ScanOperation::~ScanOperation() {
@@ -126,9 +150,12 @@ void ScanOperation::prepareScan(NdbTransaction *tx) {
   if(! scan_op) {  // don't re-prepare if retrying
     if(isIndexScan) {
       scan_op = index_scan_op = scanIndex(tx);
-      for(int i = 0 ; i < nbounds ; i++) {
-        // SetBound could return an error
-        index_scan_op->setBound(key_record->getNdbRecord(), * bounds[i]);
+      if(index_scan_op) {
+        for(int i = 0 ; i < nbounds ; i++) {
+         index_scan_op->setBound(key_record->getNdbRecord(), * bounds[i]);
+        }
+      } else {
+        DEBUG_PRINT("Error code: %d %s", tx->getNdbError().code, tx->getNdbError().message);
       }
     }
     else {
