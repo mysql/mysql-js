@@ -108,13 +108,41 @@ var q9 = {
   }
 };
 
-// TODO: q7 and q9 fail.
-// still to test:
-// isNotNull() as first part of key
-// isNull() and isNotNull() as second part of key
+var q10 = {
+  /* k1 is Not Null */
+  name: 'q10',
+  queryType: 2,
+  expected: [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+  predicate: function(q) {
+    return q.k1.isNotNull();
+  }
+};
 
-var queryTests = [ q2,q3,q4,q5,q6,q7,q8,q9 ];
+var q11 = {
+  /* k1 = 2 and k2 is null */
+  name: 'q11',
+  queryType: 2,
+  expected: [ 8 ],
+  p1: 2,
+  predicate: function(q) {
+    return q.k1.eq(q.param("p1")).and(q.k2.isNull());
+  }
+};
 
+var q12 = {
+  /* k1 = 2 and k2 is not null */
+  name: 'q12',
+  queryType: 2,
+  expected: [ 9,10,11 ],
+  p1: 2,
+  predicate: function(q) {
+    return q.k1.eq(q.param("p1")).and(q.k2.isNotNull());
+  }
+};
+
+
+// TODO: q9 and q12 fail.
+var queryTests = [ q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12 ];
 
 /** Set up domain type */
 function mpk1() {};
