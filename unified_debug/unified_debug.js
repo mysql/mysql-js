@@ -183,9 +183,11 @@ function clientSetLevel(l) {
 /* Turn debugging output on.
 */
 exports.on = function() {
-  _global_.on = 1;
   clientSetLevel(_global_.level);
-  handle_log_event(_global_.level, "unified_debug.js", "unified debug enabled");
+  if(! _global_.on) {
+    _global_.on = 1;
+    handle_log_event(_global_.level, "unified_debug.js", "unified debug enabled");
+  }
 };
 
 /* Turn debugging output off.
