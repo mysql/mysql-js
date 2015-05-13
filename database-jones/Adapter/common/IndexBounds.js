@@ -184,7 +184,8 @@ IndexValue.prototype.isFinite = function() {
 };
 
 IndexValue.prototype.inspect = function() {
-  var i, result = "Index:";
+  var i, result;
+  result = "idx" + this.size + "pt:";
   for(i = 0 ; i < this.size ; i++) {
     if(i) result += ",";
     result += this.parts[i];
@@ -561,10 +562,9 @@ NumberLine.prototype.insertSegment = function(segment) {
   nExclusive = 0;
   if(! upperBound.inclusive)  { nExclusive++; }
   if(! segment.low.inclusive) { nExclusive++; }
-  udebug.log("nExc", nExclusive);
 
   if(cmp === true || (cmp === false && nExclusive == 1)) {
-    /* Lower bound of this segment is upper bound of NumberLine.
+    /* Lower bound of segment is upper bound of NumberLine.
        Use segment's upper bound as our own new upper bound. */
     this.transitions.unshift();
     this.transitions.push(segment.high);
@@ -587,7 +587,7 @@ NumberLine.prototype.insertSegment = function(segment) {
       }
     }
   }
-  udebug.log("Insert segment", segment, " - NumberLine after insert", this);
+  // udebug.log("Insert segment", segment, " - NumberLine after insert", this);
 };
 
 /* Mutable: sets line equal to the intersection of line with segment

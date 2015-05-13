@@ -19,8 +19,16 @@
  */
 "use strict";
 
-var udebug = unified_debug.getLogger("multipartkeys/QueryScanTest.js");
-var QueryTest = require('../lib/QueryTestLib.js');
+var QueryTest = require("../lib/QueryTestLib.js");
+
+var q1 = {
+  name: 'q1',
+  queryType: 2,  /* index scan */
+  expected: [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+  predicate: function(q) {
+    return q.k1.isNotNull();
+  }
+};
 
 var q2 = {
   name: 'q2',
@@ -142,7 +150,7 @@ var q12 = {
 
 
 // TODO: q9 and q12 fail.
-var queryTests = [ q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12 ];
+var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12 ];
 
 /** Set up domain type */
 function mpk1() {};

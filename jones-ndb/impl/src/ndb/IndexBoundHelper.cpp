@@ -42,6 +42,16 @@ enum {
 
 Envelope IndexBoundEnvelope("IndexBound");
 
+void debug_print_bound(NdbIndexScanOperation::IndexBound * bound) {
+  DEBUG_PRINT("Range %d: %s%d-part-%s -> %d-part-%s%s",
+              bound->range_no,
+              bound->low_inclusive ? "[" : "(",
+              bound->low_key_count,
+              bound->low_key ? "value" : "NULL",
+              bound->high_key_count,
+              bound->high_key ? "value" : "NULL",
+              bound->high_inclusive ? "]" : ")");
+}
 
 Handle<Value> newIndexBound(const Arguments &args) {
   HandleScope scope;
@@ -102,7 +112,9 @@ Handle<Value> newIndexBound(const Arguments &args) {
   if(! v->IsNull()) {
     bound->range_no = v->Uint32Value();
   }
-  
+
+  debug_print_bound(bound);
+
   return scope.Close(jsBound);
 }
 

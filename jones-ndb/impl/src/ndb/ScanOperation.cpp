@@ -32,7 +32,7 @@ using namespace v8;
 void debug_print_flags_and_options(const NdbScanOperation::ScanOptions & opts) {
   char flags[80];
   char optsring[80];
-  snprintf(flags, 80, "%s%s%s%s%s%s%s%s",
+  snprintf(flags, 80, "%s%s%s%s%s%s%s%s%s",
     opts.scan_flags & NdbScanOperation::SF_TupScan     ? " TupScan"       : "",
     opts.scan_flags & NdbScanOperation::SF_DiskScan    ? " DiskScan"      : "",
     opts.scan_flags & NdbScanOperation::SF_OrderBy     ? " OrderBy"       : "",
@@ -40,7 +40,8 @@ void debug_print_flags_and_options(const NdbScanOperation::ScanOptions & opts) {
     opts.scan_flags & NdbScanOperation::SF_Descending  ? " Descending"    : "",
     opts.scan_flags & NdbScanOperation::SF_ReadRangeNo ? " ReadRangeNo"   : "",
     opts.scan_flags & NdbScanOperation::SF_MultiRange  ? " MultiRange"    : "",
-    opts.scan_flags & NdbScanOperation::SF_KeyInfo     ? " KeyInfo"       : "");
+    opts.scan_flags & NdbScanOperation::SF_KeyInfo     ? " KeyInfo"       : "",
+    opts.scan_flags ? "" : " [None]");
   snprintf(optsring, 80, "%s%s%s%s",
     opts.optionsPresent & NdbScanOperation::ScanOptions::SO_SCANFLAGS   ? " HasScanFlags": "",
     opts.optionsPresent & NdbScanOperation::ScanOptions::SO_BATCH       ? " Batch"       : "",
@@ -65,6 +66,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
   ctx = unwrapPointer<DBTransactionContext *>(args[2]->ToObject());
 
   lmode = NdbOperation::LM_CommittedRead;
+  scan_options.scan_flags = 0;
   scan_options.optionsPresent = 0ULL;
 
   v = spec->Get(SCAN_TABLE_RECORD);
@@ -105,7 +107,6 @@ ScanOperation::ScanOperation(const Arguments &args) :
   v = spec->Get(SCAN_OPTION_FLAGS);
   if(! v->IsNull()) {
     scan_options.scan_flags = v->Uint32Value();
-    scan_options.optionsPresent |= NdbScanOperation::ScanOptions::SO_SCANFLAGS;
   }
   
   v = spec->Get(SCAN_OPTION_BATCH_SIZE);
@@ -130,9 +131,13 @@ ScanOperation::ScanOperation(const Arguments &args) :
   /* Scanning delete requires key info */
   if(opcode == OP_SCAN_DELETE) {
     scan_options.scan_flags |= NdbScanOperation::SF_KeyInfo;
-    scan_options.optionsPresent |= NdbScanOperation::ScanOptions::SO_SCANFLAGS;    
   }
-  
+
+  /* If any flags were set, also set SO_SCANFLAGS options */
+  if(scan_options.scan_flags != 0) {
+    scan_options.optionsPresent |= NdbScanOperation::ScanOptions::SO_SCANFLAGS;
+  }
+
   /* Done defining the object */
   debug_print_flags_and_options(scan_options);
 }
