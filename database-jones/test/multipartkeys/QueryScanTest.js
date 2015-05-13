@@ -75,7 +75,7 @@ var q6 = {
 };
 
 var q7 = {
-  /* id NOT EQUAL TO X.  This should scan two ranges on PRIMARY ?? */
+  /* id NOT EQUAL TO X.  This should scan two ranges on PRIMARY */
   name: 'q7',
   queryType: 2,
   expected: [1,2,3,  5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21],
@@ -97,6 +97,7 @@ var q8 = {
 };
 
 var q9 = {
+  /* (k1 = 2 and k2 = 1) OR (k1 = 4 and k2 = 3) */
   name: 'q9',
   queryType: 2,
   expected: [ 10, 11, 17, 18 ],

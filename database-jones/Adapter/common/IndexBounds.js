@@ -417,7 +417,6 @@ function createSegmentBetween(a, b) {
 
 /* Create a segment for a comparison expression */
 function createSegmentForComparator(operator, value) {
-  var segment;
   switch(operator) {   // operation codes are from api/Query.js
     case 0:   // LE
       return new Segment(negInfExc, new Endpoint(value, true));
@@ -556,9 +555,21 @@ NumberLine.prototype.complement = function() {
    Assume as a given that the segment does not intersect any existing one.
 */
 NumberLine.prototype.insertSegment = function(segment) {
-  var i, s, sp;
-  /* Segment is above the current upper bound */
-  if(this.upperBound().compare(segment.low) < 0) {
+  var upperBound, i, s, sp, cmp, nExclusive;
+  upperBound = this.upperBound();
+  cmp = upperBound.compare(segment.low);
+  nExclusive = 0;
+  if(! upperBound.inclusive)  { nExclusive++; }
+  if(! segment.low.inclusive) { nExclusive++; }
+  udebug.log("nExc", nExclusive);
+
+  if(cmp === true || (cmp === false && nExclusive == 1)) {
+    /* Lower bound of this segment is upper bound of NumberLine.
+       Use segment's upper bound as our own new upper bound. */
+    this.transitions.unshift();
+    this.transitions.push(segment.high);
+  } else if(cmp < 0 || nExclusive == 2) {
+    /* Segment is above the current upper bound */
     this.transitions.push(segment.low);
     this.transitions.push(segment.high);
   }
@@ -576,6 +587,7 @@ NumberLine.prototype.insertSegment = function(segment) {
       }
     }
   }
+  udebug.log("Insert segment", segment, " - NumberLine after insert", this);
 };
 
 /* Mutable: sets line equal to the intersection of line with segment
@@ -794,16 +806,16 @@ function IndexBoundVisitor(queryHandler, dbIndex) {
   }
 }
 
-/* A consolidated index bound for a multi-column index is a set of 
-   segments built from IndexValues.   Each single-column value is 
-   represented by a Consolidator that builds its part of the 
-   conslidated index bound.
 
-   Take the partially completed bounds object that is passed in.
-   For each segment in this column's own bound, make a copy of
-   the partialBounds, and try to add the segment to it.  If the 
-   segment endpoint is exclusive or infinite, stop there; otherwise, 
-   pass the partialBounds along to the next column.
+/* Consolidation.
+   This here is difficult.
+   We have already evaluated a query node for each column in an index,
+   and next we have to evaluate it for the index as a whole; e.g. we have
+   evaluated it for columns A,B, and C, and there is a three-part index
+   on (A,B,C).
+
+   Each single-column value is represented by a Consolidator that builds
+   its part of the conslidated index bound.
 */
 
 var initialIndexBounds = 
@@ -817,6 +829,12 @@ IndexBoundVisitor.prototype.consolidate = function(node) {
     this.nextColumnConsolidator = nextColumnConsolidator; 
   }
 
+  /* Take the partially completed bounds object that is passed in.
+     For each segment in this column's own bound, make a copy of
+     the partialBounds, and try to add the segment to it.  If the
+     segment endpoint is exclusive or infinite, stop there; otherwise,
+     pass the partialBounds along to the next column.
+  */
   Consolidator.prototype.consolidate = function(partialBounds, doLow, doHigh) {
     var boundsIterator, segment, idxBounds, doNextLow, doNextHigh;
 
@@ -848,6 +866,7 @@ IndexBoundVisitor.prototype.consolidate = function(node) {
     }
   };
 
+  /* consolidate() starts here */
   if(! node.indexRange) {
     allBounds = new NumberLine();
     nextColumn = null;
@@ -857,7 +876,7 @@ IndexBoundVisitor.prototype.consolidate = function(node) {
       thisColumn = new Consolidator(columnBounds, nextColumn);
       nextColumn = thisColumn;
     }
-    /* nextColumn is now the first column */
+    /* nextColumn is now the first column. consolidate left-to-right. */
     nextColumn.consolidate(initialIndexBounds, true, true);
     udebug.log("consolidate out:", allBounds);
     node.indexRange = allBounds;

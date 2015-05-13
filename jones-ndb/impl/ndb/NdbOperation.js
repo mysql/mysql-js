@@ -322,7 +322,7 @@ ScanHelperSpec.prototype.clear = function() {
   this[ScanHelper.index_record] = null;
   this[ScanHelper.lock_mode]    = null;
   this[ScanHelper.bounds]       = null;
-  this[ScanHelper.flags]        = null;
+  this[ScanHelper.flags]        = 0;
   this[ScanHelper.batch_size]   = null;
   this[ScanHelper.parallel]     = null;
   this[ScanHelper.filter_code]  = null;
@@ -497,6 +497,7 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
     dbIndex = this.query.dbIndexHandler.dbIndex;
     scanSpec[ScanHelper.index_record] = dbIndex.record;
     indexBounds = getIndexBounds(this.query, dbIndex, this.params);
+    udebug.log("index bounds:", indexBounds.length);
     if(indexBounds.length) {
       boundsHelpers = this.buildBoundHelpers(indexBounds);
       scanSpec[ScanHelper.bounds] = [];
@@ -513,11 +514,10 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
   scanSpec[ScanHelper.lock_mode] = constants.LockModes[this.lockMode];
 
   if(this.params.order !== undefined) {
-    var flags = constants.Scan.flags.SF_OrderBy;
+    scanSpec[ScanHelper.flags] |= constants.Scan.flags.SF_OrderBy;
     if(this.params.order.toLocaleLowerCase() == 'desc') {
-      flags |= constants.Scan.flags.SF_Descending;
+      scanSpec[ScanHelper.flags] |= constants.Scan.flags.SF_Descending;
     }
-    scanSpec[ScanHelper.flags] |= flags;  
   }
 
   if(this.query.ndbFilterSpec) {
@@ -526,7 +526,7 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
     this.scan.filter = scanSpec[ScanHelper.filter_code];
     udebug.log("Using Scan Filter");
   }
-  
+  udebug.log("Flags", scanSpec[ScanHelper.flags]);
   this.scanOp = adapter.impl.Scan.create(scanSpec, 33, dbTransactionContext);
   return this.scanOp; 
 };

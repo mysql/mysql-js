@@ -225,7 +225,6 @@ FilterBuildingVisitor.prototype.visitQueryBetweenOperator = function(node) {
 };
 
 FilterBuildingVisitor.prototype.finalise = function() {
-  udebug.log("finalise");
   this.ndbScanFilter.end();
 };
 
