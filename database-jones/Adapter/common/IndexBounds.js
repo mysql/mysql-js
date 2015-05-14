@@ -162,7 +162,6 @@ IndexValue.prototype.copy = function() {
 IndexValue.prototype.compare = function(that) {
   var n, len, cmp, v1, v2;
 
-if(! that.isIndexValue) blah(this, that);
   assert(that.isIndexValue);
   len = this.size < that.size ? this.size : that.size;
   
@@ -279,8 +278,9 @@ Endpoint.prototype.push = function(e) {
 
 /* Static inclusive endpoints for negative and positive infinity
 */
-var negInf       = new Endpoint(-Infinity);
-var posInf       = new Endpoint(Infinity);
+var negInf        = new Endpoint(-Infinity);
+var posInf        = new Endpoint(Infinity);
+var negInfNonNull = new Endpoint(null, false);
 
 /* Static inclusive and exclusive endpoints for NULL
 */
@@ -429,9 +429,9 @@ function createSegmentBetween(a, b) {
 function createSegmentForComparator(operator, value) {
   switch(operator) {   // operation codes are from api/Query.js
     case 0:   // LE
-      return new Segment(negInf, new Endpoint(value, true));
-    case 1:   // LT 
-      return new Segment(negInf, new Endpoint(value, false));
+      return new Segment(negInfNonNull, new Endpoint(value, true));
+    case 1:   // LT
+      return new Segment(negInfNonNull, new Endpoint(value, false));
     case 2:   // GE
       return new Segment(new Endpoint(value, true), posInf);
     case 3:   // GT
@@ -903,8 +903,9 @@ IndexBoundVisitor.prototype.visitQueryNaryPredicate = function(node) {
       node.predicates[i].visit(this);
       if(node.predicates[i].indexRange) { buildChildNodeIndexBounds = true; }
     }
-    if(buildChildNodeIndexBounds) {
-      // If any child node is consolidated, consolidate all of them, 
+    if(buildChildNodeIndexBounds || (node.operationCode == 2)) {
+      // If this is a disjunction, or any child node is consolidated,
+      // consolidate all of them,
       // then construct the union or intersection over the consolidated bounds.
       indexRange = new NumberLine();
       for(i = 0 ; i < node.predicates.length ; i++) {

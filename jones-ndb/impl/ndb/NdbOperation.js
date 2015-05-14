@@ -486,7 +486,7 @@ function prepareOperations(dbTransactionContext, dbOperationList, recycleWrapper
 DBOperation.prototype.prepareScan = function(dbTransactionContext) {
   var indexBounds = null;
   var execQueue = this.transaction.dbSession.execQueue;
-  var scanHelper, boundsHelpers, dbIndex;
+  var scanHelper, boundsHelpers, dbIndex, skipFilterForTesting;
  
   /* There is one global ScanHelperSpec */
   scanSpec.clear();
@@ -520,8 +520,9 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
     }
   }
 
-  if(this.query.ndbFilterSpec) {
-    scanSpec[ScanHelper.filter_code] = 
+  skipFilterForTesting = false;
+  if(this.query.ndbFilterSpec && ! skipFilterForTesting) {
+    scanSpec[ScanHelper.filter_code] =
       this.query.ndbFilterSpec.getScanFilterCode(this.params);
     this.scan.filter = scanSpec[ScanHelper.filter_code];
     udebug.log("Using Scan Filter");

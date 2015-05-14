@@ -177,6 +177,7 @@ FilterBuildingVisitor.prototype.visitQueryNaryPredicate = function(node) {
   for(i = 0 ; i < node.predicates.length ; i++) {
     node.predicates[i].visit(this);
   }
+  udebug.log(node.operator);
   this.ndbScanFilter.end();
 };
 
@@ -187,6 +188,7 @@ FilterBuildingVisitor.prototype.visitQueryComparator = function(node) {
   this.ndbScanFilter.cmp(opcode, layout.column.columnNumber, 
                          this.paramBuffer, layout.offset, 
                          layout.column.columnSpace);
+  udebug.log(node.queryField.field.fieldName, node.comparator, "value");
   // TODO: constants
 };
 
@@ -194,6 +196,7 @@ FilterBuildingVisitor.prototype.visitQueryComparator = function(node) {
 FilterBuildingVisitor.prototype.visitQueryUnaryPredicate = function(node) {
   this.ndbScanFilter.begin(node.ndb.opcode);  // A 1-member NAND group
   node.predicates[0].visit(this);
+  udebug.log("NOT");
   this.ndbScanFilter.end();
 };
 
@@ -209,7 +212,7 @@ FilterBuildingVisitor.prototype.visitQueryUnaryOperator = function(node) {
     assert(opcode === 8);
     this.ndbScanFilter.isnotnull(colId);
   }
-  udebug.log("FilterBuildingVisitor visitQueryUnaryOperator", opcode);
+  udebug.log(node.queryField.field.fieldName, node.operator);
 };
 
 /** Handle node QueryBetween */
@@ -222,6 +225,7 @@ FilterBuildingVisitor.prototype.visitQueryBetweenOperator = function(node) {
   this.ndbScanFilter.cmp(0, col2.column.columnNumber, this.paramBuffer,
                          col2.offset, col2.column.columnSpace); // <= col2
   this.ndbScanFilter.end();
+  udebug.log(node.queryField.field.fieldName, "BETWEEN values");
 };
 
 FilterBuildingVisitor.prototype.finalise = function() {

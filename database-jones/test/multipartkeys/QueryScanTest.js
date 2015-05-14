@@ -60,6 +60,7 @@ var q4 = {
 };
 
 var q5 = {
+  /* k1 >= 1 AND k2 > 1 */
   name: 'q5',
   queryType: 2,
   expected: [6,7,10,11,14,15,18,19],
@@ -105,10 +106,10 @@ var q8 = {
 };
 
 var q9 = {
-  /* (k1 = 2 and k2 = 1) OR (k1 = 4 and k2 = 3) */
+  /* (k1 = 2 and k2 > 1) OR (k1 = 4 and k2 < 3) */
   name: 'q9',
   queryType: 2,
-  expected: [ 10, 11, 17, 18 ],
+  expected: [ 10,11,17,18 ],
   p1: 2, p2: 1, p3: 4, p4: 3,
   predicate: function(q) {
     return (q.k1.eq(q.param("p1")).and(q.k2.gt(q.param("p2")))).
@@ -117,18 +118,8 @@ var q9 = {
 };
 
 var q10 = {
-  /* k1 is Not Null */
-  name: 'q10',
-  queryType: 2,
-  expected: [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-  predicate: function(q) {
-    return q.k1.isNotNull();
-  }
-};
-
-var q11 = {
   /* k1 = 2 and k2 is null */
-  name: 'q11',
+  name: 'q10',
   queryType: 2,
   expected: [ 8 ],
   p1: 2,
@@ -137,9 +128,9 @@ var q11 = {
   }
 };
 
-var q12 = {
+var q11 = {
   /* k1 = 2 and k2 is not null */
-  name: 'q12',
+  name: 'q11',
   queryType: 2,
   expected: [ 9,10,11 ],
   p1: 2,
@@ -148,9 +139,43 @@ var q12 = {
   }
 };
 
+var q12 = {
+  /* k1 = 2 and k2 = 1 */
+  name: "q12",
+  queryType: 2,
+  expected: [ 9 ],
+  p1: 2, p2: 1,
+  predicate: function(q) {
+    return q.k1.eq(q.param("p1")).and(q.k2.eq(q.param("p2")));
+  }
+};
 
-// TODO: q9 and q12 fail.
-var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12 ];
+var q13 = {
+  /* (k1 = 2 and k2 = 1) OR (k1 = 4 and k2 = 3) */
+  name: 'q13',
+  queryType: 2,
+  expected: [ 9, 19 ],
+  p1: 2, p2: 1, p3: 4, p4: 3,
+  predicate: function(q) {
+    return (q.k1.eq(q.param("p1")).and(q.k2.eq(q.param("p2")))).
+         or(q.k1.eq(q.param("p3")).and(q.k2.eq(q.param("p4"))));
+  }
+};
+
+var q14 = {
+  /* (k1 = 2 and k2 > 1) OR (k1 = 4 and k2 = 3) */
+  name: 'q14',
+  queryType: 2,
+  expected: [ 10, 11, 19 ],
+  p1: 2, p2: 1, p3: 4, p4: 3,
+  predicate: function(q) {
+    return (q.k1.eq(q.param("p1")).and(q.k2.gt(q.param("p2")))).
+         or(q.k1.eq(q.param("p3")).and(q.k2.eq(q.param("p4"))));
+  }
+};
+
+
+var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14 ];
 
 /** Set up domain type */
 function mpk1() {};
