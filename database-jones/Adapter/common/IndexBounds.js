@@ -101,6 +101,7 @@ EncodedValue.prototype = {
 /* compareValues() takes two values which are either JS Values or EncodedValues.
    Returns -1, 0, or +1 as the first is less, equal to, or greater than the 
    second.
+   NULLs sort low in this comparison.
 */
 function compareValues(a, b) {
   var cmp;
@@ -180,6 +181,7 @@ IndexValue.prototype.isFinite = function() {
   var v;
   if(this.size == 0) return false;
   v = this.parts[this.size - 1];
+  if(v === null) return false;
   return (typeof v === 'number') ?  isFinite(v) : true;
 };
 
@@ -203,11 +205,15 @@ IndexValue.prototype.inspect = function() {
 function Endpoint(value, inclusive) {
   this.value = value;
   this.inclusive = (inclusive === false) ? false : true;
-  if(value.isIndexValue) {
+
+  if(value === null) {
+    this.isFinite = false;
+  } else if(value.isIndexValue) {
     this.isFinite = value.isFinite();
-  }
-  else {
-    this.isFinite = (typeof value === 'number') ? isFinite(value) : true;
+  } else if(typeof value === 'number') {
+    this.isFinite = isFinite(value);
+  } else {
+    this.isFinite = true;
   }
 }
 
@@ -271,12 +277,15 @@ Endpoint.prototype.push = function(e) {
   this.inclusive = e.inclusive;
 };
 
-/* Static endpoints for negative and positive infinity
+/* Static inclusive endpoints for negative and positive infinity
 */
-var negInfInc    = new Endpoint(-Infinity);
-var negInfExc    = new Endpoint(-Infinity, false);
-var posInfInc    = new Endpoint(Infinity);
-var posInfExc    = new Endpoint(Infinity, false);
+var negInf       = new Endpoint(-Infinity);
+var posInf       = new Endpoint(Infinity);
+
+/* Static inclusive and exclusive endpoints for NULL
+*/
+var nullInc      = new Endpoint(null, true);
+var nullExc      = new Endpoint(null, false);
 
 
 /* Functions to compare two endpoints and return one
@@ -420,13 +429,13 @@ function createSegmentBetween(a, b) {
 function createSegmentForComparator(operator, value) {
   switch(operator) {   // operation codes are from api/Query.js
     case 0:   // LE
-      return new Segment(negInfExc, new Endpoint(value, true));
+      return new Segment(negInf, new Endpoint(value, true));
     case 1:   // LT 
-      return new Segment(negInfExc, new Endpoint(value, false));
+      return new Segment(negInf, new Endpoint(value, false));
     case 2:   // GE
-      return new Segment(new Endpoint(value, true), posInfInc);
+      return new Segment(new Endpoint(value, true), posInf);
     case 3:   // GT
-      return new Segment(new Endpoint(value, false), posInfInc);
+      return new Segment(new Endpoint(value, false), posInf);
     case 4:   // EQ
       return new Segment(new Endpoint(value), new Endpoint(value));
     case 5:   // NE 
@@ -438,7 +447,7 @@ function createSegmentForComparator(operator, value) {
 
 /* A segment from -Inf to +Inf
 */
-var boundingSegment = new Segment(negInfInc, posInfInc);
+var boundingSegment = new Segment(negInf, posInf);
 
 
 //////// NumberLine                 /////////////////
@@ -476,7 +485,7 @@ NumberLine.prototype.isEmpty = function() {
 };
 
 NumberLine.prototype.setAll = function() {
-  this.transitions = [ negInfInc, posInfInc ];
+  this.transitions = [ negInf, posInf ];
   return this;
 };
 
@@ -485,12 +494,12 @@ NumberLine.prototype.setEqualTo = function(that) {
 };
 
 NumberLine.prototype.upperBound = function() {
-  if(this.isEmpty()) return negInfInc;
+  if(this.isEmpty()) return negInf;
   return this.transitions[this.transitions.length - 1];
 };
 
 NumberLine.prototype.lowerBound = function() {
-  if(this.isEmpty()) return posInfInc;
+  if(this.isEmpty()) return posInf;
   return this.transitions[0];
 };
 
@@ -535,14 +544,14 @@ NumberLine.prototype.complement = function() {
     this.transitions.shift();
   }
   else {
-    this.transitions.unshift(negInfInc);
+    this.transitions.unshift(negInf);
   }
   
   if(! this.upperBound().isFinite) {
     this.transitions.pop();
   }
   else {
-    this.transitions.push(posInfInc);
+    this.transitions.push(posInf);
   }
 
   assert(this.transitions.length % 2 == 0);
@@ -773,18 +782,16 @@ ColumnBoundVisitor.prototype.visitQueryBetweenOperator = function(node) {
 };
 
 /** Handle nodes QueryIsNull, QueryIsNotNull 
-    This implementation assumes that NULL sorts low, so
-    NULL is the range that includes -Inf, and NOT NULL
-    is the range that includes everything but -Inf.
-    */
+    NULLS sort low.
+*/
 ColumnBoundVisitor.prototype.visitQueryUnaryOperator = function(node) {
   var segment;
-  if(node.operationCode == 7) {  // NULL
-    segment = new Segment(negInfInc, negInfInc);
+  if(node.operationCode == 7) {  // IsNull
+    segment = new Segment(nullInc, nullInc);
   }
-  else {   // NOT NULL
+  else {   // IsNotNull
     assert(node.operationCode == 8);
-    segment = new Segment(negInfExc, posInfInc);
+    segment = new Segment(nullExc, posInf);
   }
   this.store(node, segment);
 };
@@ -811,8 +818,8 @@ function IndexBoundVisitor(queryHandler, dbIndex) {
    This here is difficult.
    We have already evaluated a query node for each column in an index,
    and next we have to evaluate it for the index as a whole; e.g. we have
-   evaluated it for columns A,B, and C, and there is a three-part index
-   on (A,B,C).
+   evaluated it for columns A, B, and C, individually, and there is a 
+   three-part index on (A,B,C).
 
    Each single-column value is represented by a Consolidator that builds
    its part of the conslidated index bound.
@@ -847,11 +854,11 @@ IndexBoundVisitor.prototype.consolidate = function(node) {
       idxBounds = partialBounds.copy();
 
       if(doLow) {
-        idxBounds.low.push(segment.low);
+        idxBounds.low.push(segment.low);  // push new part onto IndexValue
         doNextLow = segment.low.inclusive && segment.low.isFinite;
       }
       if(doHigh) {
-        idxBounds.high.push(segment.high);
+        idxBounds.high.push(segment.high); // push new part onto IndexValue
         doNextHigh = segment.high.inclusive && segment.high.isFinite;
       }
 
