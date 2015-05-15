@@ -101,37 +101,25 @@ Driver.prototype.addSuiteFromFile = function(suitename, filename) {
 };
 
 Driver.prototype.addSuitesFromDirectory = function(directory) {
-  var files, f, i, st, suite, nsuites;
+  var files, f, i, st, suite, nsuites, dir;
   nsuites = 0;
 
   directory = path.resolve(this.baseDirectory, directory);
   udebug.log_detail("addSuitesFromDirectory:", directory);
 
-  if(this.fileToRun) {
-    nsuites++;
-    if(! this.fileToRun.match(/\.js$/)) {
-      if(this.fileToRun.match(/Test$/)) {
-        this.fileToRun += ".js";
-      } else {
-        this.fileToRun += "Test.js";
+  /* Read the test directory, building list of suites */
+  files = fs.readdirSync(directory);
+  for(i = 0; i < files.length ; i++) {
+    f = files[i];
+    st = fs.statSync(path.join(directory, f));
+    if (st.isDirectory() && this.isSuiteToRun(f)) {
+      nsuites++;
+      dir = path.join(directory, f);
+      if(this.fileToRun) {
+        dir = path.join(dir, this.fileToRun);
       }
-    }
-    var suitename = path.dirname(this.fileToRun);
-    var pathname = path.join(directory, this.fileToRun); 
-    suite = new Suite(this, suitename, pathname);
-    this.suites.push(suite);
-  }
-  else { 
-    /* Read the test directory, building list of suites */
-    files = fs.readdirSync(directory);
-    for(i = 0; i < files.length ; i++) {
-      f = files[i];
-      st = fs.statSync(path.join(directory, f));
-      if (st.isDirectory() && this.isSuiteToRun(f)) {
-        nsuites++;
-        suite = new Suite(this, f, path.join(directory, f));
-        this.suites.push(suite);
-      }
+      suite = new Suite(this, f, dir);
+      this.suites.push(suite);
     }
   }
   udebug.log_detail("Added", nsuites, "suites.");
@@ -371,8 +359,20 @@ Driver.prototype.setCommandLineFlags = function() {
   opts.addOption(new CommandLine.Option(
     null, "--test <testFile>", "only run the named test file",
     function(thisArg) {
+      var suite;
       if(thisArg) {
-        driver.fileToRun = thisArg;
+        if(! thisArg.match(/\.js$/)) {
+          if(thisArg.match(/Test$/)) {
+            thisArg += ".js";
+          } else {
+            thisArg += "Test.js";
+          }
+        }
+        driver.fileToRun = path.basename(thisArg);
+        suite = path.dirname(thisArg);
+        if(suite) {
+          driver.suitesToRun = [ suite ];
+        }
         return 1;
       }
       return -1;  // argument is required
