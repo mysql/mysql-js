@@ -42,6 +42,7 @@ more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "composition"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "freeform"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
 
 // harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "loader", "lib");
 more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
@@ -97,5 +98,9 @@ harness.ignoreLint("ProxyFactory.js", 6,  /The body of a/);
 harness.ignoreLint("lib.js", 9, "Unexpected 'continue'", 2);
 harness.ignoreLint("lib.js", 8, /Don\'t make functions/);
 harness.ignoreLint("lib.js", 10, /Don\'t make functions/);
+
+//numerictypes
+harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
+harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 
 module.exports.tests = tests;

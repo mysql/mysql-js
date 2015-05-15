@@ -31,7 +31,6 @@ function more(more_tests) {
 }
 
 more(harness.getLintTestsForDirectory(config.impl_dir));
-more(harness.getLintTestsForDirectory(test_root, "numerictypes"));
 more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
 more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
 
@@ -42,10 +41,6 @@ harness.ignoreLint("MysqlErrToSQLStateMap.js", 60, "Unexpected ','");
 //stringtypes
 harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");
 harness.ignoreLint("CharsetTest.js", 26, "Missing \'new\'.", 14);
-
-//numerictypes
-harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
-harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 
 //mysql56types
 harness.ignoreLint("CharsetTest.js", 0, "Unsafe character.");
