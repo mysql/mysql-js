@@ -330,44 +330,40 @@ function BoundHelperSpec() {
 */
 BoundHelperSpec.prototype.buildPartialSpec = function(base, bound,
                                                       dbIndexHandler, buffer) {
-  function encodeBounds(nfields) {
-    return encodeFieldsInBuffer(bound.key, nfields, dbIndexHandler.getColumnMetadata(),
-                                dbIndexHandler.dbIndex.record, buffer, []);
-  }
-  var nparts, err;
+  var nparts, err, columns;
+  columns = dbIndexHandler.getColumnMetadata();
+  err = null;
 
-  /* count finite key parts */
-  for(nparts = 0 ; nparts < bound.key.length; nparts++) {
-    if((bound.key[nparts] == Infinity) || (bound.key[nparts] == -Infinity)) {
-      break;
-    }
-  }
-
-  /* IndexBounds has assumed all columns are nullable, so we expect encoder 
-     error 23000 whenever we try to set a NULL bound on a non-nullable column.
-     Respond by effectively transforming that NULL to a -Infinity.
+  /* count finite key parts.
+     IndexBounds has assumed all columns are nullable, so we may have to
+     transform a NULL bound to a -Infinity.
   */
-  do {
-    err = encodeBounds(nparts);
-    if(err) {
-      udebug.log("Substituting -Infinity for", bound.key, "at", nparts);
-      nparts--;
+  for(nparts = 0 ; nparts < bound.key.length; nparts++) {
+    if((bound.key[nparts] == Infinity)  ||
+       (bound.key[nparts] == -Infinity) ||
+       (bound.key[nparts] === null && ! columns[nparts].isNullable))
+    {
+       break;
     }
-  } while(nparts && err);
-
+  }
+  if(nparts > 0) {
+    err = encodeFieldsInBuffer(bound.key, nparts, columns,
+                               dbIndexHandler.dbIndex.record, buffer, []);
+  }
   udebug.log("Encoded", nparts, "parts for", (base ? "high" : "low"), "bound");
 
   this[base]     = (nparts > 0 ? buffer : null);
   this[base + 1] = nparts;
   this[base + 2] = bound.inclusive;
+  return err;
 };
 
 BoundHelperSpec.prototype.setLow = function(bound, dbIndexHandler, buffer) {
-  this.buildPartialSpec(BoundHelper.low_key, bound.low, dbIndexHandler, buffer);
+  return this.buildPartialSpec(BoundHelper.low_key, bound.low, dbIndexHandler, buffer);
 };
 
 BoundHelperSpec.prototype.setHigh = function(bound, dbIndexHandler, buffer) {
-  this.buildPartialSpec(BoundHelper.high_key, bound.high, dbIndexHandler, buffer);
+  return this.buildPartialSpec(BoundHelper.high_key, bound.high, dbIndexHandler, buffer);
 };
 
 
