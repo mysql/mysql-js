@@ -240,20 +240,6 @@ function encodeKeyBuffer(op) {
 }
 
 
-/* encode indexBounds into Buffer formatted for indexRecord.
-   Returns buffer if values were encoded,
-   or null if first index column value was infinite.
-*/
-function encodeBounds(key, nfields, dbIndexHandler, buffer) {  
-  if(nfields == 0) {
-    return null;
-  }
-  // FIXME: encodeFieldsInBuffer() may return an error
-  encodeFieldsInBuffer(key, nfields, dbIndexHandler.getColumnMetadata(), 
-                       dbIndexHandler.dbIndex.record, buffer, []);
-  return buffer;
-}
-
 function defineBlobs(nfields, metadata, values) {
   var i, blobs, col;
   blobs = [];
@@ -344,21 +330,34 @@ function BoundHelperSpec() {
 */
 BoundHelperSpec.prototype.buildPartialSpec = function(base, bound,
                                                       dbIndexHandler, buffer) {
-  function countFiniteKeyParts(key) {
-    var i;
-    for(i = 0; i < key.length ; i++) {
-      if((key[i] == Infinity) || (key[i] == -Infinity)) { break; }
+  function encodeBounds(nfields) {
+    return encodeFieldsInBuffer(bound.key, nfields, dbIndexHandler.getColumnMetadata(),
+                                dbIndexHandler.dbIndex.record, buffer, []);
+  }
+  var nparts, err;
+
+  /* count finite key parts */
+  for(nparts = 0 ; nparts < bound.key.length; nparts++) {
+    if((bound.key[nparts] == Infinity) || (bound.key[nparts] == -Infinity)) {
+      break;
     }
-    return i;
   }
 
-  var nparts = countFiniteKeyParts(bound.key);
-  udebug.log("Finite key parts", (base ? "high" : "low"), nparts);
-  if(nparts) {
-    this[base] = encodeBounds(bound.key, nparts, dbIndexHandler, buffer);
-  } else {
-    this[base] = null;
-  }
+  /* IndexBounds has assumed all columns are nullable, so we expect encoder 
+     error 23000 whenever we try to set a NULL bound on a non-nullable column.
+     Respond by effectively transforming that NULL to a -Infinity.
+  */
+  do {
+    err = encodeBounds(nparts);
+    if(err) {
+      udebug.log("Substituting -Infinity for", bound.key, "at", nparts);
+      nparts--;
+    }
+  } while(nparts && err);
+
+  udebug.log("Encoded", nparts, "parts for", (base ? "high" : "low"), "bound");
+
+  this[base]     = (nparts > 0 ? buffer : null);
   this[base + 1] = nparts;
   this[base + 2] = bound.inclusive;
 };
