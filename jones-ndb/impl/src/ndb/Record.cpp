@@ -27,6 +27,7 @@ Record::Record(NdbDictionary::Dictionary *d, int ncol, bool isPK) :
   dict(d),
   ncolumns(ncol),
   n_nullable(0),
+  nblobs(0),
   index(0),
   rec_size(0),
   start_of_nullmap(0),
@@ -75,9 +76,15 @@ void Record::addColumn(const NdbDictionary::Column *column) {
     pkColumnMask.array[index >> 3] |= (1 << (index & 7));
   }
 
+  /* Track the number of blob columns in the record */
+  if((column->getType() == NdbDictionary::Column::Text) ||
+     (column->getType() == NdbDictionary::Column::Blob))
+  {
+    nblobs++;
+  }
+
   /* Increment the counter and record size */
   index += 1;
-
   rec_size += column->getSizeInBytes();
 };
 

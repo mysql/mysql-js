@@ -38,11 +38,10 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
   proxy(new ColumnProxy[record->getNoOfColumns()]),
   nWrites(0)
 {
-  int nblobs = 0;
+  unsigned int nblobs = 0;
   /* Retain a handler on the buffer for our whole lifetime */
   persistentBufferHandle = Persistent<Value>::New(jsBuffer);
-  buffer = node::Buffer::Data(jsBuffer->ToObject());  
-  // You could assert here that buffer size == record buffer size
+  buffer = node::Buffer::Data(jsBuffer);
 
   /* Initialize the list of masked-in columns */
   resetMask();
@@ -62,12 +61,15 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
         proxy[i].setBlobBuffer(buf);
         record->setNotNull(i, buffer);
       } else if(b->IsNull()) {
-        record->setNull(i, buffer);
+       nblobs++;
+       record->setNull(i, buffer);
       }
     }
   }
   DEBUG_PRINT("    ___Constructor___       [%d col, bufsz %d, %d blobs]", 
               ncol, record->getBufferSize(), nblobs);
+  assert(nblobs == record->getNoOfBlobColumns());
+  assert(node::Buffer::Length(jsBuffer) == record->getBufferSize());
 }
 
 

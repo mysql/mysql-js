@@ -32,6 +32,7 @@ private:
   NdbDictionary::Dictionary *dict;
   size_t ncolumns, 
          n_nullable, 
+         nblobs,
          index,
          rec_size,
          start_of_nullmap, 
@@ -56,6 +57,7 @@ public:
   
   const NdbRecord * getNdbRecord() const;
   Uint32 getNoOfColumns() const;
+  Uint32 getNoOfBlobColumns() const;
   Uint32 getPkColumnMask() const;
   Uint32 getAllColumnMask() const;
   size_t getColumnOffset(int idx) const;
@@ -75,6 +77,10 @@ inline const NdbRecord * Record::getNdbRecord() const {
 
 inline Uint32 Record::getNoOfColumns() const {
   return ncolumns;
+}
+
+inline Uint32 Record::getNoOfBlobColumns() const {
+  return nblobs;
 }
 
 inline size_t Record::getColumnOffset(int idx) const {
