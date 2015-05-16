@@ -57,7 +57,12 @@ public:
   void setBlobHandler(BlobHandler *);
   bool isBlobReadOperation();
   const NdbOperation *prepare(NdbTransaction *);
-  
+  int createBlobReadHandles(const Record *);
+  int createBlobWriteHandles(v8::Handle<v8::Object>, const Record *);
+
+  // Get results
+  v8::Handle<v8::Value> readBlobResults();
+
   // Diagnostic 
   const char * getOperationName();
 

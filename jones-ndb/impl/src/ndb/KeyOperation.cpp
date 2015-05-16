@@ -18,7 +18,12 @@
  02110-1301  USA
  */
 
+#include <node_buffer.h>
+
+#include "unified_debug.h"
 #include "KeyOperation.h"
+
+using namespace v8;
 
 const char * opcode_strings[17] = 
  { 0, "read  ", "insert", 0, "update", 0, 0, 0, "write ",
@@ -109,3 +114,52 @@ void KeyOperation::setBlobHandler(BlobHandler *b) {
   blobHandler = b;
 }
 
+int KeyOperation::createBlobReadHandles(const Record * rowRecord) {
+  int ncreated = 0;
+  int ncol = rowRecord->getNoOfColumns();
+  for(int i = 0 ; i < ncol ; i++) {
+    const NdbDictionary::Column * col = rowRecord->getColumn(i);
+    if((col->getType() ==  NdbDictionary::Column::Blob) ||
+       (col->getType() ==  NdbDictionary::Column::Text)) 
+    {
+      setBlobHandler(new BlobReadHandler(i, col->getColumnNo()));
+      ncreated++;
+    }
+  }
+  return ncreated;
+}
+
+
+int KeyOperation::createBlobWriteHandles(Handle<Object> blobsArray,
+                                         const Record * rowRecord) {
+  int ncreated = 0;
+  int ncol = rowRecord->getNoOfColumns();
+  for(int i = 0 ; i < ncol ; i++) {
+    if(blobsArray->Get(i)->IsObject()) {
+      Local<Object> blobValue = blobsArray->Get(i)->ToObject();
+      assert(node::Buffer::HasInstance(blobValue));
+      const NdbDictionary::Column * col = rowRecord->getColumn(i);
+      assert( (col->getType() ==  NdbDictionary::Column::Blob) ||
+              (col->getType() ==  NdbDictionary::Column::Text));
+      ncreated++;
+      setBlobHandler(new BlobWriteHandler(i, col->getColumnNo(), blobValue));
+    }
+  }
+  return ncreated;
+}
+
+
+Handle<Value> KeyOperation::readBlobResults() {
+  DEBUG_MARKER(UDEB_DEBUG);
+  HandleScope scope;
+  if(isBlobReadOperation()) {
+    Handle<Object> results = Array::New();
+    BlobReadHandler * readHandler = static_cast<BlobReadHandler *>(blobHandler);
+    while(readHandler) {
+      results->Set(readHandler->getFieldNumber(), readHandler->getResultBuffer());
+      readHandler = static_cast<BlobReadHandler *>(readHandler->getNext());
+    }
+    return scope.Close(results);
+  }
+  return Undefined();
+}

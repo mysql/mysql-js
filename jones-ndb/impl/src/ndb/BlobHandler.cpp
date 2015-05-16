@@ -48,7 +48,7 @@ int blobHandlerActiveHook(NdbBlob * ndbBlob, void * handler) {
 }
 
 void freeBufferContentsFromJs(char *data, void *) {
-  free(data);
+  free(data);                                                // here is free
 }
 
 
@@ -68,7 +68,7 @@ int BlobReadHandler::runActiveHook(NdbBlob *b) {
   if(! isNull) {
     ndbBlob->getLength(length);
     uint32_t nBytes = length;
-    content = (char *) malloc(length);
+    content = (char *) malloc(length);                        // here is malloc
     if(content) {
       int rv = ndbBlob->readData(content, nBytes);
       DEBUG_PRINT("BLOB read: column %d, length %d, read %d/%d", 

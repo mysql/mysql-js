@@ -114,42 +114,6 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op) {
 }
 
 
-int createBlobReadHandles(Handle<Object> blobsArray, const Record * rowRecord,
-                          KeyOperation & op) {
-  int ncreated = 0;
-  int ncol = rowRecord->getNoOfColumns();
-  for(int i = 0 ; i < ncol ; i++) {
-    const NdbDictionary::Column * col = rowRecord->getColumn(i);
-    if((col->getType() ==  NdbDictionary::Column::Blob) ||
-       (col->getType() ==  NdbDictionary::Column::Text)) 
-    {
-      op.setBlobHandler(new BlobReadHandler(i, col->getColumnNo()));
-      ncreated++;
-    }
-  }
-  return ncreated;
-}
-
-
-int createBlobWriteHandles(Handle<Object> blobsArray, const Record * rowRecord,
-                           KeyOperation & op) {
-  int ncreated = 0;
-  int ncol = rowRecord->getNoOfColumns();
-  for(int i = 0 ; i < ncol ; i++) {
-    if(blobsArray->Get(i)->IsObject()) {
-      Local<Object> blobValue = blobsArray->Get(i)->ToObject();
-      assert(node::Buffer::HasInstance(blobValue));
-      const NdbDictionary::Column * col = rowRecord->getColumn(i);
-      assert( (col->getType() ==  NdbDictionary::Column::Blob) ||
-              (col->getType() ==  NdbDictionary::Column::Text));
-      ncreated++;
-      op.setBlobHandler(new BlobWriteHandler(i, col->getColumnNo(), blobValue));
-    }
-  }
-  return ncreated;
-}
-
-
 void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
   HandleScope scope;
 
@@ -174,9 +138,9 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
     v = spec->Get(HELPER_BLOBS);
     if(v->IsObject()) {
       if(op.opcode == 1) {
-        nblobs = createBlobReadHandles(v->ToObject(), record, op);
+        nblobs = op.createBlobReadHandles(record);
       } else {
-        nblobs = createBlobWriteHandles(v->ToObject(), record, op);
+        nblobs = op.createBlobWriteHandles(v->ToObject(), record);
       }
     }
   }

@@ -158,20 +158,10 @@ Handle<Value> executeAsynch(const Arguments &args) {
 
 
 Handle<Value> readBlobResults(const Arguments &args) {
-  DEBUG_MARKER(UDEB_DEBUG);
   HandleScope scope;
   DBOperationSet * set = unwrapPointer<DBOperationSet *>(args.Holder());
   int n = args[0]->Int32Value();
-  if(set->getKeyOperation(n)->isBlobReadOperation()) {
-    Handle<Object> results = Array::New();
-    BlobReadHandler * blobHandler = static_cast<BlobReadHandler *>(set->getBlobHandler(n));
-    while(blobHandler) {
-      results->Set(blobHandler->getFieldNumber(), blobHandler->getResultBuffer());
-      blobHandler = static_cast<BlobReadHandler *>(blobHandler->getNext());
-    }
-    return scope.Close(results);
-  }
-  return Undefined();
+  return set->getKeyOperation(n)->readBlobResults();
 }
 
 
