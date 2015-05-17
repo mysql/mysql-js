@@ -20,8 +20,9 @@
 
 
 var jones = require("database-jones");
+var udebug = unified_debug.getLogger("ScanWithBlobTest.js");
 
-var t1 = new harness.ConcurrentTest("scanTable:Id-Blob-Int");
+var t1 = new harness.ConcurrentTest("ScanWithBlob");
 
 t1.run = function() {
   fail_openSession(t1, function(session) {
@@ -31,9 +32,13 @@ t1.run = function() {
       query.execute({}, function(err, resultArray) {
         t1.errorIfNotEqual("Expected length 9", resultArray.length, 9);
         resultArray.forEach(function(result) {
-          console.log(result.text_col);
-          console.log(result.id, result.int_col);
+          udebug.log(result.id, result.text_col, result.int_col);
           t1.errorIfNotEqual("Expected id == int_col", result.id, result.int_col);
+          if(result.id == 5) {
+            t1.errorIfNotNull("Expected null text for 5", result.text_col);
+          } else {
+            t1.errorIfNull("Expected non-null text", result.text_col);
+          }
         });
         t1.failOnError();
       });

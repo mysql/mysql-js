@@ -48,6 +48,7 @@ int blobHandlerActiveHook(NdbBlob * ndbBlob, void * handler) {
 }
 
 void freeBufferContentsFromJs(char *data, void *) {
+  DEBUG_PRINT("Free %p", data);
   free(data);                                                // here is free
 }
 
@@ -85,6 +86,9 @@ v8::Handle<v8::Value> BlobReadHandler::getResultBuffer() {
   if(content) {
     node::Buffer * buffer;
     buffer = node::Buffer::New(content, length, freeBufferContentsFromJs, 0);
+    /* Content belongs to someone else now; clear it for the next user */
+    content = 0;
+    length = 0;
     return scope.Close(buffer->handle_);
   }
   return v8::Null();

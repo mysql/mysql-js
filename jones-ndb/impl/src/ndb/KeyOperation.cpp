@@ -20,6 +20,7 @@
 
 #include <node_buffer.h>
 
+#include "adapter_global.h"
 #include "unified_debug.h"
 #include "KeyOperation.h"
 
@@ -44,12 +45,10 @@ template <typename B> void deleteBlobChain(BlobHandler *b) {
 }
 
 KeyOperation::~KeyOperation() {
-  if(blobHandler) {
-    if(opcode == 1) {
-      deleteBlobChain<BlobReadHandler>(blobHandler);
-    } else {
-      deleteBlobChain<BlobWriteHandler>(blobHandler);
-    }
+  if(isBlobReadOperation()) {
+    deleteBlobChain<BlobReadHandler>(blobHandler);
+  } else if(blobHandler) {
+    deleteBlobChain<BlobWriteHandler>(blobHandler);
   }
 }
 
@@ -115,6 +114,7 @@ void KeyOperation::setBlobHandler(BlobHandler *b) {
 }
 
 int KeyOperation::createBlobReadHandles(const Record * rowRecord) {
+  DEBUG_MARKER(UDEB_DEBUG);
   int ncreated = 0;
   int ncol = rowRecord->getNoOfColumns();
   for(int i = 0 ; i < ncol ; i++) {
@@ -132,6 +132,7 @@ int KeyOperation::createBlobReadHandles(const Record * rowRecord) {
 
 int KeyOperation::createBlobWriteHandles(Handle<Object> blobsArray,
                                          const Record * rowRecord) {
+  DEBUG_MARKER(UDEB_DEBUG);
   int ncreated = 0;
   int ncol = rowRecord->getNoOfColumns();
   for(int i = 0 ; i < ncol ; i++) {

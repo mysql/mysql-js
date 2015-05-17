@@ -91,7 +91,7 @@ inline KeyOperation::KeyOperation():
 }
 
 inline bool KeyOperation::isBlobReadOperation() {
-  return (blobHandler && (opcode == 1));
+  return (blobHandler && (opcode & 1));
 }
  
 /* Select columns for reading */

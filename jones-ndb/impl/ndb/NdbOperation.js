@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014 Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -560,26 +560,26 @@ function readResultRow(op) {
 }
 
 
-function buildValueObject(op) {
+function buildValueObject(op, buffer, blobs) {
   udebug.log("buildValueObject");
   var VOC = op.tableHandler.ValueObject; // NDB Value Object Constructor
   var DOC = op.tableHandler.newObjectConstructor;  // User's Domain Object Ctor
-  var nWritesPre, nWritesPost, err;
+  var nWritesPre, nWritesPost, err, value;
   
   if(VOC) {
     /* Turn the buffer into a Value Object */
-    op.result.value = new VOC(op.buffers.row, op.blobs);
+    value = new VOC(buffer, blobs);
 
     /* TODO: Apply type converters here, rather than in Column Handler??? */
 
     /* DBT may have some fieldConverters for this object */
-    op.tableHandler.applyFieldConverters(op.result.value);
+    op.tableHandler.applyFieldConverters(value);
 
     /* Finally the user's constructor is called on the new value: */
     if(DOC) {
-      nWritesPre = adapter.impl.getValueObjectWriteCount(op.result.value);
-      DOC.call(op.result.value);
-      nWritesPost = adapter.impl.getValueObjectWriteCount(op.result.value);
+      nWritesPre = adapter.impl.getValueObjectWriteCount(value);
+      DOC.call(value);
+      nWritesPost = adapter.impl.getValueObjectWriteCount(value);
       if(nWritesPost > nWritesPre) {
         op.result.error = new DBOperationError().fromSqlState("WCTOR");
         op.result.success = false;
@@ -591,20 +591,20 @@ function buildValueObject(op) {
     console.log("NO VOC!");
     process.exit();
   }
+
+  return value;
 }
 
 
 function getScanResults(scanop, userCallback) {
-  var buffer, results, dbSession, ResultConstructor, nSkip, maxRow;
+  var buffer,results,dbSession,postScanCallback,nSkip,maxRow,i,recordSize;
   dbSession = scanop.transaction.dbSession;
-  ResultConstructor = scanop.tableHandler.ValueObject;
-  var postScanCallback = {
+  postScanCallback = {
     fn  : userCallback,
     arg0: null,
     arg1: null  
   };
-  var i = 0;
-
+  i = 0;
   nSkip = 0;
   maxRow = 100000000000;
   if(scanop.params) {
@@ -614,12 +614,8 @@ function getScanResults(scanop, userCallback) {
   if(udebug.is_debug()) {
     udebug.log("skip", nSkip, "+ limit", scanop.params.limit, "=", maxRow);
   }
-  if(ResultConstructor == null) {
-    storeNativeConstructorInMapping(scanop.tableHandler);
-    ResultConstructor = scanop.tableHandler.ValueObject;
-  }
 
-  var recordSize = scanop.tableHandler.dbTable.record.getBufferSize();
+  recordSize = scanop.tableHandler.dbTable.record.getBufferSize();
 
   function fetchResults(dbSession, ndb_scan_op, buffer) {
     var apiCall = new QueuedAsyncCall(dbSession.execQueue, null);
@@ -635,42 +631,41 @@ function getScanResults(scanop, userCallback) {
     i++;
   }
 
+  function pushNewResult() {
+    var blobs, result;
+    blobs = scanop.scanOp.readBlobResults();
+    udebug.log("pushNewResult",i,blobs);
+    result = buildValueObject(scanop, buffer, blobs);
+    results.push(result);
+  }
+
   function fetch() {
     buffer = new Buffer(recordSize);
-    results.push(new ResultConstructor(buffer));  // Optimistic
-    fetchResults(dbSession, scanop.scanOp, buffer);
+    fetchResults(dbSession, scanop.scanOp, buffer);  // gather() is the callback
   }
 
   /* <0: ERROR, 0: RESULTS_READY, 1: SCAN_FINISHED, 2: CACHE_EMPTY */
   /* gather runs as a preCallback */
   function gather(error, status) {    
-    if(status !== 0) {
-      results.pop();  // remove the optimistic result 
-    }
+    udebug.log("gather() status", status);
 
     if(status < 0) { // error
-      if(udebug.is_debug()) udebug.log("scan gather() error", status, error);
+      if(udebug.is_debug()) udebug.log("gather() error", error);
       postScanCallback.arg0 = error;
       return postScanCallback;
     }
     
     /* Gather more results. */
     while(status === 0 && results.length < maxRow) {
-      udebug.log("gather() 0 Result_Ready");
+      pushNewResult();
       buffer = new Buffer(recordSize);
       status = scanop.scanOp.nextResult(buffer);
-      if(status === 0) {
-        results.push(new ResultConstructor(buffer));
-      }
     }
     
-    if(status == 2 && results.length < maxRow) { 
-      udebug.log("gather() 2 Cache_Empty");
+    if(status == 2 && results.length < maxRow) {    // Cache empty
       fetch();
     }
     else {  // end of scan.
-      /* It is possible to have one row too many, due to the optimistic fetch */
-      if(results.length > maxRow) results.pop();
       /* Now remove the rows that should have been skipped 
          (fixme: do something more efficient) */
       for(i = 0 ; i < nSkip ; i++) results.shift();
@@ -733,7 +728,7 @@ function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
     }
 
     if(op.result.success && op.opcode === opcodes.OP_READ) {
-      buildValueObject(op);
+      op.result.value = buildValueObject(op, op.buffers.row, op.blobs);
     } 
   }
   if(udebug.is_detail()) udebug.log("buildOperationResult finished:", op.result);
@@ -879,6 +874,9 @@ function newScanOperation(tx, QueryTree, properties) {
   prepareFilterSpec(queryHandler);  // sets query.ndbFilterSpec
   op.query = queryHandler;
   op.params = properties;
+  if(! queryHandler.dbTableHandler.ValueObject) {
+    storeNativeConstructorInMapping(queryHandler.dbTableHandler);
+  }
   return op;
 }
 

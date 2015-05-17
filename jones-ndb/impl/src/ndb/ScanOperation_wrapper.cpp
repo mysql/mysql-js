@@ -36,6 +36,7 @@ Handle<Value> scanNextResult(const Arguments &);
 Handle<Value> scanFetchResults(const Arguments &);
 Handle<Value> ScanOperation_close(const Arguments &);
 Handle<Value> getNdbError(const Arguments &);
+Handle<Value> ScanOp_readBlobResults(const Arguments &);
 
 class ScanOperationEnvelopeClass : public Envelope {
 public: 
@@ -46,6 +47,7 @@ public:
     DEFINE_JS_FUNCTION(Envelope::stencil, "fetchResults", scanFetchResults);
     DEFINE_JS_FUNCTION(Envelope::stencil, "nextResult", scanNextResult);
     DEFINE_JS_FUNCTION(Envelope::stencil, "close", ScanOperation_close);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "readBlobResults", ScanOp_readBlobResults);
   }
 };
 
@@ -112,6 +114,11 @@ Handle<Value> scanFetchResults(const Arguments & args) {
   ncallptr->errorHandler = getNdbErrorIfLessThanZero;
   ncallptr->runAsync();
   return Undefined();
+}
+
+Handle<Value> ScanOp_readBlobResults(const Arguments & args) {
+  ScanOperation * op = unwrapPointer<ScanOperation *>(args.Holder());
+  return op->readBlobResults();
 }
 
 #define WRAP_CONSTANT(TARGET, X) DEFINE_JS_INT(TARGET, #X, NdbScanOperation::X)

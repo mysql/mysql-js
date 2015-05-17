@@ -52,6 +52,7 @@ void debug_print_flags_and_options(const NdbScanOperation::ScanOptions & opts) {
 }
 
 ScanOperation::ScanOperation(const Arguments &args) : 
+  KeyOperation(),
   scan_op(0),
   index_scan_op(0),
   nbounds(0),
@@ -62,7 +63,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
   Local<Value> v;
 
   const Local<Object> spec = args[0]->ToObject();
-  int opcode = args[1]->Int32Value();
+  opcode = args[1]->Int32Value();
   ctx = unwrapPointer<DBTransactionContext *>(args[2]->ToObject());
 
   lmode = NdbOperation::LM_CommittedRead;
@@ -73,6 +74,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
   if(! v->IsNull()) {
     Local<Object> o = v->ToObject();
     row_record = unwrapPointer<const Record *>(o);
+    createBlobReadHandles(row_record);
   }
 
   v = spec->Get(SCAN_INDEX_RECORD);
@@ -165,6 +167,9 @@ void ScanOperation::prepareScan(NdbTransaction *tx) {
     }
     else {
       scan_op = scanTable(tx);
+    }
+    if(blobHandler) {
+      blobHandler->prepare(scan_op);
     }
   }
 }
