@@ -184,7 +184,7 @@ QueryDomainType.prototype.not = function(queryPredicate) {
  * @param name
  * @return
  */
-QueryParameter = function(queryDomainType, name) {
+QueryParameter = function QueryParameter(queryDomainType, name) {
   if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryParameter<ctor>', name);
   this.queryDomainType = queryDomainType;
   this.name = name;
@@ -209,9 +209,18 @@ var SQLVisitor = function(rootPredicateNode) {
 SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
   var columnName = node.queryField.field.fieldName;
-  node.sql.sqlText = columnName + node.comparator + '?';
+  var value = '?';
+  var parameter = node.parameter;
+  if (typeof parameter === 'object'
+      && parameter.constructor
+      && parameter.constructor.name === 'QueryParameter') {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
+  } else {
+    // the parameter is a literal (String, number, or object with a toString method)
+    value = node.parameter;
+  }
+  node.sql.sqlText = columnName + node.comparator + value;
   // assign ordered list of parameters to the top node
-  this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
 };
 
 /** Handle nodes QueryAnd, QueryOr */
