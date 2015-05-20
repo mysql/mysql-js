@@ -184,7 +184,7 @@ QueryDomainType.prototype.not = function(queryPredicate) {
  * @param name
  * @return
  */
-QueryParameter = function(queryDomainType, name) {
+QueryParameter = function QueryParameter(queryDomainType, name) {
   if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryParameter<ctor>', name);
   this.queryDomainType = queryDomainType;
   this.name = name;
@@ -205,13 +205,34 @@ var SQLVisitor = function(rootPredicateNode) {
   this.parameterIndex = 0;
 };
 
+function isQueryParameter(parameter) {
+  return typeof parameter === 'object'
+    && parameter.constructor
+    && parameter.constructor.name === 'QueryParameter';
+}
+
+function getEscapedValue(literal) {
+  if (typeof literal === 'string') {
+    return '\'' + literal + '\'';
+  } else {
+    return literal.toString();
+  }
+}
+
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
   var columnName = node.queryField.field.fieldName;
-  node.sql.sqlText = columnName + node.comparator + '?';
+  var value = '?';
+  var parameter = node.parameter;
+  if (isQueryParameter(parameter)) {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
+  } else {
+    // the parameter is a literal (String, number, or object with a toString method)
+    value = getEscapedValue(node.parameter);
+  }
+  node.sql.sqlText = columnName + node.comparator + value;
   // assign ordered list of parameters to the top node
-  this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
 };
 
 /** Handle nodes QueryAnd, QueryOr */
@@ -242,9 +263,19 @@ SQLVisitor.prototype.visitQueryUnaryOperator = function(node) {
 /** Handle node QueryBetween */
 SQLVisitor.prototype.visitQueryBetweenOperator = function(node) {
   var columnName = node.queryField.field.fieldName;
-  node.sql.sqlText = columnName + ' BETWEEN ? AND ?';
-  this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[0];
-  this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
+  var leftValue = '?';
+  var rightValue = '?';
+  if (isQueryParameter(node.parameter1)) {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[0];
+  } else {
+    leftValue = node.parameter1;
+  }
+  if (isQueryParameter(node.parameter2)) {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
+  } else {
+    rightValue = node.parameter2;
+  }
+  node.sql.sqlText = columnName + ' BETWEEN ' + leftValue + ' AND ' + rightValue;
 };
 
 /******************************************************************************
