@@ -174,8 +174,19 @@ var q14 = {
   }
 };
 
+var q15 = {
+  /* k2 > 2 AND (k1 = 2 OR K1 = 4) */
+  name: 'q15',
+  queryType: 2,
+  expected: [ 11, 19 ],
+  p1: 2, p2: 4,
+  predicate: function(q) {
+    return q.k2.gt(q.param("p1")).and(q.k1.eq(q.param("p1")).or(q.k1.eq(q.param("p2"))));
+  }
+};
 
-var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14 ];
+var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15 ];
+//var queryTests = [ q15 ];
 
 /** Set up domain type */
 function mpk1() {};

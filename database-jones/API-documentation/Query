@@ -28,9 +28,9 @@
  *    'limit' value: number of rows to return; default: a couple of billion
  *
  * execute() returns a promise.  On success, the promise will be fulfilled 
- * with a value holding an array of query results.  The optional callback 
- * an error value and the query results.  Any extra arguments passed after 
- * the callback will be passed to the callback function verbatim as 
+ * with a value holding an array of query results.  The optional callback
+ * receives an error value and the query results.  Any extra arguments passed
+ * after the callback will be passed to the callback function verbatim as 
  * parameters following the results.
  *
  * The results of the query are returned in the callback.
