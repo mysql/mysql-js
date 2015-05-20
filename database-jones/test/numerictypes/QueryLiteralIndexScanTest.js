@@ -53,7 +53,11 @@ var q5 = {p1: 3, expected: [7, 8, 9], queryType: 2, ordered: false, predicate: f
   return qdt.tint.gt(qdt.param('p1')).and(qdt.not((qdt.tint.lt(new MyInt(7)))));
 }};
 
-var queryTests = [q1, q2, q3, q4, q5];
+var q6 = {expected: [7, 8, 9], queryType: 2, ordered: false, predicate: function(qdt) {
+  return qdt.tint.between(7, 9);
+}};
+
+var queryTests = [q1, q2, q3, q4, q5, q6];
 
 /***** Build and run queries ***/
 var testQueries = new harness.ConcurrentTest("testQueries");
