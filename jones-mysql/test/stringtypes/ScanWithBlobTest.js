@@ -18,6 +18,7 @@
  02110-1301  USA
  */
 
+"use strict";
 
 var jones = require("database-jones");
 var udebug = unified_debug.getLogger("ScanWithBlobTest.js");
@@ -30,7 +31,7 @@ t1.run = function() {
       t1.errorIfError(err);
       query.where(query.id.isNotNull());
       query.execute({}, function(err, resultArray) {
-        t1.errorIfNotEqual("Expected length 9", resultArray.length, 9);
+        t1.errorIfNotEqual("Expected length 10", resultArray.length, 10);
         resultArray.forEach(function(result) {
           udebug.log(result.id, result.text_col, result.int_col);
           t1.errorIfNotEqual("Expected id == int_col", result.id, result.int_col);
@@ -38,6 +39,9 @@ t1.run = function() {
             t1.errorIfNotNull("Expected null text for 5", result.text_col);
           } else {
             t1.errorIfNull("Expected non-null text", result.text_col);
+          }
+          if(result.id == 10) {
+            t1.errorIfNotEqual("Expected empty text for 10", "", result.text_col);
           }
         });
         t1.failOnError();

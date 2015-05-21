@@ -58,5 +58,6 @@ insert into int_after_blob
          (6, "My little horse must think it queer", 6),
          (7, "To stop without a farmhouse near", 7),
          (8, "Between the woods and frozen lake", 8),
-         (9, "The darkest evening of the year.", 9);
+         (9, "The darkest evening of the year.", 9),
+         (10, "", 10);
 
