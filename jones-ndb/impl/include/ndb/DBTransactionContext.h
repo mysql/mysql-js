@@ -23,7 +23,7 @@
 
 #include "ScanOperation.h"
 
-class DBSessionImpl;
+class SessionImpl;
 class DBOperationSet;
 
 /* DBTransactionContext takes the place of NdbTransaction, 
@@ -100,12 +100,12 @@ public:
   const NdbError & getNdbError();
 
 protected:  
-  friend class DBSessionImpl;
+  friend class SessionImpl;
   friend void setJsWrapper(DBTransactionContext *);
   friend class AsyncExecCall;
 
-  /* Protected constructor & destructor are used by DBSessionImpl */
-  DBTransactionContext(DBSessionImpl *);
+  /* Protected constructor & destructor are used by SessionImpl */
+  DBTransactionContext(SessionImpl *);
   ~DBTransactionContext();
   
   /* Reset state for next user.
@@ -120,7 +120,7 @@ private:
   v8::Persistent<v8::Value> jsWrapper;
   v8::Persistent<v8::Value> emptyOpSetWrapper;
   DBOperationSet *          emptyOpSet;  
-  DBSessionImpl * const     parent;
+  SessionImpl * const     parent;
   DBTransactionContext *    next;
   NdbTransaction *          ndbTransaction; 
   int                       tcNodeId;

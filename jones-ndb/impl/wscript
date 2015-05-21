@@ -41,8 +41,8 @@ def build(ctx):
   "src/ndb/ColumnHandler.cpp " +\
   "src/ndb/ValueObject.cpp " +\
   "src/ndb/EncoderCharset.cpp " +\
-  "src/ndb/DBSessionImpl.cpp " +\
-  "src/ndb/DBSessionImpl_wrapper.cpp " +\
+  "src/ndb/SessionImpl.cpp " +\
+  "src/ndb/SessionImpl_wrapper.cpp " +\
   "src/ndb/DBTransactionContext.cpp " +\
   "src/ndb/DBTransactionContext_wrapper.cpp " +\
   "src/ndb/DBOperationSet.cpp " +\

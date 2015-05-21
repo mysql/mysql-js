@@ -24,7 +24,7 @@
 #include "unified_debug.h"
 #include "AsyncNdbContext.h"
 #include "KeyOperation.h"
-#include "DBSessionImpl.h"
+#include "SessionImpl.h"
 #include "DBTransactionContext.h"
 
 
@@ -113,11 +113,11 @@ void CachedTransactionsAccountant::registerTxClosed(int64_t token, int nodeId) {
 
 //////////
 /////////////////
-///////////////////////// DBSessionImpl
+///////////////////////// SessionImpl
 /////////////////
 //////////
 
-DBSessionImpl::DBSessionImpl(Ndb_cluster_connection *conn, 
+SessionImpl::SessionImpl(Ndb_cluster_connection *conn, 
                              AsyncNdbContext * asyncNdbContext,
                              const char *defaultDatabase,
                              int maxTransactions) :
@@ -132,13 +132,13 @@ DBSessionImpl::DBSessionImpl(Ndb_cluster_connection *conn,
 }
 
 
-DBSessionImpl::~DBSessionImpl() {
+SessionImpl::~SessionImpl() {
   DEBUG_MARKER(UDEB_DETAIL);
   delete ndb;
 }
 
 
-DBTransactionContext * DBSessionImpl::seizeTransaction() {
+DBTransactionContext * SessionImpl::seizeTransaction() {
   DBTransactionContext * ctx;
   DEBUG_PRINT("FreeList: %p, nContexts: %d, maxNdbTransactions: %d",
               freeList, nContexts, maxNdbTransactions);
@@ -161,7 +161,7 @@ DBTransactionContext * DBSessionImpl::seizeTransaction() {
 }
 
 
-bool DBSessionImpl::releaseTransaction(DBTransactionContext *ctx) {
+bool SessionImpl::releaseTransaction(DBTransactionContext *ctx) {
   assert(ctx->parent == this);
   bool status = ctx->isClosed();
   DEBUG_PRINT("releaseTransaction status: %s", status ? "closed" : "open");
@@ -173,7 +173,7 @@ bool DBSessionImpl::releaseTransaction(DBTransactionContext *ctx) {
 }
 
 
-void DBSessionImpl::freeTransactions() {
+void SessionImpl::freeTransactions() {
   while(freeList) {
     DBTransactionContext * ctx = freeList;
     freeList = ctx->next;
@@ -181,7 +181,7 @@ void DBSessionImpl::freeTransactions() {
   }
 }
 
-const NdbError & DBSessionImpl::getNdbError() const {
+const NdbError & SessionImpl::getNdbError() const {
   return ndb->getNdbError();
 }
 

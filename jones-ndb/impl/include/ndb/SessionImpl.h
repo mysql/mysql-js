@@ -22,7 +22,7 @@
 #define NODEJS_ADAPTER_INCLUDE_DBSESSIONIMPL_H
 
 /* 
-  DBSessionImpl takes the place of Ndb. 
+  SessionImpl takes the place of Ndb. 
   It maintains an Ndb and a set of DBTransactionContext objects. 
 */ 
 
@@ -75,20 +75,20 @@ private:
 };
 
 
-class DBSessionImpl : public CachedTransactionsAccountant {
+class SessionImpl : public CachedTransactionsAccountant {
 public: 
 
   /* Constructor.
   */
-  DBSessionImpl(Ndb_cluster_connection *conn, 
+  SessionImpl(Ndb_cluster_connection *conn, 
                 AsyncNdbContext * asyncNdbContext,
                 const char *defaultDatabase,
                 int maxTransactions);
     
   /* Public destructor.
-     DBSessionImpl owns an Ndb object, which will be closed. 
+     SessionImpl owns an Ndb object, which will be closed. 
   */
-  ~DBSessionImpl();
+  ~SessionImpl();
   
   /* This replaces Ndb::startTransaction().
      Returns a DBTransactionContext, or null if none are available.

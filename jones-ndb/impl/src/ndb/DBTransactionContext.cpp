@@ -22,7 +22,7 @@
 
 #include "adapter_global.h"
 #include "AsyncNdbContext.h"
-#include "DBSessionImpl.h"
+#include "SessionImpl.h"
 #include "NdbWrappers.h"
 #include "DBTransactionContext.h"
 #include "DBOperationSet.h"
@@ -32,7 +32,7 @@ extern Persistent<Value> getWrappedObject(DBOperationSet *set);
 
 const char * modes[4] = { "Prepare ","NoCommit","Commit  ","Rollback" };
 
-DBTransactionContext::DBTransactionContext(DBSessionImpl *impl) :
+DBTransactionContext::DBTransactionContext(SessionImpl *impl) :
   token(0),
   parent(impl),
   next(0),

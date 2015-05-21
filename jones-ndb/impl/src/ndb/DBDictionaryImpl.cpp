@@ -27,7 +27,7 @@
 #include "NativeCFunctionCall.h"
 #include "js_wrapper_macros.h"
 #include "NdbWrappers.h"
-#include "DBSessionImpl.h"
+#include "SessionImpl.h"
 #include "EncoderCharset.h"
 
 using namespace v8;
@@ -75,7 +75,7 @@ Envelope * getNdbDictTableEnvelope() {
 /*** DBDictionary.listTables()
   **
    **/
-class ListTablesCall : public NativeCFunctionCall_2_<int, DBSessionImpl *, const char *> 
+class ListTablesCall : public NativeCFunctionCall_2_<int, SessionImpl *, const char *> 
 {
 private:
   Ndb * ndb;
@@ -85,7 +85,7 @@ private:
 public:
   /* Constructor */
   ListTablesCall(const Arguments &args) :
-    NativeCFunctionCall_2_<int, DBSessionImpl *, const char *>(NULL, args),
+    NativeCFunctionCall_2_<int, SessionImpl *, const char *>(NULL, args),
     list() 
   {
   }
@@ -138,7 +138,7 @@ void ListTablesCall::doAsyncCallback(Local<Object> ctx) {
 
 /* listTables() Method call
    ASYNC
-   arg0: DBSessionImpl *
+   arg0: SessionImpl *
    arg1: database name
    arg2: user_callback
 */
@@ -202,7 +202,7 @@ void DictionaryNameSplitter::splitName(const char * src) {
 /*** DBDictionary.getTable()
   **
    **/
-class GetTableCall : public NativeCFunctionCall_3_<int, DBSessionImpl *, 
+class GetTableCall : public NativeCFunctionCall_3_<int, SessionImpl *, 
                                                    const char *, const char *> 
 {
 private:
@@ -227,7 +227,7 @@ private:
 public:
   /* Constructor */
   GetTableCall(const Arguments &args) : 
-    NativeCFunctionCall_3_<int, DBSessionImpl *, const char *, const char *>(NULL, args),
+    NativeCFunctionCall_3_<int, SessionImpl *, const char *, const char *>(NULL, args),
     ndb_table(0), per_table_ndb(0), idx_list(), fk_list(), fk_count(0)
   {
     ndb = arg0->ndb; 

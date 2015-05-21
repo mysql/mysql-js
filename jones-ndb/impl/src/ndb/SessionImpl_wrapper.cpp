@@ -23,61 +23,61 @@
 #include "adapter_global.h"
 #include "js_wrapper_macros.h"
 #include "DBTransactionContext.h"
-#include "DBSessionImpl.h"
+#include "SessionImpl.h"
 #include "NativeCFunctionCall.h"
 #include "NativeMethodCall.h"
 
 using namespace v8;
 
-Handle<Value> newDBSessionImpl(const Arguments &);
+Handle<Value> newSessionImpl(const Arguments &);
 Handle<Value> seizeTransaction(const Arguments &);
 Handle<Value> releaseTransaction(const Arguments &);
 Handle<Value> freeTransactions(const Arguments &);
-Handle<Value> DBSessionImplDestructor(const Arguments &);
+Handle<Value> SessionImplDestructor(const Arguments &);
 
 
-class DBSessionImplEnvelopeClass : public Envelope {
+class SessionImplEnvelopeClass : public Envelope {
 public:
-  DBSessionImplEnvelopeClass() : Envelope("DBSessionImpl") {
+  SessionImplEnvelopeClass() : Envelope("SessionImpl") {
     DEFINE_JS_FUNCTION(Envelope::stencil, "seizeTransaction", seizeTransaction);
     DEFINE_JS_FUNCTION(Envelope::stencil, "releaseTransaction", releaseTransaction);
     DEFINE_JS_FUNCTION(Envelope::stencil, "freeTransactions", freeTransactions);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", DBSessionImplDestructor);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", SessionImplDestructor);
   }
 };
 
-DBSessionImplEnvelopeClass DBSessionImplEnvelope;
+SessionImplEnvelopeClass SessionImplEnvelope;
 
-Handle<Value> DBSessionImpl_Wrapper(DBSessionImpl *dbsi) {
+Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
   HandleScope scope;
 
   if(dbsi) {
-    Local<Object> jsobj = DBSessionImplEnvelope.newWrapper();
-    wrapPointerInObject(dbsi, DBSessionImplEnvelope, jsobj);
+    Local<Object> jsobj = SessionImplEnvelope.newWrapper();
+    wrapPointerInObject(dbsi, SessionImplEnvelope, jsobj);
     freeFromGC(dbsi, jsobj);
     return scope.Close(jsobj);
   }
   return Null();
 }
 
-DBSessionImpl * asyncNewDBSessionImpl(Ndb_cluster_connection *conn,
+SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
                                       AsyncNdbContext *ctx,
                                       const char *db, int maxTx) {
-  return new DBSessionImpl(conn, ctx, db, maxTx);
+  return new SessionImpl(conn, ctx, db, maxTx);
 }
 
 
-Handle<Value> newDBSessionImpl(const Arguments & args) {
+Handle<Value> newSessionImpl(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   HandleScope scope;
   
   PROHIBIT_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(5);
 
-  typedef NativeCFunctionCall_4_<DBSessionImpl *, Ndb_cluster_connection *,
+  typedef NativeCFunctionCall_4_<SessionImpl *, Ndb_cluster_connection *,
                                  AsyncNdbContext *, const char *, int> MCALL;
-  MCALL * mcallptr = new MCALL(& asyncNewDBSessionImpl, args);
-  mcallptr->wrapReturnValueAs(& DBSessionImplEnvelope);
+  MCALL * mcallptr = new MCALL(& asyncNewSessionImpl, args);
+  mcallptr->wrapReturnValueAs(& SessionImplEnvelope);
   mcallptr->runAsync();
   return Undefined();
 }
@@ -86,7 +86,7 @@ Handle<Value> newDBSessionImpl(const Arguments & args) {
    DBTransactionContext holds a reference to its own JS wrapper
 */   
 Handle<Value> seizeTransaction(const Arguments & args) {
-  DBSessionImpl * session = unwrapPointer<DBSessionImpl *>(args.Holder());
+  SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   DBTransactionContext * ctx = session->seizeTransaction();
   if(ctx) return ctx->getJsWrapper();
   return Null();
@@ -94,28 +94,28 @@ Handle<Value> seizeTransaction(const Arguments & args) {
 
 Handle<Value> releaseTransaction(const Arguments & args) {
   HandleScope scope;
-  typedef NativeMethodCall_1_<bool, DBSessionImpl, DBTransactionContext *> MCALL;
-  MCALL mcall(& DBSessionImpl::releaseTransaction, args);
+  typedef NativeMethodCall_1_<bool, SessionImpl, DBTransactionContext *> MCALL;
+  MCALL mcall(& SessionImpl::releaseTransaction, args);
   mcall.run();
   return scope.Close(mcall.jsReturnVal());
 }
 
 Handle<Value> freeTransactions(const Arguments & args) {
   HandleScope scope;
-  DBSessionImpl * session = unwrapPointer<DBSessionImpl *>(args.Holder());
+  SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
   return Undefined();
 }
 
-Handle<Value> DBSessionImplDestructor(const Arguments &args) {
+Handle<Value> SessionImplDestructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  typedef NativeDestructorCall<DBSessionImpl> DCALL;
+  typedef NativeDestructorCall<SessionImpl> DCALL;
   DCALL * dcall = new DCALL(args);
   dcall->runAsync();
   return Undefined();
 }
 
-void DBSessionImpl_initOnLoad(Handle<Object> target) {
+void SessionImpl_initOnLoad(Handle<Object> target) {
   HandleScope scope;
 
   Persistent<String> jsKey = Persistent<String>(String::NewSymbol("DBSession"));
@@ -123,7 +123,7 @@ void DBSessionImpl_initOnLoad(Handle<Object> target) {
 
   target->Set(jsKey, jsObj);
 
-  DEFINE_JS_FUNCTION(jsObj, "create", newDBSessionImpl);
+  DEFINE_JS_FUNCTION(jsObj, "create", newSessionImpl);
 }
 
 
