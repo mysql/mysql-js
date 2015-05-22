@@ -29,11 +29,11 @@
 
 /* There is no way to forward declare nested class NdbDictionary::Column,
  * so this header file must be included.*/
-// #include <NdbDictionary.hpp>
+#include <NdbDictionary.hpp>
 
 // Needed to get NdbQueryOptions::ScanOrdering.
-// #include "NdbQueryBuilder.hpp"
-// #include <NdbIndexScanOperation.hpp>
+#include "NdbQueryBuilder.hpp"
+#include <NdbIndexScanOperation.hpp>
 
 
 class Ndb;

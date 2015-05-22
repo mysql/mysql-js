@@ -436,7 +436,7 @@ public:
 
   const NdbQueryLookupOperationDef* readTuple(
                                 const NdbDictionary::Index*,          // Unique key lookup w/ index
-			        const NdbDictionary::Table*,
+                                const NdbDictionary::Table*,
                                 const NdbQueryOperand* const keys[],  // Terminated by NULL element
                                 const NdbQueryOptions* options = 0,
                                 const char* ident = 0);
@@ -448,7 +448,7 @@ public:
 
   const NdbQueryIndexScanOperationDef* scanIndex(
                                 const NdbDictionary::Index*, 
-	                        const NdbDictionary::Table*,
+                                const NdbDictionary::Table*,
                                 const NdbQueryIndexBound* bound = 0,
                                 const NdbQueryOptions* options = 0,
                                 const char* ident = 0);

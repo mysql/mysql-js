@@ -21,9 +21,11 @@
 #ifndef NODEJS_ADAPTER_INCLUDE_DBSESSIONIMPL_H
 #define NODEJS_ADAPTER_INCLUDE_DBSESSIONIMPL_H
 
+#include "ndb_util/NdbQueryBuilder.hpp"
+
 /* 
-  SessionImpl takes the place of Ndb. 
-  It maintains an Ndb and a set of TransactionImpl objects. 
+  SessionImpl maintains an Ndb and a set of TransactionImpl objects. 
+  
 */ 
 
 class TransactionImpl;
@@ -121,6 +123,7 @@ private:
   int maxNdbTransactions;
   int nContexts;
   Ndb *ndb;
+  NdbQueryBuilder * ndbQueryBuilder;
   AsyncNdbContext * asyncContext;
   TransactionImpl * freeList;
 };
