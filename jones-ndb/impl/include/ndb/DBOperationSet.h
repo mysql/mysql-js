@@ -22,13 +22,13 @@
 #define nodejs_adapter_DBOperationSet_h
 
 #include "KeyOperation.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 #include "BlobHandler.h"
 
 class DBOperationSet {
-friend class DBTransactionContext;
+friend class TransactionImpl;
 public:
-  DBOperationSet(DBTransactionContext *, int size);
+  DBOperationSet(TransactionImpl *, int size);
   ~DBOperationSet();
   void setError(int n, const NdbError &);
   const NdbError * getError(int n);
@@ -49,10 +49,10 @@ private:
   const NdbError ** const errors;
   int size;
   bool doesReadBlobs;
-  DBTransactionContext *txContext;
+  TransactionImpl *txContext;
 };
 
-inline DBOperationSet::DBOperationSet(DBTransactionContext * ctx, int _sz) :
+inline DBOperationSet::DBOperationSet(TransactionImpl * ctx, int _sz) :
   keyOperations(new KeyOperation[_sz]),
   ops(new const NdbOperation *[_sz]),
   errors(new const NdbError *[_sz]),

@@ -22,7 +22,7 @@
 
 #include "adapter_global.h"
 #include "js_wrapper_macros.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 #include "NativeMethodCall.h"
 #include "NdbWrapperErrors.h"
 
@@ -30,20 +30,20 @@ using namespace v8;
 
 Handle<Value> getEmptyOperationSet(const Arguments &);
 
-class DBTransactionContextEnvelopeClass : public Envelope {
+class TransactionImplEnvelopeClass : public Envelope {
 public:
-  DBTransactionContextEnvelopeClass() : Envelope("DBTransactionContext") {
+  TransactionImplEnvelopeClass() : Envelope("TransactionImpl") {
     DEFINE_JS_FUNCTION(Envelope::stencil, 
       "getEmptyOperationSet", getEmptyOperationSet);
   }
 };
 
-DBTransactionContextEnvelopeClass DBTransactionContextEnvelope;
+TransactionImplEnvelopeClass TransactionImplEnvelope;
 
-void setJsWrapper(DBTransactionContext *ctx) {
+void setJsWrapper(TransactionImpl *ctx) {
   HandleScope scope;
-  Local<Object> localObj = DBTransactionContextEnvelope.newWrapper();
-  wrapPointerInObject(ctx, DBTransactionContextEnvelope, localObj);
+  Local<Object> localObj = TransactionImplEnvelope.newWrapper();
+  wrapPointerInObject(ctx, TransactionImplEnvelope, localObj);
   ctx->jsWrapper = Persistent<Value>::New(localObj);
 }
 
@@ -51,7 +51,7 @@ void setJsWrapper(DBTransactionContext *ctx) {
 Handle<Value> getEmptyOperationSet(const Arguments &args) {
   HandleScope scope;
   DEBUG_MARKER(UDEB_DEBUG);
-  DBTransactionContext * ctx = unwrapPointer<DBTransactionContext *>(args.Holder());
+  TransactionImpl * ctx = unwrapPointer<TransactionImpl *>(args.Holder());
   return ctx->getWrappedEmptyOperationSet();
 }
 

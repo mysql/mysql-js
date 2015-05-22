@@ -25,7 +25,7 @@
 #include "NdbWrapperErrors.h"
 #include "NativeMethodCall.h"
 #include "ScanOperation.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 
 using namespace v8;
 
@@ -64,7 +64,7 @@ ScanOperation::ScanOperation(const Arguments &args) :
 
   const Local<Object> spec = args[0]->ToObject();
   opcode = args[1]->Int32Value();
-  ctx = unwrapPointer<DBTransactionContext *>(args[2]->ToObject());
+  ctx = unwrapPointer<TransactionImpl *>(args[2]->ToObject());
 
   lmode = NdbOperation::LM_CommittedRead;
   scan_options.scan_flags = 0;

@@ -23,16 +23,16 @@
 
 /* 
   SessionImpl takes the place of Ndb. 
-  It maintains an Ndb and a set of DBTransactionContext objects. 
+  It maintains an Ndb and a set of TransactionImpl objects. 
 */ 
 
-class DBTransactionContext;
+class TransactionImpl;
 class AsyncNdbContext;
 
 
 class CachedTransactionsAccountant {
 protected:
-  friend class DBTransactionContext;
+  friend class TransactionImpl;
   
   CachedTransactionsAccountant(Ndb_cluster_connection *, int maxTransactions);
   ~CachedTransactionsAccountant();
@@ -91,20 +91,20 @@ public:
   ~SessionImpl();
   
   /* This replaces Ndb::startTransaction().
-     Returns a DBTransactionContext, or null if none are available.
+     Returns a TransactionImpl, or null if none are available.
      If null, the caller should queue the request and retry it after
-     releasing a DBTransactionContext.
+     releasing a TransactionImpl.
   */
-  DBTransactionContext * seizeTransaction();
+  TransactionImpl * seizeTransaction();
 
   /* Release a previously seized transaction. 
      Returns 0 on success.
      Returns -1 if the transaction's current state does not allow it to be 
      released; the caller must execute (COMMIT or ROLLBACK) before releasing.
   */
-  bool releaseTransaction(DBTransactionContext *);
+  bool releaseTransaction(TransactionImpl *);
 
-  /* Free all DBTransactionContexts.
+  /* Free all TransactionImpls.
      This must be done in the main thread.
   */
   void freeTransactions();
@@ -114,7 +114,7 @@ public:
   const NdbError & getNdbError() const;
   
 private:  
-  friend class DBTransactionContext;
+  friend class TransactionImpl;
   friend class ListTablesCall;
   friend class GetTableCall;
 
@@ -122,7 +122,7 @@ private:
   int nContexts;
   Ndb *ndb;
   AsyncNdbContext * asyncContext;
-  DBTransactionContext * freeList;
+  TransactionImpl * freeList;
 };
 
 

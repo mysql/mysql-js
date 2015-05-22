@@ -22,7 +22,7 @@
 
 #include "adapter_global.h"
 #include "js_wrapper_macros.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 #include "SessionImpl.h"
 #include "NativeCFunctionCall.h"
 #include "NativeMethodCall.h"
@@ -83,18 +83,18 @@ Handle<Value> newSessionImpl(const Arguments & args) {
 }
 
 /* The seizeTransaction() wrapper is unusual because a 
-   DBTransactionContext holds a reference to its own JS wrapper
+   TransactionImpl holds a reference to its own JS wrapper
 */   
 Handle<Value> seizeTransaction(const Arguments & args) {
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
-  DBTransactionContext * ctx = session->seizeTransaction();
+  TransactionImpl * ctx = session->seizeTransaction();
   if(ctx) return ctx->getJsWrapper();
   return Null();
 }
 
 Handle<Value> releaseTransaction(const Arguments & args) {
   HandleScope scope;
-  typedef NativeMethodCall_1_<bool, SessionImpl, DBTransactionContext *> MCALL;
+  typedef NativeMethodCall_1_<bool, SessionImpl, TransactionImpl *> MCALL;
   MCALL mcall(& SessionImpl::releaseTransaction, args);
   mcall.run();
   return scope.Close(mcall.jsReturnVal());

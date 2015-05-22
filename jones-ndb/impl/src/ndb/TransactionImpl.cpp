@@ -24,15 +24,15 @@
 #include "AsyncNdbContext.h"
 #include "SessionImpl.h"
 #include "NdbWrappers.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 #include "DBOperationSet.h"
 
-extern void setJsWrapper(DBTransactionContext *);
+extern void setJsWrapper(TransactionImpl *);
 extern Persistent<Value> getWrappedObject(DBOperationSet *set);
 
 const char * modes[4] = { "Prepare ","NoCommit","Commit  ","Rollback" };
 
-DBTransactionContext::DBTransactionContext(SessionImpl *impl) :
+TransactionImpl::TransactionImpl(SessionImpl *impl) :
   token(0),
   parent(impl),
   next(0),
@@ -44,17 +44,17 @@ DBTransactionContext::DBTransactionContext(SessionImpl *impl) :
   emptyOpSetWrapper = getWrappedObject(emptyOpSet);
 }
 
-DBTransactionContext::~DBTransactionContext() {
+TransactionImpl::~TransactionImpl() {
   DEBUG_MARKER(UDEB_DETAIL);
   jsWrapper.Dispose();
 }
 
 
-const NdbError & DBTransactionContext::getNdbError() {
+const NdbError & TransactionImpl::getNdbError() {
   return ndbTransaction ? ndbTransaction->getNdbError() : parent->getNdbError();
 }
 
-bool DBTransactionContext::tryImmediateStartTransaction(KeyOperation * op) {
+bool TransactionImpl::tryImmediateStartTransaction(KeyOperation * op) {
   token = parent->registerIntentToOpen();
   if(token == -1) {
     startTransaction(op);
@@ -63,7 +63,7 @@ bool DBTransactionContext::tryImmediateStartTransaction(KeyOperation * op) {
   return false;
 }
 
-void DBTransactionContext::startTransaction(KeyOperation * op) {
+void TransactionImpl::startTransaction(KeyOperation * op) {
   assert(ndbTransaction == 0);
   bool startWithHint = (op && op->key_buffer && op->key_record->isPK()); 
 
@@ -81,7 +81,7 @@ void DBTransactionContext::startTransaction(KeyOperation * op) {
               startWithHint ? "[with hint]" : "[ no hint ]", tcNodeId);
 }
 
-int DBTransactionContext::prepareAndExecuteScan(ScanOperation *scan) {
+int TransactionImpl::prepareAndExecuteScan(ScanOperation *scan) {
   if(! ndbTransaction) {
     startTransaction(NULL);
   }
@@ -89,16 +89,16 @@ int DBTransactionContext::prepareAndExecuteScan(ScanOperation *scan) {
   return ndbTransaction->execute(NdbTransaction::NoCommit, NdbOperation::AO_IgnoreError, 1);
 }
 
-void DBTransactionContext::closeTransaction() {
+void TransactionImpl::closeTransaction() {
   ndbTransaction->close();
 }
 
-void DBTransactionContext::registerClose() {
+void TransactionImpl::registerClose() {
   ndbTransaction = 0;
   parent->registerTxClosed(token, tcNodeId);
 }
 
-int DBTransactionContext::execute(DBOperationSet *operations, 
+int TransactionImpl::execute(DBOperationSet *operations, 
                                   int _execType, int _abortOption, int force) {
   int rval;
   int opListSize = operations->size;
@@ -130,7 +130,7 @@ int DBTransactionContext::execute(DBOperationSet *operations,
   return rval;
 }
 
-int DBTransactionContext::executeAsynch(DBOperationSet *operations,  
+int TransactionImpl::executeAsynch(DBOperationSet *operations,  
                                         int execType, int abortOption, int forceSend, 
                                         v8::Persistent<v8::Function> callback) {
   assert(ndbTransaction);

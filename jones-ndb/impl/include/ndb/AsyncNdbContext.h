@@ -23,7 +23,7 @@
 #include "ndb_util/NdbWaitGroup.hpp"
 #include "SharedList.h"
 #include "ConcurrentFlag.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 
 /* V1 NdbWaitGroup must be created with a fixed maximum size.
    V2 NdbWaitGroup is created with an initial size and will grow as needed.
@@ -58,7 +58,7 @@ public:
   ~AsyncNdbContext();
   
   /* Methods */
-  int executeAsynch(DBTransactionContext *, NdbTransaction *,
+  int executeAsynch(TransactionImpl *, NdbTransaction *,
                     int execType, int abortOption, int forceSend,
                     v8::Persistent<v8::Function> execCompleteCallback);
 

@@ -23,7 +23,7 @@
 #include "NdbWrapperErrors.h"
 #include "AsyncNdbContext.h"
 #include "AsyncMethodCall.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 
 /* Thread starter, for pthread_create()
 */
@@ -49,7 +49,7 @@ public:
   AsyncExecCall(NdbTransaction *tx, v8::Persistent<v8::Function> jsCallback) :
     AsyncAsyncCall<int, NdbTransaction>(tx, jsCallback, 
       getNdbErrorIfLessThanZero<int, NdbTransaction>)                        {};
-  DBTransactionContext * closeContext;
+  TransactionImpl * closeContext;
   
   void closeTransaction() {
     if(closeContext) {
@@ -112,7 +112,7 @@ AsyncNdbContext::~AsyncNdbContext()
 /* This could run in a UV worker thread (JavaScript async execution)
    or possibly in the JavaScript thread (JavaScript sync execution)
 */
-int AsyncNdbContext::executeAsynch(DBTransactionContext *txc,
+int AsyncNdbContext::executeAsynch(TransactionImpl *txc,
                                    NdbTransaction *tx,
                                    int execType,
                                    int abortOption,

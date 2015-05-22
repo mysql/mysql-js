@@ -26,17 +26,17 @@
 class SessionImpl;
 class DBOperationSet;
 
-/* DBTransactionContext takes the place of NdbTransaction, 
+/* TransactionImpl takes the place of NdbTransaction, 
    allowing operations to be declared before an NdbTransaction is open, 
    and consolidating open, execute+commit, and close into a single async
    call.
 */
 
-class DBTransactionContext {
+class TransactionImpl {
 public:
 
   /* The object holds a persistent reference to the JavaScript object 
-     which serves as its wrapper.  This allows the DBTransactionContext 
+     which serves as its wrapper.  This allows the TransactionImpl 
      to be reused in JavaScript many times without creating a new wrapper
      each time.
   */
@@ -81,7 +81,7 @@ public:
   */
   void closeTransaction();  
 
-  /* Inform DBTransactionContext that NdbTransaction has been clsoed.
+  /* Inform TransactionImpl that NdbTransaction has been clsoed.
      This always happens in the JS main thread.
   */
   void registerClose();
@@ -101,12 +101,12 @@ public:
 
 protected:  
   friend class SessionImpl;
-  friend void setJsWrapper(DBTransactionContext *);
+  friend void setJsWrapper(TransactionImpl *);
   friend class AsyncExecCall;
 
   /* Protected constructor & destructor are used by SessionImpl */
-  DBTransactionContext(SessionImpl *);
-  ~DBTransactionContext();
+  TransactionImpl(SessionImpl *);
+  ~TransactionImpl();
   
   /* Reset state for next user.
      Returns true on success. 
@@ -121,20 +121,20 @@ private:
   v8::Persistent<v8::Value> emptyOpSetWrapper;
   DBOperationSet *          emptyOpSet;  
   SessionImpl * const     parent;
-  DBTransactionContext *    next;
+  TransactionImpl *    next;
   NdbTransaction *          ndbTransaction; 
   int                       tcNodeId;
 };
 
-inline v8::Handle<v8::Value> DBTransactionContext::getJsWrapper() const {
+inline v8::Handle<v8::Value> TransactionImpl::getJsWrapper() const {
   return jsWrapper;
 }
 
-inline v8::Handle<v8::Value> DBTransactionContext::getWrappedEmptyOperationSet() const {
+inline v8::Handle<v8::Value> TransactionImpl::getWrappedEmptyOperationSet() const {
   return emptyOpSetWrapper;
 }
 
-inline bool DBTransactionContext::isClosed() const {
+inline bool TransactionImpl::isClosed() const {
   return ! (bool) ndbTransaction;
 }
 

@@ -67,8 +67,8 @@ set(ADAPTER_SOURCE_FILES
   Adapter/impl/ndb/src/DBOperationSet.cpp
   Adapter/impl/ndb/src/SessionImpl_wrapper.cpp
   Adapter/impl/ndb/src/SessionImpl.cpp
-  Adapter/impl/ndb/src/DBTransactionContext_wrapper.cpp
-  Adapter/impl/ndb/src/DBTransactionContext.cpp
+  Adapter/impl/ndb/src/TransactionImpl_wrapper.cpp
+  Adapter/impl/ndb/src/TransactionImpl.cpp
   Adapter/impl/ndb/src/EncoderCharset.cpp
   Adapter/impl/ndb/src/IndexBoundHelper.cpp
   Adapter/impl/ndb/src/KeyOperation.cpp  

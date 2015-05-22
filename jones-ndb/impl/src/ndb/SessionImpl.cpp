@@ -25,7 +25,7 @@
 #include "AsyncNdbContext.h"
 #include "KeyOperation.h"
 #include "SessionImpl.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 
 
 //////////
@@ -138,8 +138,8 @@ SessionImpl::~SessionImpl() {
 }
 
 
-DBTransactionContext * SessionImpl::seizeTransaction() {
-  DBTransactionContext * ctx;
+TransactionImpl * SessionImpl::seizeTransaction() {
+  TransactionImpl * ctx;
   DEBUG_PRINT("FreeList: %p, nContexts: %d, maxNdbTransactions: %d",
               freeList, nContexts, maxNdbTransactions);
   
@@ -152,7 +152,7 @@ DBTransactionContext * SessionImpl::seizeTransaction() {
 
   /* Can we produce a new context? */
   if(nContexts < maxNdbTransactions) {
-    ctx = new DBTransactionContext(this);
+    ctx = new TransactionImpl(this);
     nContexts++;
     return ctx;  
   }
@@ -161,7 +161,7 @@ DBTransactionContext * SessionImpl::seizeTransaction() {
 }
 
 
-bool SessionImpl::releaseTransaction(DBTransactionContext *ctx) {
+bool SessionImpl::releaseTransaction(TransactionImpl *ctx) {
   assert(ctx->parent == this);
   bool status = ctx->isClosed();
   DEBUG_PRINT("releaseTransaction status: %s", status ? "closed" : "open");
@@ -175,7 +175,7 @@ bool SessionImpl::releaseTransaction(DBTransactionContext *ctx) {
 
 void SessionImpl::freeTransactions() {
   while(freeList) {
-    DBTransactionContext * ctx = freeList;
+    TransactionImpl * ctx = freeList;
     freeList = ctx->next;
     delete ctx;
   }

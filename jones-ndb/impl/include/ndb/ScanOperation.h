@@ -42,7 +42,7 @@ enum {
 
 #include "KeyOperation.h"
 
-class  DBTransactionContext;
+class  TransactionImpl;
 
 class ScanOperation : public KeyOperation {
 public:
@@ -66,7 +66,7 @@ public:
   void close();
   
 protected:
-  friend class DBTransactionContext;
+  friend class TransactionImpl;
 
   void prepareScan(NdbTransaction *);
   NdbScanOperation *scanTable(NdbTransaction *tx);
@@ -75,7 +75,7 @@ protected:
   const NdbOperation *deleteCurrentTuple(NdbScanOperation *, NdbTransaction *);
 
 private:
-  DBTransactionContext *ctx;
+  TransactionImpl *ctx;
   NdbScanOperation * scan_op;
   NdbIndexScanOperation * index_scan_op;
   NdbIndexScanOperation::IndexBound **bounds;

@@ -29,7 +29,7 @@
 #include "v8_binder.h"
 #include "js_wrapper_macros.h"
 #include "NdbRecordObject.h"
-#include "DBTransactionContext.h"
+#include "TransactionImpl.h"
 #include "BlobHandler.h"
 
 enum {
@@ -55,7 +55,7 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op);
 /* DBOperationHelper takes an array of HelperSpecs.
    arg0: Length of Array
    arg1: Array of HelperSpecs
-   arg2: DBTransactionContext *
+   arg2: TransactionImpl *
    arg3: Old DBOperationSet wrapper (for recycling)
 
    Returns: DBOperationSet
@@ -65,7 +65,7 @@ Handle<Value> DBOperationHelper(const Arguments &args) {
 
   int length = args[0]->Int32Value();
   const Local<Object> array = args[1]->ToObject();
-  DBTransactionContext *txc = unwrapPointer<DBTransactionContext *>(args[2]->ToObject());
+  TransactionImpl *txc = unwrapPointer<TransactionImpl *>(args[2]->ToObject());
   Handle<Value> oldWrapper = args[3];
 
   DBOperationSet * pendingOps = new DBOperationSet(txc, length);

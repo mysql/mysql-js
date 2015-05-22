@@ -173,7 +173,7 @@ function onExecute(dbTxHandler, execMode, err, execId, userCallback) {
                 "success:", dbTxHandler.success);
   }
 
-  // If we just executed with Commit or Rollback, release DBTransactionContext.
+  // If we just executed with Commit or Rollback, release TransactionImpl.
   if(execMode !== NOCOMMIT) {
     dbTxHandler.dbSession.releaseTransactionContext(dbTxHandler.impl);
     dbTxHandler.impl = null;
@@ -344,7 +344,7 @@ function executeNonScan(self, execMode, abortFlag, dbOperationList, callback) {
 
 
 /* Internal execute()
-   Fetch a DBTransactionContext, then call executeScan() or executeNonScan()
+   Fetch a TransactionImpl, then call executeScan() or executeNonScan()
 */ 
 function execute(self, execMode, abortFlag, dbOperationList, callback) {
   udebug.log("internal execute");
@@ -361,7 +361,7 @@ function execute(self, execMode, abortFlag, dbOperationList, callback) {
   // seizeTransactionContext has not yet returned.
   if(self.sentSeizeImpl) {
     executeSpecific();
-  } else {                           // seize a DBTransactionContext 
+  } else {                           // seize a TransactionImpl 
     self.sentSeizeImpl = true;
     self.dbSession.seizeTransactionContext(function onContext(impl) {
       self.impl = impl;
@@ -426,7 +426,7 @@ DBTransactionHandler.prototype.commit = function commit(userCallback) {
   if(this.impl) {
     executeNoOperations(this, COMMIT, userCallback);
   } else {
-    udebug.log("commit STUB COMMIT (no DBTransactionContext)");
+    udebug.log("commit STUB COMMIT (no TransactionImpl)");
     userCallback(null, this);
   }
 };
@@ -447,7 +447,7 @@ DBTransactionHandler.prototype.rollback = function rollback(userCallback) {
   if(this.impl) {
     executeNoOperations(this, ROLLBACK, userCallback);
   } else {
-    udebug.log("rollback STUB ROLLBACK (no DBTransactionContext)");
+    udebug.log("rollback STUB ROLLBACK (no TransactionImpl)");
     userCallback(null, this);
   }
 };
