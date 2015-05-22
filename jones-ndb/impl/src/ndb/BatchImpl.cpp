@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -27,12 +27,24 @@
 #include "NdbWrappers.h"
 #include "BatchImpl.h"
 
+
+BatchImpl::BatchImpl(TransactionImpl * ctx, int _sz) :
+  keyOperations(new KeyOperation[_sz]),
+  ops(new const NdbOperation *[_sz]),
+  errors(new const NdbError *[_sz]),
+  size(_sz),
+  doesReadBlobs(false),
+  transactionImpl(ctx)
+{};
+
+
 BatchImpl::~BatchImpl() {
   DEBUG_PRINT("BatchImpl destructor [size %d]", size);
   delete[] keyOperations;
   delete[] ops;
   delete[] errors;
 }
+
 
 void BatchImpl::prepare(NdbTransaction *ndbtx) {
   for(int i = 0 ; i < size ; i++) {
@@ -51,11 +63,12 @@ void BatchImpl::prepare(NdbTransaction *ndbtx) {
   }
 }
 
+
 bool BatchImpl::tryImmediateStartTransaction() {
   if(doesReadBlobs) {
     return false;
   }
-  return txContext->tryImmediateStartTransaction(& keyOperations[0]);
+  return transactionImpl->tryImmediateStartTransaction(& keyOperations[0]);
 }
 
 

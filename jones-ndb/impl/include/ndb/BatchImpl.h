@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -49,16 +49,8 @@ private:
   const NdbError ** const errors;
   int size;
   bool doesReadBlobs;
-  TransactionImpl *txContext;
+  TransactionImpl *transactionImpl;
 };
-
-inline BatchImpl::BatchImpl(TransactionImpl * ctx, int _sz) :
-  keyOperations(new KeyOperation[_sz]),
-  ops(new const NdbOperation *[_sz]),
-  errors(new const NdbError *[_sz]),
-  size(_sz),
-  doesReadBlobs(false),
-  txContext(ctx)                        {};
 
 inline void BatchImpl::setError(int n, const NdbError & err) {
   errors[n] = & err;
@@ -77,20 +69,20 @@ inline KeyOperation * BatchImpl::getKeyOperation(int n) {
 }
 
 inline int BatchImpl::execute(int execType, int abortOption, int forceSend) {
-  return txContext->execute(this, execType, abortOption, forceSend);
+  return transactionImpl->execute(this, execType, abortOption, forceSend);
 }
 
 inline int BatchImpl::executeAsynch(int execType, int abortOption, int forceSend,
                                    v8::Persistent<v8::Function> callback) {
-  return txContext->executeAsynch(this, execType, abortOption, forceSend, callback);
+  return transactionImpl->executeAsynch(this, execType, abortOption, forceSend, callback);
 }
 
 inline const NdbError & BatchImpl::getNdbError() {
-  return txContext->getNdbError();
+  return transactionImpl->getNdbError();
 }
 
 inline void BatchImpl::registerClosedTransaction() {
-  txContext->registerClose();
+  transactionImpl->registerClose();
 }
 
 inline BlobHandler * BatchImpl::getBlobHandler(int n) {
