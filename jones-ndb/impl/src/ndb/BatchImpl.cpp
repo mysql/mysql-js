@@ -25,16 +25,16 @@
 #include "js_wrapper_macros.h"
 #include "Record.h"
 #include "NdbWrappers.h"
-#include "DBOperationSet.h"
+#include "BatchImpl.h"
 
-DBOperationSet::~DBOperationSet() {
-  DEBUG_PRINT("DBOperationSet destructor [size %d]", size);
+BatchImpl::~BatchImpl() {
+  DEBUG_PRINT("BatchImpl destructor [size %d]", size);
   delete[] keyOperations;
   delete[] ops;
   delete[] errors;
 }
 
-void DBOperationSet::prepare(NdbTransaction *ndbtx) {
+void BatchImpl::prepare(NdbTransaction *ndbtx) {
   for(int i = 0 ; i < size ; i++) {
     if(keyOperations[i].opcode > 0) {
       const NdbOperation *op = keyOperations[i].prepare(ndbtx);
@@ -51,7 +51,7 @@ void DBOperationSet::prepare(NdbTransaction *ndbtx) {
   }
 }
 
-bool DBOperationSet::tryImmediateStartTransaction() {
+bool BatchImpl::tryImmediateStartTransaction() {
   if(doesReadBlobs) {
     return false;
   }

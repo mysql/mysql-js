@@ -18,18 +18,18 @@
  02110-1301  USA
 */
 
-#ifndef nodejs_adapter_DBOperationSet_h
-#define nodejs_adapter_DBOperationSet_h
+#ifndef nodejs_adapter_BatchImpl_h
+#define nodejs_adapter_BatchImpl_h
 
 #include "KeyOperation.h"
 #include "TransactionImpl.h"
 #include "BlobHandler.h"
 
-class DBOperationSet {
+class BatchImpl {
 friend class TransactionImpl;
 public:
-  DBOperationSet(TransactionImpl *, int size);
-  ~DBOperationSet();
+  BatchImpl(TransactionImpl *, int size);
+  ~BatchImpl();
   void setError(int n, const NdbError &);
   const NdbError * getError(int n);
   KeyOperation * getKeyOperation(int n);
@@ -52,7 +52,7 @@ private:
   TransactionImpl *txContext;
 };
 
-inline DBOperationSet::DBOperationSet(TransactionImpl * ctx, int _sz) :
+inline BatchImpl::BatchImpl(TransactionImpl * ctx, int _sz) :
   keyOperations(new KeyOperation[_sz]),
   ops(new const NdbOperation *[_sz]),
   errors(new const NdbError *[_sz]),
@@ -60,44 +60,44 @@ inline DBOperationSet::DBOperationSet(TransactionImpl * ctx, int _sz) :
   doesReadBlobs(false),
   txContext(ctx)                        {};
 
-inline void DBOperationSet::setError(int n, const NdbError & err) {
+inline void BatchImpl::setError(int n, const NdbError & err) {
   errors[n] = & err;
   ops[n] = NULL;
 }
 
-inline const NdbError * DBOperationSet::getError(int n) {
+inline const NdbError * BatchImpl::getError(int n) {
   if(size > n) {
     return (ops[n] ? & ops[n]->getNdbError() : errors[n]);
   }
   return 0;
 }
 
-inline KeyOperation * DBOperationSet::getKeyOperation(int n) {
+inline KeyOperation * BatchImpl::getKeyOperation(int n) {
   return & keyOperations[n];
 }
 
-inline int DBOperationSet::execute(int execType, int abortOption, int forceSend) {
+inline int BatchImpl::execute(int execType, int abortOption, int forceSend) {
   return txContext->execute(this, execType, abortOption, forceSend);
 }
 
-inline int DBOperationSet::executeAsynch(int execType, int abortOption, int forceSend,
+inline int BatchImpl::executeAsynch(int execType, int abortOption, int forceSend,
                                    v8::Persistent<v8::Function> callback) {
   return txContext->executeAsynch(this, execType, abortOption, forceSend, callback);
 }
 
-inline const NdbError & DBOperationSet::getNdbError() {
+inline const NdbError & BatchImpl::getNdbError() {
   return txContext->getNdbError();
 }
 
-inline void DBOperationSet::registerClosedTransaction() {
+inline void BatchImpl::registerClosedTransaction() {
   txContext->registerClose();
 }
 
-inline BlobHandler * DBOperationSet::getBlobHandler(int n) {
+inline BlobHandler * BatchImpl::getBlobHandler(int n) {
   return keyOperations[n].blobHandler;
 }
 
-inline bool DBOperationSet::hasBlobReadOperations() {
+inline bool BatchImpl::hasBlobReadOperations() {
   return doesReadBlobs;
 }
 

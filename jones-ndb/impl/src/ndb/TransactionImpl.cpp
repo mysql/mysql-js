@@ -25,10 +25,10 @@
 #include "SessionImpl.h"
 #include "NdbWrappers.h"
 #include "TransactionImpl.h"
-#include "DBOperationSet.h"
+#include "BatchImpl.h"
 
 extern void setJsWrapper(TransactionImpl *);
-extern Persistent<Value> getWrappedObject(DBOperationSet *set);
+extern Persistent<Value> getWrappedObject(BatchImpl *set);
 
 const char * modes[4] = { "Prepare ","NoCommit","Commit  ","Rollback" };
 
@@ -40,7 +40,7 @@ TransactionImpl::TransactionImpl(SessionImpl *impl) :
   tcNodeId(0)
 {
   setJsWrapper(this);
-  emptyOpSet = new DBOperationSet(this, 0);
+  emptyOpSet = new BatchImpl(this, 0);
   emptyOpSetWrapper = getWrappedObject(emptyOpSet);
 }
 
@@ -98,7 +98,7 @@ void TransactionImpl::registerClose() {
   parent->registerTxClosed(token, tcNodeId);
 }
 
-int TransactionImpl::execute(DBOperationSet *operations, 
+int TransactionImpl::execute(BatchImpl *operations, 
                                   int _execType, int _abortOption, int force) {
   int rval;
   int opListSize = operations->size;
@@ -130,7 +130,7 @@ int TransactionImpl::execute(DBOperationSet *operations,
   return rval;
 }
 
-int TransactionImpl::executeAsynch(DBOperationSet *operations,  
+int TransactionImpl::executeAsynch(BatchImpl *operations,  
                                         int execType, int abortOption, int forceSend, 
                                         v8::Persistent<v8::Function> callback) {
   assert(ndbTransaction);

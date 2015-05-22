@@ -25,7 +25,7 @@
 #include "js_wrapper_macros.h"
 #include "Record.h"
 #include "NdbWrappers.h"
-#include "DBOperationSet.h"
+#include "BatchImpl.h"
 #include "NativeMethodCall.h"
 #include "NdbWrapperErrors.h"
 
@@ -36,50 +36,50 @@ Handle<Value> tryImmediateStartTransaction(const Arguments &);
 Handle<Value> execute(const Arguments &);
 Handle<Value> executeAsynch(const Arguments &);
 Handle<Value> readBlobResults(const Arguments &);
-Handle<Value> DBOperationSet_freeImpl(const Arguments &);
+Handle<Value> BatchImpl_freeImpl(const Arguments &);
 
-class DBOperationSetEnvelopeClass : public Envelope {
+class BatchImplEnvelopeClass : public Envelope {
 public:
-  DBOperationSetEnvelopeClass() : Envelope("DBOperationSet") {
+  BatchImplEnvelopeClass() : Envelope("BatchImpl") {
     DEFINE_JS_FUNCTION(Envelope::stencil, 
       "tryImmediateStartTransaction", tryImmediateStartTransaction);
     DEFINE_JS_FUNCTION(Envelope::stencil, "getOperationError", getOperationError);
     DEFINE_JS_FUNCTION(Envelope::stencil, "execute", execute);
     DEFINE_JS_FUNCTION(Envelope::stencil, "executeAsynch", executeAsynch);
     DEFINE_JS_FUNCTION(Envelope::stencil, "readBlobResults", readBlobResults);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "free", DBOperationSet_freeImpl);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "free", BatchImpl_freeImpl);
   }
 };
 
-DBOperationSetEnvelopeClass DBOperationSetEnvelope;
+BatchImplEnvelopeClass BatchImplEnvelope;
 
-Handle<Value> DBOperationSet_Wrapper(DBOperationSet *set) {
-  DEBUG_PRINT("DBOperationSet wrapper");
+Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
+  DEBUG_PRINT("BatchImpl wrapper");
   HandleScope scope;
 
   if(set) {
-    Local<Object> jsobj = DBOperationSetEnvelope.newWrapper();
-    wrapPointerInObject(set, DBOperationSetEnvelope, jsobj);
+    Local<Object> jsobj = BatchImplEnvelope.newWrapper();
+    wrapPointerInObject(set, BatchImplEnvelope, jsobj);
     freeFromGC(set, jsobj);
     return scope.Close(jsobj);
   }
   return Null();
 }
 
-Handle<Value> DBOperationSet_Recycle(Handle<Object> oldWrapper, 
-                                     DBOperationSet * newSet) {
-  DEBUG_PRINT("DBOperationSet *Recycle*");
+Handle<Value> BatchImpl_Recycle(Handle<Object> oldWrapper, 
+                                     BatchImpl * newSet) {
+  DEBUG_PRINT("BatchImpl *Recycle*");
   assert(newSet);
-  DBOperationSet * oldSet = unwrapPointer<DBOperationSet *>(oldWrapper);
+  BatchImpl * oldSet = unwrapPointer<BatchImpl *>(oldWrapper);
   assert(oldSet == 0);
-  wrapPointerInObject(newSet, DBOperationSetEnvelope, oldWrapper);
+  wrapPointerInObject(newSet, BatchImplEnvelope, oldWrapper);
   return oldWrapper;
 }
 
-Persistent<Value> getWrappedObject(DBOperationSet *set) {
+Persistent<Value> getWrappedObject(BatchImpl *set) {
   HandleScope scope;
-  Local<Object> localObj = DBOperationSetEnvelope.newWrapper();
-  wrapPointerInObject(set, DBOperationSetEnvelope, localObj);
+  Local<Object> localObj = BatchImplEnvelope.newWrapper();
+  wrapPointerInObject(set, BatchImplEnvelope, localObj);
   return Persistent<Value>::New(localObj);
 }
 
@@ -87,7 +87,7 @@ Handle<Value> getOperationError(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   HandleScope scope;
 
-  DBOperationSet * set = unwrapPointer<DBOperationSet *>(args.Holder());
+  BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
 
   const NdbError * err = set->getError(n);
@@ -99,7 +99,7 @@ Handle<Value> getOperationError(const Arguments & args) {
 
 Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
   HandleScope scope;
-  DBOperationSet * ctx = unwrapPointer<DBOperationSet *>(args.Holder());
+  BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
   return ctx->tryImmediateStartTransaction() ? True() : False();
 }
 
@@ -108,17 +108,17 @@ Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
 /* ASYNC.
 */
 /* Execute NdbTransaction.
-   DBOperationSet will close the transaction if exectype is not NoCommit;
+   BatchImpl will close the transaction if exectype is not NoCommit;
    in this case, an extra call is made in the js main thread to register the
    transaction as closed.
 */
 class TxExecuteAndCloseCall : 
-  public NativeMethodCall_3_<int, DBOperationSet, int, int, int> {
+  public NativeMethodCall_3_<int, BatchImpl, int, int, int> {
 public:
   /* Constructor */
   TxExecuteAndCloseCall(const Arguments &args) : 
-    NativeMethodCall_3_<int, DBOperationSet, int, int, int>(
-      & DBOperationSet::execute, args) 
+    NativeMethodCall_3_<int, BatchImpl, int, int, int>(
+      & BatchImpl::execute, args) 
   {
     errorHandler = getNdbErrorIfLessThanZero;
   }
@@ -129,7 +129,7 @@ void TxExecuteAndCloseCall::doAsyncCallback(Local<Object> context) {
   if(arg0 != NdbTransaction::NoCommit) {
     native_obj->registerClosedTransaction();
   }
-  NativeMethodCall_3_<int, DBOperationSet, int, int, int>::doAsyncCallback(context);
+  NativeMethodCall_3_<int, BatchImpl, int, int, int>::doAsyncCallback(context);
 }
 
 Handle<Value> execute(const Arguments &args) {
@@ -149,9 +149,9 @@ Handle<Value> executeAsynch(const Arguments &args) {
      Persistent<Function> from a Local<Value>, but is there 
      actually a chain of destructors that will call Dispose() on it? 
   */  
-  typedef NativeMethodCall_4_<int, DBOperationSet, 
+  typedef NativeMethodCall_4_<int, BatchImpl, 
                               int, int, int, Persistent<Function> > MCALL;
-  MCALL mcall(& DBOperationSet::executeAsynch, args);
+  MCALL mcall(& BatchImpl::executeAsynch, args);
   mcall.run();
   return scope.Close(mcall.jsReturnVal());
 }
@@ -159,18 +159,18 @@ Handle<Value> executeAsynch(const Arguments &args) {
 
 Handle<Value> readBlobResults(const Arguments &args) {
   HandleScope scope;
-  DBOperationSet * set = unwrapPointer<DBOperationSet *>(args.Holder());
+  BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
   return set->getKeyOperation(n)->readBlobResults();
 }
 
 
-Handle<Value> DBOperationSet_freeImpl(const Arguments &args) {
+Handle<Value> BatchImpl_freeImpl(const Arguments &args) {
   HandleScope scope;
-  DBOperationSet * set = unwrapPointer<DBOperationSet *>(args.Holder());
+  BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   delete set;
   set = 0;
-  wrapPointerInObject(set, DBOperationSetEnvelope, args.Holder());
+  wrapPointerInObject(set, BatchImplEnvelope, args.Holder());
   return Undefined();
 }
 

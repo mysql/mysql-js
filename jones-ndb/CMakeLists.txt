@@ -63,8 +63,8 @@ set(ADAPTER_SOURCE_FILES
   Adapter/impl/ndb/src/ColumnProxy.cpp
   Adapter/impl/ndb/src/DBDictionaryImpl.cpp
   Adapter/impl/ndb/src/DBOperationHelper.cpp
-  Adapter/impl/ndb/src/DBOperationSet_wrapper.cpp
-  Adapter/impl/ndb/src/DBOperationSet.cpp
+  Adapter/impl/ndb/src/BatchImpl_wrapper.cpp
+  Adapter/impl/ndb/src/BatchImpl.cpp
   Adapter/impl/ndb/src/SessionImpl_wrapper.cpp
   Adapter/impl/ndb/src/SessionImpl.cpp
   Adapter/impl/ndb/src/TransactionImpl_wrapper.cpp

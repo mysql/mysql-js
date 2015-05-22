@@ -24,7 +24,7 @@
 #include "ScanOperation.h"
 
 class SessionImpl;
-class DBOperationSet;
+class BatchImpl;
 
 /* TransactionImpl takes the place of NdbTransaction, 
    allowing operations to be declared before an NdbTransaction is open, 
@@ -66,14 +66,14 @@ public:
      The JavaScript wrapper for this function is Async.
      execute() runs in a uv worker thread.
   */
-  int execute(DBOperationSet *operations,
+  int execute(BatchImpl *operations,
               int execType, int abortOption, int forceSend);
 
   /* Execute transaction and key-operations using asynchronous NDB API.
      This runs immediately.  The transaction must have already been started.     
      executeAsynch() runs in the JS main thread.     
   */
-  int executeAsynch(DBOperationSet *operations,
+  int executeAsynch(BatchImpl *operations,
                     int execType, int abortOption, int forceSend,
                     v8::Persistent<v8::Function> execCompleteCallback);
 
@@ -86,7 +86,7 @@ public:
   */
   void registerClose();
 
-  /* Fetch an empty DBOperationSet that can be used for stand-alone 
+  /* Fetch an empty BatchImpl that can be used for stand-alone 
      COMMIT and ROLLBACK calls.
   */
   v8::Handle<v8::Value> getWrappedEmptyOperationSet() const;
@@ -119,7 +119,7 @@ private:
   int64_t                   token;
   v8::Persistent<v8::Value> jsWrapper;
   v8::Persistent<v8::Value> emptyOpSetWrapper;
-  DBOperationSet *          emptyOpSet;  
+  BatchImpl *          emptyOpSet;  
   SessionImpl * const     parent;
   TransactionImpl *    next;
   NdbTransaction *          ndbTransaction; 

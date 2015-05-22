@@ -45,8 +45,8 @@ def build(ctx):
   "src/ndb/SessionImpl_wrapper.cpp " +\
   "src/ndb/TransactionImpl.cpp " +\
   "src/ndb/TransactionImpl_wrapper.cpp " +\
-  "src/ndb/DBOperationSet.cpp " +\
-  "src/ndb/DBOperationSet_wrapper.cpp " +\
+  "src/ndb/BatchImpl.cpp " +\
+  "src/ndb/BatchImpl_wrapper.cpp " +\
   "src/ndb/ScanOperation.cpp " +\
   "src/ndb/ScanOperation_wrapper.cpp " +\
   "src/ndb/BlobHandler.cpp " +\

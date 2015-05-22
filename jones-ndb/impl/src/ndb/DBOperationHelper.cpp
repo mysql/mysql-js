@@ -24,7 +24,7 @@
 
 #include "adapter_global.h"
 #include "KeyOperation.h"
-#include "DBOperationSet.h"
+#include "BatchImpl.h"
 #include "NdbWrappers.h"
 #include "v8_binder.h"
 #include "js_wrapper_macros.h"
@@ -56,9 +56,9 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op);
    arg0: Length of Array
    arg1: Array of HelperSpecs
    arg2: TransactionImpl *
-   arg3: Old DBOperationSet wrapper (for recycling)
+   arg3: Old BatchImpl wrapper (for recycling)
 
-   Returns: DBOperationSet
+   Returns: BatchImpl
 */
 Handle<Value> DBOperationHelper(const Arguments &args) {
   HandleScope scope;
@@ -68,7 +68,7 @@ Handle<Value> DBOperationHelper(const Arguments &args) {
   TransactionImpl *txc = unwrapPointer<TransactionImpl *>(args[2]->ToObject());
   Handle<Value> oldWrapper = args[3];
 
-  DBOperationSet * pendingOps = new DBOperationSet(txc, length);
+  BatchImpl * pendingOps = new BatchImpl(txc, length);
 
   for(int i = 0 ; i < length ; i++) {
     Handle<Object> spec = array->Get(i)->ToObject();
@@ -87,9 +87,9 @@ Handle<Value> DBOperationHelper(const Arguments &args) {
   }
   
   if(oldWrapper->IsObject()) {
-    return DBOperationSet_Recycle(oldWrapper->ToObject(), pendingOps);
+    return BatchImpl_Recycle(oldWrapper->ToObject(), pendingOps);
   } else {
-    return DBOperationSet_Wrapper(pendingOps);
+    return BatchImpl_Wrapper(pendingOps);
   }
 }
 

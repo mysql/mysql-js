@@ -24,14 +24,14 @@
 #include "Record.h"
 #include "JsWrapper.h"
 
-class DBOperationSet;
+class BatchImpl;
 
 Handle<Value> Record_Wrapper(const Record *);
 Handle<Value> Ndb_Wrapper(Ndb *);
 Handle<Value> NdbError_Wrapper(const NdbError &);
 Handle<Value> NdbScanOperation_Wrapper(NdbScanOperation *);
-Handle<Value> DBOperationSet_Wrapper(DBOperationSet *);
-Handle<Value> DBOperationSet_Recycle(Handle<Object>, DBOperationSet *);
+Handle<Value> BatchImpl_Wrapper(BatchImpl *);
+Handle<Value> BatchImpl_Recycle(Handle<Object>, BatchImpl *);
 
 /* Not actual wrapper functions, but functions that provide an envelope */
 
