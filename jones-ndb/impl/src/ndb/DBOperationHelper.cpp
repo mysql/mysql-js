@@ -119,7 +119,6 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
 
   Local<Value> v;
   Local<Object> o;
-  int nblobs = 0;
 
   setKeysInOp(spec, op);
   
@@ -138,9 +137,9 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
     v = spec->Get(HELPER_BLOBS);
     if(v->IsObject()) {
       if(op.opcode == 1) {
-        nblobs = op.createBlobReadHandles(record);
+        op.nblobs = op.createBlobReadHandles(record);
       } else {
-        nblobs = op.createBlobWriteHandles(v->ToObject(), record);
+        op.nblobs = op.createBlobWriteHandles(v->ToObject(), record);
       }
     }
   }
@@ -161,7 +160,7 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
   }
 
   DEBUG_PRINT("Non-VO %s -- mask: %u lobs: %d", op.getOperationName(), 
-              op.u.maskvalue, nblobs);
+              op.u.maskvalue, op.nblobs);
 }
 
 
@@ -194,10 +193,10 @@ void DBOperationHelper_VO(Handle<Object> spec,  KeyOperation & op) {
   else 
     op.setRowMask(nro->getMaskValue());
 
-  int nblobs = nro->createBlobWriteHandles(op);
+  op.nblobs = nro->createBlobWriteHandles(op);
 
   DEBUG_PRINT("  VO   %s -- mask: %u lobs: %d", op.getOperationName(), 
-              op.u.maskvalue, nblobs);
+              op.u.maskvalue, op.nblobs);
   nro->resetMask(); 
 }
 

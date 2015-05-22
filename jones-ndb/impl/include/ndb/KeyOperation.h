@@ -41,6 +41,7 @@ public:
   NdbOperation::LockMode lmode;
   NdbOperation::OperationOptions *options;
   int opcode;
+  int nblobs;
   BlobHandler * blobHandler;
   
   // Constructor and Destructor
@@ -85,7 +86,7 @@ private:
 inline KeyOperation::KeyOperation(): 
   row_buffer(0), key_buffer(0), row_record(0), key_record(0),
   read_mask_ptr(0), lmode(NdbOperation::LM_SimpleRead), options(0), opcode(0),
-  blobHandler(0)
+  nblobs(0), blobHandler(0)
 {
   u.maskvalue = 0;
 }
