@@ -35,7 +35,8 @@ OperationCodes = {
   'OP_SCAN'        : 32,      32 : 'scan',
   'OP_SCAN_READ'   : 33,      33 : 'scan_read',
   'OP_SCAN_COUNT'  : 34,      34 : 'scan_count',
-  'OP_SCAN_DELETE' : 48,      48 : 'scan_delete'
+  'OP_SCAN_DELETE' : 48,      48 : 'scan_delete',
+  'OP_PROJ_READ'   : 97,      97 : 'projection_read'
 };
 
 

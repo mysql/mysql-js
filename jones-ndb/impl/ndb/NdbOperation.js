@@ -22,15 +22,16 @@
 
 /* This corresponds to OperationCodes */
 var op_stats = { 
-  "read"        : 0,
-  "insert"      : 0,
-  "update"      : 0,
-  "write"       : 0,
-  "delete"      : 0,
-  "scan"        : 0,
-  "scan_read"   : 0,
-  "scan_count"  : 0,
-  "scan_delete" : 0
+  "read"            : 0,
+  "insert"          : 0,
+  "update"          : 0,
+  "write"           : 0,
+  "delete"          : 0,
+  "scan"            : 0,
+  "scan_read"       : 0,
+  "scan_count"      : 0,
+  "scan_delete"     : 0,
+  "projection_read" : 0
 };
 
 var index_stats = {};
@@ -824,6 +825,12 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
     op.lockMode = "SHARED";
   }
   return op;
+}
+
+
+function newReadProjectionOperation(tx, indexHandler, keys, projection) {
+  assert(false); // bye!
+
 }
 
 
