@@ -27,7 +27,7 @@ var udebug       = unified_debug.getLogger("Projection.js"),
 function Projection(domainObject) {
   if (typeof domainObject === 'function') {
     this.domainObject = domainObject;
-    this.name = 'no-name';
+    this.name = domainObject.name;
     this.validated = false; // this projection has not been validated or has changed since validation
     this.id = 0;            // initial value for projection id; when validated it will be 1
     this.fields = [];

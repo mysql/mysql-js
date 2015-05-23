@@ -812,7 +812,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
     // get this optional field mapping that corresponds to the related field mapping
     // it may be needed to find the foreign key or join table
     relatedTargetFieldName = relatedFieldMapping.targetField;
-    relatedTargetField = sector.tableHandler.fieldNameToFieldMap[relatedTargetFieldName];
+    relatedTargetField = sector.tableHandler.getField(relatedTargetFieldName);
     if (relatedFieldMapping.toMany && relatedFieldMapping.manyTo) {
       // this is a many-to-many relationship using a join table
       joinTable = relatedFieldMapping.joinTable;
@@ -822,7 +822,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
         joinTableHandler = relatedFieldMapping.joinTableHandler;
       } else {
         // join table must be defined on this side
-        thisFieldMapping = tableHandler.fieldNameToFieldMap[relatedFieldMapping.targetField];
+        thisFieldMapping = tableHandler.getField(relatedFieldMapping.targetField);
         joinTable = thisFieldMapping.joinTable;
         if (!joinTable) {
           // error; neither side defined the join table
@@ -871,7 +871,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
       } else {
         // foreign key is defined on this side
         // get the fieldMapping for this relationship field
-        relatedTargetField = sector.tableHandler.fieldNameToFieldMap[relatedTargetFieldName];
+        relatedTargetField = sector.tableHandler.getField(relatedTargetFieldName);
         foreignKeyName = relatedTargetField.foreignKey;
         if (foreignKeyName) {
         foreignKey = tableHandler.getForeignKey(foreignKeyName);
@@ -887,10 +887,10 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
   }
   // create key fields from primary key index handler
   indexHandler = tableHandler.dbIndexHandlers[0];
-  keyFieldCount = indexHandler.fieldNumberToFieldMap.length;
+  keyFieldCount = indexHandler.getNumberOfFields;
   sector.keyFieldCount = keyFieldCount;
   for (i = 0; i < keyFieldCount; ++i) {
-    field = indexHandler.fieldNumberToFieldMap[i];
+    field = indexHandler.getField(i);
     sector.keyFields.push(field);
     sector.keyFieldNames.push(field.fieldName);
   }
@@ -900,7 +900,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
     // is this field in key fields?
     if (sector.keyFieldNames.indexOf(fieldName) == -1) {
       // non-key field; add it to non-key fields
-      field = tableHandler.fieldNameToFieldMap[fieldName];
+      field = tableHandler.getField(fieldName);
       sector.nonKeyFields.push(field);
     }
   });
@@ -1064,7 +1064,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // validate all fields in projection are mapped
           if (projection.fields) { // field names
             projection.fields.forEach(function(fieldName) {
-              fieldMapping = dbTableHandler.fieldNameToFieldMap[fieldName];
+              fieldMapping = dbTableHandler.getField(fieldName);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
                   errors += '\nBad projection for ' +  domainObjectName + ': field' + fieldName + ' must not be a relationship';
@@ -1097,7 +1097,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           if (relationships) {
             Object.keys(relationships).forEach(function(key) {
               // each key is the name of a relationship that must be a field in the table handler
-              fieldMapping = dbTableHandler.fieldNameToFieldMap[key];
+              fieldMapping = dbTableHandler.getField(key);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
                   relationshipProjection = relationships[key];
@@ -1907,7 +1907,7 @@ exports.UserContext.prototype.getMapping = function() {
       userContext.applyCallback(err, null);
       return;
     }
-    var mapping = dbTableHandler.resolvedMapping;
+    var mapping = dbTableHandler.getResolvedMapping();
     userContext.applyCallback(null, mapping);
   }
   // getMapping starts here

@@ -56,6 +56,7 @@ var path          = require("path"),
     ScanHelper    = constants.Scan.helper,
     BoundHelper   = constants.IndexBound.helper,
     opcodes       = doc.OperationCodes,
+    NdbProjection = require("./NdbProjection"),
     udebug        = unified_debug.getLogger("NdbOperation.js");
 
 stats_module.register(op_stats, "spi","ndb","DBOperation","created");
@@ -774,12 +775,12 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   /* Step 1: Create Record
      getRecordForMapping(table, ndb, nColumns, columns array)
   */
-  nfields = dbTableHandler.fieldNumberToColumnMap.length;
+  nfields = dbTableHandler.getNumberOfColumns();
   record = adapter.impl.DBDictionary.getRecordForMapping(
     dbTableHandler.dbTable,
     dbTableHandler.dbTable.per_table_ndb,
     nfields,
-    dbTableHandler.fieldNumberToColumnMap
+    dbTableHandler.getAllColumns()
   );
 
   /* Step 2: Get NdbRecordObject Constructor
@@ -788,8 +789,8 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   fieldNames = {};
   typeConverters = {};
   for(i = 0 ; i < nfields ; i++) {
-    fieldNames[i] = dbTableHandler.resolvedMapping.fields[i].fieldName;
-    typeConverters[i] = dbTableHandler.fieldNumberToColumnMap[i].typeConverter.ndb;
+    fieldNames[i] = dbTableHandler.getResolvedMapping().fields[i].fieldName;
+    typeConverters[i] = dbTableHandler.getColumn(i).typeConverter.ndb;
   }
 
   VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, typeConverters);
@@ -828,9 +829,8 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 }
 
 
-function newReadProjectionOperation(tx, indexHandler, keys, projection) {
-  assert(false); // bye!
-
+function newProjectionOperation(tx, indexHandler, keys, projection) {
+  NdbProjection.initialize(projection);
 }
 
 
@@ -896,6 +896,7 @@ exports.newDeleteOperation  = newDeleteOperation;
 exports.newUpdateOperation  = newUpdateOperation;
 exports.newWriteOperation   = newWriteOperation;
 exports.newScanOperation    = newScanOperation;
+exports.newProjectionOperation = newProjectionOperation;
 exports.completeExecutedOps = completeExecutedOps;
 exports.getScanResults      = getScanResults;
 exports.prepareOperations   = prepareOperations;

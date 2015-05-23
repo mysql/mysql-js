@@ -37,7 +37,6 @@ var assert          = require("assert"),
     util            = require("util"),
     udebug          = unified_debug.getLogger("DBTableHandler.js");
 
-// forward declaration of DBIndexHandler to avoid lint issue
 var DBIndexHandler;
 
 stats_module.register(stats,"spi","DBTableHandler");
@@ -78,6 +77,20 @@ function getColumnByName(dbTable, colName) {
 }
 
 
+function DBTableHandlerPrivate() {
+  this.resolvedMapping        = null;
+  this.columnNumberToFieldMap = [];
+  this.fieldNumberToColumnMap = [];
+  this.fieldNumberToFieldMap  = [];
+  this.fieldNameToFieldMap    = {};
+  this.foreignKeyMap          = {};
+}
+
+DBTableHandlerPrivate.prototype.inspect = function() {
+  return "";
+};
+
+
 /* DBTableHandler() constructor
    IMMEDIATE
 
@@ -100,20 +113,16 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       index,           // a DBIndex
       stubFields,      // fields created through default mapping
       foreignKey,      // foreign key object from dbTable
-      nMappedFields;
-  
-  var ctorName = 'none';
-  if (ctor && ctor.name) {
-    ctorName = (ctor.name.length === 0)?'anonymous '+ctor:ctor.name;
-  }
-  
+      nMappedFields,
+      priv,
+      numberOfNotPersistentFields = 0,
+      ctorName = 'none';
+
   stats.constructor_calls++;
 
   if (tablemapping && !tablemapping.isValid) {
     // bad table mapping
     this.err = new Error(tablemapping.error);
-    console.log('DBTableHandler<ctor>.err:', this.err, 
-        'errorMessages:', this.errorMessages, 'tablemapping.error:', tablemapping.error);
     this.isValid = false;
   }
 
@@ -128,13 +137,24 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 		stats.created[dbtable.name]++;
 	}
   
-  this.dbTable = dbtable;
+  /* Default properties */
+  priv                        = new DBTableHandlerPrivate();
+  this._private               = priv;
+  this.dbTable                = dbtable;
+  this.ValueObject            = null;
+  this.errorMessages          = '\n';
+  this.isValid                = true;
+  this.autoIncFieldName       = null;
+  this.autoIncColumnNumber    = null;
+  this.numberOfLobColumns     = 0;
+  this.newObjectConstructor   = ctor || null;
 
-  if(ctor) {
-    this.newObjectConstructor = ctor;
-  }
+  /* New Arrays */
+  this.dbIndexHandlers        = [];
+  this.relationshipFields     = [];
 
-  if(tablemapping) {     
+  /* this.mapping */
+  if(tablemapping) {
     stats.explicit_mappings++;
     this.mapping = tablemapping;
   }
@@ -143,25 +163,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping          = new TableMapping(this.dbTable.name);
     this.mapping.database = this.dbTable.database;
   }
-  
-  /* Default properties */
-  this.resolvedMapping        = null;
-  this.ValueObject            = null;
-  this.errorMessages          = '\n';
-  this.isValid                = true;
-  this.autoIncFieldName       = null;
-  this.autoIncColumnNumber    = null;
-  this.numberOfLobColumns     = 0;
-  this.numberOfNotPersistentFields = 0;
-   
-  /* New Arrays */
-  this.columnNumberToFieldMap = [];  
-  this.fieldNumberToColumnMap = [];
-  this.fieldNumberToFieldMap  = [];
-  this.fieldNameToFieldMap    = {};
-  this.foreignKeyMap          = {};
-  this.dbIndexHandlers        = [];
-  this.relationshipFields     = [];
+
 
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
@@ -176,7 +178,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
         c = getColumnByName(this.dbTable, f.columnName);
         if(c) {
           n = c.columnNumber;
-          this.columnNumberToFieldMap[n] = f;
+          priv.columnNumberToFieldMap[n] = f;
           f.columnNumber = n;
           f.defaultValue = c.defaultValue;
           f.databaseTypeConverter = c.databaseTypeConverter;
@@ -198,7 +200,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       }
     } else {
       // increment not-persistent field count
-      ++this.numberOfNotPersistentFields;
+      ++numberOfNotPersistentFields;
     }
   }
 
@@ -206,11 +208,11 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   stubFields = [];
   if(this.mapping.mapAllColumns) {
     for(i = 0 ; i < this.dbTable.columns.length ; i++) {
-      if(! this.columnNumberToFieldMap[i]) {
+      if(! priv.columnNumberToFieldMap[i]) {
         c = this.dbTable.columns[i];
         f = new FieldMapping(c.name);
         stubFields.push(f);
-        this.columnNumberToFieldMap[i] = f;
+        priv.columnNumberToFieldMap[i] = f;
         f.columnNumber = i;
         f.defaultValue = c.defaultValue;
         f.databaseTypeConverter = c.databaseTypeConverter;
@@ -227,20 +229,20 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   }
 
   /* Total number of mapped fields */
-  nMappedFields = this.mapping.fields.length + stubFields.length - this.numberOfNotPersistentFields;
+  nMappedFields = this.mapping.fields.length + stubFields.length - numberOfNotPersistentFields;
          
   /* Create the resolved mapping to be returned by getMapping() */
-  this.resolvedMapping = {};
-  this.resolvedMapping.database = this.dbTable.database;
-  this.resolvedMapping.table = this.dbTable.name;
-  this.resolvedMapping.fields = [];
+  priv.resolvedMapping = {};
+  priv.resolvedMapping.database = this.dbTable.database;
+  priv.resolvedMapping.table = this.dbTable.name;
+  priv.resolvedMapping.fields = [];
 
   /* Build fieldNumberToColumnMap, establishing field order.
      Detect the autoincrement column.
      Also build the remaining fieldNameToFieldMap and fieldNumberToFieldMap. */
   for(i = 0 ; i < this.dbTable.columns.length ; i++) {
     c = this.dbTable.columns[i];
-    f = this.columnNumberToFieldMap[i];
+    f = priv.columnNumberToFieldMap[i];
     if(c.isAutoincrement) { 
       this.autoIncColumnNumber = i;
       this.autoIncFieldName = f.fieldName;
@@ -248,28 +250,31 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     if(c.isLob) {
       this.numberOfLobColumns++;
     }    
-    this.resolvedMapping.fields[i] = {};
+    priv.resolvedMapping.fields[i] = {};
     if(f) {
       f.fieldNumber = i;
-      this.fieldNumberToColumnMap.push(c);
-      this.fieldNumberToFieldMap.push(f);
-      this.fieldNameToFieldMap[f.fieldName] = f;
-      this.resolvedMapping.fields[i].columnName = f.columnName;
-      this.resolvedMapping.fields[i].fieldName = f.fieldName;
-      this.resolvedMapping.fields[i].persistent = true;
+      priv.fieldNumberToColumnMap.push(c);
+      priv.fieldNumberToFieldMap.push(f);
+      priv.fieldNameToFieldMap[f.fieldName] = f;
+      priv.resolvedMapping.fields[i].columnName = f.columnName;
+      priv.resolvedMapping.fields[i].fieldName = f.fieldName;
+      priv.resolvedMapping.fields[i].persistent = true;
     }
   }
-  var map = this.fieldNameToFieldMap;
+  var map = priv.fieldNameToFieldMap;
   // add the relationship fields that are not mapped to columns
   this.relationshipFields.forEach(function(relationship) {
     map[relationship.fieldName] = relationship;
   });
   
-  if (nMappedFields !== this.fieldNumberToColumnMap.length + this.relationshipFields.length) {
+  if (nMappedFields !== priv.fieldNumberToColumnMap.length + this.relationshipFields.length) {
+    if (ctor && ctor.name) {
+      ctorName = (ctor.name.length === 0)?'anonymous '+ctor:ctor.name;
+    };
     this.appendErrorMessage(
         'Mismatch between number of mapped fields and columns for ' + ctorName + 
         '\n mapped fields: ' + nMappedFields +
-        ', mapped columns: ' + this.fieldNumberToColumnMap.length +
+        ', mapped columns: ' + priv.fieldNumberToColumnMap.length +
         ', mapped relationships: ' + this.relationshipFields.length);
   }
 
@@ -306,6 +311,44 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   udebug.log("new completed");
   udebug.log_detail("DBTableHandler<ctor>:\n", this);
 }
+
+DBTableHandler.prototype.getResolvedMapping = function() {
+  return this._private.resolvedMapping;
+};
+
+DBTableHandler.prototype.getColumn = function(i) {
+  switch(typeof i) {
+    case 'number':
+      return this._private.fieldNumberToColumnMap[i];
+    case 'string':
+      return this._private.fieldNameToColumnMap[i];
+  }
+};
+
+DBTableHandler.prototype.getAllColumns = function() {
+  return this._private.fieldNumberToColumnMap;
+};
+
+DBTableHandler.prototype.getNumberOfColumns = function() {
+  return this._private.fieldNumberToColumnMap.length;
+};
+
+DBTableHandler.prototype.getField = function(i) {
+  switch(typeof i) {
+    case 'number':
+      return this._private.fieldNumberToFieldMap[i];
+    case 'string':
+      return this._private.fieldNameToFieldMap[i];
+  }
+};
+
+DBTableHandler.prototype.getAllFields = function() {
+  return this._private.fieldNumberToFieldMap;
+};
+
+DBTableHandler.prototype.getNumberOfFields = function() {
+  return this._private.fieldNumberToFieldMap.length;
+};
 
 
 /** Append an error message and mark this DBTableHandler as invalid.
@@ -426,8 +469,8 @@ DBTableHandler.prototype.applyMappingToResult = function(obj, adapter) {
 DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
   var i, f, value, convertedValue;
 
-  for (i = 0; i < this.fieldNumberToFieldMap.length; i++) {
-    f = this.fieldNumberToFieldMap[i];
+  for (i = 0; i < this.getNumberOfFields(); i++) {
+    f = this.getField(i);
     var databaseTypeConverter = f.databaseTypeConverter && f.databaseTypeConverter[adapter];
     if (databaseTypeConverter) {
       value = obj[f.fieldName];
@@ -463,7 +506,7 @@ DBTableHandler.prototype.setAutoincrement = function(object, autoincrementValue)
 */
 DBTableHandler.prototype.getMappedFieldCount = function() {
   udebug.log_detail("getMappedFieldCount");
-  return this.fieldNumberToColumnMap.length;
+  return this._private.fieldNumberToColumnMap.length;
 };
 
 
@@ -472,7 +515,7 @@ DBTableHandler.prototype.getMappedFieldCount = function() {
    Boolean: returns True if all columns are mapped
 */
 DBTableHandler.prototype.allColumnsMapped = function() {
-  return (this.dbTable.columns.length === this.fieldNumberToColumnMap.length);
+  return (this.dbTable.columns.length === this._private.fieldNumberToColumnMap.length);
 };
 
 /** allFieldsIncluded(values)
@@ -483,8 +526,8 @@ DBTableHandler.prototype.allFieldsIncluded = function(values) {
   // return a list of fields indexes that are found
   // the caller can easily construct the appropriate database statement
   var i, f, result = [];
-  for (i = 0; i < this.fieldNumberToFieldMap.length; ++i) {
-    f = this.fieldNumberToFieldMap[i];
+  for (i = 0; i < this.getNumberOfFields(); ++i) {
+    f = this.getField(i);
     if (typeof(values[i]) !== 'undefined') {
       result.push(i);
     }
@@ -498,7 +541,7 @@ DBTableHandler.prototype.allFieldsIncluded = function(values) {
    Returns an array containing ColumnMetadata objects in field order
 */   
 DBTableHandler.prototype.getColumnMetadata = function() {
-  return this.fieldNumberToColumnMap;
+  return this._private.fieldNumberToColumnMap;
 };
 
 
@@ -545,7 +588,7 @@ function chooseIndex(self, keys, uniqueOnly) {
         nmatches = 0;
         for(j = 0 ; j < index.columnNumbers.length ; j++) {
           n = index.columnNumbers[j];
-          f = self.columnNumberToFieldMap[n]; 
+          f = self._private.columnNumberToFieldMap[n];
           udebug.log_detail("index part", j, "is column", n, ":", f.fieldName);
           if(typeof keys[f.fieldName] !== 'undefined') {
             nmatches++;
@@ -572,7 +615,7 @@ function chooseIndex(self, keys, uniqueOnly) {
       index = idxs[i];
       if(index.isOrdered) {
         // f is the field corresponding to the first column in the index
-        f = self.columnNumberToFieldMap[index.columnNumbers[0]];
+        f = self._private.columnNumberToFieldMap[index.columnNumbers[0]];
         if(keyFieldNames.indexOf(f.fieldName) >= 0) {
          udebug.log("chooseIndex picked ordered index", i);
          return i; // this is an ordered index scan
@@ -599,7 +642,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
     }
     return obj;
   }
-  var f = this.fieldNumberToFieldMap[fieldNumber];
+  var f = this.getField(fieldNumber);
   var result;
   if (!f) {
     throw new Error('FatalInternalError: field number does not exist: ' + fieldNumber);
@@ -618,7 +661,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
     if (typeof(result) === 'undefined') {
       fieldValueDefinedListener.setUndefined(fieldNumber);
     } else {
-      if (this.fieldNumberToColumnMap[fieldNumber].isBinary && result.constructor && result.constructor.name !== 'Buffer') {
+      if (this._private.fieldNumberToColumnMap[fieldNumber].isBinary && result.constructor && result.constructor.name !== 'Buffer') {
         var err = new Error('Binary field with non-Buffer data for field ' + f.fieldName);
         err.sqlstate = '22000';
         fieldValueDefinedListener.err = err;
@@ -633,8 +676,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
 /** Return the property of obj corresponding to fieldNumber.
 */
 DBTableHandler.prototype.getFieldsSimple = function(obj, fieldNumber) {
-  var f;
-  f = this.fieldNumberToFieldMap[fieldNumber];
+  var f = this._private.fieldNumberToFieldMap[fieldNumber];
   if(f.domainTypeConverter) {
     return f.domainTypeConverter.toDB(obj[f.fieldName], obj, f);
   }
@@ -672,7 +714,7 @@ DBTableHandler.prototype.getFieldsWithListener = function(obj, adapter, fieldVal
 /* Set field to value */
 DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
   udebug.log_detail("set", fieldNumber);
-  var f = this.fieldNumberToFieldMap[fieldNumber];
+  var f = this.getField(fieldNumber);
   var userValue = value;
   var databaseTypeConverter;
   if(f) {
@@ -701,8 +743,8 @@ DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
 */
 DBTableHandler.prototype.setFields = function(obj, values, adapter) {
   var i, f, value, columnName, fieldName;
-  for (i = 0; i < this.fieldNumberToFieldMap.length; ++i) {
-    f = this.fieldNumberToFieldMap[i];
+  for (i = 0; i < this.getNumberOfFields(); ++i) {
+    f = this.getField(i);
     columnName = f.columnName;
     fieldName = f.fieldName;
     value = values[fieldName];
@@ -721,17 +763,18 @@ DBIndexHandler = function (parent, dbIndex) {
 
   this.tableHandler = parent;
   this.dbIndex = dbIndex;
-  this.fieldNumberToColumnMap = [];
-  this.fieldNumberToFieldMap  = [];
+  this._private = {};
+  this._private.fieldNumberToColumnMap = [];
+  this._private.fieldNumberToFieldMap  = [];
   
   for(i = 0 ; i < dbIndex.columnNumbers.length ; i++) {
     colNo = dbIndex.columnNumbers[i];
-    this.fieldNumberToFieldMap[i]  = parent.columnNumberToFieldMap[colNo];
-    this.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
+    this._private.fieldNumberToFieldMap[i]  = parent._private.columnNumberToFieldMap[colNo];
+    this._private.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
   }
   
   if(i === 1) {    // One-column index
-    this.singleColumn = this.fieldNumberToColumnMap[0];
+    this.singleColumn = this.getColumn(0);
   } else {
     this.singleColumn = null;
   }
@@ -743,7 +786,11 @@ DBIndexHandler.prototype = {
   get                    : DBTableHandler.prototype.get,   
   getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
   getFields              : DBTableHandler.prototype.getFields,
-  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata
+  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
+  getColumn              : DBTableHandler.prototype.getColumn,
+  getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
+  getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,
+  getField               : DBTableHandler.prototype.getField
 };
 
 

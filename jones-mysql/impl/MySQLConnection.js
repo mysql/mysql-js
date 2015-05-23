@@ -1152,7 +1152,7 @@ function createSelectSQL(dbTableHandler, index) {
   var separator = '';
   var i, j, columns, column, fields, field;
   columns = dbTableHandler.getColumnMetadata();
-  fields = dbTableHandler.fieldNumberToFieldMap;
+  fields = dbTableHandler.getAllFields();
   if (!index) {
     selectSQL = 'SELECT ';
     var fromSQL =   ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;
@@ -1400,11 +1400,11 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
     if (typeof(order) === 'string') {
       if (order.toUpperCase() === 'ASC') {
         scanSQL += ' ORDER BY ';
-        scanSQL += queryHandler.dbIndexHandler.fieldNumberToColumnMap[0].name;
+        scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
         scanSQL += ' ASC ';
       } else if (order.toUpperCase() === 'DESC') {
         scanSQL += ' ORDER BY ';
-        scanSQL += queryHandler.dbIndexHandler.fieldNumberToColumnMap[0].name;
+        scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
         scanSQL += ' DESC ';
       } else {
         err = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');
@@ -1447,13 +1447,13 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
   // get an array of key field names
   var valueFieldName, keyFieldNames = [];
   var j, field;
-  for(j = 0 ; j < dbIndexHandler.fieldNumberToFieldMap.length ; j++) {
-    keyFieldNames.push(dbIndexHandler.fieldNumberToFieldMap[j].fieldName);
+  for(j = 0 ; j < dbIndexHandler.getNumberOfFields() ; j++) {
+    keyFieldNames.push(dbIndexHandler.getField(j).fieldName);
   }
   // get an array of persistent field names
   var valueFieldNames = [];
-  for(j = 0 ; j < dbTableHandler.fieldNumberToFieldMap.length ; j++) {
-    field = dbTableHandler.fieldNumberToFieldMap[j];
+  for(j = 0 ; j < dbTableHandler.getNumberOfFields() ; j++) {
+    field = dbTableHandler.getField(j);
     valueFieldName = field.fieldName;
     // exclude not persistent fields and fields that are part of the index
     if (!field.NotPersistent && keyFieldNames.indexOf(valueFieldName) === -1) {
@@ -1464,7 +1464,7 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
   var i, x, columnName;
   // construct the WHERE clause for all key columns in the index
   for(i = 0 ; i < dbIndexHandler.dbIndex.columnNumbers.length ; i++) {
-    columnName = dbIndexHandler.fieldNumberToFieldMap[i].columnName;
+    columnName = dbIndexHandler.getField(i).columnName;
     updateWhereSQL += separatorWhereSQL + columnName + ' = ? ';
     separatorWhereSQL = 'AND ';
   }
@@ -1474,7 +1474,7 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
         // add the value in the object to the updateFields
         updateFields.push(values[x]);
         // add the value field to the SET clause
-        columnName = dbTableHandler.fieldNameToFieldMap[x].columnName;
+        columnName = dbTableHandler.getField(x).columnName;
         updateSetSQL += separatorUpdateSetSQL + columnName + ' = ?';
         separatorUpdateSetSQL = ', ';
       }

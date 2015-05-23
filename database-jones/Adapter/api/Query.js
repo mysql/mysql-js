@@ -144,7 +144,7 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
   
   var fieldName, queryField;
   // add a property for each field in the table mapping
-  jones.dbTableHandler.fieldNumberToFieldMap.forEach(function(field) {
+  jones.dbTableHandler.getAllFields().forEach(function(field) {
     fieldName = field.fieldName;
     queryField = new QueryField(queryDomainType, field);
     if (keywords.indexOf(fieldName) === -1) {

@@ -140,7 +140,7 @@ SQLBuilder.prototype.createSelectSQL = function (dbTableHandler, index) {
   var separator = '';
   var i, j, columns, column, fields, field;
   columns = dbTableHandler.getColumnMetadata();
-  fields = dbTableHandler.fieldNumberToFieldMap;
+  fields = dbTableHandler.getAllFields();
   if (!index) {
     selectSQL = 'SELECT ';
     var fromSQL =   ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;

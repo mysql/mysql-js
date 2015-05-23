@@ -181,9 +181,9 @@ function RandomRowGenerator(tableHandler) {
   names = [];
   ctor = tableHandler.newObjectConstructor || DummyConstructor;
 
-  for(i = 0; i < tableHandler.fieldNumberToColumnMap.length ; i++) {
-    column        = tableHandler.fieldNumberToColumnMap[i];
-    names[i]      = tableHandler.fieldNumberToFieldMap[i].fieldName;
+  for(i = 0; i < tableHandler.getNumberOfColumns() ; i++) {
+    column        = tableHandler.getColumnMap(i);
+    names[i]      = tableHandler.getField(i).fieldName;
     generators[i] = RandomGeneratorForColumn(column);
   }
 
