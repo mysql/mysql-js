@@ -660,14 +660,12 @@ function intersectionForColumn(predicates, columnNumber) {
   var segments = predicates.map(function(node) {
     return evaluateNodeForColumn(node, columnNumber).toNumberLine();
   });
-  udebug.log("intersectionForColumn", segments);
   return new NumberLineStack(segments).intersection();
 }
 
 /* Returns a NumberLine
 */
-function unionForColumn(predicates, columnNumber) { 
-
+function unionForColumn(predicates, columnNumber) {
   var segments = predicates.map(function(node) {
     return evaluateNodeForColumn(node, columnNumber).toNumberLine();
   });
@@ -763,8 +761,21 @@ ColumnBoundVisitor.prototype.visitQueryUnaryOperator = function(node) {
 
 /****************************************** IndexBoundVisitor ************
  *
- * Visit a tree that has already been marked by a ColumnBoundVisitor.
- * Construct a set of IndexBounds for a particular index.
+ * Visit a tree that has already been marked by a ColumnBoundVisitor, and
+ * construct a set of IndexBounds for a particular index.
+ *
+ * For each "AND" node, take the known ranges for the individual columns
+ * of the index and assemble them into a set of ranges, each range being an
+ * n-part IndexValue using the longest possible prefix set of index parts.
+ * (This is called "consolidation," below).
+ *
+ * For each "OR" node, assemble index values for the child nodes of the OR,
+ * and then construct the union of those ranges.  Note that if there is an AND 
+ * somewhere above the OR in the tree, this result will be discarded.
+ * 
+ * For any other sort of node, if that node has a bounded range for the first 
+ * column of the index, construct a range of 1-part IndexValues from that.
+ *
  */
 function IndexBoundVisitor(queryHandler, dbIndex) {
   this.index = dbIndex;
@@ -775,11 +786,6 @@ function IndexBoundVisitor(queryHandler, dbIndex) {
 
 /* Consolidation.
    This here is difficult.
-   We have already evaluated a query node for each column in an index,
-   and next we have to evaluate it for the index as a whole; e.g. we have
-   evaluated it for columns A, B, and C, individually, and there is a 
-   three-part index on (A,B,C).
-
    Each single-column value is represented by a Consolidator that builds
    its part of the conslidated index bound.
 */
@@ -916,8 +922,8 @@ IndexBound.prototype.inspect = function() {
 
 /* getIndexBounds()
 
-   For each column in the index, evaluate the predicate for that column.
-   Then consolidate the column bounds into a set of bounds on the index.
+   Evaluate each node of the tree to construct bounds for columns.
+   Then combine the column bounds into a set of bounds on the index.
 
    @arg queryHandler:  query 
    @arg dbIndex:       IndexMetadata of index to evaluate
@@ -933,7 +939,6 @@ function getIndexBounds(queryHandler, dbIndex, params) {
   topNode.visit(new ColumnBoundVisitor(params));
 
   /* Then analyze it for this particular index */
-  udebug.log("Initial eval:");
   queryIndexRange = evaluateNodeForIndex(topNode, dbIndex.columnNumbers[0]);
 
   if(dbIndex.columnNumbers.length > 1) {

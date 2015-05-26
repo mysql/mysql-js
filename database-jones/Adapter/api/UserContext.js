@@ -1082,7 +1082,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
             foreignKeyName = relationshipField.foreignKey;
             if (foreignKeyName) {
               // make sure the foreign key exists
-              if (!dbTableHandler.foreignKeyMap.hasOwnProperty(foreignKeyName)) {
+              if (!dbTableHandler.getForeignKey(foreignKeyName)) {
                 errors += '\nBad relationship field mapping; foreign key ' + foreignKeyName +
                     ' does not exist in table; possible foreign keys are: ' + Object.keys(dbTableHandler.foreignKeyMap);
               }

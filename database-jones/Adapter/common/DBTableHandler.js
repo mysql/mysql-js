@@ -292,7 +292,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   // build foreign key map
   for (i = 0; i < this.dbTable.foreignKeys.length; ++i) {
     foreignKey = this.dbTable.foreignKeys[i];
-    this.foreignKeyMap[foreignKey.name] = foreignKey;
+    priv.foreignKeyMap[foreignKey.name] = foreignKey;
   }
 
   if (!this.isValid) {
@@ -350,6 +350,11 @@ DBTableHandler.prototype.getNumberOfFields = function() {
   return this._private.fieldNumberToFieldMap.length;
 };
 
+DBTableHandler.prototype.describe = function() {
+  var s = "DBTableHandler for table " + this.dbTable.name +
+          " with " + this.getNumberOfFields() + " mapped fields ";
+  return s;
+};
 
 /** Append an error message and mark this DBTableHandler as invalid.
  */
@@ -812,7 +817,7 @@ DBTableHandler.prototype.getIndexHandler = function(keys, uniqueOnly) {
 };
 
 DBTableHandler.prototype.getForeignKey = function(foreignKeyName) {
-  return this.foreignKeyMap[foreignKeyName];
+  return this._private.foreignKeyMap[foreignKeyName];
 };
 
 
