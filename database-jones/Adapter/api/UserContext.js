@@ -835,19 +835,17 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
       // many to many relationship has a join table with at least two foreign keys; 
       // one to each table mapped to the two domain objects
       if (joinTable) {
-        for (foreignKeyName in joinTableHandler.foreignKeyMap) {
-          if (joinTableHandler.foreignKeyMap.hasOwnProperty(foreignKeyName)) {
-            foreignKey = joinTableHandler.foreignKeyMap[foreignKeyName];
-            // is this foreign key for this table?
-            if (foreignKey.targetDatabase === tableHandler.dbTable.database && 
-                foreignKey.targetTable === tableHandler.dbTable.name) {
-              // this foreign key is for the other table
-              relatedFieldMapping.otherForeignKey = foreignKey;
-            }
-            if (foreignKey.targetDatabase === relatedTableHandler.dbTable.database && 
-                foreignKey.targetTable === relatedTableHandler.dbTable.name) {
-              relatedFieldMapping.thisForeignKey = foreignKey;
-            }
+        for (foreignKeyName in joinTableHandler.getForeignKeyNames()) {
+          foreignKey = joinTableHandler.getForeignKey(foreignKeyName);
+          // is this foreign key for this table?
+          if (foreignKey.targetDatabase === tableHandler.dbTable.database &&
+              foreignKey.targetTable === tableHandler.dbTable.name) {
+            // this foreign key is for the other table
+            relatedFieldMapping.otherForeignKey = foreignKey;
+          }
+          if (foreignKey.targetDatabase === relatedTableHandler.dbTable.database &&
+              foreignKey.targetTable === relatedTableHandler.dbTable.name) {
+            relatedFieldMapping.thisForeignKey = foreignKey;
           }
         }
         if (!(relatedFieldMapping.thisForeignKey && relatedFieldMapping.otherForeignKey)) {
@@ -887,7 +885,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
   }
   // create key fields from primary key index handler
   indexHandler = tableHandler.dbIndexHandlers[0];
-  keyFieldCount = indexHandler.getNumberOfFields;
+  keyFieldCount = indexHandler.getNumberOfFields();
   sector.keyFieldCount = keyFieldCount;
   for (i = 0; i < keyFieldCount; ++i) {
     field = indexHandler.getField(i);
@@ -1084,7 +1082,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
               // make sure the foreign key exists
               if (!dbTableHandler.getForeignKey(foreignKeyName)) {
                 errors += '\nBad relationship field mapping; foreign key ' + foreignKeyName +
-                    ' does not exist in table; possible foreign keys are: ' + Object.keys(dbTableHandler.foreignKeyMap);
+                    ' does not exist in table; possible foreign keys are: ' + dbTableHandler.getForeignKeyNames();
               }
             }
             // remember this relationship in order to resolve table mapping for join table

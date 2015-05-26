@@ -820,5 +820,8 @@ DBTableHandler.prototype.getForeignKey = function(foreignKeyName) {
   return this._private.foreignKeyMap[foreignKeyName];
 };
 
+DBTableHandler.prototype.getForeignKeyNames = function() {
+  return Object.keys(this._private.foreignKeyMap);
+};
 
 exports.DBTableHandler = DBTableHandler;
