@@ -835,7 +835,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
       // many to many relationship has a join table with at least two foreign keys; 
       // one to each table mapped to the two domain objects
       if (joinTable) {
-        for (foreignKeyName in joinTableHandler.getForeignKeyNames()) {
+        joinTableHandler.getForeignKeyNames().forEach(function(foreignKeyName) {
           foreignKey = joinTableHandler.getForeignKey(foreignKeyName);
           // is this foreign key for this table?
           if (foreignKey.targetDatabase === tableHandler.dbTable.database &&
@@ -847,7 +847,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
               foreignKey.targetTable === relatedTableHandler.dbTable.name) {
             relatedFieldMapping.thisForeignKey = foreignKey;
           }
-        }
+        })
         if (!(relatedFieldMapping.thisForeignKey && relatedFieldMapping.otherForeignKey)) {
           // error must have foreign keys to both this table and related table
           projection.error += '\nMappingError: ' + relatedTableHandler.newObjectConstructor.name +
