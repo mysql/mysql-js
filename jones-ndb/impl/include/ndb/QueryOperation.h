@@ -22,12 +22,13 @@
 #define NODEJS_ADAPTER_NDB_INCLUDE_QUERYOPERATION_H
 
 #include "KeyOperation.h"
+#include "ndb_util/NdbQueryOperation.hpp"
 
 class NdbQueryBuilder;
 
 class QueryOperation : public KeyOperation {
 public:
-  QueryOperation(NdbQueryBuilder *, const v8::Arguments &);
+  QueryOperation(const NdbQueryOperationDef *);
 
 };
 

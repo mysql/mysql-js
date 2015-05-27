@@ -63,6 +63,8 @@ public:
   size_t getColumnOffset(int idx) const;
   const NdbDictionary::Column * getColumn(int idx) const;
   size_t getBufferSize() const;
+  size_t getValueLength(int idx, const char *data) const;
+  size_t getValueOffset(int idx) const;
 
   void setNull(int idx, char *data) const;
   void setNotNull(int idx, char *data) const;

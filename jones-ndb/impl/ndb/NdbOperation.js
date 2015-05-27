@@ -831,15 +831,22 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 
 function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
   var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
+
+  /* Encode keys for operation */
   op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getFields(keys);
+  allocateKeyBuffer(op);
+  encodeKeyBuffer(op);
+
+  /* Create Value Object Constructors for all tables */
   projection.sectors.forEach(function(sector) {
     storeNativeConstructorInMapping(sector.tableHandler);
   });
 
+  /* Create an NdbProjection, then use it to create a QueryOperation */
   op.query = NdbProjection.initialize(projection);
-  // op.params = ??
-  op.query.keyValues = keys;
-  op.scanOp = sessionImpl.createQueryOperation(op.query);
+  op.scanOp = sessionImpl.createQueryOperation(op.query, op.buffers.key);
+
+  return op;
 }
 
 

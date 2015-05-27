@@ -154,3 +154,44 @@ void Record::pad_offset_for_alignment() {
       break;
   }
 }
+
+/*  Assuming that a value is already encoded in buffer, how long is it?
+    For VARCHAR and VARBINARY, this returns the actual length.
+    Otherwise it returns the full length allocated to the value.
+*/
+size_t Record::getValueLength(int idx, const char *data) const {
+  size_t size;
+  const NdbDictionary::Column * col = specs[index].column;
+
+  if(col->getType() == NdbDictionary::Column::Varchar ||
+     col->getType() == NdbDictionary::Column::Varbinary)
+  {
+    uint8_t size8 = *((uint8_t *) (data));
+    size = size8;
+  } else if(col->getType() == NdbDictionary::Column::Longvarchar ||
+            col->getType() == NdbDictionary::Column::Longvarbinary)
+  {
+    uint16_t size16 = *((uint16_t *) (data));
+    size = size16;
+  }
+  else size = col->getSizeInBytes();
+
+  return size;
+}
+
+/*  How far into a recrod is the actual encoded value?
+    For all columns other than VARCHAR and VARBINARY, this returns 0.
+    For VARCHAR and VARBINARY, this returns the number of length bytes.
+*/
+size_t Record::getValueOffset(int idx) const {
+  size_t offset = 0;
+  const NdbDictionary::Column * col = specs[index].column;
+
+  if(col->getType() == NdbDictionary::Column::Varchar ||
+     col->getType() == NdbDictionary::Column::Varbinary)             offset = 1;
+  else if(col->getType() == NdbDictionary::Column::Longvarchar ||
+          col->getType() == NdbDictionary::Column::Longvarbinary)    offset = 2;
+
+  return offset;
+}
+

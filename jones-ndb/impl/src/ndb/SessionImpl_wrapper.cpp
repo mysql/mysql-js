@@ -38,6 +38,7 @@ Handle<Value> releaseTransaction(const Arguments &);
 Handle<Value> freeTransactions(const Arguments &);
 Handle<Value> SessionImplDestructor(const Arguments &);
 
+extern QueryOperation  * createQueryOperation(NdbQueryBuilder *, const Arguments &);
 
 class SessionImplEnvelopeClass : public Envelope {
 public:
@@ -114,7 +115,7 @@ Handle<Value> freeTransactions(const Arguments & args) {
 Handle<Value> createQueryOperation(const Arguments & args) {
   SessionImpl     * session = unwrapPointer<SessionImpl *>(args.Holder());
   NdbQueryBuilder * builder = session->getQueryBuilder();
-  QueryOperation  * queryOp = new QueryOperation(builder, args);
+  QueryOperation  * queryOp = createQueryOperation(builder, args);
   return QueryOperation_Wrapper(queryOp);
 }
 

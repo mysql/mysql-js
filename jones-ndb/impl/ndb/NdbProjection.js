@@ -31,6 +31,7 @@ function blah() {
 }
 
 function NdbProjection(sector, parentProjection) {
+  this.next         = null;
   if(parentProjection) {
     parentProjection.next = this;
     this.parent     = parentProjection;
@@ -43,13 +44,14 @@ function NdbProjection(sector, parentProjection) {
     this.joinTo     = null;
     this.depth      = 0;
   }
-  this.keyValues    = null;
-  this.next         = null;
   this.opNumber     = null;
   this.ndbQueryDef  = null;
   this.tableHandler = sector.tableHandler;
+  this.rowRecord    = this.tableHandler.dbTable.record;
+  this.rowBuffer    = new Buffer(this.rowRecord.getBufferSize());
   this.indexHandler = this.tableHandler.getIndexHandler(this.keys, false);
-  assert(this.indexHandler);  // shouldn't get this far without usable index
+  this.keyRecord    = this.indexHandler.record;
+  this.isPrimaryKey = this.indexHandler.dbIndex.isPrimaryKey || false;
 };
 
 

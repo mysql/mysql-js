@@ -25,12 +25,3 @@
 
 #include "adapter_global.h"
 #include "QueryOperation.h"
-
-using namespace v8;
-
-QueryOperation::QueryOperation(NdbQueryBuilder *builder, const Arguments & args)
-:
-  KeyOperation()
-{
-}
-
