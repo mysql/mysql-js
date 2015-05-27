@@ -771,13 +771,41 @@ function checkOperation(err, dbOperation) {
  * @param index the index into sectors for the sector being constructed
  * @param offset the number of fields in all sectors already processed
  */
+function Sector() {
+  this.keyFields = [];
+  this.keyFieldNames = [];
+  this.keyFieldCount = 0;
+  this.nonKeyFields = [];
+  this.nonKeyFieldCount = 0;
+  this.projection = null;
+  this.offset = 0;
+  this.tableHandler = null;
+  this.relatedFieldMapping = null;
+  this.relatedTableHandler = null;
+  this.joinTableHandler = null;
+  this.thisJoinColumns = [];
+  this.otherJoinColumns = [];
+}
+
+Sector.prototype.inspect = function() {
+  var s = "Sector for " + this.tableHandler.dbTable.name;
+  if(this.thisJoinColumns.length) {
+    s += " where this." + this.thisJoinColumns.join(",") + "=" +
+      this.relatedTableHandler.dbTable.name + "." + this.otherJoinColumns.join(",");
+  } else {
+    s+= " with keys [" + this.keyFieldNames.join(",") + "]";
+  }
+  s += " at offset " + this.offset;
+  return s;
+};
+
 function createSector(outerLoopProjection, innerLoopProjection, sectors, index, offset) {
   udebug.log('createSector ' + outerLoopProjection.name + ' for ' + outerLoopProjection.domainObject.name +
       ' inner: ' + innerLoopProjection.name + ' for ' + innerLoopProjection.domainObject.name +
       ' index: ' + index + ' offset: ' + offset);
   var projection = innerLoopProjection;
   var innerNestedProjection, outerNestedProjection;
-  var sector = {};
+  var sector = new Sector();
   var tableHandler, relationships;
   var keyFieldCount, nonKeyFieldCount;
   var fieldNames, field;
@@ -789,10 +817,6 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
   var foreignKeys, foreignKey, fkIndex, foreignKeyName;
   var i, fkFound;
 
-  // initialize sector
-  sector.keyFields = [];
-  sector.nonKeyFields = [];
-  sector.keyFieldNames = [];
   sector.projection = projection;
   sector.offset = offset;
   tableHandler = projection.domainObject.prototype.jones.tableHandler;
