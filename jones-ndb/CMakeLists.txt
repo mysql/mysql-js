@@ -87,6 +87,8 @@ set(ADAPTER_SOURCE_FILES
   Adapter/impl/ndb/src/ScanOperation.cpp
   Adapter/impl/ndb/src/ValueObject.cpp
   Adapter/impl/ndb/src/node_module.cpp
+  Adapter/impl/ndb/src/QueryOperation.cpp
+  Adapter/impl/ndb/src/QueryOperation_wrapper.cpp
 )
 
 

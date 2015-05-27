@@ -18,9 +18,9 @@
  02110-1301  USA
 */
 
+#include "KeyOperation.h"
 #include "Record.h"
 #include "ColumnProxy.h"
-#include "KeyOperation.h"
 
 class NdbRecordObject {
 public:

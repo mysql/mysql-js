@@ -51,7 +51,7 @@ require(jones.api.stats).register(stats, "spi","ndb","DBSession");
   QUEUES
   ------
   1. An Ndb object is "single-threaded".  All execute calls on the session's
-     DBSessionImpl are serialized in NdbSession.execQueue.  This is seen in
+     SessionImpl are serialized in NdbSession.execQueue.  This is seen in
      run() in NdBTransactionHandler.
   2. seizeTransactionContext() calls must wait on NdbSession.seizeTxQueue
      for some transaction context to be released, if more than 
@@ -73,7 +73,7 @@ NdbSession = function(pool) {
   this.isNdbSession          = true;
 };
 
-/* fetch DBSessionImpl. Undocumented - private to NdbConnectionPool. 
+/* fetch SessionImpl. Undocumented - private to NdbConnectionPool. 
    ASYNC.
 */
 NdbSession.prototype.fetchImpl = function(callback) {
@@ -275,9 +275,8 @@ NdbSession.prototype.buildScanOperation = function(queryHandler, properties,
 NdbSession.prototype.buildReadProjectionOperation = function(indexHandler, 
                                             keys, projection, tx, callback) {
   udebug.log("buildReadProjectionOperation");
-  //FIXME:  ALL OF THIS IS STUB CODE
-  var lockMode = "SHARED";
-  var op = ndboperation.newReadOperation(tx, indexHandler, keys, lockMode);
+  var op = ndboperation.newProjectionOperation(this.impl, tx, indexHandler,
+                                               keys, projection);
   op.userCallback = callback;
   return op;
 };

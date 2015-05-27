@@ -59,7 +59,7 @@ class NdbQueryOperationImpl;
  * A NdbQuery is associated with a collection of NdbQueryOperation which 
  * are instantiated (1::1) to reflect the NdbQueryOperationDef objects
  * which the NdbQueryDef consists of. The same NdbQueryDef may be used to
- * instantiate multiple NdbQuery obejects.
+ * instantiate multiple NdbQuery objects.
  *
  * When we have an instantiated NdbQuery, we should either bind result buffers
  * for retrieving entire rows from each operation, 

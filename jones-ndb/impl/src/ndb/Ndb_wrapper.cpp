@@ -29,6 +29,9 @@
 
 using namespace v8;
 
+// FIXME: All of this should be on SessionImpl with Ndb object not directly
+// exposed to JavaScript
+
 Handle<Value> getAutoIncValue(const Arguments &);
 Handle<Value> closeNdb(const Arguments &);
 Handle<Value> getStatistics(const Arguments &);

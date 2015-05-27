@@ -51,6 +51,8 @@ def build(ctx):
   "src/ndb/ScanOperation_wrapper.cpp " +\
   "src/ndb/BlobHandler.cpp " +\
   "src/ndb/KeyOperation.cpp " +\
+  "src/ndb/QueryOperation.cpp" +\
+  "src/ndb/QueryOperation_wrapper.cpp" +\
   \
   "src/ndb/mysqlclient_wrapper.cpp " +\
   ""

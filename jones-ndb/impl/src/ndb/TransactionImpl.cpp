@@ -99,7 +99,7 @@ void TransactionImpl::registerClose() {
 }
 
 int TransactionImpl::execute(BatchImpl *operations, 
-                                  int _execType, int _abortOption, int force) {
+                             int _execType, int _abortOption, int force) {
   int rval;
   int opListSize = operations->size;
   NdbTransaction::ExecType execType = static_cast<NdbTransaction::ExecType>(_execType);
@@ -131,8 +131,8 @@ int TransactionImpl::execute(BatchImpl *operations,
 }
 
 int TransactionImpl::executeAsynch(BatchImpl *operations,  
-                                        int execType, int abortOption, int forceSend, 
-                                        v8::Persistent<v8::Function> callback) {
+                                   int execType, int abortOption, int forceSend,
+                                   v8::Persistent<v8::Function> callback) {
   assert(ndbTransaction);
   operations->prepare(ndbTransaction);
   int opListSize = operations->size;

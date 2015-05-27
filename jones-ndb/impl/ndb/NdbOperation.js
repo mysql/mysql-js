@@ -829,8 +829,17 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 }
 
 
-function newProjectionOperation(tx, indexHandler, keys, projection) {
-  NdbProjection.initialize(projection);
+function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
+  var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
+  op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getFields(keys);
+  projection.sectors.forEach(function(sector) {
+    storeNativeConstructorInMapping(sector.tableHandler);
+  });
+
+  op.query = NdbProjection.initialize(projection);
+  // op.params = ??
+  op.query.keyValues = keys;
+  op.scanOp = sessionImpl.createQueryOperation(op.query);
 }
 
 

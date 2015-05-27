@@ -62,7 +62,9 @@
          "impl/src/ndb/ScanOperation_wrapper.cpp",
          "impl/src/ndb/ScanOperation.cpp", 
          "impl/src/ndb/ValueObject.cpp",
-         "impl/src/ndb/node_module.cpp"
+         "impl/src/ndb/node_module.cpp",
+         "impl/src/ndb/QueryOperation.cpp",
+         "impl/src/ndb/QueryOperation_wrapper.cpp"
         ],
 
       'conditions': 

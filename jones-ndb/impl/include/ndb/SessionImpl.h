@@ -21,8 +21,6 @@
 #ifndef NODEJS_ADAPTER_INCLUDE_DBSESSIONIMPL_H
 #define NODEJS_ADAPTER_INCLUDE_DBSESSIONIMPL_H
 
-#include "ndb_util/NdbQueryBuilder.hpp"
-
 /* 
   SessionImpl maintains an Ndb and a set of TransactionImpl objects. 
   
@@ -30,7 +28,7 @@
 
 class TransactionImpl;
 class AsyncNdbContext;
-
+class NdbQueryBuilder;
 
 class CachedTransactionsAccountant {
 protected:
@@ -114,7 +112,11 @@ public:
   /* Replaces Ndb::getNdbError().
   */
   const NdbError & getNdbError() const;
-  
+
+  /* getQueryBuilder():
+  */
+  NdbQueryBuilder * getQueryBuilder() { return ndbQueryBuilder; }
+
 private:  
   friend class TransactionImpl;
   friend class ListTablesCall;

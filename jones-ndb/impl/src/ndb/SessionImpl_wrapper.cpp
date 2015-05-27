@@ -23,13 +23,16 @@
 #include "adapter_global.h"
 #include "js_wrapper_macros.h"
 #include "TransactionImpl.h"
+#include "QueryOperation.h"
 #include "SessionImpl.h"
 #include "NativeCFunctionCall.h"
 #include "NativeMethodCall.h"
+#include "NdbWrappers.h"
 
 using namespace v8;
 
 Handle<Value> newSessionImpl(const Arguments &);
+Handle<Value> createQueryOperation(const Arguments &);
 Handle<Value> seizeTransaction(const Arguments &);
 Handle<Value> releaseTransaction(const Arguments &);
 Handle<Value> freeTransactions(const Arguments &);
@@ -43,6 +46,7 @@ public:
     DEFINE_JS_FUNCTION(Envelope::stencil, "releaseTransaction", releaseTransaction);
     DEFINE_JS_FUNCTION(Envelope::stencil, "freeTransactions", freeTransactions);
     DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", SessionImplDestructor);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "createQueryOperation", createQueryOperation);
   }
 };
 
@@ -105,6 +109,13 @@ Handle<Value> freeTransactions(const Arguments & args) {
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
   return Undefined();
+}
+
+Handle<Value> createQueryOperation(const Arguments & args) {
+  SessionImpl     * session = unwrapPointer<SessionImpl *>(args.Holder());
+  NdbQueryBuilder * builder = session->getQueryBuilder();
+  QueryOperation  * queryOp = new QueryOperation(builder, args);
+  return QueryOperation_Wrapper(queryOp);
 }
 
 Handle<Value> SessionImplDestructor(const Arguments &args) {

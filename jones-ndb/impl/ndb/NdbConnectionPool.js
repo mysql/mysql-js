@@ -292,7 +292,7 @@ DBConnectionPool.prototype.close = function(userCallback) {
     closeNdb(this.ndbConnection.execQueue, table.per_table_ndb , onNdbClose);
   }
 
-  /* Close the DBSessionImpls from the session pool */
+  /* Close the SessionImpls from the session pool */
   while(session = this.ndbSessionFreeList.pop()) {
     closeDbSessionImpl(this.ndbConnection.execQueue, session.impl, onNdbClose);
   }  

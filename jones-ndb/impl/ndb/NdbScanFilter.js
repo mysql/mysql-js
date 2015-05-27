@@ -81,6 +81,8 @@ function FilterSpec(predicate) {
    TODO: Determine index bounds before scan filter
          Add flags to node.ndb: isIndexBound, isScanFilter
          Do not create scan filter for nodes used in index bounds
+   XXXX: You could store all constants in a durable buffer and reuse them 
+         for each query.
 */
 function markNode(node) {
   var opcode = null;

@@ -19,6 +19,7 @@
 */
 
 #include <NdbApi.hpp>
+#include "ndb_util/NdbQueryBuilder.hpp"
 
 #include "adapter_global.h"
 #include "unified_debug.h"
@@ -26,7 +27,6 @@
 #include "KeyOperation.h"
 #include "SessionImpl.h"
 #include "TransactionImpl.h"
-
 
 //////////
 /////////////////
