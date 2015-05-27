@@ -30,37 +30,48 @@ function blah() {
   process.exit();
 }
 
-function NdbProjection(sector, parentProjection) {
+function NdbProjection(sector, indexHandler, parentProjection) {
+  var mock_keys = {};
+
+  console.log("New NdbProjection from:", sector);
+
   this.next         = null;
+  this.tableHandler = sector.tableHandler;
   if(parentProjection) {
     parentProjection.next = this;
-    this.parent     = parentProjection;
-    this.keyFields  = sector.thisJoinColumns;
-    this.joinTo     = sector.otherJoinColumns;
-    this.depth      = parentProjection.depth - 1;
+    this.parent       = parentProjection;
+    this.keyFields    = sector.thisJoinColumns;
+    this.joinTo       = sector.otherJoinColumns;
+    this.depth        = parentProjection.depth - 1;
+    this.keyFields.forEach(function(field) {
+      mock_keys[field] = "_";
+    });
+    this.indexHandler = this.tableHandler.getIndexHandler(mock_keys, false);
+    if(! this.indexHandler) blah(this.tableHandler.dbTable.indexes);
   } else {
-    this.parent     = null;
-    this.keyFields  = sector.keyFieldNames;
-    this.joinTo     = null;
-    this.depth      = 0;
-  }
-  this.opNumber     = null;
-  this.ndbQueryDef  = null;
-  this.tableHandler = sector.tableHandler;
-  this.rowRecord    = this.tableHandler.dbTable.record;
-  this.rowBuffer    = new Buffer(this.rowRecord.getBufferSize());
-  this.indexHandler = this.tableHandler.getIndexHandler(this.keys, false);
-  this.keyRecord    = this.indexHandler.record;
-  this.isPrimaryKey = this.indexHandler.dbIndex.isPrimaryKey || false;
-};
+    this.parent       = null;
+    this.keyFields    = sector.keyFieldNames;
+    this.joinTo       = null;
+    this.depth        = 0;
+    this.indexHandler = indexHandler;
+   }
+  this.opNumber       = null;
+  this.ndbQueryDef    = null;
+  this.rowRecord      = this.tableHandler.dbTable.record;
+  this.rowBuffer      = new Buffer(this.rowRecord.getBufferSize());
+  this.keyRecord      = this.indexHandler.dbIndex.record;
+  this.isPrimaryKey   = this.indexHandler.dbIndex.isPrimaryKey || false;
+
+  console.log("Got NdbProjection for ", this.tableHandler.dbTable.name);
+}
 
 
-function initializeProjection(projection) {
+function initializeProjection(sectors, indexHandler) {
   var top, projection, i;
-  projection = top = new NdbProjection(sectors[0]);
+  projection = top = new NdbProjection(sectors[0], indexHandler);
   top.depth = sectors.length;
   for (i = 1 ; i < sectors.length ; i++) {
-    projection = new NdbProjection(sectors[i], projection);
+    projection = new NdbProjection(sectors[i], null, projection);
   }
   return top;
 }

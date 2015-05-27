@@ -27,8 +27,20 @@
 class NdbQueryBuilder;
 
 class QueryOperation : public KeyOperation {
+private:
+  NdbQueryBuilder * ndbQueryBuilder;
+  const NdbQueryOperationDef * operationTree;
+  const NdbQueryDef * definedQuery;
+
 public:
-  QueryOperation(const NdbQueryOperationDef *);
+  QueryOperation();
+  ~QueryOperation();
+  void prepare(const NdbQueryOperationDef * root);
+  NdbQueryBuilder * getBuilder() { return ndbQueryBuilder; }
+  const NdbQueryOperationDef * defineOperation(const NdbDictionary::Index * index,
+                                               const NdbDictionary::Table * table,
+                                               const NdbQueryOperand* const keys[]);
+
 
 };
 

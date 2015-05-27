@@ -28,7 +28,6 @@
 
 class TransactionImpl;
 class AsyncNdbContext;
-class NdbQueryBuilder;
 
 class CachedTransactionsAccountant {
 protected:
@@ -113,10 +112,6 @@ public:
   */
   const NdbError & getNdbError() const;
 
-  /* getQueryBuilder():
-  */
-  NdbQueryBuilder * getQueryBuilder() { return ndbQueryBuilder; }
-
 private:  
   friend class TransactionImpl;
   friend class ListTablesCall;
@@ -125,7 +120,6 @@ private:
   int maxNdbTransactions;
   int nContexts;
   Ndb *ndb;
-  NdbQueryBuilder * ndbQueryBuilder;
   AsyncNdbContext * asyncContext;
   TransactionImpl * freeList;
 };

@@ -19,7 +19,6 @@
 */
 
 #include <NdbApi.hpp>
-#include "ndb_util/NdbQueryBuilder.hpp"
 
 #include "adapter_global.h"
 #include "unified_debug.h"
@@ -129,13 +128,11 @@ SessionImpl::SessionImpl(Ndb_cluster_connection *conn,
 {
   ndb = new Ndb(conn, defaultDatabase);
   ndb->init(maxTransactions * 2);
-  ndbQueryBuilder = NdbQueryBuilder::create();
 }
 
 
 SessionImpl::~SessionImpl() {
   DEBUG_MARKER(UDEB_DETAIL);
-  ndbQueryBuilder->destroy();
   delete ndb;
 }
 

@@ -65,18 +65,40 @@ Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
   return Null();
 }
 
-const NdbQueryOperationDef * createTopLevelQuery(NdbQueryBuilder *builder,
+const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
-  const NdbQueryOperationDef * thisOp;
+  NdbQueryBuilder *builder = queryOp->getBuilder();
 
   /* Pull values out of the JavaScript object */
-  const Record * keyRecord = unwrapPointer<const Record *>
-    (spec->Get(K_keyRecord)->ToObject());
-  const NdbDictionary::Table * table = unwrapPointer<const NdbDictionary::Table *>
-    (spec->Get(K_tableHandler)->ToObject()->Get(K_dbTable)->ToObject());
+  Local<Value> v;
+  const Record * keyRecord = 0;
+  const NdbDictionary::Table * table = 0;
+  const NdbDictionary::Index * index = 0;
+
+  v = spec->Get(K_keyRecord);
+  if(v->IsObject()) {
+    keyRecord = unwrapPointer<const Record *>(v->ToObject());
+  };
+  v = spec->Get(K_tableHandler);
+  if(v->IsObject()) {
+    v = v->ToObject()->Get(K_dbTable);
+    if(v->IsObject()) {
+      table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
+    }
+  }
   bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
   const char * key_buffer = node::Buffer::Data(keyBuffer);
+  if(! isPrimaryKey) {
+    v = spec->Get(K_indexHandler);
+    if(v->IsObject()) {
+      v = v->ToObject()->Get(K_dbIndex);
+      if(v->IsObject()) {
+        index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
+      }
+    }
+    assert(index);
+  }
 
   /* Build the key */
   int nKeyParts = keyRecord->getNoOfColumns();
@@ -90,42 +112,76 @@ const NdbQueryOperationDef * createTopLevelQuery(NdbQueryBuilder *builder,
   }
   key_parts[nKeyParts] = 0;
 
-  /* Build the operation */
-  if(isPrimaryKey) {
-    thisOp = builder->readTuple(table, key_parts);
-  } else {
-    const NdbDictionary::Index * index =
-      unwrapPointer<const NdbDictionary::Index *>
-        (spec->Get(K_indexHandler)->ToObject()->Get(K_dbIndex)->ToObject());
-    thisOp = builder->readTuple(index, table, key_parts);
+  return queryOp->defineOperation(index, table, key_parts);
+}
+
+const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
+                                             Handle<Object> spec,
+                                             const NdbQueryOperationDef * parent) {
+  NdbQueryBuilder *builder = queryOp->getBuilder();
+
+  /* Pull values out of the JavaScript object */
+  Local<Value> v;
+  const NdbDictionary::Table * table = 0;
+  const NdbDictionary::Index * index = 0;
+
+  v = spec->Get(K_tableHandler);
+  if(v->IsObject()) {
+    v = v->ToObject()->Get(K_dbTable);
+    if(v->IsObject()) {
+      table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
+    }
+  }
+  bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
+
+  if(! isPrimaryKey) {
+    v = spec->Get(K_indexHandler);
+    if(v->IsObject()) {
+      v = v->ToObject()->Get(K_dbIndex);
+      if(v->IsObject()) {
+        index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
+      }
+    }
+    assert(index);
   }
 
-  return thisOp;
+  v = spec->Get(K_joinTo);
+  Local<Array> joinColumns = Array::Cast(*v);
+
+  /* Build the key */
+  int nKeyParts = joinColumns->Length();
+  const NdbQueryOperand * key_parts[nKeyParts+1];
+
+  for(int i = 0 ; i < nKeyParts ; i++) {
+    String::AsciiValue column_name(joinColumns->Get(i));
+    key_parts[i] = builder->linkedValue(parent, *column_name);
+  }
+
+  return queryOp->defineOperation(index, table, key_parts);
 }
 
-const NdbQueryOperationDef * createNextLevel(Handle<Value> spec,
-                                             const NdbQueryOperationDef * parent) {
-  const NdbQueryOperationDef * thisOp = 0;
 
-
-  return thisOp;
-}
-
-
-Handle<Value> createQueryOperation(NdbQueryBuilder *builder,
-                                   const Arguments & args) {
-  Local<Object> spec = args[0]->ToObject();
+Handle<Value> createQueryOperation(const Arguments & args) {
+  DEBUG_MARKER(UDEB_DEBUG);
   const NdbQueryOperationDef * root, * current;
+  QueryOperation * queryOperation = new QueryOperation();
 
-  current = root = createTopLevelQuery(builder,
-                                       args[0]->ToObject(),
+  DEBUG_PRINT("arg0 %s", args[0]->IsNull() ? "null" : "notnull");
+  DEBUG_PRINT("arg1 %s", args[1]->IsNull() ? "null" : "notnull");
+
+  Local<Object> spec = args[0]->ToObject();
+  Local<Value> v;
+
+  current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
 
-  while(! (spec = spec->Get(K_next)->ToObject())->IsNull()) {
-    current = createNextLevel(spec, current);
+  while(! (v = spec->Get(K_next))->IsNull()) {
+    DEBUG_PRINT("v %s", v->IsNull() ? "null" : "notnull");
+    spec = v->ToObject();
+    current = createNextLevel(queryOperation, spec, current);
   }
-
-  return QueryOperation_Wrapper(new QueryOperation(root));
+  queryOperation->prepare(root);
+  return QueryOperation_Wrapper(queryOperation);
 }
 
 
@@ -133,6 +189,13 @@ Handle<Value> createQueryOperation(NdbQueryBuilder *builder,
 
 void QueryOperation_initOnLoad(Handle<Object> target) {
   HandleScope scope;
+
+  Persistent<Object> ibObj = Persistent<Object>(Object::New());
+  Persistent<String> ibKey = Persistent<String>(String::NewSymbol("QueryOperation"));
+  target->Set(ibKey, ibObj);
+
+  DEFINE_JS_FUNCTION(ibObj, "create", createQueryOperation);
+
   K_next          = JSSTRING("next");
   K_parent        = JSSTRING("parent");
   K_keyFields     = JSSTRING("keyFields");

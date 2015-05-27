@@ -833,7 +833,7 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
   var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
-  op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getFields(keys);
+  op.keys = Array.isArray(keys) ? keys : indexHandler.getFields(keys);
   allocateKeyBuffer(op);
   encodeKeyBuffer(op);
 
@@ -843,8 +843,8 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
   });
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
-  op.query = NdbProjection.initialize(projection);
-  op.scanOp = sessionImpl.createQueryOperation(op.query, op.buffers.key);
+  op.query = NdbProjection.initialize(projection.sectors, indexHandler);
+  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key);
 
   return op;
 }

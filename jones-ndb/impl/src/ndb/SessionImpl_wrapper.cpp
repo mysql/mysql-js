@@ -32,13 +32,10 @@
 using namespace v8;
 
 Handle<Value> newSessionImpl(const Arguments &);
-Handle<Value> createQueryOperation(const Arguments &);
 Handle<Value> seizeTransaction(const Arguments &);
 Handle<Value> releaseTransaction(const Arguments &);
 Handle<Value> freeTransactions(const Arguments &);
 Handle<Value> SessionImplDestructor(const Arguments &);
-
-extern QueryOperation  * createQueryOperation(NdbQueryBuilder *, const Arguments &);
 
 class SessionImplEnvelopeClass : public Envelope {
 public:
@@ -47,7 +44,6 @@ public:
     DEFINE_JS_FUNCTION(Envelope::stencil, "releaseTransaction", releaseTransaction);
     DEFINE_JS_FUNCTION(Envelope::stencil, "freeTransactions", freeTransactions);
     DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", SessionImplDestructor);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "createQueryOperation", createQueryOperation);
   }
 };
 
@@ -110,13 +106,6 @@ Handle<Value> freeTransactions(const Arguments & args) {
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
   return Undefined();
-}
-
-Handle<Value> createQueryOperation(const Arguments & args) {
-  SessionImpl     * session = unwrapPointer<SessionImpl *>(args.Holder());
-  NdbQueryBuilder * builder = session->getQueryBuilder();
-  QueryOperation  * queryOp = createQueryOperation(builder, args);
-  return QueryOperation_Wrapper(queryOp);
 }
 
 Handle<Value> SessionImplDestructor(const Arguments &args) {

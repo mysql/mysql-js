@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #include "adapter_global.h"
+#include "unified_debug.h"
 #include "Record.h"
 
 Record::Record(NdbDictionary::Dictionary *d, int ncol, bool isPK) : 
@@ -160,8 +161,10 @@ void Record::pad_offset_for_alignment() {
     Otherwise it returns the full length allocated to the value.
 */
 size_t Record::getValueLength(int idx, const char *data) const {
+  DEBUG_MARKER(UDEB_DEBUG);
+  assert((size_t) idx < ncolumns);
   size_t size;
-  const NdbDictionary::Column * col = specs[index].column;
+  const NdbDictionary::Column * col = specs[idx].column;
 
   if(col->getType() == NdbDictionary::Column::Varchar ||
      col->getType() == NdbDictionary::Column::Varbinary)
@@ -179,13 +182,15 @@ size_t Record::getValueLength(int idx, const char *data) const {
   return size;
 }
 
-/*  How far into a recrod is the actual encoded value?
+/*  How far into a record is the actual encoded value?
     For all columns other than VARCHAR and VARBINARY, this returns 0.
     For VARCHAR and VARBINARY, this returns the number of length bytes.
 */
 size_t Record::getValueOffset(int idx) const {
+  DEBUG_MARKER(UDEB_DEBUG);
+  assert((size_t) idx < ncolumns);
   size_t offset = 0;
-  const NdbDictionary::Column * col = specs[index].column;
+  const NdbDictionary::Column * col = specs[idx].column;
 
   if(col->getType() == NdbDictionary::Column::Varchar ||
      col->getType() == NdbDictionary::Column::Varbinary)             offset = 1;
