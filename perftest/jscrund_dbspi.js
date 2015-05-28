@@ -116,7 +116,7 @@ implementation.prototype.find = function(parameters, callback) {
   udebug.log_detail('find key:', parameters.key);
   var dbt = parameters.object.constructor.dbt;
   var tx = this.dbSession.getTransactionHandler();
-  var index = dbt.getIndexHandler(parameters.key, true);
+  var index = dbt.getUniqueIndexHandler(parameters.key);
   var op = this.dbSession.buildReadOperation(index, parameters.key, tx, callback);
   this.execOneOperation(op, tx, callback);
 };
@@ -125,7 +125,7 @@ implementation.prototype.remove = function(parameters, callback) {
   udebug.log_detail('remove key:', parameters.key);
   var dbt = parameters.object.constructor.dbt;
   var tx = this.dbSession.getTransactionHandler();
-  var index = dbt.getIndexHandler(parameters.key, true);
+  var index = dbt.getUniqueIndexHandler(parameters.key);
   var op = this.dbSession.buildDeleteOperation(index, parameters.key, tx, callback);
   this.execOneOperation(op, tx, callback);
 };

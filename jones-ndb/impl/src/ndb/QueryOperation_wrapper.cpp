@@ -29,11 +29,11 @@ using namespace v8;
 
 Handle<String>    /* keys of NdbProjection */
   K_next,
-  K_parent,
+  K_root,
+  K_hasScan,
   K_keyFields,
   K_joinTo,
   K_depth,
-  K_opNumber,
   K_ndbQueryDef,
   K_tableHandler,
   K_rowRecord,
@@ -68,6 +68,7 @@ Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
 const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
+  DEBUG_ENTER();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
   /* Pull values out of the JavaScript object */
@@ -124,6 +125,8 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   Local<Value> v;
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
+  int depth = spec->Get(K_depth)->Int32Value();
+  DEBUG_PRINT("Creating QueryOperationDef at level %d",depth);
 
   v = spec->Get(K_tableHandler);
   if(v->IsObject()) {
@@ -156,6 +159,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
     String::AsciiValue column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
   }
+  key_parts[nKeyParts] = 0;
 
   return queryOp->defineOperation(index, table, key_parts);
 }
@@ -163,22 +167,20 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
 
 Handle<Value> createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  const NdbQueryOperationDef * root, * current;
   QueryOperation * queryOperation = new QueryOperation();
+  const NdbQueryOperationDef * root, * current;
 
-  DEBUG_PRINT("arg0 %s", args[0]->IsNull() ? "null" : "notnull");
-  DEBUG_PRINT("arg1 %s", args[1]->IsNull() ? "null" : "notnull");
-
-  Local<Object> spec = args[0]->ToObject();
   Local<Value> v;
+  Local<Object> spec = args[0]->ToObject();
 
   current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
+  assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
 
   while(! (v = spec->Get(K_next))->IsNull()) {
-    DEBUG_PRINT("v %s", v->IsNull() ? "null" : "notnull");
     spec = v->ToObject();
     current = createNextLevel(queryOperation, spec, current);
+    assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
   }
   queryOperation->prepare(root);
   return QueryOperation_Wrapper(queryOperation);
@@ -197,11 +199,11 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
   DEFINE_JS_FUNCTION(ibObj, "create", createQueryOperation);
 
   K_next          = JSSTRING("next");
-  K_parent        = JSSTRING("parent");
+  K_root          = JSSTRING("root");
+  K_hasScan       = JSSTRING("hasScan");
   K_keyFields     = JSSTRING("keyFields");
   K_joinTo        = JSSTRING("joinTo");
   K_depth         = JSSTRING("depth");
-  K_opNumber      = JSSTRING("opNumber");
   K_ndbQueryDef   = JSSTRING("ndbQueryDef");
   K_tableHandler  = JSSTRING("tableHandler");
   K_rowRecord     = JSSTRING("rowRecord"),

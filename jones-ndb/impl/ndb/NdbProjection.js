@@ -32,48 +32,84 @@ function blah() {
 
 function NdbProjection(sector, indexHandler, parentProjection) {
   var mock_keys = {};
-
   console.log("New NdbProjection from:", sector);
 
-  this.next         = null;
-  this.tableHandler = sector.tableHandler;
   if(parentProjection) {
-    parentProjection.next = this;
-    this.parent       = parentProjection;
-    this.keyFields    = sector.thisJoinColumns;
-    this.joinTo       = sector.otherJoinColumns;
-    this.depth        = parentProjection.depth - 1;
-    this.keyFields.forEach(function(field) {
+    sector.thisJoinColumns.forEach(function(field) {
       mock_keys[field] = "_";
     });
-    this.indexHandler = this.tableHandler.getIndexHandler(mock_keys, false);
-    if(! this.indexHandler) blah(this.tableHandler.dbTable.indexes);
+  }
+
+  this.next           = null;
+  this.tableHandler   = sector.tableHandler;
+  this.error          = null;
+  if(parentProjection) {
+    parentProjection.next = this;
+    this.root         = parentProjection.root;
+    this.keyFields    = sector.thisJoinColumns;
+    this.joinTo       = sector.otherJoinColumns;
+    this.depth        = parentProjection.depth + 1;
+    this.indexHandler = this.tableHandler.getIndexHandler(mock_keys);
+    this.hasScan      = null;   // unused except in root
   } else {
-    this.parent       = null;
+    this.root         = this;
     this.keyFields    = sector.keyFieldNames;
     this.joinTo       = null;
     this.depth        = 0;
     this.indexHandler = indexHandler;
-   }
-  this.opNumber       = null;
+    this.hasScan      = false;
+  }
   this.ndbQueryDef    = null;
   this.rowRecord      = this.tableHandler.dbTable.record;
   this.rowBuffer      = new Buffer(this.rowRecord.getBufferSize());
   this.keyRecord      = this.indexHandler.dbIndex.record;
   this.isPrimaryKey   = this.indexHandler.dbIndex.isPrimaryKey || false;
+  this.isUniqueKey    = this.indexHandler.dbIndex.isUnique;
 
-  console.log("Got NdbProjection for ", this.tableHandler.dbTable.name);
+  if(! (this.isPrimaryKey || this.isUniqueKey)) {
+    this.root.hasScan = true;
+  }
 }
 
 
+/* If the root operation is a find, but some child operation is a scan,
+   NdbQueryBuilder.cpp says "Scan with root lookup operation has not been
+   implemented" and returns QRY_WRONG_OPERATION_TYPE error 4820. 
+   We have to work around this now by rewriting the root to use a scan.
+*/
+NdbProjection.prototype.rewriteAsScan = function(sector) {
+  var new_index, mock_keys;
+
+  mock_keys = {};
+  sector.keyFieldNames.forEach(function(field) {
+    mock_keys[field] = "_";
+  });
+
+  this.indexHandler = this.tableHandler.getOrderedIndexHandler(mock_keys);
+  if(this.indexHandler) {
+    this.isPrimaryKey = false;
+    this.isUniqueKey = false;
+  } else {
+    this.error = new Error("Could not rewrite NdbProjection to use scan");
+  }
+};
+
+
 function initializeProjection(sectors, indexHandler) {
-  var top, projection, i;
-  projection = top = new NdbProjection(sectors[0], indexHandler);
-  top.depth = sectors.length;
+  var projection, i;
+  projection = new NdbProjection(sectors[0], indexHandler);
   for (i = 1 ; i < sectors.length ; i++) {
     projection = new NdbProjection(sectors[i], null, projection);
   }
-  return top;
+
+  if(projection.root.hasScan &&
+     (projection.root.isPrimaryKey || projection.root.isUniqueKey))
+  {
+    console.log("Rewriting to scan");
+    projection.root.rewriteAsScan(sectors[0]);
+  }
+
+  return projection.root;
 }
 
 exports.initialize = initializeProjection;

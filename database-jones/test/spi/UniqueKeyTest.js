@@ -91,7 +91,7 @@ function do_insert_op(testCase, dataObj) {
 function do_read_op(testCase, keyObj) {
   udebug.log("do_read_op for", testCase.name);
   var tx = dbSession.getTransactionHandler();
-  var index = dbt.getIndexHandler(keyObj);
+  var index = dbt.getUniqueIndexHandler(keyObj);
   var op = dbSession.buildReadOperation(index, keyObj, tx);
   tx.execute([ op ], testCase.checkResult);
 }
@@ -100,7 +100,7 @@ function do_update_op(testCase, dataObj) {
   assert(typeof testCase.checkResult === 'function');
   udebug.log("do_update_op for", testCase.name);
   var tx = dbSession.getTransactionHandler();
-  var dbix = dbt.getIndexHandler(dataObj.keys);
+  var dbix = dbt.getUniqueIndexHandler(dataObj.keys);
   var op = dbSession.buildUpdateOperation(dbix, dataObj.keys, dataObj.values, tx, null);
   tx.execute([ op ], testCase.checkResult);
 }
@@ -109,7 +109,7 @@ function do_write_op(testCase, dataObj) {
   assert(typeof testCase.checkResult === 'function');
   udebug.log("do_write_op for", testCase.name);
   var tx = dbSession.getTransactionHandler();
-  var dbix = dbt.getIndexHandler(dataObj);
+  var dbix = dbt.getUniqueIndexHandler(dataObj);
   var op = dbSession.buildWriteOperation(dbix, dataObj, tx, null);
   tx.execute([ op ], testCase.checkResult);
 }
@@ -117,7 +117,7 @@ function do_write_op(testCase, dataObj) {
 function do_delete_op(testCase, keyObj) {
   udebug.log("do_delete_op for", testCase.name);
   var tx = dbSession.getTransactionHandler();
-  var dbix = dbt.getIndexHandler(keyObj);
+  var dbix = dbt.getUniqueIndexHandler(keyObj);
   var op = dbSession.buildDeleteOperation(dbix, keyObj, tx, null);  
   tx.execute([ op ], testCase.checkResult);
 }

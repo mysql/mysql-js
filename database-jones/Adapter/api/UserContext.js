@@ -1679,7 +1679,7 @@ exports.UserContext.prototype.save = function() {
       userContext.applyCallback(err);
     } else {
       transactionHandler = dbSession.getTransactionHandler();
-      indexHandler = dbTableHandler.getIndexHandler(userContext.values);
+      indexHandler = dbTableHandler.getUniqueIndexHandler(userContext.values);
       if (!indexHandler.dbIndex.isPrimaryKey) {
         userContext.applyCallback(
             new Error('Illegal argument: parameter of save must include all primary key columns.'));
@@ -1817,7 +1817,6 @@ exports.UserContext.prototype.load = function() {
       userContext.dbTableHandler = dbTableHandler;
       // the domain object must provide PRIMARY or unique key
       keys = userContext.user_arguments[0];
-      // ask getIndexHandler for only unique key indexes
       index = dbTableHandler.getUniqueIndexHandler(keys);
       if (index === null) {
         err = new Error('Illegal argument: load unable to get a unique index to use for ' + JSON.stringify(keys));

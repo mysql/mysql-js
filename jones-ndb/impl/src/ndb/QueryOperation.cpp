@@ -29,7 +29,6 @@
 #include "QueryOperation.h"
 
 QueryOperation::QueryOperation() {
-  DEBUG_MARKER(UDEB_DEBUG);
   ndbQueryBuilder = NdbQueryBuilder::create();
 }
 
@@ -48,19 +47,36 @@ const NdbQueryOperationDef *
   QueryOperation::defineOperation(const NdbDictionary::Index * index,
                                   const NdbDictionary::Table * table,
                                   const NdbQueryOperand* const keys[]) {
-  DEBUG_PRINT("index: %p", index);
-  if(! index) {
-    return ndbQueryBuilder->readTuple(table, keys);
-  }
-  switch(index->getType()) {
-    case NdbDictionary::Index::UniqueHashIndex:
-      return ndbQueryBuilder->readTuple(index, table, keys);
+  const NdbQueryOperationDef * rval;
+  NdbQueryIndexBound * bound;
+  DEBUG_MARKER(UDEB_DEBUG);
 
-    case NdbDictionary::Index::OrderedIndex:
-      return ndbQueryBuilder->scanIndex(index, table,
-                                        new NdbQueryIndexBound(keys));
+  if(index) {
+    switch(index->getType()) {
+      case NdbDictionary::Index::UniqueHashIndex:
+        rval = ndbQueryBuilder->readTuple(index, table, keys);
+        DEBUG_PRINT("Using UniqueHashIndex");
+        break;
 
-    default:
-      return 0;
+      case NdbDictionary::Index::OrderedIndex:
+        bound = new NdbQueryIndexBound(keys);
+        rval = ndbQueryBuilder->scanIndex(index, table, bound);
+        DEBUG_PRINT("Using OrderedIndex");
+        break;
+      default:
+        DEBUG_PRINT("ERROR: default case");
+        rval = 0;
+        break;
+    }
   }
+  else {
+    rval = ndbQueryBuilder->readTuple(table, keys);
+    DEBUG_PRINT("Using PrimaryKey");
+  }
+
+  if(rval == 0) {
+    const NdbError & err = ndbQueryBuilder->getNdbError();
+    DEBUG_PRINT("Error %d %s", err.code, err.message);
+  }
+  return rval;
 }
