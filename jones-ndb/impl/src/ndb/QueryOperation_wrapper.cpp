@@ -18,11 +18,17 @@
  02110-1301  USA
 */
 
+#include "ndb_util/NdbQueryOperation.hpp"
+
+#include "TransactionImpl.h"
+#include "QueryOperation.h"
+
+#include "node_buffer.h"
+
 #include "JsWrapper.h"
 #include "js_wrapper_macros.h"
-#include "QueryOperation.h"
-#include "ndb_util/NdbQueryOperation.hpp"
-#include "node_buffer.h"
+#include "NativeMethodCall.h"
+#include "NdbWrapperErrors.h"
 
 using namespace v8;
 
@@ -45,9 +51,13 @@ Handle<String>    /* keys of NdbProjection */
   K_dbIndex;
 
 
+Handle<Value> queryPrepareAndExecute(const Arguments &);
+
+
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
+    DEFINE_JS_FUNCTION(Envelope::stencil, "prepareAndExecute", queryPrepareAndExecute);
   }
 };
 
@@ -167,7 +177,10 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
 
 Handle<Value> createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  QueryOperation * queryOperation = new QueryOperation();
+  REQUIRE_ARGS_LENGTH(3);
+
+  TransactionImpl * ctx = unwrapPointer<TransactionImpl *>(args[2]->ToObject());
+  QueryOperation * queryOperation = new QueryOperation(ctx);
   const NdbQueryOperationDef * root, * current;
 
   Local<Value> v;
@@ -184,6 +197,20 @@ Handle<Value> createQueryOperation(const Arguments & args) {
   }
   queryOperation->prepare(root);
   return QueryOperation_Wrapper(queryOperation);
+}
+
+// void prepareAndExecute() 
+// ASYNC
+Handle<Value> queryPrepareAndExecute(const Arguments &args) {
+  HandleScope scope;
+  DEBUG_MARKER(UDEB_DEBUG);
+  REQUIRE_ARGS_LENGTH(1);
+  typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
+  MCALL * mcallptr = new MCALL(& QueryOperation::prepareAndExecute, args);
+  mcallptr->errorHandler = getNdbErrorIfLessThanZero;
+  mcallptr->runAsync();
+  
+  return Undefined();
 }
 
 

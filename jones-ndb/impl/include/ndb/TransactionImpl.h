@@ -22,6 +22,7 @@
 #define NODEJS_ADAPTER_INCLUDE_DBTRANSACTIONCONTEXT_H
 
 #include "ScanOperation.h"
+#include "QueryOperation.h"
 
 class SessionImpl;
 class BatchImpl;
@@ -46,6 +47,8 @@ public:
   /****** Executing Operations *******/
 
   int prepareAndExecuteScan(ScanOperation *);
+
+  int prepareAndExecuteQuery(QueryOperation *);
 
   /* If it is possible to open the NdbTransaction without blocking, do so,
      and return true.  Otherwise return false.  This can be used as a 

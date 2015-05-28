@@ -89,6 +89,14 @@ int TransactionImpl::prepareAndExecuteScan(ScanOperation *scan) {
   return ndbTransaction->execute(NdbTransaction::NoCommit, NdbOperation::AO_IgnoreError, 1);
 }
 
+int TransactionImpl::prepareAndExecuteQuery(QueryOperation *query) {
+  if(! ndbTransaction) {
+    startTransaction(NULL);
+  }
+  query->createNdbQuery(ndbTransaction);
+  return ndbTransaction->execute(NdbTransaction::NoCommit, NdbOperation::AO_IgnoreError, 1);
+}
+
 void TransactionImpl::closeTransaction() {
   ndbTransaction->close();
 }

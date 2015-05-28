@@ -844,7 +844,7 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
   op.query = NdbProjection.initialize(projection.sectors, indexHandler);
-  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key);
+  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, tx);
   return op;
 }
 

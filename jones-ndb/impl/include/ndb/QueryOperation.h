@@ -21,27 +21,33 @@
 #ifndef NODEJS_ADAPTER_NDB_INCLUDE_QUERYOPERATION_H
 #define NODEJS_ADAPTER_NDB_INCLUDE_QUERYOPERATION_H
 
+
 #include "KeyOperation.h"
-#include "ndb_util/NdbQueryOperation.hpp"
 
 class NdbQueryBuilder;
+class NdbQueryOperationDef;
+class NdbQueryDef;
+class TransactionImpl;
+class NdbQueryOperand;
 
 class QueryOperation : public KeyOperation {
-private:
-  NdbQueryBuilder * ndbQueryBuilder;
-  const NdbQueryOperationDef * operationTree;
-  const NdbQueryDef * definedQuery;
-
 public:
-  QueryOperation();
+  QueryOperation(TransactionImpl *);
   ~QueryOperation();
+  int prepareAndExecute();
+  void createNdbQuery(NdbTransaction *);
   void prepare(const NdbQueryOperationDef * root);
   NdbQueryBuilder * getBuilder() { return ndbQueryBuilder; }
   const NdbQueryOperationDef * defineOperation(const NdbDictionary::Index * index,
                                                const NdbDictionary::Table * table,
                                                const NdbQueryOperand* const keys[]);
+  const NdbError & getNdbError();
 
-
+private:
+  NdbQueryBuilder             * ndbQueryBuilder;
+  const NdbQueryOperationDef  * operationTree;
+  const NdbQueryDef           * definedQuery;
+  TransactionImpl             * transaction;
 };
 
 #endif

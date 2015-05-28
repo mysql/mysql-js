@@ -27,8 +27,11 @@
 #include "unified_debug.h"
 
 #include "QueryOperation.h"
+#include "TransactionImpl.h"
 
-QueryOperation::QueryOperation() {
+QueryOperation::QueryOperation(TransactionImpl *tx) :
+  transaction(tx)
+{
   ndbQueryBuilder = NdbQueryBuilder::create();
 }
 
@@ -42,6 +45,9 @@ void QueryOperation::prepare(const NdbQueryOperationDef * root) {
   definedQuery = ndbQueryBuilder->prepare();
 }
 
+int QueryOperation::prepareAndExecute() {
+  return transaction->prepareAndExecuteQuery(this);
+}
 
 const NdbQueryOperationDef *
   QueryOperation::defineOperation(const NdbDictionary::Index * index,
@@ -79,4 +85,12 @@ const NdbQueryOperationDef *
     DEBUG_PRINT("Error %d %s", err.code, err.message);
   }
   return rval;
+}
+
+void QueryOperation::createNdbQuery(NdbTransaction *tx) {
+}
+
+
+const NdbError & QueryOperation::getNdbError() {
+  return ndbQueryBuilder->getNdbError();
 }
