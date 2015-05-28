@@ -862,7 +862,6 @@ DBIndexHandler.prototype.score = function(predicate) {
   i = 0;
   do {
     colNo = this.indexColumnNumbers[i];
-    udebug.log("Evaluating mask", predicate.usedColumnMask, "for", colNo);
     point = predicate.usedColumnMask.bitIsSet(colNo);
     if(point) { 
       score += 1;

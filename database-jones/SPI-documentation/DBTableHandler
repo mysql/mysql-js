@@ -117,6 +117,9 @@
       getMappedFieldCount()
       get()
       getFields()
+
+    TODO: Provide separate documentation for DBIndexHandler
+          DBIndexHandler now does more than this
 */
   getIndexHandler(keys);
   
