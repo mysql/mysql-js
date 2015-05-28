@@ -227,6 +227,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
           break;
         }
         j += 1; // skip past FOREIGN
+        if (tokens[j] === 'KEY') j += 1; // there may be an extra blank after FOREIGN KEY before column names
         columnNames = tokens[j];
         foreignKeyColumnNames = decodeIndexColumnNames(columnNames);
         udebug.log_detail('parseCreateTable FOREIGN KEY foreignKeyColumnNames:', foreignKeyColumnNames);
