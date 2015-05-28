@@ -640,98 +640,6 @@ QueryNot.prototype = new AbstractQueryUnaryPredicate();
 
 
 /******************************************************************************
- *                 CANDIDATE INDEX
- *****************************************************************************/
-// CandidateIndex is almost stateless now.
-// For future consideration: move mask into DbIndexHandler, then eliminate
-// CandidateIndex completely.
-
-var CandidateIndex = function(dbTableHandler, indexNumber) {
-  this.dbIndexHandler = dbTableHandler.dbIndexHandlers[indexNumber];
-  if(! this.dbIndexHandler) {
-    console.log("indexNumber", typeof(indexNumber));
-    console.trace("not an index handler");
-    throw new Error('Query.CandidateIndex<ctor> indexNumber is not found');
-  }
-  this.isOrdered = this.dbIndexHandler.dbIndex.isOrdered;
-  this.isUnique = this.dbIndexHandler.dbIndex.isUnique;
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('CandidateIndex<ctor> for index', this.dbIndexHandler.dbIndex.name,
-      'isUnique', this.isUnique, 'isOrdered', this.isOrdered);
-  this.indexColumns = this.dbIndexHandler.dbIndex.columnNumbers;
-  var mask = new BitMask(dbTableHandler.dbTable.columns.length);
-  this.indexColumns.forEach(function(columnNumber) {
-    mask.set(columnNumber);
-  });
-  this.mask = mask;
-};
-
-CandidateIndex.prototype.isUsable = function(predicate) {
-  var usable;
-  if (this.isUnique) {
-    usable = predicate.equalColumnMask.and(this.mask).isEqualTo(this.mask);
-  } else if(this.isOrdered) {
-    usable = predicate.usedColumnMask.bitIsSet(this.indexColumns[0]);
-  }
-  return usable;
-};
-
-
-// This is used in Primary Key & Unique Key queries.
-// param predicate: query predicate
-// param parameterValues: the parameters object passed to query.execute()
-// It returns an array, in key-column order, of the key values from the 
-// parameter object.
-CandidateIndex.prototype.getKeys = function(predicate, parameterValues) {
-
-  function getParameterNameForColumn(node, columnNumber) {
-    var i, name;
-    if(node.equalColumnMask.bitIsSet(columnNumber)) {
-      if(node.queryField && node.queryField.field.columnNumber == columnNumber) {
-        return node.parameter.name;
-      }
-      if(node.predicates) {
-        for(i = 0 ; i < node.predicates.length ; i++) {
-          name = getParameterNameForColumn(node, columnNumber);
-          if(name !== null) return name;
-        }
-      }
-    }
-    return null;
-  }
-
-  var result = [];
-  var candidateIndex = this;
-  this.indexColumns.forEach(function(columnNumber) {
-    result.push(parameterValues[getParameterNameForColumn(predicate, columnNumber)]);
-  });
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('CandidateIndex.getKeys parameters:', parameterValues,
-                    'key:', result);
-  return result;
-};
-
-/** Evaluate candidate indexes.
-    Score 1 point for each consecutive key part used plus 1 more point
-    if the column is in QueryEq. */
-CandidateIndex.prototype.score = function(predicate) {
-  var score = 0;
-  var point, i;
-  i = 0;
-  do {
-    point = predicate.usedColumnMask.bitIsSet(this.indexColumns[i]);
-    if(point) { 
-      score += 1; 
-      if(predicate.usedColumnMask.bitIsSet(this.indexColumns[i])) {
-        score += 1;
-      }
-    }
-    i++;
-  } while(point && i < this.indexColumns.length);
-    
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('score', this.dbIndexHandler.dbIndex.name, 'is', score);
-  return score;
-};
-
-/******************************************************************************
  *                 QUERY HANDLER
  *****************************************************************************/
 /* QueryHandler constructor
@@ -756,11 +664,11 @@ var QueryHandler = function(dbTableHandler, predicate) {
   
   // create a CandidateIndex object for each index
   // if the primary index is usable, choose it
-  var primaryCandidateIndex = new CandidateIndex(dbTableHandler, 0);
+  var primaryCandidateIndex = dbTableHandler.getHandlerForIndex(0);
 
   if(primaryCandidateIndex.isUsable(predicate)) {
     // we're done!
-    this.candidateIndex = primaryCandidateIndex;
+    this.dbIndexHandler = primaryCandidateIndex;
     this.queryType = 0; // primary key lookup
     return;
   }
@@ -771,16 +679,16 @@ var QueryHandler = function(dbTableHandler, predicate) {
     index = indexes[i];
     if (index.isUnique) {
       // create a candidate index for unique index
-      uniqueCandidateIndex = new CandidateIndex(dbTableHandler, i);
+      uniqueCandidateIndex = dbTableHandler.getHandlerForIndex(i);
       if (uniqueCandidateIndex.isUsable(predicate)) {
-        this.candidateIndex = uniqueCandidateIndex;
+        this.dbIndexHandler = uniqueCandidateIndex;
         this.queryType = 1; // unique key lookup
         // we're done!
         return;
       }
     } else if (index.isOrdered) {
       // create an array of candidate indexes for ordered indexes to be evaluated later
-      orderedCandidateIndexes.push(new CandidateIndex(dbTableHandler, i));
+      orderedCandidateIndexes.push(dbTableHandler.getHandlerForIndex(i));
     } else {
       throw new Error('FatalInternalException: index is not unique or ordered... so what is it?');
     }
@@ -798,17 +706,45 @@ var QueryHandler = function(dbTableHandler, predicate) {
   });
   udebug.log("Best score is", topScore);
   if (topScore > 0) {
-    this.candidateIndex = bestCandidateIndex;
-    this.dbIndexHandler = bestCandidateIndex.dbIndexHandler;
+    this.dbIndexHandler = bestCandidateIndex;
     this.queryType = 2; // index scan
   } else {
     this.queryType = 3; // table scan
   }
 };
 
-/** Get key values from candidate indexes and parameters */
+/** Get key values from candidate indexes and parameters 
+    This is used in Primary Key & Unique Key queries.
+    param parameterValues: the parameters object passed to query.execute()
+    It returns an array, in key-column order, of the key values from the
+    parameter object.
+*/
 QueryHandler.prototype.getKeys = function(parameterValues) {
-  return this.candidateIndex.getKeys(this.predicate, parameterValues);
+  var indexColumns = this.dbIndexHandler.dbIndex.columnNumbers;
+  var predicate = this.predicate;
+
+  function getParameterNameForColumn(node, columnNumber) {
+    var i, name;
+    if(node.equalColumnMask.bitIsSet(columnNumber)) {
+      if(node.queryField && node.queryField.field.columnNumber == columnNumber) {
+        return node.parameter.name;
+      }
+      if(node.predicates) {
+        for(i = 0 ; i < node.predicates.length ; i++) {
+          name = getParameterNameForColumn(node, columnNumber);
+          if(name !== null) return name;
+        }
+      }
+    }
+    return null;
+  }
+
+  var result = [];
+  indexColumns.forEach(function(columnNumber) {
+    result.push(parameterValues[getParameterNameForColumn(predicate, columnNumber)]);
+  });
+  udebug.log_detail('getKeys parameters:', parameterValues, 'key:', result);
+  return result;
 };
 
 exports.QueryDomainType = QueryDomainType;

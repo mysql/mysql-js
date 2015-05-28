@@ -34,6 +34,7 @@ var assert          = require("assert"),
     TableMapping    = jones.TableMapping,
     FieldMapping    = require(jones.api.TableMapping).FieldMapping,
     stats_module    = require(jones.api.stats),
+    BitMask         = require(jones.common.BitMask),
     util            = require("util"),
     udebug          = unified_debug.getLogger("DBTableHandler.js");
 
@@ -759,47 +760,15 @@ DBTableHandler.prototype.setFields = function(obj, values, adapter) {
   }
 };
 
-
-/* DBIndexHandler constructor and prototype */
-DBIndexHandler = function (parent, dbIndex) {
-  udebug.log("DBIndexHandler constructor");
-  stats.DBIndexHandler_created++;
-  var i, colNo;
-
-  this.tableHandler = parent;
-  this.dbIndex = dbIndex;
-  this._private = {};
-  this._private.fieldNumberToColumnMap = [];
-  this._private.fieldNumberToFieldMap  = [];
-  
-  for(i = 0 ; i < dbIndex.columnNumbers.length ; i++) {
-    colNo = dbIndex.columnNumbers[i];
-    this._private.fieldNumberToFieldMap[i]  = parent._private.columnNumberToFieldMap[colNo];
-    this._private.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
-  }
-  
-  if(i === 1) {    // One-column index
-    this.singleColumn = this.getColumn(0);
-  } else {
-    this.singleColumn = null;
-  }
-};
-
-/* DBIndexHandler inherits some methods from DBTableHandler */
-DBIndexHandler.prototype = {
-  getMappedFieldCount    : DBTableHandler.prototype.getMappedFieldCount,   
-  get                    : DBTableHandler.prototype.get,   
-  getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
-  getFields              : DBTableHandler.prototype.getFields,
-  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
-  getColumn              : DBTableHandler.prototype.getColumn,
-  getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
-  getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,
-  getField               : DBTableHandler.prototype.getField
+/* Functions to get IndexHandlers 
+*/
+DBTableHandler.prototype.getHandlerForIndex = function(n) {
+  return this.dbIndexHandlers[n];
 };
 
 
-/* DBIndexHandler getIndexHandler(Object keys)
+
+/* DBTableHandler getIndexHandler(Object keys)
    IMMEDIATE
 
    Given an object containing keys as defined in API Context.find(),
@@ -823,5 +792,91 @@ DBTableHandler.prototype.getForeignKey = function(foreignKeyName) {
 DBTableHandler.prototype.getForeignKeyNames = function() {
   return Object.keys(this._private.foreignKeyMap);
 };
+
+
+//////// DBIndexHandler             /////////////////
+
+DBIndexHandler = function(parent, dbIndex) {
+  udebug.log("DBIndexHandler constructor");
+  stats.DBIndexHandler_created++;
+  var i, colNo, mask;
+
+  this.tableHandler = parent;
+  this.dbIndex = dbIndex;
+  this.indexColumnNumbers = dbIndex.columnNumbers;
+  this.columnMask = null;
+  this.singleColumn = null;
+  this._private = {};
+  this._private.fieldNumberToColumnMap = [];
+  this._private.fieldNumberToFieldMap  = [];
+
+  /* Create a bitmask representing the columns in this index */
+  mask = new BitMask(parent.dbTable.columns.length);
+  this.indexColumnNumbers.forEach(function(columnNumber) {
+    mask.set(columnNumber);
+  });
+  this.columnMask = mask;
+
+  for(i = 0 ; i < dbIndex.columnNumbers.length ; i++) {
+    colNo = dbIndex.columnNumbers[i];
+    this._private.fieldNumberToFieldMap[i]  = parent._private.columnNumberToFieldMap[colNo];
+    this._private.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
+  }
+  
+  if(i === 1) this.singleColumn = this.getColumn(0);   // One-column index
+};
+
+/* DBIndexHandler inherits some methods from DBTableHandler 
+*/
+DBIndexHandler.prototype = {
+  getMappedFieldCount    : DBTableHandler.prototype.getMappedFieldCount,   
+  get                    : DBTableHandler.prototype.get,   
+  getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
+  getFields              : DBTableHandler.prototype.getFields,
+  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
+  getColumn              : DBTableHandler.prototype.getColumn,
+  getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
+  getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,
+  getField               : DBTableHandler.prototype.getField
+};
+
+/* Determine whether index is usable for a particular Query predicate
+*/
+DBIndexHandler.prototype.isUsable = function(predicate) {
+  var usable = false;
+  if(this.dbIndex.isUnique) {
+    usable = predicate.equalColumnMask.and(this.columnMask).isEqualTo(this.columnMask);
+  } else if(this.isOrdered) {
+    usable = predicate.usedColumnMask.bitIsSet(this.indexColumnNumbers[0]);
+  }
+  return usable;
+};
+
+/* Score an index for a Query predicate.
+   Score 1 point for each consecutive key part used plus 1 more point
+   if the column is in QueryEq. 
+*/
+DBIndexHandler.prototype.score = function(predicate) {
+  var score, point, i, colNo;
+  score = 0;
+  i = 0;
+  do {
+    colNo = this.indexColumnNumbers[i];
+    udebug.log("Evaluating mask", predicate.usedColumnMask, "for", colNo);
+    point = predicate.usedColumnMask.bitIsSet(colNo);
+    if(point) { 
+      score += 1;
+      if(predicate.equalColumnMask.bitIsSet(colNo)) {
+        score += 1;
+      }
+    }
+    i++;
+  } while(point && i < this.indexColumnNumbers.length);
+
+  udebug.log_detail('score', this.dbIndex.name, 'is', score);
+  return score;
+};
+
+
 
 exports.DBTableHandler = DBTableHandler;

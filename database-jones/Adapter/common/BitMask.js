@@ -34,6 +34,7 @@ function BitMask(size) {
   else {
     this._grow(radix);
   }
+  this.displaySize = size || this.size;
 }
 
 function greater(x, y) {
@@ -41,8 +42,9 @@ function greater(x, y) {
 }
 
 BitMask.prototype.inspect = function() {
-  var str = "";
-  this._mask.forEach(function(value) { str += value.toString(2); });
+  var i, str = "";
+  for(i = 0 ; i < this.displaySize ; i++)
+    str += this.bitIsSet(i) ? "1" : "0";
   return str;
 };
 

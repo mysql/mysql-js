@@ -772,10 +772,10 @@ function checkOperation(err, dbOperation) {
  * @param offset the number of fields in all sectors already processed
  */
 function Sector() {
-  this.keyFields = [];
+  this.keyFields = [];      // array of FieldMapping
   this.keyFieldNames = [];
   this.keyFieldCount = 0;
-  this.nonKeyFields = [];
+  this.nonKeyFields = [];   // ?
   this.nonKeyFieldCount = 0;
   this.projection = null;
   this.offset = 0;
@@ -1534,7 +1534,7 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     // create the find operation and execute it
     dbSession = userContext.session.dbSession;
     transactionHandler = dbSession.getTransactionHandler();
-    var dbIndexHandler = queryDomainType.jones_query_domain_type.queryHandler.candidateIndex.dbIndexHandler;
+    var dbIndexHandler = queryDomainType.jones_query_domain_type.queryHandler.dbIndexHandler;
     var keys = queryDomainType.jones_query_domain_type.queryHandler.getKeys(userContext.user_arguments[0]);
     userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys, transactionHandler,
         executeQueryKeyOnResult);
