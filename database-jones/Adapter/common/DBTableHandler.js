@@ -271,7 +271,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   if (nMappedFields !== priv.fieldNumberToColumnMap.length + this.relationshipFields.length) {
     if (ctor && ctor.name) {
       ctorName = (ctor.name.length === 0)?'anonymous '+ctor:ctor.name;
-    };
+    }
     this.appendErrorMessage(
         'Mismatch between number of mapped fields and columns for ' + ctorName + 
         '\n mapped fields: ' + nMappedFields +
@@ -318,12 +318,7 @@ DBTableHandler.prototype.getResolvedMapping = function() {
 };
 
 DBTableHandler.prototype.getColumn = function(i) {
-  switch(typeof i) {
-    case 'number':
-      return this._private.fieldNumberToColumnMap[i];
-    case 'string':
-      return this._private.fieldNameToColumnMap[i];
-  }
+  return this._private.fieldNumberToColumnMap[i];
 };
 
 DBTableHandler.prototype.getAllColumns = function() {
@@ -345,6 +340,10 @@ DBTableHandler.prototype.getField = function(i) {
 
 DBTableHandler.prototype.getAllFields = function() {
   return this._private.fieldNumberToFieldMap;
+};
+
+DBTableHandler.prototype.getFieldForColumn = function(i) {
+  return this._private.columnNumberToFieldMap[i];
 };
 
 DBTableHandler.prototype.getNumberOfFields = function() {
@@ -551,8 +550,8 @@ DBTableHandler.prototype.getColumnMetadata = function() {
 };
 
 
-/* IndexMetadata chooseIndex(dbTableHandler, keys) 
- Returns the index number to use as an access path.
+/* chooseIndex(keys, allowUnique, allowScan)
+ Returns a preferred DBIndexHandler, or null if none available.
  From API Context.find():
    * The parameter "keys" may be of any type. Keys must uniquely identify
    * a single row in the database. If keys is a simple type
@@ -562,78 +561,89 @@ DBTableHandler.prototype.getColumnMetadata = function() {
    * from the parameter and matched against property names in the
    * mapping.
 */
-function chooseIndex(self, keys, uniqueOnly) {
-  udebug.log("chooseIndex");
-  var idxs = self.dbTable.indexes;
-  var keyFieldNames, firstIdxFieldName;
-  var i, j, f, n, index, nmatches, x;
-  
-  udebug.log_detail("chooseIndex for:", JSON.stringify(keys));
-  
-  if(typeof keys === 'number' || typeof keys === 'string') {
-    if(idxs[0].columnNumbers.length === 1) {
-      return 0;
-    }
+DBTableHandler.prototype.chooseIndex = function(keys, allowUnique, allowScan) {
+  var indexHandler, fieldName, field, predicate, ncol, pkcol0;
+
+  udebug.log("chooseIndex for:", keys);
+  indexHandler = null;
+  ncol = this.getNumberOfColumns();
+
+  /* Create bitmasks over the key columns */
+  predicate = {
+    "usedColumnMask"  : new BitMask(ncol),   // all keys
+    "equalColumnMask" : new BitMask(ncol)    // only non-null keys
+  };
+
+  if((typeof keys === 'number' || typeof keys === 'string')) {
+    /* A simple key value represents first column of primary key */
+    pkcol0 = this.dbTable.indexes[0].columnNumbers[0];
+    predicate.usedColumnMask.set(pkcol0);
+    predicate.equalColumnMask.set(pkcol0);
   }
   else {
-    /* Keys is an object */ 
-     keyFieldNames = [];
-     for (x in keys) {
-       // only include properties of the keys itself that are defined and not null
-       if (keys.hasOwnProperty(x) && keys[x]) {
-         keyFieldNames.push(x);
-       }
-     }
-
-    /* First look for a unique index.  All columns must match. */
-    for(i = 0 ; i < idxs.length ; i++) {
-      index = idxs[i];
-      if(index.isUnique) {
-        udebug.log_detail("Considering:", (index.name || "primary key ") + " for " + JSON.stringify(keys));
-        // Each key field resolves to a column, which must be in the index
-        nmatches = 0;
-        for(j = 0 ; j < index.columnNumbers.length ; j++) {
-          n = index.columnNumbers[j];
-          f = self._private.columnNumberToFieldMap[n];
-          udebug.log_detail("index part", j, "is column", n, ":", f.fieldName);
-          if(typeof keys[f.fieldName] !== 'undefined') {
-            nmatches++;
-            udebug.log_detail("match! ", nmatches);
+    for (fieldName in keys) {
+      if (keys.hasOwnProperty(fieldName) && keys[fieldName] !== undefined ) {
+        field = this.getField(fieldName);
+        if(field) {
+          predicate.usedColumnMask.set(field.columnNumber);
+          if(keys[fieldName] !== null) {
+            predicate.equalColumnMask.set(field.columnNumber);
           }
-        }
-        if(nmatches === index.columnNumbers.length) {
-          udebug.log("chooseIndex picked unique index", i);
-          return i; // all columns are found in the key object
-        }
-      }    
-    }
-
-    // if unique only, return failure
-    if (uniqueOnly) {
-      udebug.log("chooseIndex for unique index FAILED");
-      return -1;
-    }
-
-    /* Then look for an ordered index.  A prefix match is OK. */
-    /* Return the first suitable index we find (which might not be the best) */
-    /* TODO: A better algorithm might be to return the one with the longest train of matches */
-    for(i = 0 ; i < idxs.length ; i++) {
-      index = idxs[i];
-      if(index.isOrdered) {
-        // f is the field corresponding to the first column in the index
-        f = self._private.columnNumberToFieldMap[index.columnNumbers[0]];
-        if(keyFieldNames.indexOf(f.fieldName) >= 0) {
-         udebug.log("chooseIndex picked ordered index", i);
-         return i; // this is an ordered index scan
         }
       }
     }
   }
+  udebug.log("KeyMasks:", predicate);
 
-  udebug.log("chooseIndex FAILED");
-  return -1; // didn't find a suitable index
-}
+  /* Look for a unique index */
+  if(allowUnique) {
+    indexHandler = this.chooseUniqueIndexForPredicate(predicate);
+  }
 
+  /* Look for an ordered index */
+  if(allowScan && ! indexHandler) {
+    indexHandler = this.chooseOrderedIndexForPredicate(predicate);
+  }
+
+  return indexHandler;
+};
+
+/* Return the first unique index that matches all predicate columns
+*/
+DBTableHandler.prototype.chooseUniqueIndexForPredicate = function(predicate) {
+  var i, idxs, indexHandler, columnMask;
+  columnMask = predicate.equalColumnMask;
+  idxs = this.dbTable.indexes;
+  for(i = 0 ; i < idxs.length ; i++) {
+    if(idxs[i].isUnique) {
+      indexHandler = this.getHandlerForIndex(i);
+      if(columnMask.and(indexHandler.columnMask).isEqualTo(indexHandler.columnMask))
+        return indexHandler;
+    }
+  }
+  return null;
+};
+
+/* Score all ordered indexes and return the one with the best score
+*/
+DBTableHandler.prototype.chooseOrderedIndexForPredicate = function(predicate) {
+  var i, idxs, indexHandler, score, highScore, highScorer;
+  idxs = this.dbTable.indexes;
+  highScore = 0;
+  highScorer = null;
+  for(i = 0 ; i < idxs.length ; i++) {
+    if(idxs[i].isOrdered) {
+      indexHandler = this.getHandlerForIndex(i);
+      score = indexHandler.score(predicate);
+      udebug.log("Ordered index", i, "scored", score);
+      if(score > highScore) {
+        highScore = score;
+        highScorer = indexHandler;
+      }
+    }
+  }
+  return highScorer;
+};
 
 /** Return the property of obj corresponding to fieldNumber.
  * If a domain type converter and/or database type converter is defined, convert the value here.
@@ -767,7 +777,6 @@ DBTableHandler.prototype.getHandlerForIndex = function(n) {
 };
 
 
-
 /* DBTableHandler getIndexHandler(Object keys)
    IMMEDIATE
 
@@ -775,14 +784,16 @@ DBTableHandler.prototype.getHandlerForIndex = function(n) {
    choose an index to use as an access path for the operation,
    and return a DBIndexHandler for that index.
 */
-DBTableHandler.prototype.getIndexHandler = function(keys, uniqueOnly) {
-  udebug.log("getIndexHandler");
-  var idx = chooseIndex(this, keys, uniqueOnly);
-  var handler = null;
-  if (idx !== -1) {
-    handler = this.dbIndexHandlers[idx];
-  }
-  return handler;
+DBTableHandler.prototype.getIndexHandler = function(keys) {
+  return this.chooseIndex(keys, true, true);
+};
+
+DBTableHandler.prototype.getUniqueIndexHandler = function(keys) {
+  return this.chooseIndex(keys, true, false);
+};
+
+DBTableHandler.prototype.getOrderedIndexHandler = function(keys) {
+  return this.chooseIndex(keys, false, true);
 };
 
 DBTableHandler.prototype.getForeignKey = function(foreignKeyName) {
@@ -846,7 +857,7 @@ DBIndexHandler.prototype.isUsable = function(predicate) {
   var usable = false;
   if(this.dbIndex.isUnique) {
     usable = predicate.equalColumnMask.and(this.columnMask).isEqualTo(this.columnMask);
-  } else if(this.isOrdered) {
+  } else if(this.dbIndex.isOrdered) {
     usable = predicate.usedColumnMask.bitIsSet(this.indexColumnNumbers[0]);
   }
   return usable;

@@ -871,7 +871,7 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
               foreignKey.targetTable === relatedTableHandler.dbTable.name) {
             relatedFieldMapping.thisForeignKey = foreignKey;
           }
-        })
+        });
         if (!(relatedFieldMapping.thisForeignKey && relatedFieldMapping.otherForeignKey)) {
           // error must have foreign keys to both this table and related table
           projection.error += '\nMappingError: ' + relatedTableHandler.newObjectConstructor.name +
@@ -1285,7 +1285,7 @@ exports.UserContext.prototype.findWithProjection = function() {
       dbTableHandler = projection.dbTableHandler;
       userContext.dbTableHandler = dbTableHandler;
       keys = userContext.user_arguments[1];
-      indexHandler = dbTableHandler.getIndexHandler(keys, true);
+      indexHandler = dbTableHandler.getUniqueIndexHandler(keys);
       if (indexHandler === null) {
         err = new Error('UserContext.find unable to get an index for ' + dbTableHandler.dbTable.name +
             ' to use with ' + JSON.stringify(keys));
@@ -1348,7 +1348,7 @@ exports.UserContext.prototype.find = function() {
     } else {
       userContext.dbTableHandler = dbTableHandler;
       keys = userContext.user_arguments[1];
-      index = dbTableHandler.getIndexHandler(keys, true);
+      index = dbTableHandler.getUniqueIndexHandler(keys);
       if (index === null) {
         err = new Error('UserContext.find unable to get an index to use for ' + JSON.stringify(keys));
         userContext.applyCallback(err, null);
@@ -1818,7 +1818,7 @@ exports.UserContext.prototype.load = function() {
       // the domain object must provide PRIMARY or unique key
       keys = userContext.user_arguments[0];
       // ask getIndexHandler for only unique key indexes
-      index = dbTableHandler.getIndexHandler(keys, true);
+      index = dbTableHandler.getUniqueIndexHandler(keys);
       if (index === null) {
         err = new Error('Illegal argument: load unable to get a unique index to use for ' + JSON.stringify(keys));
         userContext.applyCallback(err);
@@ -1883,7 +1883,7 @@ exports.UserContext.prototype.remove = function() {
     if (err) {
       userContext.applyCallback(err);
     } else {
-      dbIndexHandler = dbTableHandler.getIndexHandler(userContext.keys, true);
+      dbIndexHandler = dbTableHandler.getUniqueIndexHandler(userContext.keys);
       if (dbIndexHandler === null) {
         err = new Error('UserContext.remove unable to get an index to use for ' + JSON.stringify(userContext.keys));
         userContext.applyCallback(err);

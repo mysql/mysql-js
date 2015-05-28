@@ -654,59 +654,28 @@ QueryNot.prototype = new AbstractQueryUnaryPredicate();
  * 
  */
 var QueryHandler = function(dbTableHandler, predicate) {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryHandler<ctor>', util.inspect(predicate));
+  var candidateIndex;
+
+  udebug.log_detail('QueryHandler<ctor>', predicate);
   this.dbTableHandler = dbTableHandler;
   this.predicate = predicate;
-  var indexes = dbTableHandler.dbTable.indexes;
 
   // Mark the usedColumnMask and equalColumnMask in each query node
   predicate.visit(theMaskMarkerVisitor);
   
-  // create a CandidateIndex object for each index
-  // if the primary index is usable, choose it
-  var primaryCandidateIndex = dbTableHandler.getHandlerForIndex(0);
+  candidateIndex = dbTableHandler.chooseUniqueIndexForPredicate(predicate);
 
-  if(primaryCandidateIndex.isUsable(predicate)) {
-    // we're done!
-    this.dbIndexHandler = primaryCandidateIndex;
-    this.queryType = 0; // primary key lookup
-    return;
+  if(candidateIndex) {
+    this.dbIndexHandler = candidateIndex;
+    this.queryType = candidateIndex.dbIndex.isPrimaryKey ? 0 : 1;
+    return;   // we're done!
   }
-  // otherwise, look for a usable unique index
-  var uniqueCandidateIndex, orderedCandidateIndexes = [];
-  var i, index;
-  for (i = 1; i < indexes.length; ++i) {
-    index = indexes[i];
-    if (index.isUnique) {
-      // create a candidate index for unique index
-      uniqueCandidateIndex = dbTableHandler.getHandlerForIndex(i);
-      if (uniqueCandidateIndex.isUsable(predicate)) {
-        this.dbIndexHandler = uniqueCandidateIndex;
-        this.queryType = 1; // unique key lookup
-        // we're done!
-        return;
-      }
-    } else if (index.isOrdered) {
-      // create an array of candidate indexes for ordered indexes to be evaluated later
-      orderedCandidateIndexes.push(dbTableHandler.getHandlerForIndex(i));
-    } else {
-      throw new Error('FatalInternalException: index is not unique or ordered... so what is it?');
-    }
-  }
-  // otherwise, look for the best ordered index (largest number of usable query terms)
-  // choose the index with the biggest score
-  var topScore = 0, candidateScore = 0;
-  var bestCandidateIndex = null;
-  orderedCandidateIndexes.forEach(function(candidateIndex) {
-    candidateScore = candidateIndex.score(predicate);
-    if (candidateScore > topScore) {
-      topScore = candidateScore;
-      bestCandidateIndex = candidateIndex;
-    }
-  });
-  udebug.log("Best score is", topScore);
-  if (topScore > 0) {
-    this.dbIndexHandler = bestCandidateIndex;
+
+  // otherwise, look for the best ordered index
+  candidateIndex = dbTableHandler.chooseOrderedIndexForPredicate(predicate);
+
+  if(candidateIndex) {
+    this.dbIndexHandler = candidateIndex;
     this.queryType = 2; // index scan
   } else {
     this.queryType = 3; // table scan
