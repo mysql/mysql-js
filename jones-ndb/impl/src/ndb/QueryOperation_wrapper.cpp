@@ -49,7 +49,8 @@ Handle<String>    /* keys of NdbProjection */
   K_dbTable,
   K_dbIndex,
   K_level,
-  K_data;
+  K_data,
+  K_tag;
 
 
 Handle<Value> queryPrepareAndExecute(const Arguments &);
@@ -258,6 +259,11 @@ void freeQueryResultAtGC(char *data, void *hint) {
   free(data);
 }
 
+void doNotFreeQueryResultAtGC(char *data, void *hint) {
+  (void) hint;
+  (void) data;
+}
+
 // getResult(id, objectWrapper):  IMMEDIATE
 Handle<Value> queryGetResult(const Arguments & args) {
   REQUIRE_ARGS_LENGTH(2);
@@ -269,11 +275,16 @@ Handle<Value> queryGetResult(const Arguments & args) {
   QueryResultHeader * header = op->getResult(id);
 
   if(header) {
-    node::Buffer *buff = node::Buffer::New(header->data,
-                                           op->getResultRowSize(header->depth),
-                                           freeQueryResultAtGC, 0);
+    if(header->data) {
+      node::Buffer *buff = node::Buffer::New(header->data,
+                                            op->getResultRowSize(header->depth),
+                                            doNotFreeQueryResultAtGC, 0);
+      wrapper->Set(K_data, Persistent<Object>(buff->handle_));
+    } else {
+      wrapper->Set(K_data, Null());
+    }
     wrapper->Set(K_level, Persistent<Value>(v8::Uint32::New(header->depth)));
-    wrapper->Set(K_data,  Persistent<Object>(buff->handle_));
+    wrapper->Set(K_tag,   Persistent<Value>(v8::Int32::New(header->tag)));
     return True();
   }
   return False();
@@ -317,5 +328,6 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
 
   K_level         = JSSTRING("level");
   K_data          = JSSTRING("data");
+  K_tag           = JSSTRING("tag");
 }
 

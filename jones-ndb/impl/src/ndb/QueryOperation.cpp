@@ -66,10 +66,25 @@ int QueryOperation::prepareAndExecute() {
   return transaction->prepareAndExecuteQuery(this);
 }
 
-bool QueryOperation::pushResultIfChanged(int level) {
+bool QueryOperation::pushResultForTable(int level) {
   char * & temp_result = buffers[level].buffer;
   size_t & size = buffers[level].size;
   int lastCopy = buffers[level].lastCopy;
+
+  if(level == 0)
+  {
+    nullLevel = depth;  // reset for new root result
+  }
+
+  if(ndbQuery->getQueryOperation(level)->isRowNULL())
+  {
+    if(nullLevel < level)
+    {
+      return true;   /* skip */
+    }
+    nullLevel = level;
+    return pushResultNull(level);
+  }
 
   if(lastCopy > 0 && (! (memcmp(results[lastCopy-1].data, temp_result, size))))
   {
@@ -77,11 +92,27 @@ bool QueryOperation::pushResultIfChanged(int level) {
   }
   else
   {
-    return pushResult(level);
+    return pushResultValue(level);
   }
 }
 
-bool QueryOperation::pushResult(int level) {
+bool QueryOperation::pushResultNull(int level) {
+  bool ok = true;
+  size_t n = nresults;
+
+  if(n == nheaders) {
+    ok = growHeaderArray();
+  }
+  if(ok) {
+    results[n].depth = level;
+    results[n].tag = -1;
+    results[n].data = 0;
+    nresults++;
+  }
+  return ok;
+}
+
+bool QueryOperation::pushResultValue(int level) {
   bool ok = true;
   size_t n = nresults;
   size_t & size = buffers[level].size;
@@ -134,7 +165,7 @@ int QueryOperation::fetchAllResults() {
       case NdbQuery::NextResult_gotRow:
         /* New results at every level */
         for(int level = 0 ; level < depth ; level++) {
-          if(! pushResultIfChanged(level)) return -1;
+          if(! pushResultForTable(level)) return -1;
         }
         break;
 
@@ -148,6 +179,10 @@ int QueryOperation::fetchAllResults() {
         return -1;
     }
   }
+  /* All done with the query now. */
+  ndbQuery->close();
+  ndbQuery = 0;
+
   return nresults;
 }
 
@@ -220,8 +255,7 @@ void QueryOperation::setTransactionImpl(TransactionImpl *tx) {
 
 void QueryOperation::close() {
   DEBUG_ENTER();
-  ndbQuery->close();
-  ndbQuery = 0;
+  definedQuery->destroy();
 }
 
 const NdbError & QueryOperation::getNdbError() {

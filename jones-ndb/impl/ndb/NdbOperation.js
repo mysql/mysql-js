@@ -721,18 +721,37 @@ function getQueryResults(op, userCallback) {
       }
     }
 
+    function assembleNull() {
+      current[level] = null;
+      if(level > 0) {
+        related = sectors[level].relatedField;
+        if(related.toMany  && ! current[level-1][related.fieldName])
+        {
+          current[level-1][related.fieldName] = [];
+        }
+        else {
+          current[level-1][related.fieldName] = null;
+        }
+      }
+    }
+
     udebug.log("fetchAllResults returns", err, nresults);
     if(nresults > 0) {
       for(i = 0 ; i < nresults ; i++) {
         op.scanOp.getResult(i, wrapper);
         level = wrapper.level;
-        resultObject = buildValueObject(op, sectors[level].tableHandler,
-                                        wrapper.data, null);
-        assemble();
+        if(wrapper.tag == -1) {
+          assembleNull();
+        } else {
+          resultObject = buildValueObject(op, sectors[level].tableHandler,
+                                          wrapper.data, null);
+          assemble();
+        }
       }
       op.result.success = true;
       op.result.value = current[0];
     }
+    udebug.log("Join result:", current[0]);
     userCallback(err, op.result.value);
   });
 }

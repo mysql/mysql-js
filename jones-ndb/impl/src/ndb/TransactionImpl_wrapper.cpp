@@ -35,8 +35,9 @@ public:
   TransactionImplEnvelopeClass() : Envelope("TransactionImpl") {
     DEFINE_JS_FUNCTION(Envelope::stencil, 
       "getEmptyOperationSet", getEmptyOperationSet);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", getNdbError<TransactionImpl>);
   }
-};
+};  
 
 TransactionImplEnvelopeClass TransactionImplEnvelope;
 

@@ -44,7 +44,7 @@ class QueryResultHeader {
 public:
   char        * data;
   uint16_t      depth;
-  uint16_t      tag;
+  int16_t       tag;
 };
 
 class QueryOperation : public KeyOperation {
@@ -69,11 +69,13 @@ public:
 protected:
   bool growHeaderArray();
   // int fetchResultsAtLevel(int, int);
-  bool pushResult(int);
-  bool pushResultIfChanged(int);
+  bool pushResultValue(int);
+  bool pushResultNull(int);
+  bool pushResultForTable(int);
 
 private:
   int                           depth;
+  int                           nullLevel;
   QueryBuffer * const           buffers;
   NdbQueryBuilder             * ndbQueryBuilder;
   const NdbQueryOperationDef  * operationTree;
