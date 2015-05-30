@@ -21,7 +21,8 @@
 "use strict";
 
 var util = require("util"),
-    assert = require("assert");
+    assert = require("assert"),
+    udebug = unified_debug.getLogger("NdbProjection.js");
 
 function blah() {
   console.log("BLAH");
@@ -32,7 +33,6 @@ function blah() {
 
 function NdbProjection(sector, indexHandler, parentProjection) {
   var mock_keys = {};
-  console.log("New NdbProjection from:", sector);
 
   if(parentProjection) {
     sector.thisJoinColumns.forEach(function(field) {
@@ -64,6 +64,7 @@ function NdbProjection(sector, indexHandler, parentProjection) {
   this.keyRecord      = this.indexHandler.dbIndex.record;
   this.isPrimaryKey   = this.indexHandler.dbIndex.isPrimaryKey || false;
   this.isUniqueKey    = this.indexHandler.dbIndex.isUnique;
+  this.relatedField   = sector.relatedFieldMapping;
 
   if(! (this.isPrimaryKey || this.isUniqueKey)) {
     this.root.hasScan = true;
@@ -104,7 +105,7 @@ function initializeProjection(sectors, indexHandler) {
   if(projection.root.hasScan &&
      (projection.root.isPrimaryKey || projection.root.isUniqueKey))
   {
-    console.log("Rewriting to scan");
+    udebug.log("Rewriting to scan");
     projection.root.rewriteAsScan(sectors[0]);
   }
 

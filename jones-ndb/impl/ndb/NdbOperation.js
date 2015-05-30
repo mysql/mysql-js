@@ -701,23 +701,39 @@ function getQueryResults(op, userCallback) {
   }
 
   op.scanOp.fetchAllResults(function(err, nresults) {
-    var i, wrapper, queryResults, newObject;
+    var i, wrapper, level, current, resultObject, related;
+    current = [];   // current values for each sector
+    wrapper = {};
+
+    function assemble() {
+      current[level] = resultObject;
+      if(level > 0) {
+        related = sectors[level].relatedField;
+        if(related.toMany  && ! current[level-1][related.fieldName])
+        {
+          current[level-1][related.fieldName] = [];
+        }
+        if(related.toMany) {
+          current[level-1][related.fieldName].push(resultObject);
+        } else {
+          current[level-1][related.fieldName] = resultObject;
+        }
+      }
+    }
 
     udebug.log("fetchAllResults returns", err, nresults);
     if(nresults > 0) {
-      queryResults = [];
-      wrapper = {};
-      for(i = 0 ; i < nresults ; i++ ) {
+      for(i = 0 ; i < nresults ; i++) {
         op.scanOp.getResult(i, wrapper);
-        udebug.log("level", wrapper.level);
-        newObject = buildValueObject(op, sectors[wrapper.level].tableHandler,
-                                     wrapper.data, null);
-        queryResults.push(newObject);
+        level = wrapper.level;
+        resultObject = buildValueObject(op, sectors[level].tableHandler,
+                                        wrapper.data, null);
+        assemble();
       }
       op.result.success = true;
-      op.result.value = queryResults;
+      op.result.value = current[0];
     }
-    userCallback(err, queryResults);
+    userCallback(err, op.result.value);
   });
 }
 

@@ -796,6 +796,7 @@ Sector.prototype.inspect = function() {
     s+= " with keys [" + this.keyFieldNames.join(",") + "]";
   }
   s += " at offset " + this.offset;
+  s += " relationship: " + util.inspect(this.relatedFieldMapping);
   return s;
 };
 
