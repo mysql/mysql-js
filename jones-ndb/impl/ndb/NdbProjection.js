@@ -60,8 +60,7 @@ function NdbProjection(sector, indexHandler, parentProjection) {
     this.hasScan      = false;
   }
   this.ndbQueryDef    = null;
-  this.rowRecord      = this.tableHandler.dbTable.record;
-  this.rowBuffer      = new Buffer(this.rowRecord.getBufferSize());
+  this.rowRecord      = this.tableHandler.resultRecord;
   this.keyRecord      = this.indexHandler.dbIndex.record;
   this.isPrimaryKey   = this.indexHandler.dbIndex.isPrimaryKey || false;
   this.isUniqueKey    = this.indexHandler.dbIndex.isUnique;

@@ -30,24 +30,64 @@ class NdbQueryDef;
 class TransactionImpl;
 class NdbQueryOperand;
 
+class QueryBuffer {
+public:
+  Record      * record;
+  char        * buffer;
+  size_t        size;
+  size_t        lastCopy;
+  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0) {};
+  ~QueryBuffer()                       { if(size) delete[] buffer; };
+};
+
+class QueryResultHeader {
+public:
+  char        * data;
+  uint16_t      depth;
+  uint16_t      tag;
+};
+
 class QueryOperation : public KeyOperation {
 public:
-  QueryOperation(TransactionImpl *);
+  QueryOperation(int);
   ~QueryOperation();
+  void createRowBuffer(int level, Record *);
   int prepareAndExecute();
+  void setTransactionImpl(TransactionImpl *);
   void createNdbQuery(NdbTransaction *);
   void prepare(const NdbQueryOperationDef * root);
+  int fetchAllResults();
   NdbQueryBuilder * getBuilder() { return ndbQueryBuilder; }
   const NdbQueryOperationDef * defineOperation(const NdbDictionary::Index * index,
                                                const NdbDictionary::Table * table,
                                                const NdbQueryOperand* const keys[]);
+  QueryResultHeader * getResult(size_t);
+  size_t getResultRowSize(int depth);
+  void close();
   const NdbError & getNdbError();
 
+protected:
+  bool growHeaderArray();
+  // int fetchResultsAtLevel(int, int);
+  bool pushResult(int);
+  bool pushResultIfChanged(int);
+
 private:
+  int                           depth;
+  QueryBuffer * const           buffers;
   NdbQueryBuilder             * ndbQueryBuilder;
   const NdbQueryOperationDef  * operationTree;
   const NdbQueryDef           * definedQuery;
+  NdbQuery                    * ndbQuery;
   TransactionImpl             * transaction;
+  QueryResultHeader           * results;
+  const NdbError              * latest_error;
+  size_t                        nresults, nheaders;
+  size_t                        nextHeaderAllocationSize;
+};
+
+inline size_t QueryOperation::getResultRowSize(int depth) {
+  return buffers[depth].size;
 };
 
 #endif

@@ -142,6 +142,8 @@ function keepIndexStatistics(dbTable, index) {
 	index_stats[dbTable.name][keyName]++;
 }  
 
+// FIXME: Use tableHandler.resultRecord or dbTable.record as appropriate
+
 var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
   assert(tx);
  
@@ -529,6 +531,9 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
   return this.scanOp; 
 };
 
+DBOperation.prototype.isQueryOperation = function() {
+  return (this.opcode == 97);
+};
 
 DBOperation.prototype.isScanOperation = function() {
   return (this.opcode >= 32);
@@ -562,10 +567,10 @@ function readResultRow(op) {
 }
 
 
-function buildValueObject(op, buffer, blobs) {
+function buildValueObject(op, tableHandler, buffer, blobs) {
   udebug.log("buildValueObject");
-  var VOC = op.tableHandler.ValueObject; // NDB Value Object Constructor
-  var DOC = op.tableHandler.newObjectConstructor;  // User's Domain Object Ctor
+  var VOC = tableHandler.ValueObject; // NDB Value Object Constructor
+  var DOC = tableHandler.newObjectConstructor;  // User's Domain Object Ctor
   var nWritesPre, nWritesPost, err, value;
   
   if(VOC) {
@@ -637,7 +642,7 @@ function getScanResults(scanop, userCallback) {
     var blobs, result;
     blobs = scanop.scanOp.readBlobResults();
     udebug.log("pushNewResult",i,blobs);
-    result = buildValueObject(scanop, buffer, blobs);
+    result = buildValueObject(scanop, scanop.tableHandler, buffer, blobs);
     results.push(result);
   }
 
@@ -685,6 +690,36 @@ function getScanResults(scanop, userCallback) {
   fetch();
 }
 
+function getQueryResults(op, userCallback) {
+  var i = 0;
+  var sectors = [];
+  var ndbProjection = op.query;
+
+  while(ndbProjection) {
+    sectors[i++] = ndbProjection;
+    ndbProjection = ndbProjection.next;
+  }
+
+  op.scanOp.fetchAllResults(function(err, nresults) {
+    var i, wrapper, queryResults, newObject;
+
+    udebug.log("fetchAllResults returns", err, nresults);
+    if(nresults > 0) {
+      queryResults = [];
+      wrapper = {};
+      for(i = 0 ; i < nresults ; i++ ) {
+        op.scanOp.getResult(i, wrapper);
+        udebug.log("level", wrapper.level);
+        newObject = buildValueObject(op, sectors[wrapper.level].tableHandler,
+                                     wrapper.data, null);
+        queryResults.push(newObject);
+      }
+      op.result.success = true;
+      op.result.value = queryResults;
+    }
+    userCallback(err, queryResults);
+  });
+}
 
 function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
   udebug.log("buildOperationResult");
@@ -730,7 +765,7 @@ function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
     }
 
     if(op.result.success && op.opcode === opcodes.OP_READ) {
-      op.result.value = buildValueObject(op, op.buffers.row, op.blobs);
+      op.result.value = buildValueObject(op, op.tableHandler, op.buffers.row, op.blobs);
     } 
   }
   if(udebug.is_detail()) udebug.log("buildOperationResult finished:", op.result);
@@ -801,8 +836,9 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
     VOC.prototype = DOC.prototype;
   }
 
-  /* Store the VOC in the mapping */
+  /* Store both the VOC and the Record in the mapping */
   dbTableHandler.ValueObject = VOC;
+  dbTableHandler.resultRecord = record;
 };
 
 function verifyIndexHandler(dbIndexHandler) {
@@ -844,7 +880,8 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
   op.query = NdbProjection.initialize(projection.sectors, indexHandler);
-  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, tx);
+  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key,
+                                                 projection.sectors.length);
   return op;
 }
 
@@ -915,3 +952,4 @@ exports.newProjectionOperation = newProjectionOperation;
 exports.completeExecutedOps = completeExecutedOps;
 exports.getScanResults      = getScanResults;
 exports.prepareOperations   = prepareOperations;
+exports.getQueryResults     = getQueryResults;

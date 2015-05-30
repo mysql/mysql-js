@@ -43,21 +43,30 @@ Handle<String>    /* keys of NdbProjection */
   K_ndbQueryDef,
   K_tableHandler,
   K_rowRecord,
-  K_rowBuffer,
   K_indexHandler,
   K_keyRecord,
   K_isPrimaryKey,
   K_dbTable,
-  K_dbIndex;
+  K_dbIndex,
+  K_level,
+  K_data;
 
 
 Handle<Value> queryPrepareAndExecute(const Arguments &);
+Handle<Value> querySetTransactionImpl(const Arguments &);
+Handle<Value> queryFetchAllResults(const Arguments &);
+Handle<Value> queryGetResult(const Arguments &);
+Handle<Value> queryClose(const Arguments &);
 
 
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
     DEFINE_JS_FUNCTION(Envelope::stencil, "prepareAndExecute", queryPrepareAndExecute);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "setTransactionImpl", querySetTransactionImpl);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "fetchAllResults", queryFetchAllResults);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "getResult", queryGetResult);
+    DEFINE_JS_FUNCTION(Envelope::stencil, "close", queryClose);
   }
 };
 
@@ -74,6 +83,15 @@ Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
   }
   return Null();
 }
+
+
+void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
+  int level = spec->Get(K_depth)->Int32Value();
+  Record * record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
+
+  queryOp->createRowBuffer(level, record);
+}
+
 
 const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
@@ -179,24 +197,35 @@ Handle<Value> createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(3);
 
-  TransactionImpl * ctx = unwrapPointer<TransactionImpl *>(args[2]->ToObject());
-  QueryOperation * queryOperation = new QueryOperation(ctx);
+  int size = args[2]->Int32Value();
+  QueryOperation * queryOperation = new QueryOperation(size);
   const NdbQueryOperationDef * root, * current;
 
   Local<Value> v;
   Local<Object> spec = args[0]->ToObject();
 
+  setRowBuffers(queryOperation, spec);
   current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
-  assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
 
   while(! (v = spec->Get(K_next))->IsNull()) {
     spec = v->ToObject();
     current = createNextLevel(queryOperation, spec, current);
     assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
+    setRowBuffers(queryOperation, spec);
   }
   queryOperation->prepare(root);
   return QueryOperation_Wrapper(queryOperation);
+}
+
+Handle<Value> querySetTransactionImpl(const Arguments &args) {
+  REQUIRE_ARGS_LENGTH(1);
+
+  typedef NativeVoidMethodCall_1_<QueryOperation, TransactionImpl *> MCALL;
+  MCALL mcall(& QueryOperation::setTransactionImpl, args);
+  mcall.run();
+  
+  return Undefined();
 }
 
 // void prepareAndExecute() 
@@ -209,10 +238,55 @@ Handle<Value> queryPrepareAndExecute(const Arguments &args) {
   MCALL * mcallptr = new MCALL(& QueryOperation::prepareAndExecute, args);
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
-  
   return Undefined();
 }
 
+// fetchAllResults()
+// ASYNC
+Handle<Value> queryFetchAllResults(const Arguments &args) {
+  HandleScope scope;
+  REQUIRE_ARGS_LENGTH(1);
+  typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
+  MCALL * mcallptr = new MCALL(& QueryOperation::fetchAllResults, args);
+  mcallptr->errorHandler = getNdbErrorIfLessThanZero;
+  mcallptr->runAsync();
+  return Undefined();
+}
+
+void freeQueryResultAtGC(char *data, void *hint) {
+  (void) hint;   // unused
+  free(data);
+}
+
+// getResult(id, objectWrapper):  IMMEDIATE
+Handle<Value> queryGetResult(const Arguments & args) {
+  REQUIRE_ARGS_LENGTH(2);
+
+  QueryOperation * op = unwrapPointer<QueryOperation *>(args.Holder());
+  size_t id = args[0]->Uint32Value();
+  Handle<Object> wrapper = args[1]->ToObject();
+
+  QueryResultHeader * header = op->getResult(id);
+
+  if(header) {
+    node::Buffer *buff = node::Buffer::New(header->data,
+                                           op->getResultRowSize(header->depth),
+                                           freeQueryResultAtGC, 0);
+    wrapper->Set(K_level, Persistent<Value>(v8::Uint32::New(header->depth)));
+    wrapper->Set(K_data,  Persistent<Object>(buff->handle_));
+    return True();
+  }
+  return False();
+}
+
+// void close()
+// ASYNC
+Handle<Value> queryClose(const Arguments & args) {
+  typedef NativeVoidMethodCall_0_<QueryOperation> NCALL;
+  NCALL * ncallptr = new NCALL(& QueryOperation::close, args);
+  ncallptr->runAsync();
+  return Undefined();
+}
 
 #define JSSTRING(a) Persistent<String>::New(String::NewSymbol(a))
 
@@ -234,12 +308,14 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
   K_ndbQueryDef   = JSSTRING("ndbQueryDef");
   K_tableHandler  = JSSTRING("tableHandler");
   K_rowRecord     = JSSTRING("rowRecord"),
-  K_rowBuffer     = JSSTRING("rowBuffer"),
   K_indexHandler  = JSSTRING("indexHandler");
   K_keyRecord     = JSSTRING("keyRecord");
   K_isPrimaryKey  = JSSTRING("isPrimaryKey");
 
   K_dbTable       = JSSTRING("dbTable");
   K_dbIndex       = JSSTRING("dbIndex");
+
+  K_level         = JSSTRING("level");
+  K_data          = JSSTRING("data");
 }
 

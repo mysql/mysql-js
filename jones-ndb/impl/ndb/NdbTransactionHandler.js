@@ -230,7 +230,7 @@ function executeScan(self, execMode, abortFlag, dbOperationList, callback) {
     var closeScanopCallback;
 
     function retryAfterClose() {
-      op.ndbScanOp = null;
+      op.ndbScanOp = null;  // fixme this is clearly a bug
       stats.execute.scan_retry++;
       udebug.log(self.moniker, "retrying scan:", self.retries);
       executeScan(self, execMode, abortFlag, dbOperationList, callback);
@@ -272,7 +272,9 @@ function executeScan(self, execMode, abortFlag, dbOperationList, callback) {
     if(err) {
       onFetchComplete(err);
     }
-    else {
+    else if(op.isQueryOperation()) {
+      ndboperation.getQueryResults(op, onFetchComplete);
+    } else {
       ndboperation.getScanResults(op, onFetchComplete);
     }
   }
@@ -292,8 +294,13 @@ function executeScan(self, execMode, abortFlag, dbOperationList, callback) {
   udebug.log(self.moniker, "executeScan");
   op = dbOperationList[0];
   execId = getExecIdForOperationList(self, dbOperationList);
-  if(op.scanOp) { //  No need to rebuild if retrying after error
-    scanOperation = op.scanOp;
+  if(op.scanOp) {
+    if(op.isQueryOperation()) {
+      op.scanOp.setTransactionImpl(self.impl);
+      scanOperation = op.scanOp;
+    } else {
+      scanOperation = op.scanOp; //  No need to rebuild if retrying after error
+    }
   } else {
     scanOperation = op.prepareScan(self.impl);
   }
