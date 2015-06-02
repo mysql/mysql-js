@@ -31,46 +31,94 @@ function blah() {
   process.exit();
 }
 
-function NdbProjection(sector, indexHandler, parentProjection) {
+function mockKeys(columnNames) {
   var mock_keys = {};
-
-  if(parentProjection) {
-    sector.thisJoinColumns.forEach(function(field) {
-      mock_keys[field] = "_";
-    });
-  }
-
-  this.next           = null;
-  this.tableHandler   = sector.tableHandler;
-  this.error          = null;
-  if(parentProjection) {
-    parentProjection.next = this;
-    this.root         = parentProjection.root;
-    this.keyFields    = sector.thisJoinColumns;
-    this.joinTo       = sector.otherJoinColumns;
-    this.depth        = parentProjection.depth + 1;
-    this.indexHandler = this.tableHandler.getIndexHandler(mock_keys);
-    this.hasScan      = null;   // unused except in root
-  } else {
-    this.root         = this;
-    this.keyFields    = sector.keyFieldNames;
-    this.joinTo       = null;
-    this.depth        = 0;
-    this.indexHandler = indexHandler;
-    this.hasScan      = false;
-  }
-  this.ndbQueryDef    = null;
-  this.rowRecord      = this.tableHandler.resultRecord;
-  this.keyRecord      = this.indexHandler.dbIndex.record;
-  this.isPrimaryKey   = this.indexHandler.dbIndex.isPrimaryKey || false;
-  this.isUniqueKey    = this.indexHandler.dbIndex.isUnique;
-  this.relatedField   = sector.relatedFieldMapping;
-
-  if(! (this.isPrimaryKey || this.isUniqueKey)) {
-    this.root.hasScan = true;
-  }
+  columnNames.forEach(function(field) {
+    mock_keys[field] = "_";
+  });
+  return mock_keys;
 }
 
+
+function NdbProjection(tableHandler, indexHandler, parent) {
+  this.root           = parent ? parent.root : this;    // root of chain
+  this.depth          = parent ? parent.depth + 1 : 0;
+  this.next           = null;                           // next in chain
+  this.error          = null;
+  this.hasScan        = null;
+  this.tableHandler   = tableHandler;
+  this.rowRecord      = tableHandler.resultRecord;
+  this.indexHandler   = indexHandler;
+  this.keyRecord      = indexHandler.dbIndex.record;
+  this.isPrimaryKey   = indexHandler.dbIndex.isPrimaryKey || false;
+  this.isUniqueKey    = indexHandler.dbIndex.isUnique;
+
+  if(parent) parent.next = this;
+  assert(this.keyRecord);
+}
+
+function ndbRootProjection(sector, indexHandler) {
+  udebug.log("Root", sector);
+  var p = new NdbProjection(sector.tableHandler, indexHandler);
+  p.keyFields    = sector.keyFieldNames;
+  p.joinTo       = null;
+  p.relatedField = sector.relatedFieldMapping;
+  p.hasScan      = ! (p.isPrimaryKey || p.isUniqueKey);
+  return p;
+}
+
+function createNdbProjection(sector, parentProjection) {
+  var indexHandler, p;
+
+  if(sector.joinTableHandler) {
+    p = ndbProjectionToJoinTable(sector, parentProjection);
+    return ndbProjectionFromJoinTable(sector, p);
+  }
+
+  udebug.log(sector);
+  indexHandler = sector.tableHandler.getIndexHandler(mockKeys(sector.thisJoinColumns));
+
+  p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
+  p.keyFields    = sector.thisJoinColumns;
+  p.joinTo       = sector.otherJoinColumns;
+  p.relatedField = sector.relatedFieldMapping;
+
+  if(! (p.isPrimaryKey || p.isUniqueKey)) {
+    p.root.hasScan = true;
+  }
+  return p;
+}
+
+function ndbProjectionToJoinTable(sector, parentProjection) {
+  var mock_keys, indexHandler, p;
+  udebug.log("ToJoinTable:", sector);
+
+  //blah(util.inspect(sector.relatedFieldMapping.thisForeignKey, {colors:true, depth:1, customInspect:false}));
+  mock_keys = mockKeys(sector.relatedFieldMapping.thisForeignKey.columnNames);
+  indexHandler = sector.joinTableHandler.getOrderedIndexHandler(mock_keys);
+  //blah(util.inspect(indexHandler, {colors:true, depth:1, customInspect:false}));
+
+  p = new NdbProjection(sector.joinTableHandler, indexHandler, parentProjection);
+  p.keyFields    = sector.relatedFieldMapping.thisForeignKey.columnNames;
+  p.joinTo       = sector.relatedFieldMapping.thisForeignKey.targetColumnNames;
+  p.relatedField = null;   // No result fields come from the join table
+  p.root.hasScan = true;
+  return p;
+}
+
+function ndbProjectionFromJoinTable(sector, parentProjection) {
+  var mock_keys, indexHandler, p;
+  udebug.log("FromJoinTable:", sector);
+
+  mock_keys = mockKeys(sector.relatedFieldMapping.otherForeignKey.targetColumnNames);
+  indexHandler = sector.tableHandler.getIndexHandler(mock_keys);
+
+  p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
+  p.keyFields    = sector.relatedFieldMapping.otherForeignKey.targetColumnNames;
+  p.joinTo       = sector.relatedFieldMapping.otherForeignKey.columnNames;
+  p.relatedField = sector.relatedFieldMapping.fieldName
+  return p;
+}
 
 /* If the root operation is a find, but some child operation is a scan,
    NdbQueryBuilder.cpp says "Scan with root lookup operation has not been
@@ -80,11 +128,7 @@ function NdbProjection(sector, indexHandler, parentProjection) {
 NdbProjection.prototype.rewriteAsScan = function(sector) {
   var new_index, mock_keys;
 
-  mock_keys = {};
-  sector.keyFieldNames.forEach(function(field) {
-    mock_keys[field] = "_";
-  });
-
+  mock_keys = mockKeys(sector.keyFieldNames);
   this.indexHandler = this.tableHandler.getOrderedIndexHandler(mock_keys);
   if(this.indexHandler) {
     this.isPrimaryKey = false;
@@ -97,9 +141,9 @@ NdbProjection.prototype.rewriteAsScan = function(sector) {
 
 function initializeProjection(sectors, indexHandler) {
   var projection, i;
-  projection = new NdbProjection(sectors[0], indexHandler);
+  projection = ndbRootProjection(sectors[0], indexHandler);
   for (i = 1 ; i < sectors.length ; i++) {
-    projection = new NdbProjection(sectors[i], null, projection);
+    projection = createNdbProjection(sectors[i], projection);
   }
 
   if(projection.root.hasScan &&
@@ -109,7 +153,7 @@ function initializeProjection(sectors, indexHandler) {
     projection.root.rewriteAsScan(sectors[0]);
   }
 
-  return projection.root;
+  return projection;
 }
 
 exports.initialize = initializeProjection;

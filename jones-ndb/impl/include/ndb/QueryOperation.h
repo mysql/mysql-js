@@ -54,7 +54,7 @@ public:
   void createRowBuffer(int level, Record *);
   int prepareAndExecute();
   void setTransactionImpl(TransactionImpl *);
-  void createNdbQuery(NdbTransaction *);
+  bool createNdbQuery(NdbTransaction *);
   void prepare(const NdbQueryOperationDef * root);
   int fetchAllResults();
   NdbQueryBuilder * getBuilder() { return ndbQueryBuilder; }

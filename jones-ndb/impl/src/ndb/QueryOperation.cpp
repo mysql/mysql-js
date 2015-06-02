@@ -42,6 +42,7 @@ QueryOperation::QueryOperation(int sz) :
   nextHeaderAllocationSize(1024)
 {
   ndbQueryBuilder = NdbQueryBuilder::create();
+  DEBUG_PRINT("Depth: %d", depth);
 }
 
 QueryOperation::~QueryOperation() {
@@ -52,8 +53,13 @@ QueryOperation::~QueryOperation() {
 
 void QueryOperation::createRowBuffer(int level, Record *record) {
   buffers[level].record = record;
-  buffers[level].buffer = new char[record->getBufferSize()];
-  buffers[level].size   = record->getBufferSize();
+  if(record) {
+    buffers[level].buffer = new char[record->getBufferSize()];
+    buffers[level].size   = record->getBufferSize();
+  } else {
+    buffers[level].buffer = 0;
+    buffers[level].size   = 0;
+  }
 }
 
 void QueryOperation::prepare(const NdbQueryOperationDef * root) {
@@ -205,48 +211,54 @@ const NdbQueryOperationDef *
   QueryOperation::defineOperation(const NdbDictionary::Index * index,
                                   const NdbDictionary::Table * table,
                                   const NdbQueryOperand* const keys[]) {
-  const NdbQueryOperationDef * rval;
+  const NdbQueryOperationDef * rval = 0;
   NdbQueryIndexBound * bound;
-  DEBUG_MARKER(UDEB_DEBUG);
 
   if(index) {
     switch(index->getType()) {
       case NdbDictionary::Index::UniqueHashIndex:
         rval = ndbQueryBuilder->readTuple(index, table, keys);
-        DEBUG_PRINT("Using UniqueHashIndex");
+        DEBUG_PRINT("defineOperation using UniqueHashIndex %s", index->getName());
         break;
 
       case NdbDictionary::Index::OrderedIndex:
         bound = new NdbQueryIndexBound(keys);
         rval = ndbQueryBuilder->scanIndex(index, table, bound);
-        DEBUG_PRINT("Using OrderedIndex");
+        DEBUG_PRINT("defineOperation using OrderedIndex %s", index->getName());
         break;
       default:
-        DEBUG_PRINT("ERROR: default case");
-        rval = 0;
-        break;
+        DEBUG_PRINT("defineOperation ERROR: default case");
+        return 0;
     }
   }
   else {
     rval = ndbQueryBuilder->readTuple(table, keys);
-    DEBUG_PRINT("Using PrimaryKey");
+    DEBUG_PRINT("defineOperation using PrimaryKey");
   }
 
   if(rval == 0) {
     const NdbError & err = ndbQueryBuilder->getNdbError();
-    DEBUG_PRINT("Error %d %s", err.code, err.message);
+    DEBUG_PRINT("defineOperation: Error %d %s", err.code, err.message);
   }
   return rval;
 }
 
-void QueryOperation::createNdbQuery(NdbTransaction *tx) {
+bool QueryOperation::createNdbQuery(NdbTransaction *tx) {
   DEBUG_MARKER(UDEB_DEBUG);
   ndbQuery = tx->createQuery(definedQuery);
+  if(! ndbQuery) return false;
 
   for(int i = 0 ; i < depth ; i++) {
     NdbQueryOperation * qop = ndbQuery->getQueryOperation(i);
-    qop->setResultRowBuf(buffers[i].record->getNdbRecord(), buffers[i].buffer);
+    if(! qop) {
+      DEBUG_PRINT("No Query Operation at index %d", i);
+      return -1;
+    }
+    if(buffers[i].record) {
+      qop->setResultRowBuf(buffers[i].record->getNdbRecord(), buffers[i].buffer);
+    }
   }
+  return true;
 }
 
 void QueryOperation::setTransactionImpl(TransactionImpl *tx) {

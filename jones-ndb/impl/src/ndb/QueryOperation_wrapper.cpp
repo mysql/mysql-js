@@ -40,7 +40,6 @@ Handle<String>    /* keys of NdbProjection */
   K_keyFields,
   K_joinTo,
   K_depth,
-  K_ndbQueryDef,
   K_tableHandler,
   K_rowRecord,
   K_indexHandler,
@@ -87,9 +86,11 @@ Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
 
 
 void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
+  Record * record = 0;
   int level = spec->Get(K_depth)->Int32Value();
-  Record * record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
-
+  if(spec->Get(K_rowRecord)->IsObject()) {
+    record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
+  }
   queryOp->createRowBuffer(level, record);
 }
 
@@ -187,6 +188,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   for(int i = 0 ; i < nKeyParts ; i++) {
     String::AsciiValue column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
+    DEBUG_PRINT("Col: %s", *column_name);
   }
   key_parts[nKeyParts] = 0;
 
@@ -316,7 +318,6 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
   K_keyFields     = JSSTRING("keyFields");
   K_joinTo        = JSSTRING("joinTo");
   K_depth         = JSSTRING("depth");
-  K_ndbQueryDef   = JSSTRING("ndbQueryDef");
   K_tableHandler  = JSSTRING("tableHandler");
   K_rowRecord     = JSSTRING("rowRecord"),
   K_indexHandler  = JSSTRING("indexHandler");

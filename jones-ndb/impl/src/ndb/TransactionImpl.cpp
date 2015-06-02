@@ -93,7 +93,10 @@ int TransactionImpl::prepareAndExecuteQuery(QueryOperation *query) {
   if(! ndbTransaction) {
     startTransaction(NULL);
   }
-  query->createNdbQuery(ndbTransaction);
+  if(! query->createNdbQuery(ndbTransaction)) {
+    DEBUG_PRINT("%d %s", query->getNdbError().code, query->getNdbError().message);
+    return -1;
+  }
   return ndbTransaction->execute(NdbTransaction::NoCommit, NdbOperation::AO_IgnoreError, 1);
 }
 

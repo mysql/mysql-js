@@ -901,7 +901,8 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 
 
 function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
-  var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
+  var op, projection, depth;
+  op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
   op.keys = Array.isArray(keys) ? keys : indexHandler.getFields(keys);
@@ -914,9 +915,10 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
   });
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
-  op.query = NdbProjection.initialize(projection.sectors, indexHandler);
-  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key,
-                                                 projection.sectors.length);
+  projection = NdbProjection.initialize(projection.sectors, indexHandler);
+  op.query = projection.root;
+  depth = projection.depth + 1;
+  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
   return op;
 }
 
