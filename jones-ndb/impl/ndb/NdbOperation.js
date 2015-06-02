@@ -703,6 +703,7 @@ function getQueryResults(op, userCallback) {
   op.scanOp.fetchAllResults(function(err, nresults) {
     var i, wrapper, level, current, resultObject, related;
     current = [];   // current values for each sector
+    current[0] = null;
     wrapper = {};
 
     function assemble() {
@@ -741,7 +742,10 @@ function getQueryResults(op, userCallback) {
     }
 
     udebug.log("fetchAllResults returns", err, nresults);
-    if(nresults > 0) {
+    if(err) {
+      op.result.success = false;
+      op.result.error = new DBOperationError().fromNdbError(err);
+    } else {
       for(i = 0 ; i < nresults ; i++) {
         op.scanOp.getResult(i, wrapper);
         udebug.log("Wrapper",wrapper.level,wrapper.tag);
