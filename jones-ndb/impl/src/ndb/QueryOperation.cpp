@@ -53,13 +53,13 @@ QueryOperation::~QueryOperation() {
 
 void QueryOperation::createRowBuffer(int level, Record *record) {
   buffers[level].record = record;
-  if(record) {
-    buffers[level].buffer = new char[record->getBufferSize()];
-    buffers[level].size   = record->getBufferSize();
-  } else {
-    buffers[level].buffer = 0;
-    buffers[level].size   = 0;
-  }
+  buffers[level].buffer = new char[record->getBufferSize()];
+  buffers[level].size   = record->getBufferSize();
+}
+
+void QueryOperation::levelIsJoinTable(int level) {
+  DEBUG_PRINT("Level %d is join table", level);
+  buffers[level].flags |= 2;
 }
 
 void QueryOperation::prepare(const NdbQueryOperationDef * root) {
@@ -111,7 +111,7 @@ bool QueryOperation::pushResultNull(int level) {
   }
   if(ok) {
     results[n].depth = level;
-    results[n].tag = -1;
+    results[n].tag = 1 | buffers[level].flags;
     results[n].data = 0;
     nresults++;
   }
@@ -137,8 +137,9 @@ bool QueryOperation::pushResultValue(int level) {
     /* Copy from the holding buffer to the new result */
     memcpy(results[n].data, temp_result, size);
 
-    /* Set the level in the header */
+    /* Set the level and tag in the header */
     results[n].depth = level;
+    results[n].tag = buffers[level].flags;
 
     /* Record that this result has been copied out */
     buffers[level].lastCopy = nresults;
@@ -254,9 +255,8 @@ bool QueryOperation::createNdbQuery(NdbTransaction *tx) {
       DEBUG_PRINT("No Query Operation at index %d", i);
       return -1;
     }
-    if(buffers[i].record) {
-      qop->setResultRowBuf(buffers[i].record->getNdbRecord(), buffers[i].buffer);
-    }
+    assert(buffers[i].record);
+    qop->setResultRowBuf(buffers[i].record->getNdbRecord(), buffers[i].buffer);
   }
   return true;
 }

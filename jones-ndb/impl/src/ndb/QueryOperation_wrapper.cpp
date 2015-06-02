@@ -45,6 +45,7 @@ Handle<String>    /* keys of NdbProjection */
   K_indexHandler,
   K_keyRecord,
   K_isPrimaryKey,
+  K_relatedField,
   K_dbTable,
   K_dbIndex,
   K_level,
@@ -92,6 +93,10 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
     record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
   }
   queryOp->createRowBuffer(level, record);
+
+  if(spec->Get(K_relatedField)->IsNull()) {
+    queryOp->levelIsJoinTable(level);
+  }
 }
 
 
@@ -188,7 +193,6 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   for(int i = 0 ; i < nKeyParts ; i++) {
     String::AsciiValue column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
-    DEBUG_PRINT("Col: %s", *column_name);
   }
   key_parts[nKeyParts] = 0;
 
@@ -286,7 +290,7 @@ Handle<Value> queryGetResult(const Arguments & args) {
       wrapper->Set(K_data, Null());
     }
     wrapper->Set(K_level, Persistent<Value>(v8::Uint32::New(header->depth)));
-    wrapper->Set(K_tag,   Persistent<Value>(v8::Int32::New(header->tag)));
+    wrapper->Set(K_tag,   Persistent<Value>(v8::Uint32::New(header->tag)));
     return True();
   }
   return False();
@@ -323,6 +327,7 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
   K_indexHandler  = JSSTRING("indexHandler");
   K_keyRecord     = JSSTRING("keyRecord");
   K_isPrimaryKey  = JSSTRING("isPrimaryKey");
+  K_relatedField  = JSSTRING("relatedField");
 
   K_dbTable       = JSSTRING("dbTable");
   K_dbIndex       = JSSTRING("dbIndex");

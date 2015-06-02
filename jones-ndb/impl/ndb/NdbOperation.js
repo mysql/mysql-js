@@ -709,7 +709,7 @@ function getQueryResults(op, userCallback) {
       current[level] = resultObject;
       if(level > 0) {
         related = sectors[level].relatedField;
-        if(related.toMany  && ! current[level-1][related.fieldName])
+        if(related.toMany && ! current[level-1][related.fieldName])
         {
           current[level-1][related.fieldName] = [];
         }
@@ -721,16 +721,21 @@ function getQueryResults(op, userCallback) {
       }
     }
 
-    function assembleNull() {
-      current[level] = null;
-      if(level > 0) {
-        related = sectors[level].relatedField;
-        if(related.toMany  && ! current[level-1][related.fieldName])
-        {
-          current[level-1][related.fieldName] = [];
-        }
-        else {
-          current[level-1][related.fieldName] = null;
+    function assembleSpecial(tag) {
+      if(tag & 2) {   /* This row came from a many-to-many join table but
+                         is not itself part of the user's result object.  */
+        current[level] = current[level - 1];
+      }
+      if(tag & 1) {   /* Row is null */
+        current[level] = null;
+        if(level > 0) {
+          related = sectors[level].relatedField || sectors[level-1].relatedField;
+          if(related.toMany && ! current[level-1][related.fieldName]) {
+            current[level-1][related.fieldName] = [];
+          }
+          else {
+            current[level-1][related.fieldName] = null;
+          }
         }
       }
     }
@@ -739,9 +744,10 @@ function getQueryResults(op, userCallback) {
     if(nresults > 0) {
       for(i = 0 ; i < nresults ; i++) {
         op.scanOp.getResult(i, wrapper);
+        udebug.log("Wrapper",wrapper.level,wrapper.tag);
         level = wrapper.level;
-        if(wrapper.tag == -1) {
-          assembleNull();
+        if(wrapper.tag) {
+          assembleSpecial(wrapper.tag);
         } else {
           resultObject = buildValueObject(op, sectors[level].tableHandler,
                                           wrapper.data, null);
@@ -901,7 +907,7 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 
 
 function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
-  var op, projection, depth;
+  var op, ndbProjection, depth;
   op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
@@ -915,9 +921,9 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
   });
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
-  projection = NdbProjection.initialize(projection.sectors, indexHandler);
-  op.query = projection.root;
-  depth = projection.depth + 1;
+  ndbProjection = NdbProjection.initialize(projection.sectors, indexHandler);
+  op.query = ndbProjection.root;
+  depth = ndbProjection.depth + 1;
   op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
   return op;
 }

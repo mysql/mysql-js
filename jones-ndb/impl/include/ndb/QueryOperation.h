@@ -36,7 +36,8 @@ public:
   char        * buffer;
   size_t        size;
   size_t        lastCopy;
-  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0) {};
+  uint16_t      flags;
+  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0), flags(0) {};
   ~QueryBuffer()                       { if(size) delete[] buffer; };
 };
 
@@ -44,7 +45,7 @@ class QueryResultHeader {
 public:
   char        * data;
   uint16_t      depth;
-  int16_t       tag;
+  uint16_t      tag;
 };
 
 class QueryOperation : public KeyOperation {
@@ -52,6 +53,7 @@ public:
   QueryOperation(int);
   ~QueryOperation();
   void createRowBuffer(int level, Record *);
+  void levelIsJoinTable(int level);
   int prepareAndExecute();
   void setTransactionImpl(TransactionImpl *);
   bool createNdbQuery(NdbTransaction *);
@@ -68,7 +70,6 @@ public:
 
 protected:
   bool growHeaderArray();
-  // int fetchResultsAtLevel(int, int);
   bool pushResultValue(int);
   bool pushResultNull(int);
   bool pushResultForTable(int);

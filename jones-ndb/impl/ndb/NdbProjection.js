@@ -22,6 +22,8 @@
 
 var util = require("util"),
     assert = require("assert"),
+    conf = require("./path_config"),
+    adapter = require(conf.binary).ndb,
     udebug = unified_debug.getLogger("NdbProjection.js");
 
 function blah() {
@@ -39,6 +41,16 @@ function mockKeys(columnNames) {
   return mock_keys;
 }
 
+function buildJoinTableResultRecord(dbTableHandler) {
+  if(! dbTableHandler.resultRecord) {
+    dbTableHandler.resultRecord = adapter.impl.DBDictionary.getRecordForMapping(
+        dbTableHandler.dbTable,
+        dbTableHandler.dbTable.per_table_ndb,
+        dbTableHandler.getNumberOfColumns(),
+        dbTableHandler.getAllColumns()
+    );
+  }
+}
 
 function NdbProjection(tableHandler, indexHandler, parent) {
   this.root           = parent ? parent.root : this;    // root of chain
@@ -54,7 +66,6 @@ function NdbProjection(tableHandler, indexHandler, parent) {
   this.isUniqueKey    = indexHandler.dbIndex.isUnique;
 
   if(parent) parent.next = this;
-  assert(this.keyRecord);
 }
 
 function ndbRootProjection(sector, indexHandler) {
@@ -93,10 +104,10 @@ function ndbProjectionToJoinTable(sector, parentProjection) {
   var mock_keys, indexHandler, p;
   udebug.log("ToJoinTable:", sector);
 
-  //blah(util.inspect(sector.relatedFieldMapping.thisForeignKey, {colors:true, depth:1, customInspect:false}));
   mock_keys = mockKeys(sector.relatedFieldMapping.thisForeignKey.columnNames);
   indexHandler = sector.joinTableHandler.getOrderedIndexHandler(mock_keys);
-  //blah(util.inspect(indexHandler, {colors:true, depth:1, customInspect:false}));
+
+  buildJoinTableResultRecord(sector.joinTableHandler);
 
   p = new NdbProjection(sector.joinTableHandler, indexHandler, parentProjection);
   p.keyFields    = sector.relatedFieldMapping.thisForeignKey.columnNames;
@@ -116,7 +127,7 @@ function ndbProjectionFromJoinTable(sector, parentProjection) {
   p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
   p.keyFields    = sector.relatedFieldMapping.otherForeignKey.targetColumnNames;
   p.joinTo       = sector.relatedFieldMapping.otherForeignKey.columnNames;
-  p.relatedField = sector.relatedFieldMapping.fieldName
+  p.relatedField = sector.relatedFieldMapping;
   return p;
 }
 
