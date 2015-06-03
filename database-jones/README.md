@@ -1,12 +1,6 @@
 Database Jones
 ==============
 
-READ ME FIRST
--------------
-This is a prototype based on mysql-js.
-For production use see https://github.com/mysql/mysql-js
-
-
 
 Introduction
 ------------
