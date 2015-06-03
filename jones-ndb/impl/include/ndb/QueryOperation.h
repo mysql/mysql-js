@@ -48,7 +48,7 @@ public:
   uint16_t      tag;
 };
 
-class QueryOperation : public KeyOperation {
+class QueryOperation {
 public:
   QueryOperation(int);
   ~QueryOperation();
