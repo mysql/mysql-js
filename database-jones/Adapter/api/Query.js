@@ -212,11 +212,11 @@ function isQueryParameter(parameter) {
 }
 
 function getEscapedValue(literal) {
+  var ret = literal.toString();
   if (typeof literal === 'string') {
-    return '\'' + literal + '\'';
-  } else {
-    return literal.toString();
+    ret = '\'' + literal + '\'';
   }
+  return ret;
 }
 
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
