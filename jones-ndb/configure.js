@@ -273,6 +273,13 @@ function main() {
   }
 
   /* Start here: */
+
+  /* MySQL Path was supplied on the command line */
+  if(process.argv[2]) {
+    configure(process.argv[2]);
+  }
+
+  /* Get path interactively */
   rl.write(greeting);
   rl.on('SIGINT', hangup);
   if(candidates.length) {
