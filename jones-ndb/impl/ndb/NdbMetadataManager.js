@@ -46,10 +46,10 @@ function findMetadataScript(suiteName, suitePath, file) {
 
 function NdbMetadataManager(properties) {
   var sqlProps = {
-    "mysql_user"                : properties.sql_user,
-    "mysql_host"                : properties.sql_host,
-    "mysql_port"                : properties.sql_port,
-    "mysql_password"            : properties.sql_password,
+    "mysql_user"                : properties.mysql_user || properties.sql_user,
+    "mysql_host"                : properties.mysql_host || properties.sql_host,
+    "mysql_port"                : properties.mysql_port || properties.sql_port,
+    "mysql_password"            : properties.mysql_password || properties.sql_password,
     "implementation"            : "mysql",
     "isMetadataOnlyConnection"  : true
   };

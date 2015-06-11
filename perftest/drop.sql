@@ -15,30 +15,7 @@
 
 SET storage_engine=ndbcluster;
 
-CREATE DATABASE IF NOT EXISTS jscrund;
 USE jscrund;
 
-CREATE TABLE IF NOT EXISTS a (
-        id              INT             NOT NULL,
-        cint            INT,
-        clong           BIGINT,
-        cfloat          FLOAT,
-        cdouble         DOUBLE,
-        CONSTRAINT PK_A_0 PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS b (
-        id              INT             NOT NULL,
-        cint            INT,
-        clong           BIGINT,
-        cfloat          FLOAT,
-        cdouble         DOUBLE,
-        a_id            INT,
-        cvarbinary_def  VARBINARY(202),
-        cvarchar_def    VARCHAR(202),
-        CONSTRAINT PK_B_0 PRIMARY KEY (id),
-        CONSTRAINT FK_B_1 FOREIGN KEY (a_id) REFERENCES a (id)
-);
-
-DELETE FROM b;
-DELETE FROM a;
+DROP TABLE b;
+DROP TABLE a;
