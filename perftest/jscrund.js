@@ -28,7 +28,6 @@ JSCRUND.mynode = require("database-jones");
 JSCRUND.unified_debug = require("unified_debug");
 JSCRUND.udebug = JSCRUND.unified_debug.getLogger("jscrund.js");
 JSCRUND.stats  = require(JSCRUND.mynode.api.stats);
-JSCRUND.lib    = require("./lib");
 
 // Backends:
 JSCRUND.mysqljs = require('./jscrund_mysqljs');
@@ -235,6 +234,46 @@ function parse_command_line(options) {
     }
   }
 }
+
+/** Timer functions for crund. Multiple timers can be used simultaneously,
+ * as long as each timer is created via new Timer().
+ * start() starts the timer.
+ * stop() stops the timer and writes results.
+ * mode is the mode of operation (indy, each, or bulk)
+ * operation is the operation (e.g. persist, find, delete)
+ * numberOfIterations is the number of iterations of each operation
+ */
+function Timer() {
+}
+
+Timer.prototype.start = function(mode, operation, numberOfIterations) {
+  //console.log('lib.Timer.start', mode, operation, 'iterations:', numberOfIterations);
+  this.mode = mode;
+  this.operation = operation;
+  this.numberOfIterations = numberOfIterations;
+  this.current = Date.now();
+};
+
+Timer.prototype.stop = function() {
+  function pad(str, count, onRight) {
+    while (str.length < count)
+      str = (onRight ? str + ' ' : ' ' + str);
+    return str;
+  }
+  function rpad(num, str) {
+    return pad(str, num, true);
+  }
+  function lpad(num, str) {
+    return pad(str, num, false);
+  }
+  this.interval = Date.now() - this.current;
+  this.average = this.interval / this.numberOfIterations;
+  var ops = Math.round(this.numberOfIterations * 1000 / this.interval);
+  console.log(rpad(18, this.mode + ' ' + this.operation),
+              '    time: ' + lpad(4, this.interval.toString()) + 'ms',
+              '    avg latency: ' + lpad(4, this.average.toFixed(3)) + 'ms',
+              '    ops/s: ' + lpad(4, ops.toString()));
+};
 
 /** Error reporter 
  */
@@ -482,7 +521,7 @@ function main() {
 
   var runTests = function(options) {
 
-    var timer = new JSCRUND.lib.Timer();
+    var timer = new Timer();
 
     var modeNames = options.modes.split('\,');    
     var modeNumber = 0;
@@ -785,7 +824,9 @@ function main() {
   };
 
   // create database
-  JSCRUND.lib.SQL.create('./', properties, function(err) {
+  JSCRUND.metadataManager = require("jones-ndb").getDBMetadataManager(properties);
+
+  JSCRUND.metadataManager.runSQL("./create.sql", function(err) {
     if (err) {
       console.log('Error creating tables.', err);
       process.exit(1);
