@@ -135,6 +135,9 @@ function ndbProjectionFromJoinTable(sector, parentProjection) {
    NdbQueryBuilder.cpp says "Scan with root lookup operation has not been
    implemented" and returns QRY_WRONG_OPERATION_TYPE error 4820. 
    We have to work around this now by rewriting the root to use a scan.
+
+   NOTE: The server uses a different strategy here.  Divides the tree after
+   the last consecutive lookup then runs all lookups.
 */
 NdbProjection.prototype.rewriteAsScan = function(sector) {
   var new_index, mock_keys;

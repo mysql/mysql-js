@@ -274,6 +274,12 @@ NdbSession.prototype.buildScanOperation = function(queryHandler, properties,
 */
 NdbSession.prototype.buildReadProjectionOperation = function(indexHandler, 
                                             keys, projection, tx, callback) {
+  /* If the "join" involves only one table, it is more efficient to run
+     it as a ReadOperation */
+  if(projection.sectors.length == 1) {
+    return this.buildReadOperation(indexHandler, keys, tx, callback);
+  }
+
   udebug.log("buildReadProjectionOperation");
   var op = ndboperation.newProjectionOperation(this.impl, tx, indexHandler,
                                                keys, projection);
