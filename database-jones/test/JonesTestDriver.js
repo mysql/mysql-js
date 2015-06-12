@@ -22,6 +22,7 @@
 
 global.harness   = require("jones-test");
 var driver       = new harness.Driver();
+var utilities    = require("./utilities");
 var stats_module = require(jones.api.stats);
 var cmdLineProperties;
 
