@@ -19,7 +19,7 @@
 */
 
 #include <assert.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #include "adapter_global.h"
 #include "unified_debug.h"
