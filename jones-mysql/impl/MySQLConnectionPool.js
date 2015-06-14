@@ -271,7 +271,10 @@ exports.DBConnectionPool.prototype.connect = function(callback) {
     if (err) {
       stats.connections.failed++;
       // create a new Error with a message and this stack
-      error = new Error('Connection failed.');
+      error = new Error('Connection to MySQL server failed.\n' +
+          'Your connection properties have been translated into node-mysql connection options:\n' +
+          'https://github.com/felixge/node-mysql/#connection-options\n' +
+          util.inspect(connectionPool.driverproperties));
       // add cause to the error
       error.cause = err;
       // add sqlstate to error
