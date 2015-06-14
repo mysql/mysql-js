@@ -23,8 +23,7 @@
 global.harness   = require("jones-test");
 var driver       = new harness.Driver();
 var stats_module = require(jones.api.stats);
-var utilities    = require("./utilities.js");
-
+var cmdLineProperties;
 
 /* Hack the prototypes for SerialTest and ConcurrentTest 
    to ensure that a test case always closes its session
@@ -43,11 +42,20 @@ harness.ConcurrentTest.prototype.onComplete = function() {
 
 driver.statsDomain = null;
 
-driver.addCommandLineOption("", "--set <var>=<value>", "set a global variable",
+/* If --set *is not* used:
+     jones-xxx/test/test_connection.js is read for connection properties.
+     If test_connection.js does not exist, test_connection_defaults.js is 
+     copied to test_connection.js.
+   If --set *is* used, then test_conneciton.js is ignored.
+*/
+driver.addCommandLineOption("", "--set <var>=<value>", "set a connection property",
   function(nextArg) {
+    if(! cmdLineProperties) {
+      cmdLineProperties = {};
+    }
     var pair = nextArg.split('=');
     if(pair.length === 2) {
-      global[pair[0]] = pair[1];
+      cmdLineProperties[pair[0]] = pair[1];
       return 1;
     }
     console.log("Invalid --set option " + nextArg);
@@ -76,7 +84,7 @@ driver.onReportCallback = function() {
 /* 
 */
 driver.getConnectionProperties = function(adapter, base_dir) {
-  return utilities.getConnectionProperties(adapter,base_dir);
+  return utilities.getConnectionProperties(adapter,base_dir, cmdLineProperties);
 };
 
 module.exports = driver;

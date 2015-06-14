@@ -58,8 +58,8 @@ function getTestConnectionProperties(base_dir) {
   return require(props_file);
 }
 
-function getConnectionProperties(adapter, base_dir) {
-  var testEnvProperties = getTestConnectionProperties(base_dir);
+function getConnectionProperties(adapter, base_dir, base_properties) {
+  var testEnvProperties = base_properties || getTestConnectionProperties(base_dir);
   testEnvProperties.implementation = adapter;
 
   dbServiceProvider = jones.getDBServiceProvider(adapter);
