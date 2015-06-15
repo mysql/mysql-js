@@ -28,18 +28,20 @@ var conf = require("./path_config");
 var DatetimeConverter = require(path.join(conf.converters_dir, "NdbDatetimeConverter"));
 var TimeConverter = require(path.join(conf.converters_dir, "NdbTimeConverter"));
 var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
-
-try {
-  var DBConnectionPool   = require("./NdbConnectionPool.js").DBConnectionPool;
-  var NdbMetadataManager = require("./NdbMetadataManager.js");
-}
-catch(e) {
-  console.log(e.stack);
-  /* Let unmet module dependencies be caught by loadRequiredModules() */
-}
-
 var propertiesDocFile = path.join(conf.docs_dir, "ndb_properties");
 var udebug  = unified_debug.getLogger("ndb_service_provider.js");
+
+
+/* Let unmet module dependencies be caught by loadRequiredModules() */
+var NdbMetadataManager, DBConnectionPool;
+try {
+  NdbMetadataManager = require("./NdbMetadataManager.js");
+} catch(e1) {}
+
+try {
+  DBConnectionPool   = require("./NdbConnectionPool.js").DBConnectionPool;
+} catch(e2) {}
+
 
 exports.loadRequiredModules = function() {
   var err, ldp, msg;
