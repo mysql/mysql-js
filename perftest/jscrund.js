@@ -31,13 +31,11 @@ JSCRUND.stats  = require(JSCRUND.mynode.api.stats);
 
 // Backends:
 JSCRUND.mysqljs = require('./jscrund_mysqljs');
-JSCRUND.sqlAdapter = require('./jscrund_sql');
-JSCRUND.spiAdapter = require('./jscrund_dbspi');
-JSCRUND.nullAdapter = require('./jscrund_null');
 
 JSCRUND.errors  = [];
 
 var DEBUG, DETAIL;
+var path = require("path");
 
 // webkit-devtools-agent allows you to profile the process from a Chrome browser
 try {
@@ -443,10 +441,13 @@ function main() {
 
   /* Fetch the backend implementation */
   if(options.spi) {
+    JSCRUND.spiAdapter = require('./jscrund_dbspi');
     JSCRUND.implementation = new JSCRUND.spiAdapter.implementation();
   } else if(options.adapter == 'sql') {
+    JSCRUND.sqlAdapter = require('./jscrund_sql');
     JSCRUND.implementation = new JSCRUND.sqlAdapter.implementation();
   } else if(options.adapter == 'null') {
+    JSCRUND.nullAdapter = require('./jscrund_null');
     JSCRUND.implementation = new JSCRUND.nullAdapter.implementation();
   } else {
     JSCRUND.implementation = new JSCRUND.mysqljs.implementation();
@@ -826,7 +827,7 @@ function main() {
   // create database
   JSCRUND.metadataManager = require("jones-ndb").getDBMetadataManager(properties);
 
-  JSCRUND.metadataManager.runSQL("./create.sql", function(err) {
+  JSCRUND.metadataManager.runSQL(path.join(__dirname, "./create.sql"), function(err) {
     if (err) {
       console.log('Error creating tables.', err);
       process.exit(1);
