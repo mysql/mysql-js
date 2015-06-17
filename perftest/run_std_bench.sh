@@ -1,19 +1,19 @@
 LOGDIR='./benchmark_logs'
 SUMMARYFILE="$LOGDIR/All-runs-summary.txt"
 
-REVNO=`bzr revno`
+REVNO=`git show --pretty=%h`   ## = "bzr revno"
 [ -d $LOGDIR ] || mkdir $LOGDIR
 
 DoRun() {
   ADAPTER=$1
   TIME=`date +%d%b%Y-%H%M%S`
-  LOGFILE="$LOGDIR/bzr-$REVNO-$ADAPTER-$TIME.txt"
+  LOGFILE="$LOGDIR/git-$REVNO-$ADAPTER-$TIME.txt"
   Echo "Running $ADAPTER"
   node --expose-gc jscrund --adapter=$ADAPTER --modes=indy,bulk -r 8  | tee $LOGFILE
 } 
 
 Sum() {
-  echo "## bzr: $REVNO  Adapter: $ADAPTER  Date: $TIME"
+  echo "## git: $REVNO  Adapter: $ADAPTER  Date: $TIME"
   tail $LOGFILE | Analyze
   echo ""
 }
@@ -24,9 +24,9 @@ Analyze() {
     func summarize() { for(i = 2 ; i < 8 ; i++) sums[i] += $i } 
 
     NR == 1 { print }
-    NR == 6 { print; summarize(); }
     NR == 7 { print; summarize(); }
     NR == 8 { print; summarize(); }
+    NR == 9 { print; summarize(); }
     END     { printf("AVGS\t")
               for(i = 2 ; i < 8 ; i++) printf("%.1f\t", sums[i]/3);
               printf("\n")
@@ -39,6 +39,6 @@ Analyze() {
 DoRun ndb 
 Sum | tee -a $SUMMARYFILE
 
-# DoRun mysql
-# Sum | tee -a $SUMMARYFILE
+DoRun mysql
+Sum | tee -a $SUMMARYFILE
 
