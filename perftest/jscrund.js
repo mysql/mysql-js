@@ -35,7 +35,9 @@ JSCRUND.mysqljs = require('./jscrund_mysqljs');
 JSCRUND.errors  = [];
 
 var DEBUG, DETAIL;
-var path = require("path");
+var path = require("path"),
+    fs = require("fs");
+
 
 // webkit-devtools-agent allows you to profile the process from a Chrome browser
 try {
@@ -381,7 +383,6 @@ ResultLog.prototype.close = function() {
  */
 function main() {
   var config_file_exists = false;
-  var fs = require('fs');
 
   /* Default options: */
   var options = {
