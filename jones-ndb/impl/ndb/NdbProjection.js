@@ -24,7 +24,10 @@ var util = require("util"),
     assert = require("assert"),
     conf = require("./path_config"),
     adapter = require(conf.binary).ndb,
-    udebug = unified_debug.getLogger("NdbProjection.js");
+    udebug = unified_debug.getLogger("NdbProjection.js"),
+    stats = { "rootProjectionsCreated" : 0, "rewrittenToScan" : 0 };
+
+require(jones.api.stats).register(stats, "spi","ndb","NdbProjection");
 
 function blah() {
   console.log("BLAH");
@@ -69,34 +72,16 @@ function NdbProjection(tableHandler, indexHandler, parent) {
 }
 
 function ndbRootProjection(sector, indexHandler) {
+  var p;
+
   udebug.log("Root", sector);
-  var p = new NdbProjection(sector.tableHandler, indexHandler);
+  stats.rootProjectionsCreated++;
+
+  p = new NdbProjection(sector.tableHandler, indexHandler);
   p.keyFields    = sector.keyFieldNames;
   p.joinTo       = null;
   p.relatedField = sector.relatedFieldMapping;
   p.hasScan      = ! (p.isPrimaryKey || p.isUniqueKey);
-  return p;
-}
-
-function createNdbProjection(sector, parentProjection) {
-  var indexHandler, p;
-
-  if(sector.joinTableHandler) {
-    p = ndbProjectionToJoinTable(sector, parentProjection);
-    return ndbProjectionFromJoinTable(sector, p);
-  }
-
-  udebug.log(sector);
-  indexHandler = sector.tableHandler.getIndexHandler(mockKeys(sector.thisJoinColumns));
-
-  p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
-  p.keyFields    = sector.thisJoinColumns;
-  p.joinTo       = sector.otherJoinColumns;
-  p.relatedField = sector.relatedFieldMapping;
-
-  if(! (p.isPrimaryKey || p.isUniqueKey)) {
-    p.root.hasScan = true;
-  }
   return p;
 }
 
@@ -131,6 +116,28 @@ function ndbProjectionFromJoinTable(sector, parentProjection) {
   return p;
 }
 
+function createNdbProjection(sector, parentProjection) {
+  var indexHandler, p;
+
+  if(sector.joinTableHandler) {
+    p = ndbProjectionToJoinTable(sector, parentProjection);
+    return ndbProjectionFromJoinTable(sector, p);
+  }
+
+  udebug.log(sector);
+  indexHandler = sector.tableHandler.getIndexHandler(mockKeys(sector.thisJoinColumns));
+
+  p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
+  p.keyFields    = sector.thisJoinColumns;
+  p.joinTo       = sector.otherJoinColumns;
+  p.relatedField = sector.relatedFieldMapping;
+
+  if(! (p.isPrimaryKey || p.isUniqueKey)) {
+    p.root.hasScan = true;
+  }
+  return p;
+}
+
 /* If the root operation is a find, but some child operation is a scan,
    NdbQueryBuilder.cpp says "Scan with root lookup operation has not been
    implemented" and returns QRY_WRONG_OPERATION_TYPE error 4820. 
@@ -147,6 +154,7 @@ NdbProjection.prototype.rewriteAsScan = function(sector) {
   if(this.indexHandler) {
     this.isPrimaryKey = false;
     this.isUniqueKey = false;
+    stats.rewrittenToScan++;
   } else {
     this.error = new Error("Could not rewrite NdbProjection to use scan");
   }
