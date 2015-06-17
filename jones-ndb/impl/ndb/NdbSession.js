@@ -24,7 +24,8 @@ var stats = {
 	"created" : 0,
   "seizeTransactionContext" : { 
     "immediate" : 0 , "queued" : 0 
-  }
+  },
+  "oneTableProjections" : 0
 };
 
 var conf            = require("./path_config"),
@@ -277,6 +278,7 @@ NdbSession.prototype.buildReadProjectionOperation = function(indexHandler,
   /* If the "join" involves only one table, it is more efficient to run
      it as a ReadOperation */
   if(projection.sectors.length == 1) {
+    stats.oneTableProjections++;
     return this.buildReadOperation(indexHandler, keys, tx, callback);
   }
 
