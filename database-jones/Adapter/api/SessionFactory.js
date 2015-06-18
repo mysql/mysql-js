@@ -27,6 +27,9 @@ var session     = require("./Session.js"),
     Db          = require("./Db.js");
 
 var SessionFactory = function(key, dbConnectionPool, properties, mappings, delete_callback) {
+  if (!dbConnectionPool) {
+    throw new Error("Fatal internal error; dbConnectionPool must not be null or undefined");
+  }
   this.key = key;
   this.dbConnectionPool = dbConnectionPool;
   this.properties = properties;
