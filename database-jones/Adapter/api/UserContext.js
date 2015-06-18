@@ -647,6 +647,8 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
     if (connection.isConnecting) {
       // the first requester for this connection
       connection.isConnecting = false;
+      // remember the error condition
+      connection.error = error;
       if (error) {
         callback(error, null);
       } else {
@@ -703,6 +705,10 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
       // there is a connection, but is there a SessionFactory for this database?
       factory = connection.factories[database];
       if (typeof(factory) === 'undefined') {
+        if (!connection.dbConnectionPool) {
+          throw new Error('Fatal internal exception: connection has no dbConnectionPool\n' +
+              util.inspect(connection));
+        }
         // create a SessionFactory for the existing dbConnectionPool
         udebug.log('connect creating factory with existing', connectionKey, 'database', database);
         factory = createFactory(connection.dbConnectionPool);
