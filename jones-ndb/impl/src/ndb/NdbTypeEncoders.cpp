@@ -645,11 +645,11 @@ template<> inline bool writeBigint<uint64_t>(Handle<Value> val, uint64_t *ipos) 
 template<typename T> void bigintToString(char *, T);
 
 template<> inline void bigintToString<int64_t>(char * strbuf, int64_t bigint) {
-  sprintf(strbuf, "%lld", bigint);
+  sprintf(strbuf, "%lld", (long long int) bigint);
 }
 
 template<> inline void bigintToString<uint64_t>(char * strbuf, uint64_t bigint) {
-  sprintf(strbuf, "%llu", bigint);
+  sprintf(strbuf, "%llu", (long long unsigned int) bigint);
 }
 
 template <typename BIGT>
