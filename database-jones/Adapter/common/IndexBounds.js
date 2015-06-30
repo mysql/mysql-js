@@ -437,7 +437,7 @@ function unboundedSegment() { return new Segment(negInf(), posInf()); }
    The constructor "new NumberLine()" returns an empty NumberLine
 */
 
-function NumberLine() {
+NumberLine = function() {
   this.transitions = [];
 } 
 
@@ -560,7 +560,7 @@ NumberLine.prototype.nonNull = function() {
 /* NumberLineStack constructor.  Takes an array of NumberLines.
    Uses iterative mergesort to form a single combined list of endpoints.
 */
-function NumberLineStack(lines) {
+NumberLineStack = function(lines) {
   var ins, arrays;
   arrays = lines.map(function(numberLine) {
     return numberLine.transitions;
