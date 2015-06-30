@@ -26,7 +26,10 @@ t1.run = function() {
       t1.failOnError();
       sessionFactory.close();
     } else {
-      t1.fail('could not obtain sessionFactory using adapter name ' + global.adapter + ' in mysql.connect');
+      // either success or some connection failed error if running in an environment where the string is insufficient
+      if (err.sqlstate.indexOf('0800') !== 0) {
+        t1.fail('could not obtain sessionFactory using adapter name ' + global.adapter + ' in mysql.connect');
+      }
     }
   });
 };
