@@ -706,8 +706,9 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
       factory = connection.factories[database];
       if (typeof(factory) === 'undefined') {
         if (!connection.dbConnectionPool) {
-          throw new Error('Fatal internal exception: connection has no dbConnectionPool\n' +
-              util.inspect(connection));
+          // this connection is unusable due to failure reported in connection.error
+          callback(connection.error);
+          return;
         }
         // create a SessionFactory for the existing dbConnectionPool
         udebug.log('connect creating factory with existing', connectionKey, 'database', database);

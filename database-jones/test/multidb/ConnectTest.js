@@ -75,10 +75,7 @@ var properties = new mynode.ConnectionProperties(global.adapter);
 var propertiesList = [];
 var p, x, props;
 for (p = mindb; p < mindb + numberOfDBs; ++p) {
-  props = {};
-  for (x in properties) if (properties.hasOwnProperty(x)) {
-    props[x] = properties[x];
-  }
+  props = JSON.parse(JSON.stringify(global.test_conn_properties));
   props.database = 'mysqljs_multidb_test' + p;
   propertiesList[p] = props;
 }
