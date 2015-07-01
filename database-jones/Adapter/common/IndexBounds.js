@@ -439,7 +439,7 @@ function unboundedSegment() { return new Segment(negInf(), posInf()); }
 
 NumberLine = function() {
   this.transitions = [];
-} 
+};
 
 NumberLine.prototype.isNumberLine = true;
 
@@ -576,7 +576,7 @@ NumberLineStack = function(lines) {
     }
   }
   udebug.log("NumberLineStack", this.list);
-}
+};
 
 NumberLineStack.prototype.mergeSortEndpoints = function(list1, list2) {
   var result  = [],
