@@ -75,6 +75,9 @@ exports.UserContext = function(user_arguments, required_parameter_count, returne
   this.execute = (typeof execute === 'boolean' ? execute : true);
   this.user_arguments = user_arguments;
   this.user_callback = user_arguments[required_parameter_count - 1];
+  if (this.user_callback && typeof this.user_callback !== 'function') {
+    throw new Error('User callback is not a function.');
+  }
   this.required_parameter_count = required_parameter_count;
   this.extra_arguments_count = user_arguments.length - required_parameter_count;
   this.returned_parameter_count = returned_parameter_count;
