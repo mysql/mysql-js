@@ -937,7 +937,8 @@ function newInsertOperation(tx, tableHandler, row) {
   var op = new DBOperation(opcodes.OP_INSERT, tx, null, tableHandler);
 // Test row for VO?
   op.values = row;
-  if (typeof row[op.tableHandler.autoIncFieldName] === 'undefined') {
+  if((op.tableHandler.autoIncFieldName) &&
+     (typeof row[op.tableHandler.autoIncFieldName] === 'undefined')) {
     // we need autoincrement services because the user did not supply the value for the autoincrement column
     op.needAutoInc = true;
   }
