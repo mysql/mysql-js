@@ -35,7 +35,7 @@ Key features include:
 
 + Simple API for create, read, update, delete
 + Bulk operations for high performance
-+ Support for ACID transactions (ACID), both explicit and implicit
++ Support for ACID transactions, both explicit and implicit
 + Flexible mapping from JavaScript objects to relational tables
 + A fluent Query language using domain model tokens
 + Default mapping of relational tables to simple objects
@@ -47,13 +47,11 @@ Key features include:
 
 Quick Install
 -------------
-
-*Not Ready Yet*: Use npm to install the Jones Adapter for a desired database.
-This will install Jones as a dependency.
-
-To install Jones itself:
+The whole project can be used directly from a clone of github if *core.symlinks* 
+is set to true.
 ```
-npm install https://github.com/jdduncan/beta-jones/archive/2014-10-16.tar.gz
+git config --add core.symlinks true
+git clone http://github.com/mysql/mysql-js
 ```
 
 Supported Databases and Connection Properties

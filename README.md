@@ -34,7 +34,7 @@ Key features include:
 
 + Simple API for create, read, update, delete
 + Bulk operations for high performance
-+ Support for ACID transactions (ACID), both explicit and implicit
++ Support for ACID transactions, both explicit and implicit
 + Flexible mapping from JavaScript objects to relational tables
 + A fluent Query language using domain model tokens
 + Default mapping of a relational table to a simple object 
@@ -42,6 +42,15 @@ Key features include:
 + Asynchronous API using well-known node.js callback patterns
 + Promises/A+, allowing easier management of callbacks
 + Connection pooling, allowing in-process scale up
+
+Quick Install
+-------------
+The whole project can be used directly from a clone of github if *core.symlinks* 
+is set to true.
+```
+git config --add core.symlinks true
+git clone http://github.com/mysql/mysql-js
+```
 
 More information
 ----------------
