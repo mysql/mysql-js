@@ -9,18 +9,11 @@ database applications in Node.js.  It is organized around the concept
 of a database *session*, which allows standard JavaScript objects to be
 read from and written to a database.
 
-This example uses a session to store a single object into a MySQL table:
+This example uses a session to store a single object into an existing MySQL table:
 ```
 var jones = require("database-jones");
 
-var connectionProperties = {
-  "implementation" : "mysql",
-  "database"       : "test",
-  "mysql_host"     : "localhost",
-  "mysql_port"     : 3306,
-  "mysql_user"     : "test",
-  "mysql_password" : "",    
-};
+var connectionProperties = new jones.ConnectionProperties("mysql");
 
 jones.openSession(connectionProperties).then(
   function(session) {
@@ -28,12 +21,28 @@ jones.openSession(connectionProperties).then(
     return session.persist("user", user);
   }
 ).then(
-  function() { 
+  function success() { 
     console.log("Complete");
     jones.closeAllOpenSessionFactories();
+  },
+  function failure(error) { 
+    console.log("Error", error);l
   }
 );
 ```
+
+Key features include:
+
++ Simple API for create, read, update, delete
++ Bulk operations for high performance
++ Support for ACID transactions (ACID), both explicit and implicit
++ Flexible mapping from JavaScript objects to relational tables
++ A fluent Query language using domain model tokens
++ Default mapping of relational tables to simple objects
++ Complex mapping of relational tables to complex objects
++ Asynchronous API using well-known node.js callback patterns
++ Promises/A+, allowing easier management of callbacks
++ Connection pooling, allowing in-process scale up
 
 
 Quick Install
