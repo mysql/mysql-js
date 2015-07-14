@@ -47,10 +47,10 @@ Key features include:
 
 Quick Install
 -------------
-The whole project can be used directly from a clone of github if *core.symlinks* 
+The whole project can be used directly from a github clone if *core.symlinks* 
 is set to true.
 ```
-git config --add core.symlinks true
+git config --global --add core.symlinks true
 git clone http://github.com/mysql/mysql-js
 ```
 To use the mysql adapter, you will also need node-mysql.

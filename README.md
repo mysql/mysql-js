@@ -4,11 +4,10 @@ Database Jones
 Introduction
 ------------
 This package provides a fast, easy, and safe framework for building 
-database applications in Node.js.  It is organized around the concept
-of a database *session*, which allows standard JavaScript objects to be
-read from and written to a database.
+database applications in Node.js. 
 
-This example uses a session to store a single object into an existing MySQL table:
+Here is an example using Database Jones to store a single object (a JSON literal)
+into an existing MySQL table:
 ```
 var jones = require("database-jones");
 
@@ -45,10 +44,10 @@ Key features include:
 
 Quick Install
 -------------
-The whole project can be used directly from a clone of github if *core.symlinks* 
+The whole project can be used directly from a github clone if *core.symlinks* 
 is set to true.
 ```
-git config --add core.symlinks true
+git config --global --add core.symlinks true
 git clone http://github.com/mysql/mysql-js
 ```
 To use the mysql adapter, you will also need node-mysql.
