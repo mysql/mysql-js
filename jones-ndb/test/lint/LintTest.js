@@ -32,7 +32,7 @@ function more(more_tests) {
 
 more(harness.getLintTestsForDirectory(config.impl_js_dir));
 more(harness.getLintTestsForDirectory(config.converters_dir));
-more(harness.getLintTestsForDirectory(config.docs_dir));
+more(harness.getLintTestsForDirectory(config.root_dir));
 
 harness.ignoreLint("NdbOperation.js", 22, "Use the array literal notation");
 harness.ignoreLint("NdbOperation.js", 27, "'gather' was used before it was defined.");
