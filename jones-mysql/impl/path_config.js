@@ -27,6 +27,5 @@ var config = {};
 config.impl_dir   = __dirname;
 config.root_dir   = path.dirname(config.impl_dir);            // jones-mysql
 config.suites_dir = path.resolve(config.root_dir, "test");
-config.docs_dir   = path.join(config.root_dir, "Documentation");
 
 module.exports = config;

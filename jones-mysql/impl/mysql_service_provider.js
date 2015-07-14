@@ -26,7 +26,7 @@ var udebug = unified_debug.getLogger("mysql_service_provider.js"),
     saved_err,
     mysqlconnection,
     mysqldictionary,
-    propertiesDocFile = path.join(config.docs_dir, "mysql_properties.js");
+    propertiesDocFile = path.join(config.root_dir, "DefaultConnectionProperties");
 
 try {
   /* Let unmet module dependencies be caught by loadRequiredModules() */

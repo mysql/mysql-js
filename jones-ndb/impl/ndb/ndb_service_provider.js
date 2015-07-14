@@ -28,7 +28,7 @@ var conf = require("./path_config");
 var DatetimeConverter = require(path.join(conf.converters_dir, "NdbDatetimeConverter"));
 var TimeConverter = require(path.join(conf.converters_dir, "NdbTimeConverter"));
 var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
-var propertiesDocFile = path.join(conf.docs_dir, "ndb_properties");
+var propertiesDocFile = path.join(conf.root_dir, "DefaultConnectionProperties");
 var udebug  = unified_debug.getLogger("ndb_service_provider.js");
 
 
