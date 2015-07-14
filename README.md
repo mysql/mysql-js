@@ -51,6 +51,10 @@ is set to true.
 git config --add core.symlinks true
 git clone http://github.com/mysql/mysql-js
 ```
+To use the mysql adapter, you will also need node-mysql.
+To use the ndb adapter, you need MySQL Cluster, and you must use node-gyp to build
+the C++ source code under jones-ndb.  
+
 
 More information
 ----------------
