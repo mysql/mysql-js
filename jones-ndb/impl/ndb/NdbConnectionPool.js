@@ -425,7 +425,8 @@ function makeGetTableCall(dbSession, ndbConnectionPool, dbName, tableName) {
 
   function masterCallback(err, table) {
     if(err) {
-      err.notice = "Table " + key + " not found in NDB data dictionary";
+      err.sqlState = "42S02";
+      err.message = "Table " + key + " not found in NDB data dictionary";
     }
     if(table) {
       autoincrement.getCacheForTable(table);  // get AutoIncrementCache
