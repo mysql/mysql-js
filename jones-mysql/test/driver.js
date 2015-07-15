@@ -36,7 +36,7 @@ driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
   });
 
 driver.processCommandLineOptions();
-properties = driver.getConnectionProperties("mysql", jonesMysql.config.suites_dir);
+properties = driver.getConnectionProperties("mysql", "test");
 
 if(storageEngine) {
    properties.mysql_storage_engine = storageEngine;

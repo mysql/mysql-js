@@ -43,12 +43,6 @@ harness.ConcurrentTest.prototype.onComplete = function() {
 
 driver.statsDomain = null;
 
-/* If --set *is not* used:
-     jones-xxx/test/test_connection.js is read for connection properties.
-     If test_connection.js does not exist, test_connection_defaults.js is 
-     copied to test_connection.js.
-   If --set *is* used, then test_conneciton.js is ignored.
-*/
 driver.addCommandLineOption("", "--set <var>=<value>", "set a connection property",
   function(nextArg) {
     if(! cmdLineProperties) {
@@ -84,8 +78,8 @@ driver.onReportCallback = function() {
 
 /* 
 */
-driver.getConnectionProperties = function(adapter, base_dir) {
-  return utilities.getConnectionProperties(adapter,base_dir, cmdLineProperties);
+driver.getConnectionProperties = function(adapter, deployment) {
+  return utilities.getConnectionProperties(adapter, deployment, cmdLineProperties);
 };
 
 module.exports = driver;

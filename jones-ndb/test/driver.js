@@ -27,7 +27,7 @@ var jones       = require("database-jones"),
     properties;
 
 driver.processCommandLineOptions();
-properties = driver.getConnectionProperties("ndb", jonesNdb.config.suites_dir);
+properties = driver.getConnectionProperties("ndb", "test");
 
 // Setup globals:
 global.test_conn_properties = properties;

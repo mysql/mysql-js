@@ -32,38 +32,12 @@ var path    = require("path"),
     metadataManager;
 
 
-/* Manage test_connection.js file:
-   Read it if it exists.
-   If it doesn't exist, copy it from the standard template
-*/
-function getTestConnectionProperties(base_dir) {
-  var props_file     = path.join(base_dir, "test_connection.js");
-  var props_template = path.join(base_dir, "test_connection_defaults.js");
-  var existsSync     = fs.existsSync || path.existsSync;
-  var properties     = null;
-  var f1, f2; 
-  
-  if(! existsSync(props_file)) {
-    try {
-      f1 = fs.createReadStream(props_template);
-      f2 = fs.createWriteStream(props_file);
-      f1.pipe(f2);
-      f1.on('end', function() {});
-    }
-    catch(e1) {
-      console.log(e1);
-    }
-  }
-
-  return require(props_file);
-}
-
-function getConnectionProperties(adapter, base_dir, base_properties) {
-  var testEnvProperties = base_properties || getTestConnectionProperties(base_dir);
+function getConnectionProperties(adapter, deployment, base_properties) {
+  var testEnvProperties = base_properties || {};
   testEnvProperties.implementation = adapter;
 
+  test_conn_properties = new jones.ConnectionProperties(testEnvProperties, deployment);
   dbServiceProvider = jones.getDBServiceProvider(adapter);
-  test_conn_properties = new jones.ConnectionProperties(testEnvProperties);
   metadataManager = dbServiceProvider.getDBMetadataManager(test_conn_properties);
 
   return test_conn_properties;
