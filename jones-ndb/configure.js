@@ -148,10 +148,9 @@ function finish() {
 }
 
 function testPath(mysqlPath) {
-  // We assert that a path is a valid mysql install true if and only if 
+  // We assert that a path is a valid mysql install tree if and only if
   // it contains a mysql-test directory
-  var testPath = path.join(mysqlPath.trim(), "mysql-test");
-  return verify(testPath);
+  return verify(path.join(mysqlPath.trim(), "mysql-test"));
 }
 
 function configure(mysql, layout) {
@@ -173,7 +172,7 @@ function configure(mysql, layout) {
 function completion(line) {
   var matches = [];
   var files = [];
-  var dir, base, stat;
+  var dir, base, stat, i;
 
   function readCurrentDir(dir) {
     files = [];  // parent scope
@@ -194,7 +193,7 @@ function completion(line) {
     readCurrentDir(dir);
   }
  
-  for(var i = 0; i < files.length ; i++) {
+  for(i = 0; i < files.length ; i++) {
     if(files[i].substring(0,1) !== "." && files[i].match("^" + base)) {
       matches.push(path.join(dir, files[i]));
     }
@@ -221,17 +220,34 @@ function main() {
     candidates = get_candidates();
   var text = build_prompt(candidates);
   var rl = readline.createInterface(process.stdin, process.stdout, completion);
-  
+
   function hangup() {
     rl.close();
     process.exit(-1);
+  }
+
+  function onPath(mysqlPath) {
+    if(testPath(mysqlPath)) {
+      rl.close();
+      configure(mysqlPath);
+    }
+    else {
+      console.log("ERROR: not a MySQL install tree" + lf);
+      rl.prompt(true);
+    }
+  }
+
+  function customMode() {
+    rl.setPrompt('MySQL Install Path> ', 20);
+    rl.on('line', onPath);
+    rl.prompt(true);
   }
 
   function onEntry(choice) {
     var range = candidates.length + 1;
     var num = Number(choice);
 
-    if(num == NaN) {  // user skipped straight to pathname entry
+    if(isNaN(num)) {  // user skipped straight to pathname entry
       onPath(choice); 
     }
     else if(num < 1 || num > range) {
@@ -249,26 +265,9 @@ function main() {
     }
   }
 
-  function onPath(mysqlPath) {
-    if(testPath(mysqlPath)) {
-      rl.close();
-      configure(mysqlPath);
-    }
-    else {
-      console.log("ERROR: not a MySQL install tree" + lf);
-      rl.prompt(true);
-    }
-  }
-
   function mainMode() {
     rl.setPrompt('Your choice> ', 13);
     rl.on('line', onEntry);
-    rl.prompt(true);
-  }
-
-  function customMode() {
-    rl.setPrompt('MySQL Install Path> ', 20);
-    rl.on('line', onPath);
     rl.prompt(true);
   }
 
