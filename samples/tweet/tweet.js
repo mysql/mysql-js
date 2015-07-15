@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -34,11 +34,10 @@
 var http   = require('http'),
     assert = require('assert'),
     url    = require('url'),
-    nosql  = require('database-jones'),
+    jones  = require('database-jones'),
     udebug = unified_debug.getLogger("tweet.js"),
-    getProperties = require("./tweet.properties.js").getProperties,
-    getDefaultAdapter = require("./tweet.properties.js").getDefaultAdapter,
-    adapter = getDefaultAdapter(),
+    adapter = "ndb",
+    deployment = "test",
     mainLoopComplete, parse_command, allOperations, operationMap;
 
 //////////////////////////////////////////
@@ -633,6 +632,7 @@ function get_cmdline_args() {
     "         -d or --debug: set the debug flag\n" +
     "               --detail: set the detail debug flag\n" +
     "               -df <file>: enable debug output from <file>\n" +
+    "         -e or --deployment <name>: use deployment <name> (default: test) \n" +
     "\n" +
     "  COMMANDS:\n" + operationMap.cli_help;
   
@@ -656,6 +656,10 @@ function get_cmdline_args() {
         break;
       case '--help':
       case '-h':
+        break;
+      case '-e':
+      case '--deployment':
+        deployment = process.argv[++i];
         break;
       default:
         cmdList.push(val);
@@ -741,19 +745,19 @@ prepareOperationMap();
 operation = get_cmdline_args();
 
 /* Connection Properties */
-dbProperties = getProperties(adapter);
+dbProperties = new jones.ConnectionProperties(adapter, deployment);
 
 // Map SQL Tables to JS Constructors using default mappings
 mappings = [];
-mappings.push(new nosql.TableMapping('tweet').applyToClass(Tweet));
-mappings.push(new nosql.TableMapping('author').applyToClass(Author));
-mappings.push(new nosql.TableMapping('hashtag').applyToClass(HashtagEntry));
-mappings.push(new nosql.TableMapping('follow').applyToClass(Follow));
-mappings.push(new nosql.TableMapping('mention').applyToClass(Mention));
+mappings.push(new jones.TableMapping('tweet').applyToClass(Tweet));
+mappings.push(new jones.TableMapping('author').applyToClass(Author));
+mappings.push(new jones.TableMapping('hashtag').applyToClass(HashtagEntry));
+mappings.push(new jones.TableMapping('follow').applyToClass(Follow));
+mappings.push(new jones.TableMapping('mention').applyToClass(Mention));
 
 function run(sessionFactory) {
   runCmdlineOperation(sessionFactory, operation);
 }
 
-nosql.connect(dbProperties, mappings).then(run);
+jones.connect(dbProperties, mappings).then(run);
 
