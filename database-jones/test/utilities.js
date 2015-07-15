@@ -18,6 +18,8 @@
  02110-1301  USA
  */
 
+// TODO: Merge utilities.js into JonesTestDriver.js
+
 /*global adapter */
 
 "use strict";
@@ -26,7 +28,6 @@ var path    = require("path"),
     fs      = require("fs"),
     assert  = require("assert"),
     jones   = require("database-jones"),
-    udebug  = unified_debug.getLogger("utilities.js"),
     test_conn_properties,
     dbServiceProvider,
     metadataManager;

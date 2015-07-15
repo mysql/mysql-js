@@ -70,8 +70,6 @@ var badtbl9 = function(i, j) {
 };
 
 // create all properties for connecting with different default databases
-var properties = new mynode.ConnectionProperties(global.adapter);
-// make a local copy of the properties
 var propertiesList = [];
 var p, x, props;
 for (p = mindb; p < mindb + numberOfDBs; ++p) {
@@ -246,35 +244,35 @@ t9.run = function() {
   var testCase = this;
   testCase.expectedResultCount = 1;
   testCase.actualResultCount = 0;
-  mynode.connect(properties, 'tbl8', function(err) {
+  mynode.connect(global.test_conn_properties, 'tbl8', function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on tbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(properties, 'mysqljs_multidb_test.tbl8', function(err) {
+  mynode.connect(global.test_conn_properties, 'mysqljs_multidb_test.tbl8', function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on mysqljs_multidb_test.tbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(properties, badtbl8, function(err) {
+  mynode.connect(global.test_conn_properties, badtbl8, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(properties, badtesttbl8, function(err) {
+  mynode.connect(global.test_conn_properties, badtesttbl8, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtesttbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(properties, badtbl9, function(err) {
+  mynode.connect(global.test_conn_properties, badtbl9, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtbl9');
     }
