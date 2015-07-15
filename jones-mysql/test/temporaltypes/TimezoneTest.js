@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -25,19 +25,15 @@
    Write MySQL, Read NDB Timestamp
    Write NDB, Read MySQL Timestamp
    
-   TODO: These tests should use the current adapter rather than "Ndb" 
-         and should use a direct mysql connection rather than our "Mysql"
-   
    Assure that the two backends have identical behavior,
    especially with regard to local time vs. UTC.
 */
 
 // http://dev.mysql.com/doc/refman/5.6/en/time-zone-support.html
 
-var propsNdb = new mynode.ConnectionProperties(global.test_conn_properties);
-var propsMysql = new mynode.ConnectionProperties(global.test_conn_properties);
-propsNdb.implementation = global.adapter;
+var propsMysql = JSON.parse(JSON.stringify(global.test_conn_properties));
 propsMysql.implementation = "mysql";
+propsMysql = new mynode.ConnectionProperties(propsMysql);
 
 function openSessions(testCase, callback) {
   function onOpen2(err, session) {
@@ -60,7 +56,7 @@ function openSessions(testCase, callback) {
     }
   }
   
-  mynode.openSession(propsNdb, testCase.mappings, onOpen1);
+  mynode.openSession(global.test_conn_properties, testCase.mappings, onOpen1);
 }
 
 

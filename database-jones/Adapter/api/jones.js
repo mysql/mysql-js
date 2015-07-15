@@ -185,7 +185,7 @@ exports.ConnectionProperties = function(nameOrProperties, deployment) {
         deploymentModule = findDeploymentsFile();
         deploymentFn = deploymentModule[deployment];
         assert.equal(typeof deploymentFn, 'function',
-                     "deployment string must name a function from deployments.js");
+                     "deployment string must name a function from jones_deployments.js");
         break;
 
       case 'function':
