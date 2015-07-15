@@ -25,6 +25,7 @@ var driver       = new harness.Driver();
 var utilities    = require("./utilities");
 var stats_module = require(jones.api.stats);
 var cmdLineProperties;
+var deployment   = "test";
 
 /* Hack the prototypes for SerialTest and ConcurrentTest 
    to ensure that a test case always closes its session
@@ -69,6 +70,12 @@ driver.addCommandLineOption("", "--stats=<query>",
     return 0;
   });
 
+driver.addCommandLineOption("", "--deployment=<name>",
+  "use deployment <name> from jones_deployments.js",
+  function(thisArg) {
+    deployment = thisArg;
+    return 1;
+  });
 
 driver.onReportCallback = function() {
   if(this.statsDomain !== null) {
@@ -78,7 +85,7 @@ driver.onReportCallback = function() {
 
 /* 
 */
-driver.getConnectionProperties = function(adapter, deployment) {
+driver.getConnectionProperties = function(adapter) {
   return utilities.getConnectionProperties(adapter, deployment, cmdLineProperties);
 };
 

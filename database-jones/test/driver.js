@@ -51,7 +51,7 @@ driver.addSuitesFromDirectory(jones.fs.suites_dir);
    set the Connection Properties for the specified adapter. */
 a_module = require ("jones-" + adapter);
 driver.addSuitesFromDirectory(a_module.config.suites_dir);
-properties = driver.getConnectionProperties(adapter, "test");
+properties = driver.getConnectionProperties(adapter);
 
 
 /* Adapter-specific code goes here */

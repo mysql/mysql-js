@@ -36,7 +36,7 @@ driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
   });
 
 driver.processCommandLineOptions();
-properties = driver.getConnectionProperties("mysql", "test");
+properties = driver.getConnectionProperties("mysql");
 
 if(storageEngine) {
    properties.mysql_storage_engine = storageEngine;
