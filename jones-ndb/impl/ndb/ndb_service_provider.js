@@ -53,7 +53,7 @@ exports.loadRequiredModules = function() {
   } catch(e) {
     ldp = process.platform === 'darwin' ? 'DYLD_LIBRARY_PATH' : 'LD_LIBRARY_PATH';
     msg = "\n\n" +
-      "  The ndb adapter cannot load the native code module ndb_adapter.node.\n";
+      "  The ndb adapter cannot load the compiled module ndb_adapter.node.\n";
     if(existsSync(conf.binary)) {
       msg += 
       "  This module has been built, but was not succesfully loaded.  Perhaps \n" +

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -30,23 +30,21 @@ var converters_dir = path.join(root_dir, "Converters");
 var suites_dir     = path.join(root_dir, "test");
 
 /* Find the build directory */
+var existsSync = fs.existsSync || path.existsSync;
 var binary_dir;
 var build1 = path.join(root_dir, "build");   // gyp builds under root dir
 var build2 = path.join(impl_dir, "build");   // waf builds under impl dir
-var existsSync = fs.existsSync || path.existsSync;
+var build = existsSync(build1) ? build1 : build2;
 
-if(existsSync(path.join(build1, "Release", "ndb_adapter.node"))) {
-  binary_dir = path.join(build1, "Release");
+binary_dir = path.join(build, "Release");
+
+if(existsSync(path.join(build, "Debug", "ndb_adapter.node"))) {
+  binary_dir = path.join(build, "Debug");
 }
-else if(existsSync(path.join(build2, "Release", "ndb_adapter.node"))) {
-  binary_dir = path.join(build2, "Release");
-}
-else if(existsSync(path.join(build1, "Debug", "ndb_adapter.node"))) {
-  binary_dir = path.join(build1, "Debug");
-}
-else if(existsSync(path.join(build2, "Debug", "ndb_adapter.node"))) {
-  binary_dir = path.join(build2, "Debug");
-}
+
+/* binary_dir may not exist, but that is an error that we leave for
+   for loadRequiredModules() to catch.
+*/
 
 module.exports = {
   "binary"         : path.join(binary_dir, "ndb_adapter.node"),
