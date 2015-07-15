@@ -26,10 +26,6 @@ var DEBUG, DETAIL;
 var implementation = function() {
 };
 
-implementation.prototype.getDefaultProperties = function(adapter) {
-  return new mynode.ConnectionProperties(adapter);
-};
-
 implementation.prototype.close = function(callback) {
   if(DETAIL) JSCRUND.udebug.log_detail('jscrund_mysqljs implementation.close', this);
   this.session.close(callback);

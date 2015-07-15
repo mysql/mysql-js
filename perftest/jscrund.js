@@ -77,7 +77,8 @@ function usage() {
   "   -r <n>  :  Repeat tests #n times (default 1, n<0: forever)\n" +
   "   --trace :\n" +
   "   -t      :  Enable trace output\n" +
-  "   --set prop=value: set connection property prop to value"
+  "   --set prop=value: set connection property prop to value\n" +
+  "   --deployment=<name>: use deplyment <name> from jones_deployments.js\n"
   ;
   console.log(msg);
   process.exit(1);
@@ -222,6 +223,9 @@ function parse_command_line(options) {
           break;
         case '--varchar':
           options.B_varchar_size = values[1];
+          break;
+        case '--deployment':
+          options.deployment = values[1];
           break;
         default:
           console.log('Invalid option ' + val);
@@ -399,7 +403,8 @@ function main() {
     'setProp' : {},
     'delay_pre' : 0,
     'delay_post' : 0,
-    'B_varchar_size' : 10
+    'B_varchar_size' : 10,
+    'deployment' : 'test'
   };
 
   /* Options from config file */
@@ -454,16 +459,12 @@ function main() {
     JSCRUND.implementation = new JSCRUND.mysqljs.implementation();
   }
 
-  /* Get default connection properties */
-  var properties = JSCRUND.implementation.getDefaultProperties(options.adapter);
-
-  /* Then mix in connection properties from jscrund.config */
-  if(config_file_exists) {
-    for(var i in config_file.connection_properties) {
-      if(config_file.connection_properties.hasOwnProperty(i)) {
-        properties[i] = config_file.connection_properties[i];
-      }
-    }
+  /* Get connection properties */
+  var properties;
+  if(typeof JSCRUND.implementation.getConnectionProperties === 'function') {
+    properties = JSCRUND.implementation.getConnectionProperties();
+  } else {
+    properties = new JSCRUND.mynode.ConnectionProperties(options.adapter, options.deployment);
   }
 
   /* Then mix in properties from the command line */

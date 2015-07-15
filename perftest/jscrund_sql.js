@@ -80,7 +80,7 @@ var tableHandlers = {
 var implementation = function() {
 };
 
-implementation.prototype.getDefaultProperties = function() {
+implementation.prototype.getConnectionProperties = function() {
   return {
     mysql_host      : 'localhost',
     mysql_port      : 3306,

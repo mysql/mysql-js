@@ -39,7 +39,7 @@ function implementation() {
 implementation.prototype = {
 };
 
-implementation.prototype.getDefaultProperties = function() {
+implementation.prototype.getConnectionProperties = function() {
   return {
     mysql_user           : "root",  // For CREATE TABLE
     database             : "test",

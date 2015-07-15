@@ -36,11 +36,6 @@ implementation.prototype = {
   operations        :  null
 };
 
-implementation.prototype.getDefaultProperties = function(adapter) {
-  this.dbServiceProvider = jones.getDBServiceProvider(adapter);
-  return this.dbServiceProvider.getDefaultConnectionProperties();
-};
-
 implementation.prototype.close = function(callback) {
   var impl = this;
   impl.dbSession.close(function() { impl.dbConnPool.close(callback); });
@@ -92,6 +87,7 @@ implementation.prototype.initialize = function(options, callback) {
     }
   }
   
+  impl.dbServiceProvider = jones.getDBServiceProvider(options.adapter);
   impl.dbServiceProvider.connect(options.properties, onConnect);
 };
 
