@@ -42,8 +42,9 @@ function parse_command_line() {
   handler = new CommandLine.FlagHandler();
 
   options = {
-    "adapter" : "ndb",
-    "plugin"  : new LoaderModule(handler)
+    "adapter"    : "ndb",
+    "plugin"     : new LoaderModule(handler),
+    "deployment" : "test"
   };
 
   handler.addOption(new CommandLine.Option(
@@ -106,6 +107,13 @@ function parse_command_line() {
       usage(handler);
       process.exit(1);
     }));
+  handler.addOption(new CommandLine.Option(
+    null, "--deployment=<name>",
+    "use deployment <name> from jones_deployments.js",
+    function(thisArg) {
+      options.deployment = thisArg;
+      return 1;
+    }));
 
   handler.processArguments();
 
@@ -143,7 +151,7 @@ function main() {
   }
 
   // Set connection properties
-  var connectionProperties = new jones.ConnectionProperties(cmdOptions.adapter);
+  var connectionProperties = new jones.ConnectionProperties(cmdOptions.adapter, cmdOptions.deployment);
 
   if(cmdOptions.connect_string) {
     connectionProperties.ndb_connectstring = cmdOptions.connect_string;
