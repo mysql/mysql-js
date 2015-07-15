@@ -101,18 +101,63 @@ exports.converters = {
   "JSONSparseConverter"  : require(path.join(conf.converters_dir, "JSONSparseConverter"))
 };
 
-exports.ConnectionProperties = function(nameOrProperties) {
-  var serviceProvider, defaultProps, newProps, key, impl, mergeProps;
 
+/* Find jones_deployments.js
+     Read a deployments.js file from the same directory as the top-level
+     node.js executable module.
+     If none, read one from the directory of a required module, descending
+     through modules to the same directory as this module (jones.js).
+     If none is found, read one from the current working directory.
+*/
+
+function findDeploymentsFile() {
+  var depFile, depObject, mod, sourceDir, oldDir;
+  depObject = {};
+  mod = module.parent;
+
+  function findFile(dir) {
+    var file = path.join(dir, "jones_deployments.js");
+    return existsSync(file) ? file : undefined;
+  }
+
+  // Look in source directory, iteratating module -> parent module -> ...
+  while(mod) {
+    sourceDir = path.dirname(mod.filename);
+    depFile = findFile(sourceDir) || depFile;
+    mod = mod.parent;
+  }
+
+  // From top-level source module, walk path towards root.
+  do {
+    oldDir = sourceDir;
+    sourceDir = path.dirname(sourceDir);
+    depFile = depFile || findFile(sourceDir);
+  } while(oldDir !== sourceDir);   // these become equal at "/"
+
+  // Finally look in CWD
+  depFile = depFile || findFile(process.env.CWD);
+
+  /* Load the file */
+  if(depFile) {
+    depObject = require(depFile);
+  }
+
+  return depObject;
+}
+
+
+exports.ConnectionProperties = function(nameOrProperties, deployment) {
+  var serviceProvider, defaultProps, newProps, key, impl, mergeProps;
+  var deploymentFn, deploymentModule;
+
+  assert(typeof nameOrProperties === 'string' || typeof nameOrProperties === 'object');
   if(typeof nameOrProperties === 'string') {
     impl = nameOrProperties;
     mergeProps = {};
-  } else if(typeof nameOrProperties === 'object' &&
-          typeof nameOrProperties.implementation === 'string') {
+  } else {
+    assert(typeof nameOrProperties.implementation === 'string');
     impl = nameOrProperties.implementation;
     mergeProps = nameOrProperties;
-  } else {
-    return {};
   }
   udebug.log("ConnectionProperties", impl);
 
@@ -133,6 +178,27 @@ exports.ConnectionProperties = function(nameOrProperties) {
     newProps[key] = mergeProps[key];
   }
   udebug.log(newProps);
+
+  if(deployment !== undefined) {
+    switch(typeof deployment) {
+      case 'string':
+        deploymentModule = findDeploymentsFile();
+        deploymentFn = deploymentModule[deployment];
+        assert.equal(typeof deploymentFn, 'function',
+                     "deployment string must name a function from deployments.js");
+        break;
+
+      case 'function':
+        deploymentFn = deployment;
+        break;
+
+      default:
+        assert(false, "deployment must be a string or function");
+    }
+
+    // Use Properties if returned
+    newProps = deploymentFn(newProps) || newProps;
+  }
 
   /* "Normally constructors don't return a value, but they can choose to" */
   return newProps;

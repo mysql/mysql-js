@@ -3,17 +3,49 @@
  * ConnectionProperties()
  * IMMEDIATE
  * CONSTRUCTOR
- *
- * If implName_or_connectionProperties is the name of a backend adapter,
- * (e.g. "mysql" or "ndb"), this constructor returns the default
- * ConnectionProperties for that adapter.
  * 
- * If implName_or_connectionProperties is an object which includes a member
- * property "implementation", then the default ConnectionProperties for 
- * adapter <implementation> are fetched, and then overridden by any
- * properties present in implName_or_connectionProperties.
+ * ConnectionProperties provides a powerful and flexible means to obtain the
+ * particular set of ConnectionProperties for an instance of an application.
+ * Its two parameters identify a backend database (e.g. "mysql", "ndb", etc.)
+ * and a connection environment (e.g. "test", "staging", "readonly", etc.).
+ *
+ * implName_or_connectionProperties may either be the name of a Jones
+ * adapter (e.g. "mysql"), or a ConnectionProperties object.
+ *   - If it is a string naming a backend adapter, then the default
+ *     ConnectionProperties for that adapter will be fetched.
+ *   - If it is an object, the object must contain a member property
+ *     "implementation".  The default ConnectionProperties for
+ *     adapter <implementation> are fetched, and then overridden by
+ *     the properties specified in the object.
+ *
+ * deployment is optional, and may be a string or a function.  In both cases
+ * it refers to a function that can receive the ConnectionProperties obtained
+ * using implName_or_connectionProperties and further modify them.
+ *    - If it is unspecified or undefined, the ConnectionProperties object
+ *      described above will be returned directly to the caller.
+ *    - If it is a function, the function will be called with a single parameter
+ *      holding a ConnectionProperties object.  The function may modify the
+ *      object in place, or it may return a new object.  The new object or
+ *      modified properties will be the return value of ConnectionProperties().
+ *    - If it is a string, Jones will search for a jones_deployments.js file as
+ *      described below.  The file will be expected to export a function whose
+ *      name matches the string value.  If found, this function will be called
+ *      with a single parameter as above.
+ *
+ *    jones_deployments.js seach path
+ *    -------------------------------
+ *    ConnectionProperties() searches for jones_deployments.js in the following
+ *    directories:
+ *       * The directory containing the currently executing main source file.
+ *       * For each required() module in a chain from the main source file to
+ *         jones.js, the directory containing that module.
+ *       * The parent directory of the one containing the main source file,
+ *         and then its parent, etc., up to the filesystem root.
+ *       * The current working directory as stored in the CWD environment variable.
+ *
+ *  A sample jones_deployments.js file is provided.
  */
-ConnectionProperties(implName_or_connectionProperties);
+ConnectionProperties(implName_or_connectionProperties, deployment);
 
 
 /**
