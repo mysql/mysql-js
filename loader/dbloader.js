@@ -108,7 +108,7 @@ function parse_command_line() {
       process.exit(1);
     }));
   handler.addOption(new CommandLine.Option(
-    null, "--deployment=<name>",
+    "-E", "--deployment=<name>",
     "use deployment <name> from jones_deployments.js",
     function(thisArg) {
       options.deployment = thisArg;

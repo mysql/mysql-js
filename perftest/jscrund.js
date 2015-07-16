@@ -78,7 +78,8 @@ function usage() {
   "   --trace :\n" +
   "   -t      :  Enable trace output\n" +
   "   --set prop=value: set connection property prop to value\n" +
-  "   --deployment=<name>: use deplyment <name> from jones_deployments.js\n"
+  "   -E <name> \n" +
+  "   --deployment=<name>\n: use deplyment <name> from jones_deployments.js\n"
   ;
   console.log(msg);
   process.exit(1);
@@ -126,6 +127,9 @@ function parse_command_line(options) {
         console.log('runs value is not allowed:', process.argv[i]);
         options.exit = true;
       }
+      break;
+    case '-E':
+      options.deployment = process.argv[++i];
       break;
     case '--stats':
       options.stats = true;

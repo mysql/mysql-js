@@ -632,7 +632,7 @@ function get_cmdline_args() {
     "         -d or --debug: set the debug flag\n" +
     "               --detail: set the detail debug flag\n" +
     "               -df <file>: enable debug output from <file>\n" +
-    "         -e or --deployment <name>: use deployment <name> (default: test) \n" +
+    "         -E or --deployment <name>: use deployment <name> (default: test) \n" +
     "\n" +
     "  COMMANDS:\n" + operationMap.cli_help;
   
@@ -657,7 +657,7 @@ function get_cmdline_args() {
       case '--help':
       case '-h':
         break;
-      case '-e':
+      case '-E':
       case '--deployment':
         deployment = process.argv[++i];
         break;

@@ -70,7 +70,7 @@ driver.addCommandLineOption("", "--stats=<query>",
     return 0;
   });
 
-driver.addCommandLineOption("", "--deployment=<name>",
+driver.addCommandLineOption("-E", "--deployment=<name>",
   "use deployment <name> from jones_deployments.js",
   function(thisArg) {
     deployment = thisArg;
