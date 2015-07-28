@@ -31,6 +31,8 @@
  *    Meta.unsigned()                  unsigned; applies to integer types
  *
  * Examples: 
+ *   var jones = require("database-jones");
+ *   var meta = jones.meta;
  *   tableMapping.mapField('id', meta.int(32).primaryKey().unsigned()) => id INT UNSIGNED PRIMARY KEY
  *   tableMapping.mapField('name', meta.varchar(32).notNull()) => name VARCHAR(32) NOT NULL
  *   tableMapping.mapField('ssn', meta.char(9).hash()) ==> ssn char(9) INDEX USING HASH

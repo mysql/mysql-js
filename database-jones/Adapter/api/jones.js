@@ -68,6 +68,8 @@ exports.api_doc = {
   "Jones"                     : api_doc_dir("Jones")
 };
 
+exports.meta = require(exports.api.Meta);
+
 exports.fs = conf;    // Export path helpers under jones.fs
 
 exports.TableMapping = require("./TableMapping").TableMapping;
