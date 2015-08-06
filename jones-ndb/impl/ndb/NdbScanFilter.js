@@ -28,10 +28,10 @@ var conf               = require("./path_config"),
     udebug             = unified_debug.getLogger("NdbScanFilter.js");
 
 
-function QueryTerm(bufferSchema, column, param) {
+function QueryTerm(offset, column, param) {
   this.param        = param;
   this.column       = column;
-  this.offset       = bufferSchema.size;
+  this.offset       = offset;
   this.constBuffer  = null;
 }
 
@@ -80,7 +80,7 @@ BufferSchema.prototype.encode = function(params) {
 /* Add a query term to layout, and return it
 */
 BufferSchema.prototype.addTerm = function(column, param) {
-  var term = new QueryTerm(this, column, param);
+  var term = new QueryTerm(this.size, column, param);
   this.layout.push(term);
   this.size += column.columnSpace;
   return term;
