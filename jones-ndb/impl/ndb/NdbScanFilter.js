@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  02110-1301  USA
  */
 
-// FIXME:  IS NULL / IS NOT NULL are const operations but do not require any
-// buffer space
-
 "use strict";
 
 var conf               = require("./path_config"),
@@ -30,65 +27,73 @@ var conf               = require("./path_config"),
     NdbScanFilter      = adapter.ndb.ndbapi.NdbScanFilter,
     udebug             = unified_debug.getLogger("NdbScanFilter.js");
 
-function blah() {
-  console.log("BLAH");
-  console.log.apply(null, arguments);
-  process.exit();
+
+function QueryTerm(bufferSchema, column, param) {
+  this.param        = param;
+  this.column       = column;
+  this.offset       = bufferSchema.size;
+  this.constBuffer  = null;
 }
 
-/* ParamRecordSpec describes how a parameter value is encoded into a buffer
+/* Encode value into buffer. 
+   If params are supplied, then this.param is assumed to be a QueryParameter.
+   Otherwise, this.param is treated as a query constant term, and we retain
+   a reference to the buffer.
 */
-function ParamRecordSpec(column, visitor, paramName) {
-  this.column = column;
-  this.offset = visitor.paramBufferSize;
-  this.param  = paramName;
-  visitor.paramLayout.push(this);
-  visitor.paramBufferSize += column.columnSpace;
+QueryTerm.prototype.encode = function(buffer, params) {
+  var value;
+  if(params) {
+    value = params[this.param.name]; // a QueryParameter (from Jones Query.js)
+  } else {
+    value = this.param;              // a query constant
+    this.constBuffer = buffer;
+  }
+  adapter.ndb.impl.encoderWrite(this.column, value, buffer, this.offset);
+};
+
+
+/* BufferSchema points to a Buffer and describes the size and layout of
+   values in that buffer.
+*/
+function BufferSchema() {
+  this.layout  = [];    // an array of QueryTerm
+  this.size    = 0;     // length of the buffer
 }
 
-/* ConstRecordSpec describes the encoding of query parameter constants
+/* Create a buffer;
+   encode each spec in layout into the buffer using the supplied params;
+   return the buffer.
 */
-function ConstRecordSpec(column, visitor, value) {
-  this.column = column;
-  this.offset = visitor.paramBufferSize;
-  this.value  = value;
-  visitor.paramLayout.push(this);
-  visitor.paramBufferSize += column.columnSpace;
-}
+BufferSchema.prototype.encode = function(params) {
+  var i, spec, buffer;
+  buffer = null;
 
-/* FilterSpec describes filter implementation; will be stored in QueryHandler
+  if(this.size > 0) {
+    buffer = new Buffer(this.size);
+    for(i = 0; i < this.layout.length ; i++) {
+      this.layout[i].encode(buffer, params);
+    }
+  }
+  return buffer;
+};
+
+/* Add a query term to layout, and return it
 */
-function FilterSpec(predicate) {
-  this.predicate       = predicate;  /* Query Predicate for this filter */
-  this.isConst         = true;  /* true if filter uses constants only */
-  this.constFilter = {          /* If no params are needed for filter, */
-    ndbInterpretedCode : null,  /* isConst=true, and the filter is built */
-    ndbScanFilter      : null   /* just once and stored here. */
-  };
-  this.constBuffer     = null;  /* Buffer for encoded literal constants; */
-  this.constBufferSize = 0;     /* encoded just once in advance, */
-  this.constLayout     = null;  /* according to this layout. */
-  this.paramBufferSize = 0;     /* Buffer for encoded execution parameters. */
-  this.paramLayout     = null;  /* Array of ParamRecordSpec in buffer order */
-  this.dbTable         = null;  /* NdbDictionary::Table for this filter */   
-}
+BufferSchema.prototype.addTerm = function(column, param) {
+  var term = new QueryTerm(this, column, param);
+  this.layout.push(term);
+  this.size += column.columnSpace;
+  return term;
+};
 
 
 /* Make a note in a node of the predicate tree.
    The note will be used to store all NDB-related analysis.
    Copy the node's operator or comparator code into the ndb section.
    This should be called in the first-pass visitor.
-   TODO: Determine index bounds before scan filter
-         Add flags to node.ndb: isIndexBound, isScanFilter
-         Do not create scan filter for nodes used in index bounds
-   XXXX: You could store all constants in a durable buffer and reuse them 
-         for each query.
 */
 function markNode(node) {
-  var opcode = null;
-  if(typeof node.operationCode !== 'undefined') {
-    opcode = node.operationCode;
-  }
+  var opcode = node.operationCode || null;
   node.ndb = {
     "opcode"     : opcode,
     "layout"     : null,
@@ -102,14 +107,10 @@ function markNode(node) {
  * This is the first pass, run when the operation is declared.
  * 
  * Visit nodes, marking them for NdbScanFilter.  Calculate buffer layout 
- * and needed space.  End product will be used to define FilterSpec.
+ * and needed space.
  */ 
-function BufferManagerVisitor(dbTable) {
-  this.dbTable         = dbTable;
-  this.paramBufferSize = 0;
-  this.paramLayout     = [];
-  this.constBufferSize = 0;
-  this.constLayout     = [];
+function BufferManagerVisitor(filterSpec) {
+  this.spec = filterSpec;
 }
 
 /** Handle nodes QueryAnd, QueryOr */
@@ -123,15 +124,11 @@ BufferManagerVisitor.prototype.visitQueryNaryPredicate = function(node) {
 
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 BufferManagerVisitor.prototype.visitQueryComparator = function(node) {
-  markNode(node);
   var colId = node.queryField.field.columnNumber;
-  var col = this.dbTable.columns[colId];
-  var spec;
-  // if param
-    spec = new ParamRecordSpec(col, this, node.parameter.name);
-  // else if constant
-    // spec = new ConstRecordSpec(...
-  node.ndb.layout = spec;   // store the layout in the query node
+  var col = this.spec.dbTable.columns[colId];
+  var schema = node.constants ? this.spec.constSchema : this.spec.paramSchema;
+  markNode(node);
+  node.ndb.layout = schema.addTerm(col, node.parameter);
 };
 
 /** Handle node QueryNot */
@@ -142,12 +139,15 @@ BufferManagerVisitor.prototype.visitQueryUnaryPredicate = function(node) {
 
 /** Handle node QueryBetween */
 BufferManagerVisitor.prototype.visitQueryBetweenOperator = function(node) {
-  var colId, col, spec1, spec2;
-  markNode(node);
+  var colId, col, spec1, spec2, schema1, schema2;
   colId = node.queryField.field.columnNumber;
-  col = this.dbTable.columns[colId];
-  spec1 = new ParamRecordSpec(col, this, node.parameter1.name);
-  spec2 = new ParamRecordSpec(col, this, node.parameter2.name);
+  col = this.spec.dbTable.columns[colId];
+  schema1 = node.constants & 1 ? this.spec.constSchema : this.spec.paramSchema;
+  schema2 = node.constants & 2 ? this.spec.constSchema : this.spec.paramSchema;
+  spec1 = schema1.addTerm(col, node.parameter1);
+  spec2 = schema2.addTerm(col, node.parameter2);
+
+  markNode(node);
   node.ndb.layout = { "between" : [ spec1 , spec2 ] };
 };
 
@@ -162,12 +162,11 @@ BufferManagerVisitor.prototype.visitQueryUnaryOperator = function(node) {
  *
  * This is the second pass, run each time the operation is executed.
  * 
- * Visit nodes and build NdbScanFilter using actual parameters.
+ * Visit nodes and build NdbScanFilter.
  */ 
-function FilterBuildingVisitor(filterSpec, paramBuffer) {
-  this.filterSpec         = filterSpec;
+function FilterBuildingVisitor(dbTable, paramBuffer) {
   this.paramBuffer        = paramBuffer;
-  this.ndbInterpretedCode = NdbInterpretedCode.create(filterSpec.dbTable);
+  this.ndbInterpretedCode = NdbInterpretedCode.create(dbTable);
   this.ndbScanFilter      = NdbScanFilter.create(this.ndbInterpretedCode);
   this.ndbScanFilter.begin(1);  // implicit top-level AND group
 }
@@ -188,10 +187,9 @@ FilterBuildingVisitor.prototype.visitQueryComparator = function(node) {
   var opcode = node.ndb.opcode;
   var layout = node.ndb.layout;
   this.ndbScanFilter.cmp(opcode, layout.column.columnNumber, 
-                         this.paramBuffer, layout.offset, 
-                         layout.column.columnSpace);
+                         layout.constBuffer || this.paramBuffer,
+                         layout.offset, layout.column.columnSpace);
   udebug.log(node.queryField.field.fieldName, node.comparator, "value");
-  // TODO: constants
 };
 
 /** Handle nodes QueryNot */
@@ -222,9 +220,11 @@ FilterBuildingVisitor.prototype.visitQueryBetweenOperator = function(node) {
   var col1 = node.ndb.layout.between[0];
   var col2 = node.ndb.layout.between[1];  
   this.ndbScanFilter.begin(1);  // AND
-  this.ndbScanFilter.cmp(2, col1.column.columnNumber, this.paramBuffer,
+  this.ndbScanFilter.cmp(2, col1.column.columnNumber,
+                         col1.constBuffer || this.paramBuffer,
                          col1.offset, col1.column.columnSpace); // >= col1
-  this.ndbScanFilter.cmp(0, col2.column.columnNumber, this.paramBuffer,
+  this.ndbScanFilter.cmp(0, col2.column.columnNumber,
+                         col2.constBuffer || this.paramBuffer,
                          col2.offset, col2.column.columnSpace); // <= col2
   this.ndbScanFilter.end();
   udebug.log(node.queryField.field.fieldName, "BETWEEN values");
@@ -236,75 +236,62 @@ FilterBuildingVisitor.prototype.finalise = function() {
 
 /*************************************************/
 
-function prepareFilterSpec(queryHandler) {
-  var i, v, spec, bufferManager, constFilterVisitor;
-
-  if(queryHandler.ndbFilterSpec) return;
-  spec = new FilterSpec(queryHandler.predicate);
-
-  /* 1st pass.  Mark table and calculate buffer sizes. */
-  spec.dbTable = queryHandler.dbTableHandler.dbTable;
-  bufferManager = new BufferManagerVisitor(spec.dbTable);
-  spec.predicate.visit(bufferManager);
-
-  /* Encode buffer for constant parameters */
-  if(bufferManager.constBufferSize > 0) {
-    spec.constBufferSize = bufferManager.constBufferSize;
-    spec.constLayout     = bufferManager.constLayout;
-    spec.constBuffer     = new Buffer(spec.constBufferSize);
-    for(i = 0 ; i < spec.constLayout.length ; i++) {
-      v = spec.constLayout[i];
-      adapter.ndb.impl.encoderWrite(v.column, v.value, spec.constBuffer, v.offset);
-    }
-  }
-
-  /* Assembly */
-  if(bufferManager.paramBufferSize === 0) {
-    constFilterVisitor = new FilterBuildingVisitor(spec, null);
-    queryHandler.predicate.visit(constFilterVisitor);
-    constFilterVisitor.finalise();
-    spec.constFilter.ndbScanFilter = constFilterVisitor.ndbScanFilter;
-    spec.constFilter.ndbInterpretedCode = constFilterVisitor.ndbInterpretedCode;
-  }
-  else {
-    spec.isConst         = false;
-    spec.paramBufferSize = bufferManager.paramBufferSize;
-    spec.paramLayout     = bufferManager.paramLayout;
-  }
-
-  /* Attach the FilterSpec to the QueryHandler */
-  queryHandler.ndbFilterSpec = spec;
+/* FilterSpec describes filter implementation; will be stored in QueryHandler
+*/
+function FilterSpec(queryHandler) {
+  this.predicate       = queryHandler.predicate;
+  this.dbTable         = queryHandler.dbTableHandler.dbTable;
+  this.constSchema     = new BufferSchema();
+  this.paramSchema     = new BufferSchema();
+  this.constFilter     = null;
+  this.constBuffer     = null;
+  this.markQuery();
 }
 
-function encodeParameters(filterSpec, params) {
-  var i, f;
-  var buffer = null;
-  if(filterSpec.paramBufferSize) {
-    buffer = new Buffer(filterSpec.paramBufferSize);
-    for(i = 0; i < filterSpec.paramLayout.length ; i++) {
-      f = filterSpec.paramLayout[i];
-      adapter.ndb.impl.encoderWrite(f.column, params[f.param], buffer, f.offset);
+FilterSpec.prototype.markQuery = function() {
+  /* 1st pass.  Mark tree and calculate buffer sizes. */
+  this.predicate.visit(new BufferManagerVisitor(this));
+
+  /* Encode buffer for constant query terms */
+  if(this.predicate.constants) {
+    this.constBuffer = this.constSchema.encode();
+
+    /* If paramSchema.size is zero, then the query uses *only* constant terms.
+       Optimize by building a filter just once in advance.
+    */
+    if(this.paramSchema.size === 0) {
+      this.constFilter = this.buildFilter(null);
     }
   }
-  return buffer;
-}
+};
+
+FilterSpec.prototype.buildFilter = function(paramBuffer) {
+  var visitor = new FilterBuildingVisitor(this.dbTable, paramBuffer);
+  this.predicate.visit(visitor);
+  visitor.finalise();
+  return visitor;
+};
 
 FilterSpec.prototype.getScanFilterCode = function(params) {
-  if(this.isConst) {
+  var paramBuffer;
+
+  if(this.constFilter) {
     udebug.log("getScanFilterCode: ScanFilter is const");
     return this.constFilter.ndbInterpretedCode;
   }
 
   /* Encode the parameters */
-  var paramBuffer = encodeParameters(this, params);
+  paramBuffer = this.paramSchema.encode(params);
 
   /* Build the NdbScanFilter for this operation */
-  var filterBuildingVisitor = new FilterBuildingVisitor(this, paramBuffer);
-  this.predicate.visit(filterBuildingVisitor);
-  filterBuildingVisitor.finalise();
-  
-  return filterBuildingVisitor.ndbInterpretedCode;
+  return this.buildFilter(paramBuffer).ndbInterpretedCode;
 };
 
+
+function prepareFilterSpec(queryHandler) {
+  if(! queryHandler.ndbFilterSpec) {
+    queryHandler.ndbFilterSpec = new FilterSpec(queryHandler);
+  }
+}
 
 exports.prepareFilterSpec = prepareFilterSpec;

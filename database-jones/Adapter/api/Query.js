@@ -225,11 +225,11 @@ SQLVisitor.prototype.visitQueryComparator = function(node) {
   var columnName = node.queryField.field.fieldName;
   var value = '?';
   var parameter = node.parameter;
-  if (isQueryParameter(parameter)) {
-    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
-  } else {
+  if(node.constants) {
     // the parameter is a literal (String, number, or object with a toString method)
     value = getEscapedValue(node.parameter);
+  } else {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
   }
   node.sql.sqlText = columnName + node.comparator + value;
   // assign ordered list of parameters to the top node
@@ -265,15 +265,15 @@ SQLVisitor.prototype.visitQueryBetweenOperator = function(node) {
   var columnName = node.queryField.field.fieldName;
   var leftValue = '?';
   var rightValue = '?';
-  if (isQueryParameter(node.parameter1)) {
-    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[0];
-  } else {
+  if (node.constants & 1) {
     leftValue = node.parameter1;
-  }
-  if (isQueryParameter(node.parameter2)) {
-    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
   } else {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[0];
+  }
+  if (node.constants & 2) {
     rightValue = node.parameter2;
+  } else {
+    this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
   }
   node.sql.sqlText = columnName + ' BETWEEN ' + leftValue + ' AND ' + rightValue;
 };
@@ -326,12 +326,56 @@ MaskMarkerVisitor.prototype.visitQueryNaryPredicate = function(node) {
 
 var theMaskMarkerVisitor = new MaskMarkerVisitor();   // Singleton
 
+/******************************************************************************
+ *                 MARKS CONSTANT EXPRESSIONS
+ *****************************************************************************/
+function ConstMarkerVisitor() {
+}
+
+/** Handle nodes QueryAnd, QueryOr */
+ConstMarkerVisitor.prototype.visitQueryNaryPredicate = function(node) {
+  var i;
+  for(i = 0 ; i < node.predicates.length ; i++) {
+    node.predicates[i].visit(this);
+    if(node.predicates[i].constants) {
+      node.constants = 1;
+    }
+  }
+};
+
+/** Handle QueryNot */
+ConstMarkerVisitor.prototype.visitQueryUnaryPredicate = function(node) {
+  node.predicates[0].visit(this);
+  if(node.predicates[0].constants) {
+    node.constants = 1;
+  }
+};
+
+/** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
+ConstMarkerVisitor.prototype.visitQueryComparator = function(node) {
+  if (! isQueryParameter(node.parameter)) {
+    node.constants = 1;
+  }
+};
+
+/** Handle node QueryBetween */
+ConstMarkerVisitor.prototype.visitQueryBetweenOperator = function(node) {
+  if (! isQueryParameter(node.parameter1)) {
+    node.constants = 1;
+  }
+  if (! isQueryParameter(node.parameter2)) {
+    node.constants += 2;
+  }
+};
+
+var theConstMarkerVisitor =  new ConstMarkerVisitor();  // Singleton
 
 /******************************************************************************
  *                 TOP LEVEL ABSTRACT QUERY PREDICATE
  *****************************************************************************/
 var AbstractQueryPredicate = function() {
   this.sql = {};
+  this.constants = 0;
 };
 
 AbstractQueryPredicate.prototype.inspect = function() {
@@ -546,6 +590,7 @@ QueryIn.prototype = new AbstractQueryComparator();
  *                 ABSTRACT QUERY UNARY OPERATOR
  *****************************************************************************/
 var AbstractQueryUnaryOperator = function() {
+  this.constants = 1;  // treat NULL and NOT NULL as constants
 };
 
 AbstractQueryUnaryOperator.prototype = new AbstractQueryPredicate();
@@ -659,6 +704,9 @@ var QueryHandler = function(dbTableHandler, predicate) {
   udebug.log_detail('QueryHandler<ctor>', predicate);
   this.dbTableHandler = dbTableHandler;
   this.predicate = predicate;
+
+  // Mark constant expressions in each query node
+  predicate.visit(theConstMarkerVisitor);
 
   // Mark the usedColumnMask and equalColumnMask in each query node
   predicate.visit(theMaskMarkerVisitor);
