@@ -276,7 +276,10 @@ Logger.prototype = {
  *
  ***********************************************************/
 exports.getLogger = function(filename) {
-  assert(! _global_.fileLoggers[filename]); // A file cannot be registered twice
+  if (_global_.fileLoggers[filename]) {
+    throw new Error('The file name ' + filename + ' has already been registered.');
+  }
+//  assert(! _global_.fileLoggers[filename]); // A file cannot be registered twice
 
   function makeLogFunction(level) {
     return function() {      
