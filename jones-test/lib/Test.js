@@ -40,7 +40,7 @@ function Test() {
 Test.prototype.test = function(result) {
   var runReturnCode;
   this.result = result;
-  result.listener.startTest(this);
+  result.startTest(this);
 
   try {
     runReturnCode = this.run();
@@ -114,9 +114,14 @@ Test.prototype.failOnError = function() {
   }
 };
 
-Test.prototype.skip = function(message) {
+Test.prototype.skip = function(message,result) {
   this.skipped = true;
-  this.result.skip(this, message);
+  if(result) {
+    this.result = result;
+    this.result.skipNotStarted(this, message);
+  } else {
+    this.result.skipStarted(this, message);
+  }
   return true;
 };
 
