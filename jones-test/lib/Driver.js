@@ -175,11 +175,7 @@ Driver.prototype.onReportCallback = function() {
 Driver.prototype.reportResultsAndExit = function() {
   var driver = this;
 
-  console.log("Started: ", this.result.listener.started);
-  console.log("Passed:  ", this.result.passed.length);
-  console.log("Failed:  ", this.result.failed.length);
-  console.log("Skipped: ", this.result.skipped.length);
-
+  this.result.report();
   this.onReportCallback();
 
   if(this.closeResources) {
@@ -213,10 +209,7 @@ Driver.prototype.runAllTests = function() {
 
   /* Set Timeout */
   function onTimeout() { 
-    var nwait = driver.result.listener.started - driver.result.listener.ended;
-    var tests = (nwait === 1 ? " test:" : " tests:");
-    console.log('TIMEOUT: still waiting for', nwait, tests);
-    driver.result.listener.listRunningTests();
+    console.log("DRIVER TIMED OUT after", driver.timeoutMillis, "msec.");
     driver.reportResultsAndExit();
   }
 

@@ -20,36 +20,23 @@
 
 "use strict";
 
+
 /* Listener
 */
 function Listener() {
-  this.started = 0;
-  this.ended   = 0;
   this.printStackTraces = false;
-  this.runningTests = {};
 }
 
-Listener.prototype.startTest = function(t) { 
-  this.started++;
-  this.runningTests[t.fullName()] = 1;
-};
-
 Listener.prototype.pass = function(t) {
-  this.ended++;
-  delete this.runningTests[t.fullName()];
   console.log("[pass]", t.fullName() );
 };
 
 Listener.prototype.skip = function(t, message) {
-  this.skipped++;
-  delete this.runningTests[t.fullName()];
   console.log("[skipped]", t.fullName(), "\t", message);
 };
 
 Listener.prototype.fail = function(t, e) {
   var message = "";
-  this.ended++;
-  delete this.runningTests[t.fullName()];
   if (e) {
     if (e.stack !== undefined) {
       t.stack = e.stack;
@@ -64,44 +51,44 @@ Listener.prototype.fail = function(t, e) {
     message = t.stack;
   }
 
-  if(t.phase === 0) {
-    console.log("[FailSmokeTest]", t.fullName(), "\t", message);
-  }
-  else {
-    console.log("[FAIL]", t.fullName(), "\t", message);
-  }
+  console.log("[FAIL]", t.fullName(), "\t", message);
 };
 
-Listener.prototype.listRunningTests = function() {
-  console.log(this.runningTests);
+Listener.prototype.listRunningTests = function(tests) {
+  console.log(tests);
+};
+
+Listener.prototype.reportResult  = function(result) {
+  console.log("Started: ", result.started);
+  console.log("Passed:  ", result.passed.length);
+  console.log("Failed:  ", result.failed.length);
+  console.log("Skipped: ", result.skipped.length);
 };
 
 
 /* QuietListener */
-function QuietListener() {
-  this.started = 0;
-  this.ended   = 0;
-  this.runningTests = {};
+
+function nil() {
 }
 
-QuietListener.prototype.startTest = Listener.prototype.startTest;
+function QuietListener() {
+  this.pass = nil;
+  this.skip = nil;
+  this.fail = nil;
+}
 
-QuietListener.prototype.pass = function(t) {
-  this.ended++;
-  delete this.runningTests[t.fullName()];
-};
+QuietListener.prototype = new Listener();
 
-QuietListener.prototype.skip = QuietListener.prototype.pass;
-QuietListener.prototype.fail = QuietListener.prototype.pass;
-
-QuietListener.prototype.listRunningTests = Listener.prototype.listRunningTests;
 
 /* FailOnlyListener */
+
 function FailOnlyListener() {
-  this.fail = Listener.prototype.fail;
+  this.pass = nil;
+  this.skip = nil;
 }
 
-FailOnlyListener.prototype = new QuietListener();
+FailOnlyListener.prototype = new Listener();
+
 
 exports.Listener          = Listener;
 exports.QuietListener     = QuietListener;
