@@ -21,8 +21,7 @@
 "use strict";
 
 var udebug = unified_debug.getLogger("SQLBuilder.js"),
-    assert = require("assert"),
-    meta   = require(jones.api.Meta);
+    assert = require("assert");
 
 
 function SQLBuilder() {
@@ -425,9 +424,8 @@ translateMeta.year = function(nullable) {return 'YEAR' + pn(nullable);};
 SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, defaultDatabaseName, engine) {
   udebug.log('sqlForTableCreation tableMapping', tableMapping, engine);
   var i, field, delimiter = '';
-  var tableMeta;
+  var meta, tableMeta, columnMeta;
   var sql = 'CREATE TABLE ';
-  var columnMeta;
   sql += tableMapping.database || defaultDatabaseName;
   sql += '.';
   sql += tableMapping.table;
