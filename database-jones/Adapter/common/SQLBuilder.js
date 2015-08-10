@@ -21,7 +21,8 @@
 "use strict";
 
 var udebug = unified_debug.getLogger("SQLBuilder.js"),
-    assert = require("assert");
+    assert = require("assert"),
+    meta   = require(jones.api.Meta);
 
 
 function SQLBuilder() {
@@ -373,6 +374,100 @@ SQLBuilder.prototype.initializeProjection = function(projection) {
   mysql.id = projection.id;
 };
 
+
+function defaultFieldMeta(fieldMapping) {
+  if (fieldMapping.fieldName == 'id') {
+    return 'id INT PRIMARY KEY';
+  }
+  return fieldMapping.fieldName + ' VARCHAR(32) ';
+}
+
+function pn(nullable) {return nullable? '': ' NOT NULL ';}
+function pu(unsigned) {return unsigned? ' UNSIGNED' : '';}
+
+var translateMeta = {};
+
+translateMeta.binary = function(length, nullable) {return 'BINARY(' + length + ')' +  pn(nullable);};
+translateMeta.char = function(length, nullable) {return 'CHAR(' + length + ')' +  pn(nullable);};
+translateMeta.date = function(nullable) {return 'DATE' +  pn(nullable);};
+translateMeta.datetime = function(fsp, nullable) {return 'DATETIME(' +  fsp + ')' + pn(nullable);};
+translateMeta.decimal = function(precision, scale, nullable) {return 'DECIMAL(' + precision + ', ' + scale + ')' +  pn(nullable);};
+translateMeta.double = function(nullable) {return 'DOUBLE' +  pn(nullable);};
+translateMeta.float = function(nullable) {return 'FLOAT' +  pn(nullable);};
+translateMeta.integer = function(bits, unsigned, nullable) {
+  var u = pu(unsigned);
+  var n = pn(nullable);
+  if (bits < 8) return 'BIT' + u + n;
+  if (bits == 8) return 'TINYINT' + u + n;
+  if (bits <= 16) return 'SMALLINT' + u + n;
+  if (bits <= 24) return 'MEDIUMINT' + u + n;
+  if (bits <= 32) return 'INT' + u + n;
+  return 'BIGINT' + u + n;
+};
+translateMeta.interval = function(fsp, nullable) {return 'TIME' + pn(nullable);};
+translateMeta.time = function(fsp, nullable) {return 'TIME' + pn(nullable);};
+translateMeta.timestamp = function(fsp, nullable) {return 'TIMESTAMP' + pn(nullable);};
+translateMeta.varbinary = function(length, lob, nullable) {
+  if (lob) {
+    return 'BLOB(' + length + ')' + pn(nullable);
+  }
+  return 'VARBINARY(' + length + ')' + pn(nullable);
+};
+translateMeta.varchar = function(length, lob, nullable) {
+  if (lob) {
+    return 'TEXT(' + length + ')' + pn(nullable);
+  }
+  return 'VARCHAR(' + length + ')' + pn(nullable);
+};
+translateMeta.year = function(nullable) {return 'YEAR' + pn(nullable);};
+
+
+SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, defaultDatabaseName, engine) {
+  udebug.log('sqlForTableCreation tableMapping', tableMapping, engine);
+  var i, field, delimiter = '';
+  var tableMeta;
+  var sql = 'CREATE TABLE ';
+  var columnMeta;
+  sql += tableMapping.database || defaultDatabaseName;
+  sql += '.';
+  sql += tableMapping.table;
+  sql += '(';
+  for (i = 0; i < tableMapping.fields.length; ++i) {
+    sql += delimiter;
+    delimiter = ', ';
+    field = tableMapping.fields[i];
+    sql += field.columnName;
+    sql += ' ';
+    meta = field.meta;
+    if (meta) {
+      columnMeta = meta.doit(translateMeta);
+      sql += columnMeta;
+      sql += meta.isPrimaryKey? ' PRIMARY KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : '') : '';
+      sql += meta.isUniqueKey?   ' UNIQUE KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : ''): '';
+      udebug.log('sqlForTableCreation field:', field.fieldName, 'column:', field.columnName, 'meta:', meta, 'columnMeta:', columnMeta);
+    } else {
+      sql += defaultFieldMeta(field);
+    }
+  }
+  // process meta for the table
+  // need to support PRIMARY and HASH
+  for (i = 0; i < tableMapping.meta.length; ++i) {
+    tableMeta = tableMapping.meta[i];
+    if (tableMeta.index) {
+      sql += delimiter;
+      // index name calculation
+      sql += tableMeta.unique?' UNIQUE': '';
+      sql += ' INDEX ' + tableMeta.columns + ' ( ' + tableMeta.columns + ') ';
+    }
+  }
+  sql += ")";
+  if(engine) {
+    sql += ' ENGINE=' + engine;
+  }
+  sql += ";";
+  udebug.log('sqlForTableMapping sql: ', sql);
+  return sql;
+};
 
 module.exports = SQLBuilder;
 
