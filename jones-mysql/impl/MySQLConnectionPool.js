@@ -463,58 +463,42 @@ exports.DBConnectionPool.prototype.listTables = function(databaseName, dbSession
 /** Create the table in the database for the mapping.
  * @param tableMapping the mapping for this table
  * @param session the session to use for database operations
- * @param sessionFactory the session factory to use for database operations
  * @param user_callback the user callback(err)
  * @return err if any errors
  */
-exports.DBConnectionPool.prototype.createTable = function(tableMapping, session, sessionFactory, user_callback) {
+exports.DBConnectionPool.prototype.createTable = function(tableMapping, session, user_callback) {
+  var engine = this.props.engine;
+  var databaseName = tableMapping.database || this.driverproperties.database;
   var connectionPool = this;
-  var createTableSQL, connection, dictionary, databaseName, tableName, qualifiedTableName, tableHandler;
-  tableName = tableMapping.table;
-  databaseName = tableMapping.database || connectionPool.driverproperties.database;
-  qualifiedTableName = databaseName + '.' + tableName;
-  function createTableOnTableMetadata(err, tableMetadata) {
-    udebug.log('createTableOnTableMetadata with err:', err, '\n', util.inspect(tableMetadata));
-    // remember the table metadata in the session factory
-    sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
-    // create the table handler
-    tableHandler = new DBTableHandler(tableMetadata, tableMapping, null);
-    // remember the table handler in the session factory
-    sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
-    if (!session || !session.dbSession) {
+  var connection;
+
+  function createTableOnQuery(err) {
+     if (!session || !session.dbSession) {
       // return the connection we got just for this call
       connectionPool.releaseConnection(connection);
-    }    
+    }
     user_callback(err);
   }
-  function createTableOnTableCreation(err) {
-    if (err) {
-      user_callback(err);
-    } else {
-      // create the table metadata and table handler for the new table
-      dictionary = new mysqlDictionary.DataDictionary(connection, connectionPool);
-      dictionary.getTableMetadata(databaseName, tableName, createTableOnTableMetadata);
-    }
-  }
+
   function createTableOnConnection(err, c) {
+    var createTableSQL;
     if (err) {
       user_callback(err);
     } else {
       connection = c;
-      createTableSQL = sqlBuilder.getSqlForTableCreation(tableMapping, databaseName, connectionPool.props.engine);
-    connection.query(createTableSQL, createTableOnTableCreation);
+      createTableSQL = sqlBuilder.getSqlForTableCreation(tableMapping, databaseName, engine);
+      connection.query(createTableSQL, createTableOnQuery);
     }
   }
 
   // createTable starts here
-  
-  udebug.log('createTable for tableMapping:', util.inspect(tableMapping));
+  udebug.log('createTable for tableMapping:', tableMapping);
   if (session && session.dbSession) {
     // dbSession exists; use the connection in the db session
     createTableOnConnection(null, session.dbSession.pooledConnection);
   } else {
     // dbSession does not exist; get a connection for the call
-    connectionPool.getConnection(createTableOnConnection);
+    this.getConnection(createTableOnConnection);
   }
 };
 

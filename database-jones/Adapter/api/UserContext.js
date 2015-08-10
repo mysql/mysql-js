@@ -26,7 +26,8 @@ var stats = {
 		"success"    : 0,
 		"idempotent" : 0,
 		"cache_hit"  : 0
-	}
+	},
+  "tables_created" : 0
 };
 
 var jonesConnections = {};   // a hash of connectionKey to Connection
@@ -156,20 +157,49 @@ exports.UserContext.prototype.getOpenSessionFactories = function() {
 };
 
 
+function createTable(tableMapping, sessionFactory, session, callback) {
+  var connectionPool = sessionFactory.dbConnectionPool;
+  var tableName = tableMapping.table;
+  var databaseName = tableMapping.database || connectionPool.driverproperties.database;
+  var qualifiedTableName = databaseName + '.' + tableName;
+
+  function createTableOnTableMetadata(err, tableMetadata) {
+    // create the table handler
+    var tableHandler = new DBTableHandler(tableMetadata, tableMapping, null);
+    // remember the table metadata in the session factory
+    sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
+    // remember the table handler in the session factory
+    sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
+
+    callback(err);
+  }
+
+  function createTableOnTableCreated(err) {
+    if (err) {
+      callback(err);
+    } else {
+      stats.tables_created++;
+      // create the table metadata and table handler for the new table
+      connectionPool.getTableMetadata(databaseName, tableName,
+                                      session.dbSession,
+                                      createTableOnTableMetadata);
+    }
+  }
+
+  connectionPool.createTable(tableMapping, session, createTableOnTableCreated);
+}
+
 /** Create schema from a table mapping. 
  * promise = createTable(tableMapping, callback);
  */
 exports.UserContext.prototype.createTable = function() {
   var userContext = this;
-  var tableMapping, dbSession;
-  function createTableOnTableCreated(err) {
-    userContext.applyCallback(err);
-  }
 
-  // createTable starts here
-  tableMapping = userContext.user_arguments[0];
-  userContext.session_factory.dbConnectionPool.createTable(tableMapping, userContext.session, userContext.session_factory,
-      createTableOnTableCreated);
+  createTable(this.user_arguments[0], this.session_factory, this.session,
+              function(err) {
+    userContext.applyCallback(err);
+  });
+
   return userContext.promise;
 };
 
@@ -344,8 +374,8 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
             sessionFactory.tableMappings[tableSpecification.qualifiedTableName] = tableMapping;
           }
           if (tableMapping) {
-            sessionFactory.dbConnectionPool.createTable(tableMapping, session, sessionFactory,
-                tableHandlerFactoryOnCreateTable);
+            createTable(tableMapping, sessionFactory, session,
+                        tableHandlerFactoryOnCreateTable);
             return;
           }
         }
