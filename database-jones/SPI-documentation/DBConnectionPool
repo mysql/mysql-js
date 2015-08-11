@@ -74,5 +74,10 @@ DBConnectionPool(Properties connectionProperties);
 /* createTable
    ASYNC.
    Creates a table based on a table mapping.
+   If the "database" property of TableMapping is not set, createTable() will
+   set it to the default database from the connection properties.
+   @param tableMapping TableMapping for table to be created
+   @param session user's Session
+   @param sessionFactory user's SessionFactory
 */
-  createTable(tableMapping, function(err) callback);
+  createTable(tableMapping, session, function(err) callback);
