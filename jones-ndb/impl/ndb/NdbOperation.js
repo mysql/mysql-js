@@ -725,7 +725,7 @@ function getQueryResults(op, userCallback) {
     function assembleSpecial(tag) {
       if(tag & 2) {   /* This row came from a many-to-many join table but
                          is not itself part of the user's result object.  */
-        current[level] = current[level - 1];
+        current[level] = current[level - 1];  // will be parent sector index
       }
       if(tag & 1) {   /* Row is null */
         current[level] = null;
