@@ -57,12 +57,7 @@ function NdbMetadataManager(properties) {
   this.sqlConnectionProperties = new jones.ConnectionProperties(sqlProps);
 }
 
-
-NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
-  assert(sqlPath);
-  udebug.log("runSQL", sqlPath);
-  var statement = "set storage_engine=ndbcluster;\n";
-  statement += fs.readFileSync(sqlPath, "ASCII");
+NdbMetadataManager.prototype.execDDL = function(statement, callback) {
   jones.openSession(this.sqlConnectionProperties).then(function(session) {
     udebug.log("onSession");
     var driver = session.dbSession.pooledConnection;
@@ -75,18 +70,26 @@ NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
   });
 };
 
+NdbMetadataManager.prototype.runSQLFromFile = function(sqlPath, callback) {
+  assert(sqlPath);
+  udebug.log("runSQLFromFile", sqlPath);
+  var statement = "set storage_engine=ndbcluster;\n";
+  statement += fs.readFileSync(sqlPath, "ASCII");
+  this.execDDL(statement, callback);
+};
+
 
 NdbMetadataManager.prototype.createTestTables = function(suiteName, suitePath, callback) {
   udebug.log("createTestTables", suiteName);
   var sqlPath = findMetadataScript(suiteName, suitePath, "create.sql");
-  this.runSQL(sqlPath, callback);
+  this.runSQLFromFile(sqlPath, callback);
 };
 
 
 NdbMetadataManager.prototype.dropTestTables = function(suiteName, suitePath, callback) {
   udebug.log("dropTestTables", suiteName);
   var sqlPath = findMetadataScript(suiteName, suitePath, "drop.sql");
-  this.runSQL(sqlPath, callback);
+  this.runSQLFromFile(sqlPath, callback);
 };
 
 

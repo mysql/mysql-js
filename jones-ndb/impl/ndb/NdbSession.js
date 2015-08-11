@@ -194,6 +194,7 @@ NdbSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
 */
 NdbSession.prototype.buildInsertOperation = function(tableHandler, row,
                                                     tx, callback) {
+  assert.equal(typeof row, "object");
   if(udebug.is_debug()) udebug.log("buildInsertOperation " + tableHandler.dbTable.name);
   var op = ndboperation.newInsertOperation(tx, tableHandler, row);
   op.userCallback = callback;
