@@ -70,9 +70,9 @@ NdbMetadataManager.prototype.execDDL = function(statement, callback) {
   });
 };
 
-NdbMetadataManager.prototype.runSQLFromFile = function(sqlPath, callback) {
+NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
   assert(sqlPath);
-  udebug.log("runSQLFromFile", sqlPath);
+  udebug.log("runSQL", sqlPath);
   var statement = "set storage_engine=ndbcluster;\n";
   statement += fs.readFileSync(sqlPath, "ASCII");
   this.execDDL(statement, callback);
@@ -82,14 +82,14 @@ NdbMetadataManager.prototype.runSQLFromFile = function(sqlPath, callback) {
 NdbMetadataManager.prototype.createTestTables = function(suiteName, suitePath, callback) {
   udebug.log("createTestTables", suiteName);
   var sqlPath = findMetadataScript(suiteName, suitePath, "create.sql");
-  this.runSQLFromFile(sqlPath, callback);
+  this.runSQL(sqlPath, callback);
 };
 
 
 NdbMetadataManager.prototype.dropTestTables = function(suiteName, suitePath, callback) {
   udebug.log("dropTestTables", suiteName);
   var sqlPath = findMetadataScript(suiteName, suitePath, "drop.sql");
-  this.runSQLFromFile(sqlPath, callback);
+  this.runSQL(sqlPath, callback);
 };
 
 
