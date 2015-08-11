@@ -421,12 +421,12 @@ translateMeta.varchar = function(length, lob, nullable) {
 translateMeta.year = function(nullable) {return 'YEAR' + pn(nullable);};
 
 
-SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, defaultDatabaseName, engine) {
+SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
   udebug.log('sqlForTableCreation tableMapping', tableMapping, engine);
   var i, field, delimiter = '';
   var meta, tableMeta, columnMeta;
   var sql = 'CREATE TABLE ';
-  sql += tableMapping.database || defaultDatabaseName;
+  sql += tableMapping.database;
   sql += '.';
   sql += tableMapping.table;
   sql += '(';

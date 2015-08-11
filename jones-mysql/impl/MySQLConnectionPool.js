@@ -465,10 +465,12 @@ exports.DBConnectionPool.prototype.listTables = function(databaseName, dbSession
  * @param session the session to use for database operations
  * @param user_callback the user callback(err)
  * @return err if any errors
+ *
+ * Side effect: if TableMapping.database is not set, createTable() sets it 
+ * to the default database
  */
 exports.DBConnectionPool.prototype.createTable = function(tableMapping, session, user_callback) {
   var engine = this.props.engine;
-  var databaseName = tableMapping.database || this.driverproperties.database;
   var connectionPool = this;
   var connection;
 
@@ -486,13 +488,16 @@ exports.DBConnectionPool.prototype.createTable = function(tableMapping, session,
       user_callback(err);
     } else {
       connection = c;
-      createTableSQL = sqlBuilder.getSqlForTableCreation(tableMapping, databaseName, engine);
+      createTableSQL = sqlBuilder.getSqlForTableCreation(tableMapping, engine);
       connection.query(createTableSQL, createTableOnQuery);
     }
   }
 
   // createTable starts here
   udebug.log('createTable for tableMapping:', tableMapping);
+  if(! tableMapping.database) {
+    tableMapping.database = this.driverproperties.database;
+  }
   if (session && session.dbSession) {
     // dbSession exists; use the connection in the db session
     createTableOnConnection(null, session.dbSession.pooledConnection);

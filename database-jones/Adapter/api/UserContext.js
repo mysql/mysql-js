@@ -160,17 +160,17 @@ exports.UserContext.prototype.getOpenSessionFactories = function() {
 function createTable(tableMapping, sessionFactory, session, callback) {
   var connectionPool = sessionFactory.dbConnectionPool;
   var tableName = tableMapping.table;
-  var databaseName = tableMapping.database || connectionPool.driverproperties.database;
-  var qualifiedTableName = databaseName + '.' + tableName;
 
   function createTableOnTableMetadata(err, tableMetadata) {
-    // create the table handler
-    var tableHandler = new DBTableHandler(tableMetadata, tableMapping, null);
-    // remember the table metadata in the session factory
-    sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
-    // remember the table handler in the session factory
-    sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
-
+    var qualifiedTableName = tableMapping.database + '.' + tableName;
+    if(! err) {
+      // create the table handler
+      var tableHandler = new DBTableHandler(tableMetadata, tableMapping, null);
+      // remember the table metadata in the session factory
+      sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
+      // remember the table handler in the session factory
+      sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
+    }
     callback(err);
   }
 
@@ -180,7 +180,7 @@ function createTable(tableMapping, sessionFactory, session, callback) {
     } else {
       stats.tables_created++;
       // create the table metadata and table handler for the new table
-      connectionPool.getTableMetadata(databaseName, tableName,
+      connectionPool.getTableMetadata(tableMapping.database, tableName,
                                       session.dbSession,
                                       createTableOnTableMetadata);
     }
