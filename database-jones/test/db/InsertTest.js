@@ -81,7 +81,6 @@ t1.run = function() {
   var object4 = {id:4074, name:'Employee 4074', age:4074, magic:4074}; ++count;
   var object5 = {id:4075, name:'Employee 4075', age:4075, magic:4075}; ++count;
   function check(err) {
-    console.log('InsertTest.t1');
     if (err) testCase.appendErrorMessage(err.message);
     if (--count == 0) {
       // all done with insert
@@ -92,13 +91,11 @@ t1.run = function() {
   fail_connect(testCase, function(sessionFactory) {
     db = sessionFactory.db();
     testCase.session = db;
-    db.db_basic.insert(object1, check).then(function(){console.log(db);});
+    db.db_basic.insert(object1, check);
     db.db_basic.insert(object2, check);
     db.db_basic.insert(object3, check);
     db.db_basic.insert(object4, check);
     db.db_basic.insert(object5, check);
-    console.log(db);
-    
   });
 };
 
