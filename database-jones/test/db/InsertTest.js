@@ -198,4 +198,6 @@ t5.run = function() {
 };
 
 /*************** EXPORT THE TOP-LEVEL GROUP ********/
-module.exports.tests = [t1, t2, t3, t4, t5];
+// module.exports.tests = [t1, t2, t3, t4, t5];
+// This suite is disabled!
+module.exports.tests = [];

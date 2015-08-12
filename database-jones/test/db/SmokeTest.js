@@ -25,6 +25,11 @@
 var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
+
+// THIS SUITE IS DISABLED:
+  return this.skip("db suite is disabled");
+
+
   var t = this;
   try {
     var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
