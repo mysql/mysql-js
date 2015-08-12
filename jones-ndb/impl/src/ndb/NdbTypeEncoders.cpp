@@ -757,7 +757,7 @@ Handle<Value> BinaryWriter(const NdbDictionary::Column * col,
       memset(buffer+offset+ncopied, 0, col_len - ncopied); // padding
     }
   }
-  return valid ? writerOK : K_22000_DataError;
+  return valid ? writerOK : K_0F001_Bad_BLOB;
 }
 
 template<typename LENGTHTYPE>

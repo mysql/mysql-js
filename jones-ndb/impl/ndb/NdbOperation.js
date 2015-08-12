@@ -86,7 +86,7 @@ var sqlStateMessages = {
   "22007" : "Invalid datetime",
   "23000" : "Column cannot be null",
   "HY000" : "Incorrect numeric value",
-  "0F001" : "Invalid BLOB value",
+  "0F001" : "BLOB or BINARY value is not a Buffer",
   "WCTOR" : 
       "A Domain Object Constructor has overwritten persistent properties "+
       "that were read from the database.  The Domain Object Constructor "+
@@ -115,6 +115,12 @@ DBOperationError.prototype.fromNdbError = function(ndb_error) {
 DBOperationError.prototype.fromSqlState = function(sqlstate) {
   this.message = sqlStateMessages[sqlstate];
   this.sqlstate = sqlstate;
+
+  /* Some exceptional behavior: */
+  if(sqlstate == "0F001") {
+    this.sqlstate = "22000";
+  }
+
   return this;
 };
   
