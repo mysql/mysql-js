@@ -266,7 +266,7 @@ Suite.prototype.testCompleted = function(testCase) {
   var result = testCase.result;
   switch (testCase.phase) {
     case 0:     // the smoke test completed
-      this.smokeTestHasFailed = testCase.failed;
+      this.smokeTestHasFailed = testCase.failed || testCase.skipped;
       return this.startConcurrentTests(result);
 
     case 1:     // one of the concurrent tests completed

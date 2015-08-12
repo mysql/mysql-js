@@ -8,7 +8,9 @@ There are four varieties of functional tests.
 
 ```JavaScript
 /* SmokeTest: set up and verify the environment for a test suite.
-  If a SmokeTest fails, then the remaining tests in a suite will not be run.
+  If a SmokeTest fails, or is skipped by calling skip(), then 
+  the remaining Serial and Concurrent tests in a suite will not be run;
+  They will be accounted as not started and as skipped.
 */
 function SmokeTest(name);
 
