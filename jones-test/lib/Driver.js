@@ -45,7 +45,6 @@ function Driver(baseDirectory) {
   this.skipSmokeTest         = false;
   this.skipClearSmokeTest    = false;
   this.onReportCallback      = null;    // callback at report 
-  this.closeResources        = null;    // callback at exit 
   this.abortAndExit          = false;   // --help option
   this.timeoutMillis         = 0;       // no timeout
   this.numberOfRunningSuites = 0;
@@ -172,19 +171,16 @@ Driver.prototype.onReportCallback = function() {
   return;
 };
 
+Driver.prototype.closeResources = function(callback) {
+  callback();
+};
+
 Driver.prototype.reportResultsAndExit = function() {
-  var driver = this;
-
-  this.result.report();
+  var exitStatus = this.result.report();
   this.onReportCallback();
-
-  if(this.closeResources) {
-    this.closeResources(function() {
-      process.exit(driver.result.failed.length > 0);     
-    });
-  } else {
-    process.exit(driver.result.failed.length > 0);    
-  }
+  this.closeResources(function exit() {
+    process.exit(exitStatus);
+  });
 };
 
 Driver.prototype.runAllTests = function() {

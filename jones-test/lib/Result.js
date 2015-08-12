@@ -68,15 +68,26 @@ Result.prototype.skipNotStarted = function(t, reason) {
   this.driver.testCompleted(t);
 };
 
+/* Returns exit status:
+   1 if any tests failed or timed out.
+   0 if no tests failed and no tests timed out.
+ */
 Result.prototype.report = function() {
-  var nwait, tests;
+  var nwait, tests, exitStatus;
   nwait = this.started - this.ended;
   if(nwait > 0) {
     tests = (nwait === 1 ? "test:" : "tests:");
     console.log("Still waiting for", nwait, tests);
     console.log(this.runningTests);
   }
+  if(this.failed.length == 0 && nwait == 0) {
+    exitStatus = 0;
+  } else {
+    exitStatus = 1;
+  }
+
   this.listener.reportResult(this);
+  return exitStatus;
 };
 
 module.exports = Result;
