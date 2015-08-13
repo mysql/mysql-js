@@ -21,7 +21,7 @@
 // configure.js:
 //    Try to find installed mysql that matches architecture of node
 //    Ask user for mysql pathname
-//    Write mysql pathname into config.gypi and config.waf
+//    Write mysql pathname into config.gypi
 
 // TODO: Auto-detect mysql layout here, and write about it in config.gypi
 
@@ -158,7 +158,6 @@ function configure(mysql, layout) {
     layout = "";  // fixme
     var gyp = { "variables" : {"mysql_path":mysql, "mysql_layout":layout}};
     fs.writeFileSync("config.gypi", JSON.stringify(gyp) + "\n", "ascii");
-    fs.writeFileSync("config.waf", mysql + "\n", 'ascii');
     finish();
   }
   else {
