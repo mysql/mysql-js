@@ -34,7 +34,14 @@ using v8::Object;
 using v8::Value;
 using v8::Exception;
 using v8::String;
+using v8::Arguments;
+using v8::FunctionTemplate;
+using v8::AccessorInfo;
 
+/* Signature of a V8 function wrapper
+*/
+typedef Handle<Value> V8WrapperFn(const Arguments &);
+typedef Handle<Value> V8Accessor(Local<String>, const AccessorInfo &);
 
 /*****************************************************************
  Code to confirm that C++ types wrapped as JavaScript values
@@ -86,9 +93,18 @@ public:
     stencil = Persistent<ObjectTemplate>::New(proto);
   }
 
-  /* Instance Method */
+  /* Instance Methods */
   Local<Object> newWrapper() { 
     return stencil->NewInstance();
+  }
+
+  void addMethod(const char *name, V8WrapperFn wrapper) {
+    stencil->Set(String::NewSymbol(name),
+                 FunctionTemplate::New(wrapper)->GetFunction());
+  }
+
+  void addAccessor(const char *name, V8Accessor accessor) {
+    stencil->SetAccessor(String::NewSymbol(name), accessor);
   }
 };
 

@@ -29,25 +29,24 @@
 
 using namespace v8;
 
-Handle<Value> newScanOperation(const Arguments &);
-Handle<Value> prepareAndExecute(const Arguments &);
-Handle<Value> getOperationError(const Arguments &);
-Handle<Value> scanNextResult(const Arguments &);
-Handle<Value> scanFetchResults(const Arguments &);
-Handle<Value> ScanOperation_close(const Arguments &);
-Handle<Value> getNdbError(const Arguments &);
-Handle<Value> ScanOp_readBlobResults(const Arguments &);
+V8WrapperFn newScanOperation;
+V8WrapperFn prepareAndExecute;
+V8WrapperFn getOperationError;
+V8WrapperFn scanNextResult;
+V8WrapperFn scanFetchResults;
+V8WrapperFn ScanOperation_close;
+V8WrapperFn getNdbError;
+V8WrapperFn ScanOp_readBlobResults;
 
 class ScanOperationEnvelopeClass : public Envelope {
 public: 
   ScanOperationEnvelopeClass() : Envelope("ScanOperation") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", 
-                       getNdbError<ScanOperation>);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "prepareAndExecute", prepareAndExecute);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "fetchResults", scanFetchResults);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "nextResult", scanNextResult);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "close", ScanOperation_close);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "readBlobResults", ScanOp_readBlobResults);
+    addMethod("getNdbError", getNdbError<ScanOperation>);
+    addMethod("prepareAndExecute", prepareAndExecute);
+    addMethod("fetchResults", scanFetchResults);
+    addMethod("nextResult", scanNextResult);
+    addMethod("close", ScanOperation_close);
+    addMethod("readBlobResults", ScanOp_readBlobResults);
   }
 };
 

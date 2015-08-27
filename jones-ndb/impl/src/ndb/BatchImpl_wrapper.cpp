@@ -31,23 +31,22 @@
 
 using namespace v8;
 
-Handle<Value> getOperationError(const Arguments &);
-Handle<Value> tryImmediateStartTransaction(const Arguments &);
-Handle<Value> execute(const Arguments &);
-Handle<Value> executeAsynch(const Arguments &);
-Handle<Value> readBlobResults(const Arguments &);
-Handle<Value> BatchImpl_freeImpl(const Arguments &);
+V8WrapperFn getOperationError,
+            tryImmediateStartTransaction,
+            execute,
+            executeAsynch,
+            readBlobResults,
+            BatchImpl_freeImpl;
 
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, 
-      "tryImmediateStartTransaction", tryImmediateStartTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getOperationError", getOperationError);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "execute", execute);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "executeAsynch", executeAsynch);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "readBlobResults", readBlobResults);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "free", BatchImpl_freeImpl);
+    addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
+    addMethod("getOperationError", getOperationError);
+    addMethod("execute", execute);
+    addMethod("executeAsynch", executeAsynch);
+    addMethod("readBlobResults", readBlobResults);
+    addMethod("free", BatchImpl_freeImpl);
   }
 };
 

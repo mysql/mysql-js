@@ -31,19 +31,19 @@
 
 using namespace v8;
 
-Handle<Value> newSessionImpl(const Arguments &);
-Handle<Value> seizeTransaction(const Arguments &);
-Handle<Value> releaseTransaction(const Arguments &);
-Handle<Value> freeTransactions(const Arguments &);
-Handle<Value> SessionImplDestructor(const Arguments &);
+V8WrapperFn newSessionImpl;
+V8WrapperFn seizeTransaction;
+V8WrapperFn releaseTransaction;
+V8WrapperFn freeTransactions;
+V8WrapperFn SessionImplDestructor;
 
 class SessionImplEnvelopeClass : public Envelope {
 public:
   SessionImplEnvelopeClass() : Envelope("SessionImpl") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "seizeTransaction", seizeTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "releaseTransaction", releaseTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "freeTransactions", freeTransactions);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", SessionImplDestructor);
+    addMethod("seizeTransaction", seizeTransaction);
+    addMethod("releaseTransaction", releaseTransaction);
+    addMethod("freeTransactions", freeTransactions);
+    addMethod("destroy", SessionImplDestructor);
   }
 };
 

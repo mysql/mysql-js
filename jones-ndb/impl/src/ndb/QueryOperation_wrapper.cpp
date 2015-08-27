@@ -53,21 +53,21 @@ Handle<String>    /* keys of NdbProjection */
   K_tag;
 
 
-Handle<Value> queryPrepareAndExecute(const Arguments &);
-Handle<Value> querySetTransactionImpl(const Arguments &);
-Handle<Value> queryFetchAllResults(const Arguments &);
-Handle<Value> queryGetResult(const Arguments &);
-Handle<Value> queryClose(const Arguments &);
+V8WrapperFn queryPrepareAndExecute,
+            querySetTransactionImpl,
+            queryFetchAllResults,
+            queryGetResult,
+            queryClose;
 
 
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "prepareAndExecute", queryPrepareAndExecute);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "setTransactionImpl", querySetTransactionImpl);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "fetchAllResults", queryFetchAllResults);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getResult", queryGetResult);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "close", queryClose);
+    addMethod("prepareAndExecute", queryPrepareAndExecute);
+    addMethod("setTransactionImpl", querySetTransactionImpl);
+    addMethod("fetchAllResults", queryFetchAllResults);
+    addMethod("getResult", queryGetResult);
+    addMethod("close", queryClose);
   }
 };
 
