@@ -40,6 +40,7 @@ V8WrapperFn SessionImplDestructor;
 class SessionImplEnvelopeClass : public Envelope {
 public:
   SessionImplEnvelopeClass() : Envelope("SessionImpl") {
+    HandleScope scope;
     addMethod("seizeTransaction", seizeTransaction);
     addMethod("releaseTransaction", releaseTransaction);
     addMethod("freeTransactions", freeTransactions);

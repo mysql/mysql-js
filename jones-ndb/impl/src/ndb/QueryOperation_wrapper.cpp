@@ -63,6 +63,7 @@ V8WrapperFn queryPrepareAndExecute,
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
+    HandleScope scope;
     addMethod("prepareAndExecute", queryPrepareAndExecute);
     addMethod("setTransactionImpl", querySetTransactionImpl);
     addMethod("fetchAllResults", queryFetchAllResults);

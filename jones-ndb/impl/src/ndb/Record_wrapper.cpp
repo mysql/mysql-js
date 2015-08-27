@@ -41,6 +41,7 @@ V8WrapperFn getColumnOffset_wrapper,
 class RecordEnvelopeClass : public Envelope {
 public:
   RecordEnvelopeClass() : Envelope("Record") {
+    HandleScope scope;
     addMethod("getColumnOffset", getColumnOffset_wrapper);
     addMethod("getBufferSize", getBufferSize_wrapper);
     addMethod("setNull", setNull_wrapper);

@@ -40,6 +40,7 @@ V8WrapperFn getAutoIncValue,
 class NdbEnvelopeClass : public Envelope {
 public:
   NdbEnvelopeClass() : Envelope("Ndb") {
+    HandleScope scope;
     addMethod("getNdbError", getNdbError<Ndb>);
     addMethod("close", closeNdb);
     addMethod("getStatistics", getStatistics);

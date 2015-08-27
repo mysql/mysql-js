@@ -41,6 +41,7 @@ V8WrapperFn ScanOp_readBlobResults;
 class ScanOperationEnvelopeClass : public Envelope {
 public: 
   ScanOperationEnvelopeClass() : Envelope("ScanOperation") {
+    HandleScope scope;
     addMethod("getNdbError", getNdbError<ScanOperation>);
     addMethod("prepareAndExecute", prepareAndExecute);
     addMethod("fetchResults", scanFetchResults);

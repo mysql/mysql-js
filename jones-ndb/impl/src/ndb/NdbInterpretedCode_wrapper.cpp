@@ -80,6 +80,7 @@ V8WrapperFn getWordsUsed;
 class NdbInterpretedCodeEnvelopeClass : public Envelope {
 public:
   NdbInterpretedCodeEnvelopeClass() : Envelope("NdbInterpretedCode") {
+    HandleScope scope;
     WRAPPER_FUNCTION( load_const_null);
     WRAPPER_FUNCTION( load_const_u16);
     WRAPPER_FUNCTION( load_const_u32);

@@ -33,6 +33,7 @@ V8WrapperFn getEmptyOperationSet;
 class TransactionImplEnvelopeClass : public Envelope {
 public:
   TransactionImplEnvelopeClass() : Envelope("TransactionImpl") {
+    HandleScope scope;
     addMethod("getEmptyOperationSet", getEmptyOperationSet);
     addMethod("getNdbError", getNdbError<TransactionImpl>);
   }

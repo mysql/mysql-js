@@ -41,6 +41,7 @@ V8WrapperFn getOperationError,
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
+    HandleScope scope;
     addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
     addMethod("getOperationError", getOperationError);
     addMethod("execute", execute);
