@@ -32,18 +32,19 @@ using namespace v8;
 // FIXME: All of this should be on SessionImpl with Ndb object not directly
 // exposed to JavaScript
 
-Handle<Value> getAutoIncValue(const Arguments &);
-Handle<Value> closeNdb(const Arguments &);
-Handle<Value> getStatistics(const Arguments &);
-Handle<Value> getConnectionStatistics(const Arguments &);
+V8WrapperFn getAutoIncValue,
+            closeNdb,
+            getStatistics,
+            getConnectionStatistics;
 
 class NdbEnvelopeClass : public Envelope {
 public:
   NdbEnvelopeClass() : Envelope("Ndb") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", getNdbError<Ndb>);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "close", closeNdb);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getStatistics", getStatistics);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getConnectionStatistics", getConnectionStatistics);
+    HandleScope scope;
+    addMethod("getNdbError", getNdbError<Ndb>);
+    addMethod("close", closeNdb);
+    addMethod("getStatistics", getStatistics);
+    addMethod("getConnectionStatistics", getConnectionStatistics);
   }
   
   Local<Object> wrap(Ndb *ndb) {

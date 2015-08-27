@@ -28,14 +28,14 @@
 
 using namespace v8;
 
-Handle<Value> getEmptyOperationSet(const Arguments &);
+V8WrapperFn getEmptyOperationSet;
 
 class TransactionImplEnvelopeClass : public Envelope {
 public:
   TransactionImplEnvelopeClass() : Envelope("TransactionImpl") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, 
-      "getEmptyOperationSet", getEmptyOperationSet);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", getNdbError<TransactionImpl>);
+    HandleScope scope;
+    addMethod("getEmptyOperationSet", getEmptyOperationSet);
+    addMethod("getNdbError", getNdbError<TransactionImpl>);
   }
 };
 

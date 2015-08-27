@@ -30,23 +30,22 @@
 
 using namespace v8;
 
-typedef Handle<Value> _Wrapper_(const Arguments &);
+V8WrapperFn begin;
+V8WrapperFn end;
+V8WrapperFn istrue;
+V8WrapperFn isfalse;
+V8WrapperFn cmp;
+V8WrapperFn isnull;
+V8WrapperFn isnotnull;
+V8WrapperFn getInterpretedCode;
+V8WrapperFn getNdbOperation;
 
-_Wrapper_ begin;
-_Wrapper_ end;
-_Wrapper_ istrue;
-_Wrapper_ isfalse;
-_Wrapper_ cmp;
-_Wrapper_ isnull;
-_Wrapper_ isnotnull;
-_Wrapper_ getInterpretedCode;
-_Wrapper_ getNdbOperation;
-
-#define WRAPPER_FUNCTION(A) DEFINE_JS_FUNCTION(Envelope::stencil, #A, A)
+#define WRAPPER_FUNCTION(A) addMethod(#A, A)
 
 class NdbScanFilterEnvelopeClass : public Envelope {
 public:
   NdbScanFilterEnvelopeClass() : Envelope("NdbScanFilter") {
+    HandleScope scope;
     WRAPPER_FUNCTION( begin);
     WRAPPER_FUNCTION( end);
     WRAPPER_FUNCTION( istrue);
@@ -56,7 +55,7 @@ public:
     WRAPPER_FUNCTION( isnotnull);
     WRAPPER_FUNCTION( getInterpretedCode);
     WRAPPER_FUNCTION( getNdbOperation);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", getNdbError<NdbScanFilter>);
+    addMethod("getNdbError", getNdbError<NdbScanFilter>);
   }
 };
 

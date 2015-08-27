@@ -18,6 +18,7 @@
  02110-1301  USA
  */
 
+
 #define THROW_ERROR(MESSAGE) \
   ThrowException(Exception::Error(String::New(MESSAGE)))
   

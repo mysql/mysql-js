@@ -28,59 +28,59 @@
 
 using namespace v8;
 
-typedef Handle<Value> _Wrapper_(const Arguments &);
 
-_Wrapper_ load_const_null;
-_Wrapper_ load_const_u16;
-_Wrapper_ load_const_u32;
-// _Wrapper_ load_const_u64;   // not wrapped
-_Wrapper_ read_attr;
-_Wrapper_ write_attr;
-_Wrapper_ add_reg;
-_Wrapper_ sub_reg;
-_Wrapper_ def_label;
-_Wrapper_ branch_label;
-_Wrapper_ branch_ge;
-_Wrapper_ branch_gt;
-_Wrapper_ branch_le;
-_Wrapper_ branch_lt;
-_Wrapper_ branch_eq;
-_Wrapper_ branch_ne;
-_Wrapper_ branch_ne_null;
-_Wrapper_ branch_eq_null;
-_Wrapper_ branch_col_eq;
-_Wrapper_ branch_col_ne;
-_Wrapper_ branch_col_lt;
-_Wrapper_ branch_col_le;
-_Wrapper_ branch_col_gt;
-_Wrapper_ branch_col_ge;
-_Wrapper_ branch_col_eq_null;
-_Wrapper_ branch_col_ne_null;
-_Wrapper_ branch_col_like;
-_Wrapper_ branch_col_notlike;
-_Wrapper_ branch_col_and_mask_eq_mask;
-_Wrapper_ branch_col_and_mask_ne_mask;
-_Wrapper_ branch_col_and_mask_eq_zero;
-_Wrapper_ branch_col_and_mask_ne_zero;
-_Wrapper_ interpret_exit_ok;
-_Wrapper_ interpret_exit_nok;
-_Wrapper_ interpret_exit_last_row;
-_Wrapper_ add_val;
-_Wrapper_ sub_val;
-_Wrapper_ def_sub;
-_Wrapper_ call_sub;
-_Wrapper_ ret_sub;
-_Wrapper_ finalise;
-_Wrapper_ NdbInterpretedCode_getTable_wrapper;   // rename to avoid duplicate symbol
-_Wrapper_ getNdbError;
-_Wrapper_ getWordsUsed;
-// _Wrapper_ copy; // not wrapped
+V8WrapperFn load_const_null;
+V8WrapperFn load_const_u16;
+V8WrapperFn load_const_u32;
+// V8WrapperFn load_const_u64;   // not wrapped
+V8WrapperFn read_attr;
+V8WrapperFn write_attr;
+V8WrapperFn add_reg;
+V8WrapperFn sub_reg;
+V8WrapperFn def_label;
+V8WrapperFn branch_label;
+V8WrapperFn branch_ge;
+V8WrapperFn branch_gt;
+V8WrapperFn branch_le;
+V8WrapperFn branch_lt;
+V8WrapperFn branch_eq;
+V8WrapperFn branch_ne;
+V8WrapperFn branch_ne_null;
+V8WrapperFn branch_eq_null;
+V8WrapperFn branch_col_eq;
+V8WrapperFn branch_col_ne;
+V8WrapperFn branch_col_lt;
+V8WrapperFn branch_col_le;
+V8WrapperFn branch_col_gt;
+V8WrapperFn branch_col_ge;
+V8WrapperFn branch_col_eq_null;
+V8WrapperFn branch_col_ne_null;
+V8WrapperFn branch_col_like;
+V8WrapperFn branch_col_notlike;
+V8WrapperFn branch_col_and_mask_eq_mask;
+V8WrapperFn branch_col_and_mask_ne_mask;
+V8WrapperFn branch_col_and_mask_eq_zero;
+V8WrapperFn branch_col_and_mask_ne_zero;
+V8WrapperFn interpret_exit_ok;
+V8WrapperFn interpret_exit_nok;
+V8WrapperFn interpret_exit_last_row;
+V8WrapperFn add_val;
+V8WrapperFn sub_val;
+V8WrapperFn def_sub;
+V8WrapperFn call_sub;
+V8WrapperFn ret_sub;
+V8WrapperFn finalise;
+V8WrapperFn NdbInterpretedCode_getTable_wrapper;   // rename to avoid duplicate symbol
+V8WrapperFn getNdbError;
+V8WrapperFn getWordsUsed;
+// V8WrapperFn copy; // not wrapped
 
-#define WRAPPER_FUNCTION(A) DEFINE_JS_FUNCTION(Envelope::stencil, #A, A)
+#define WRAPPER_FUNCTION(A) addMethod(#A, A)
 
 class NdbInterpretedCodeEnvelopeClass : public Envelope {
 public:
   NdbInterpretedCodeEnvelopeClass() : Envelope("NdbInterpretedCode") {
+    HandleScope scope;
     WRAPPER_FUNCTION( load_const_null);
     WRAPPER_FUNCTION( load_const_u16);
     WRAPPER_FUNCTION( load_const_u32);
@@ -124,9 +124,8 @@ public:
     WRAPPER_FUNCTION( finalise);
     WRAPPER_FUNCTION( getWordsUsed);
     // WRAPPER_FUNCTION( copy);   // not wrapped 
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getTable",
-                       NdbInterpretedCode_getTable_wrapper);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getNdbError", getNdbError<NdbInterpretedCode>);
+    addMethod("getTable", NdbInterpretedCode_getTable_wrapper);
+    addMethod("getNdbError", getNdbError<NdbInterpretedCode>);
   }
 };
 

@@ -41,8 +41,7 @@ Envelope AsyncNdbContextEnvelope("AsyncNdbContext");
 */
 Handle<Value> createAsyncNdbContext(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
-  
+
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
 
