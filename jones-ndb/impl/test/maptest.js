@@ -1,10 +1,10 @@
 console.log("line 1");
-var udebug = require("../../api/unified_debug.js").getLogger("maptest.js");
-var mapper = require("../build/Release/test/mapper.node");
-var dmapper = require("../build/Release/test/outermapper.node");
+// var udebug = require("../../api/unified_debug.js").getLogger("maptest.js");
+var mapper = require("./build/Release/api_mapper_test");
+// var dmapper = require("../build/Release/test/outermapper.node");
 
-udebug.on();
-udebug.all_files();
+// udebug.on();
+// udebug.all_files();
 
 console.log("line 4");
 console.log("%d ", mapper.whatnumber(3, "cowboy"));
@@ -31,6 +31,6 @@ var d = c;
 console.dir(d);
 console.log("d area: %d", d.area());
 
-var x = dmapper.doubleminus(4);
-console.log("doubleminus 4: %d", x);
+// var x = dmapper.doubleminus(4);
+// console.log("doubleminus 4: %d", x);
 

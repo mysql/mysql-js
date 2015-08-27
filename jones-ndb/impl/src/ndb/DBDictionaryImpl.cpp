@@ -850,7 +850,6 @@ Handle<Value> getRecordForMapping(const Arguments &args) {
 
 
 void DBDictionaryImpl_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
   Persistent<Object> dbdict_obj = Persistent<Object>(Object::New());
 
   DEFINE_JS_FUNCTION(dbdict_obj, "listTables", listTables);

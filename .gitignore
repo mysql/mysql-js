@@ -1,5 +1,6 @@
 jones-ndb/build/
 jones-ndb/config.gypi
+jones-ndb/impl/test/build/
 jones-ndb/config.waf
 **/.DS_Store
 

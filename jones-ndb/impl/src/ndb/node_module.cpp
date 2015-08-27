@@ -69,7 +69,7 @@ void init_impl(Handle<Object> target) {
 
 
 void initModule(Handle<Object> target) {
-  HandleScope scope;
+  HandleScope scope;   // Keep this
   Persistent<Object> ndb_obj    = Persistent<Object>(Object::New());
   Persistent<Object> ndbapi_obj = Persistent<Object>(Object::New());
   Persistent<Object> impl_obj   = Persistent<Object>(Object::New());

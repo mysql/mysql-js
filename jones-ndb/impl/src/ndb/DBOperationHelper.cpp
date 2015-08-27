@@ -26,7 +26,6 @@
 #include "KeyOperation.h"
 #include "BatchImpl.h"
 #include "NdbWrappers.h"
-#include "v8_binder.h"
 #include "js_wrapper_macros.h"
 #include "NdbRecordObject.h"
 #include "TransactionImpl.h"

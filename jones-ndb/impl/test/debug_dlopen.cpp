@@ -34,7 +34,6 @@
 #include <dlfcn.h>
 
 #include "adapter_global.h"
-#include "v8_binder.h"
 #include "js_wrapper_macros.h"
 
 using namespace v8;

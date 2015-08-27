@@ -22,7 +22,7 @@
 #define NODEJS_ADAPTER_INCLUDE_JSCONVERTER_H
 
 #include "JsWrapper.h"
-#include "v8_binder.h"
+#include "node_buffer.h"
 
 using namespace v8;
 typedef Local<Value> jsvalue;
@@ -126,17 +126,17 @@ public:
   bool toC()  { return jsval->BooleanValue(); };
 };
 
-
-/* const char * is JavaScript String */
-template <>
-class JsValueConverter <const char *> {
-private:
-  v8::String::AsciiValue av;
-
-public: 
-  JsValueConverter(jsvalue v) : av(v)   {};
-  const char * toC()  { return *av;  };
-};
+//
+///* const char * is JavaScript String */
+//template <>
+//class JsValueConverter <const char *> {
+//private:
+//  v8::String::AsciiValue av;
+//
+//public: 
+//  JsValueConverter(jsvalue v) : av(v)   {};
+//  const char * toC()  { return *av;  };
+//};
 
 
 /* char * is Node::Buffer */
@@ -147,20 +147,20 @@ public:
   JsValueConverter(jsvalue v) : jsval(v)   {};
   char * toC()  { 
     DEBUG_PRINT_DETAIL("Unwrapping Node buffer");
-    return V8BINDER_UNWRAP_BUFFER(jsval);  
+    return node::Buffer::Data(jsval->ToObject());
   };
 };
 
 /* Pass through of JavaScript value */
-template <>
-class JsValueConverter <Persistent<Function> > {
-public:
-  Persistent<Function> jspf;
-  JsValueConverter(Local<Value> v) {
-    jspf = Persistent<Function>::New(Local<Function>::Cast(v));
-  };
-  Persistent<Function> toC()  { return jspf;  };
-};
+//template <>
+//class JsValueConverter <Persistent<Function> > {
+//public:
+//  Persistent<Function> jspf;
+//  JsValueConverter(Local<Value> v) {
+//    jspf = Persistent<Function>::New(Local<Function>::Cast(v));
+//  };
+//  Persistent<Function> toC()  { return jspf;  };
+//};
 
 /*****************************************************************
  toJs functions
@@ -182,74 +182,74 @@ public:
 template <typename T> Local<Value> toJS(T cptr) {
   /* This can't be done.  Use wrapPointerInObject() instead. */
   assert("WRONG TEMPLATE SPECIALIZATION" == 0);
-  return Null();
+  // return Null();
 }
 
 // int
 template <>
-inline Local<Value> toJS<int>(int cval) { 
-  return v8::Integer::New(cval);
+inline Local<Value> toJS<int>(int cval) {
+  return v8::Integer::New(Isolate::GetCurrent(), cval);
 }
 
 // unsigned int
 template <>
 inline Local<Value> toJS<unsigned int>(unsigned int cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
 }
 
 // short
 template <>
 inline Local<Value> toJS<short>(short cval) {
-  return v8::Integer::New(cval);
+  return v8::Integer::New(Isolate::GetCurrent(), cval);
 }
 
 // unsigned short
 template <>
 inline Local<Value> toJS<unsigned short>(unsigned short cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
 }
 
 // long 
 template <>
 inline Local<Value> toJS<long>(long cval) {
-  return v8::Integer::New(cval);
+  return v8::Integer::New(Isolate::GetCurrent(), cval);
 }
 
 // unsigned long
 template <>
 inline Local<Value> toJS<unsigned long >(unsigned long cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
 }
 
 // unsigned long long 
 // (the value may actually be too large to represent in JS!?)
 template <>
 inline Local<Value> toJS<unsigned long long>(unsigned long long cval) {
- return v8::Integer::NewFromUnsigned((uint32_t) cval);
+  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), (uint32_t) cval);
 }
 
 // double
 template <>
 inline Local<Value> toJS<double>(double cval) {
-  return Number::New(cval);
+  return Number::New(Isolate::GetCurrent(), cval);
 };
 
 // const char *
 template <> 
 inline Local<Value> toJS<const char *>(const char * cval) {
-  return v8::String::New(cval);
+  return v8::String::NewFromUtf8(Isolate::GetCurrent(), cval);
 }
 
 // const bool * 
 template <> 
 inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  return scope.Close(Boolean::New(*cbp));
+  return Boolean::New(Isolate::GetCurrent(), *cbp);
 }
 
 // bool 
 template <>
 inline Local<Value> toJS<bool>(bool b) {
-  return scope.Close(Boolean::New(b));
+  return Boolean::New(Isolate::GetCurrent(), b);
 }
 
 /*****************************************************************

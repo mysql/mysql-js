@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -18,12 +18,16 @@
  02110-1301  USA
  */
 
+#define NEW_STRING(S) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), S)
+
+#define NEW_SYMBOL(S) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), S, \
+  v8::String::kInternalizedString)
 
 #define THROW_ERROR(MESSAGE) \
-  ThrowException(Exception::Error(String::New(MESSAGE)))
+  ThrowException(Exception::Error(NEW_STRING(MESSAGE))))
   
 #define THROW_TYPE_ERROR(MESSAGE) \
-  ThrowException(Exception::TypeError(String::New(MESSAGE)))
+  ThrowException(Exception::TypeError(NEW_STRING(MESSAGE)))
   
 /*#define REQUIRE_ARGS_LENGTH(N) \
   if(args.Length() != N) { \
@@ -63,16 +67,19 @@
 */
 #define PROHIBIT_CONSTRUCTOR_CALL() assert(! args.IsConstructCall())
 
+#define NEW_FN_TEMPLATE(FN) \
+  v8::FunctionTemplate::New(v8::Isolate::GetCurrent(), FN)
+
 #define DEFINE_JS_FUNCTION(TARGET, NAME, FN) \
-  TARGET->Set(String::NewSymbol(NAME), FunctionTemplate::New(FN)->GetFunction())
+  TARGET->Set(NEW_SYMBOL(NAME), NEW_FN_TEMPLATE(FN)->GetFunction())
 
 /* For SetInternalFieldCount() , see:
  http://groups.google.com/group/v8-users/browse_thread/thread/d8bcb33178a55223
 */  
 
 #define DEFINE_JS_CLASS(JSCLASS, NAME, FN) \
-  JSCLASS = FunctionTemplate::New(FN); \
-  JSCLASS->SetClassName(String::NewSymbol(NAME)); \
+  JSCLASS = NEW_FN_TEMPLATE(FN); \
+  JSCLASS->SetClassName(NEW_SYMBOL(NAME)); \
   JSCLASS->InstanceTemplate()->SetInternalFieldCount(2);
 
 /* This could be replaced with NODE_SET_PROTOTYPE_METHOD from node.h */
@@ -80,15 +87,15 @@
   DEFINE_JS_FUNCTION(CLASS->PrototypeTemplate(), NAME, FN);
 
 #define DEFINE_JS_CONSTRUCTOR(TARGET, NAME, JSCLASS) \
-  TARGET->Set(String::NewSymbol(NAME), \
+  TARGET->Set(NEW_SYMBOL(NAME), \
     Persistent<Function>::New(JSCLASS->GetFunction()));
 
 #define DEFINE_JS_ACCESSOR(TARGET, property, getter)                 \
-  (TARGET)->SetAccessor(String::NewSymbol(property), getter)
+  (TARGET)->SetAccessor(NEW_SYMBOL(property), getter)
 
 #define DEFINE_JS_INT(TARGET, name, value) \
-  (TARGET)->Set(String::NewSymbol(name), \
-                Integer::New(value), \
+  (TARGET)->Set(NEW_SYMBOL(name), \
+                Integer::New(v8::Isolate::GetCurrent(), value), \
                 static_cast<PropertyAttribute>(ReadOnly|DontDelete))
 
 #define DEFINE_JS_CONSTANT(TARGET, constant) \
