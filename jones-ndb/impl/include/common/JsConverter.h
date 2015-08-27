@@ -243,13 +243,13 @@ inline Local<Value> toJS<const char *>(const char * cval) {
 // const bool * 
 template <> 
 inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  return scope.Close(Boolean::New(*cbp));
+  return Boolean::New(*cbp);
 }
 
 // bool 
 template <>
 inline Local<Value> toJS<bool>(bool b) {
-  return scope.Close(Boolean::New(b));
+  return Boolean::New(b);
 }
 
 /*****************************************************************
