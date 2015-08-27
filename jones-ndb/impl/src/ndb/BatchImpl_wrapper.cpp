@@ -98,7 +98,6 @@ Handle<Value> getOperationError(const Arguments & args) {
 }
 
 Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
   return ctx->tryImmediateStartTransaction() ? True() : False();
 }
@@ -158,7 +157,6 @@ Handle<Value> executeAsynch(const Arguments &args) {
 
 
 Handle<Value> readBlobResults(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
   return set->getKeyOperation(n)->readBlobResults();
@@ -166,7 +164,6 @@ Handle<Value> readBlobResults(const Arguments &args) {
 
 
 Handle<Value> BatchImpl_freeImpl(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   delete set;
   set = 0;
