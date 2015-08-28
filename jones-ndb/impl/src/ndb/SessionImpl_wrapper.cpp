@@ -59,12 +59,12 @@ Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
     freeFromGC(dbsi, jsobj);
     return scope.Close(jsobj);
   }
-  return Null();
+  return scope.Close(Null());
 }
 
 SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
-                                      AsyncNdbContext *ctx,
-                                      const char *db, int maxTx) {
+                                  AsyncNdbContext *ctx,
+                                  const char *db, int maxTx) {
   return new SessionImpl(conn, ctx, db, maxTx);
 }
 
