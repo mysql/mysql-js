@@ -25,7 +25,6 @@
 
 #include "JsConverter.h"
 #include "async_common.h"
-#include "common_v8_values.h"
 
 using namespace v8;
 
