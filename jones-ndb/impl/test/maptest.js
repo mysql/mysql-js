@@ -1,7 +1,9 @@
 console.log("line 1");
 // var udebug = require("../../api/unified_debug.js").getLogger("maptest.js");
-var mapper = require("./build/Release/api_mapper_test");
+// var mapper = require("./build/Release/api_mapper_test");
 // var dmapper = require("../build/Release/test/outermapper.node");
+
+var mapper = require("./build/Debug/api_mapper_test");
 
 // udebug.on();
 // udebug.all_files();
@@ -20,9 +22,6 @@ console.log("quadrant: %d", p.quadrant());
 
 console.log("line 13");
 var c = new mapper.Circle(p, 2.5);
-console.log("c:");
-console.dir(c);
-// process.exit();
 
 console.log("line 16");
 console.log("area: %d", c.area());

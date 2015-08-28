@@ -46,8 +46,10 @@ void Point_new_wrapper(const FunctionCallbackInfo<Value> &args) {
 
   Point * p = new Point(arg0.toC(), arg1.toC());
 
-  wrapPointerInObject(p, PointEnvelope, args.This());
-  args.GetReturnValue().Set(args.This());
+  Local<Object> jsObject = PointEnvelope.newWrapper();
+  wrapPointerInObject(p, PointEnvelope, jsObject);
+
+  args.GetReturnValue().Set(jsObject);
 }
 
 
@@ -74,7 +76,7 @@ public:
   }
 };
 
-Envelope CircleEnvelope("Circle");
+CircleEnvelopeClass CircleEnvelope;
 
 void Circle_new_wrapper(const FunctionCallbackInfo<Value> &args) {
   REQUIRE_CONSTRUCTOR_CALL();
@@ -85,8 +87,10 @@ void Circle_new_wrapper(const FunctionCallbackInfo<Value> &args) {
 
   Circle * c = new Circle(* arg0.toC(), arg1.toC());
 
-  wrapPointerInObject(c, CircleEnvelope, args.This());
-  args.GetReturnValue().Set(args.This());
+  Local<Object> jsObject = CircleEnvelope.newWrapper();
+  wrapPointerInObject(c, CircleEnvelope, jsObject);
+
+  args.GetReturnValue().Set(jsObject);
  }
 
 

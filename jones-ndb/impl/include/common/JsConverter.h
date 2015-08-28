@@ -126,17 +126,17 @@ public:
   bool toC()  { return jsval->BooleanValue(); };
 };
 
-//
-///* const char * is JavaScript String */
-//template <>
-//class JsValueConverter <const char *> {
-//private:
-//  v8::String::AsciiValue av;
-//
-//public: 
-//  JsValueConverter(jsvalue v) : av(v)   {};
-//  const char * toC()  { return *av;  };
-//};
+
+/* const char * is JavaScript String */
+template <>
+class JsValueConverter <const char *> {
+private:
+  v8::String::Utf8Value av;
+
+public: 
+  JsValueConverter(jsvalue v) : av(v)   {};
+  const char * toC()  { return *av;  };
+};
 
 
 /* char * is Node::Buffer */
