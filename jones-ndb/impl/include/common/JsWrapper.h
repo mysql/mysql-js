@@ -38,16 +38,22 @@ using v8::FunctionCallbackInfo;
 using v8::FunctionTemplate;
 using v8::PropertyCallbackInfo;
 
-/* https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ
+/* A Persistent<T> can be cast to a Local<T>.  See:
+   https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ
 */
 template<class T>
 inline Local<T> ToLocal(Persistent<T>* p_) {
   return *reinterpret_cast<Local<T>*>(p_);
 }
 
+/* Recast the new (node 0.12) API in terms of the 
+   Arguments type from the previous API
+*/
+typedef FunctionCallbackInfo<Value> Arguments;
+
 /* Signature of a V8 function wrapper
 */
-typedef void V8WrapperFn(const FunctionCallbackInfo<Value> &);
+typedef void V8WrapperFn(const Arguments &);
 typedef Handle<Value> V8Accessor(Local<String>, const PropertyCallbackInfo<Value> &);
 
 /*****************************************************************

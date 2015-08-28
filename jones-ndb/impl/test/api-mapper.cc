@@ -9,7 +9,7 @@ using namespace v8;
 
 /*  C function wrapper 
 */
-void whatnumber_wrapper(const FunctionCallbackInfo<Value>& args) {
+void whatnumber_wrapper(const Arguments & args) {
   REQUIRE_ARGS_LENGTH(2);
   
   JsValueConverter<int>           arg0(args[0]);
@@ -37,7 +37,7 @@ public:
 
 PointEnvelopeClass PointEnvelope;
 
-void Point_new_wrapper(const FunctionCallbackInfo<Value> &args) {
+void Point_new_wrapper(const Arguments &args) {
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(2);
 
@@ -55,7 +55,7 @@ void Point_new_wrapper(const FunctionCallbackInfo<Value> &args) {
 
 /* Point::quadrant() 
 */
-void Point_quadrant_wrapper(const FunctionCallbackInfo<Value> &args) {
+void Point_quadrant_wrapper(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(0);
 
   Point *p = unwrapPointer<Point *>(args.Holder());
@@ -78,7 +78,7 @@ public:
 
 CircleEnvelopeClass CircleEnvelope;
 
-void Circle_new_wrapper(const FunctionCallbackInfo<Value> &args) {
+void Circle_new_wrapper(const Arguments &args) {
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(2);
 
@@ -94,7 +94,7 @@ void Circle_new_wrapper(const FunctionCallbackInfo<Value> &args) {
  }
 
 
-void Circle_area_wrapper(const FunctionCallbackInfo<Value>  &args) {
+void Circle_area_wrapper(const Arguments  &args) {
   REQUIRE_ARGS_LENGTH(0);
   Circle *c = unwrapPointer<Circle *>(args.Holder());
   args.GetReturnValue().Set(c->area());

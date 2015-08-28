@@ -182,7 +182,7 @@ public:
 template <typename T> Local<Value> toJS(T cptr) {
   /* This can't be done.  Use wrapPointerInObject() instead. */
   assert("WRONG TEMPLATE SPECIALIZATION" == 0);
-  return Local<Value>::New(Null(Isolate::GetCurrent()));
+  // return Local<Value>::New(Null(Isolate::GetCurrent()));
 }
 
 // int
@@ -243,13 +243,15 @@ inline Local<Value> toJS<const char *>(const char * cval) {
 // const bool * 
 template <> 
 inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), *cbp));
+  // return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), *cbp));
+  return *cbp ? True(Isolate::GetCurrent()) : False(Isolate::GetCurrent());
 }
 
 // bool 
 template <>
 inline Local<Value> toJS<bool>(bool b) {
-  return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), b));
+  // return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), b));
+  return b ? True(Isolate::GetCurrent()) : False(Isolate::GetCurrent());
 }
 
 /*****************************************************************
