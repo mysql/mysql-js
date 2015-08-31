@@ -72,7 +72,9 @@ class AsyncCall {
     Persistent<Function> callback;
     
     /* Protected constructor chain from AsyncAsyncCall */
-    AsyncCall(Persistent<Function> cb) : callback(cb) {};
+    AsyncCall(Handle<Function> cb) {
+      callback = Persistent<Function>::New(cb);
+    };
 
   public:
     AsyncCall(Local<Value> callbackFunc) {
@@ -116,7 +118,7 @@ private:
 
 protected:
   /* Protected Constructor Chain */
-  AsyncCall_Returning<RETURN_TYPE>(Persistent<Function> callback) :
+  AsyncCall_Returning<RETURN_TYPE>(Handle<Function> callback) :
     AsyncCall(callback), returnValueEnvelope(0), error(0)  {}
     
 public:
@@ -206,7 +208,7 @@ public:
 protected:
   /* Alternative constructor used only by AsyncAsyncCall */
   NativeMethodCall<R, C>(C * obj, 
-                         Persistent<Function> callback, 
+                         Handle<Function> callback,
                          errorHandler_fn_t errHandler) :
     AsyncCall_Returning<R>(callback),
     native_obj(obj),
@@ -222,7 +224,7 @@ public:
   typedef NativeCodeError * (*errorHandler_fn_t)(R, C *);
 
   /* Constructor */
-  AsyncAsyncCall<R, C>(C * obj, Persistent<Function> callback, 
+  AsyncAsyncCall<R, C>(C * obj, Handle<Function> callback,
                        errorHandler_fn_t errHandler) :
     NativeMethodCall<R, C>(obj, callback, errHandler)       {};
   

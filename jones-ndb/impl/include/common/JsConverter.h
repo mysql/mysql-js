@@ -153,13 +153,14 @@ public:
 
 /* Pass through of JavaScript value */
 template <>
-class JsValueConverter <Persistent<Function> > {
+class JsValueConverter <Handle<Function> > {
 public:
-  Persistent<Function> jspf;
+  HandleScope scope;
+  Local<Function> jsval;
   JsValueConverter(Local<Value> v) {
-    jspf = Persistent<Function>::New(Local<Function>::Cast(v));
+    jsval = Local<Function>::New(Local<Function>::Cast(v));
   };
-  Persistent<Function> toC()  { return jspf;  };
+  Handle<Function> toC()  { return jsval;  };
 };
 
 /*****************************************************************
@@ -282,6 +283,6 @@ template <> inline bool isWrappedPointer(const char * typ)     { return false; }
 template <> inline bool isWrappedPointer(const bool * typ)     { return false; }
 template <> inline bool isWrappedPointer(bool typ)             { return false; }
 template <> inline bool isWrappedPointer(char * typ)           { return false; }
-template <> inline bool isWrappedPointer(Persistent<Function> typ) { return false; }
+template <> inline bool isWrappedPointer(Handle<Function> typ) { return false; }
 
 #endif

@@ -144,12 +144,8 @@ Handle<Value> execute(const Arguments &args) {
 */
 Handle<Value> executeAsynch(const Arguments &args) {
   HandleScope scope;
-  /* TODO: The JsValueConverter constructor for arg3 creates a 
-     Persistent<Function> from a Local<Value>, but is there 
-     actually a chain of destructors that will call Dispose() on it? 
-  */  
-  typedef NativeMethodCall_4_<int, BatchImpl, 
-                              int, int, int, Persistent<Function> > MCALL;
+  typedef NativeMethodCall_4_<int, BatchImpl,
+                              int, int, int, Handle<Function> > MCALL;
   MCALL mcall(& BatchImpl::executeAsynch, args);
   mcall.run();
   return scope.Close(mcall.jsReturnVal());

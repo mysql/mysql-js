@@ -36,7 +36,7 @@ public:
   bool tryImmediateStartTransaction();
   int execute(int execType, int abortOption, int forceSend);
   int executeAsynch(int execType, int abortOption, int forceSend,
-                    v8::Persistent<v8::Function> execCompleteCallback);
+                    v8::Handle<v8::Function> execCompleteCallback);
   void prepare(NdbTransaction *);
   const NdbError & getNdbError();
   void registerClosedTransaction();
@@ -73,7 +73,7 @@ inline int BatchImpl::execute(int execType, int abortOption, int forceSend) {
 }
 
 inline int BatchImpl::executeAsynch(int execType, int abortOption, int forceSend,
-                                   v8::Persistent<v8::Function> callback) {
+                                   v8::Handle<v8::Function> callback) {
   return transactionImpl->executeAsynch(this, execType, abortOption, forceSend, callback);
 }
 

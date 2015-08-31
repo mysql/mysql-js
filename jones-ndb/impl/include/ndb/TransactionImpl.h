@@ -78,7 +78,7 @@ public:
   */
   int executeAsynch(BatchImpl *operations,
                     int execType, int abortOption, int forceSend,
-                    v8::Persistent<v8::Function> execCompleteCallback);
+                    v8::Handle<v8::Function> execCompleteCallback);
 
   /* Close the NDB Transaction.  This could happen in a worker thread.
   */
