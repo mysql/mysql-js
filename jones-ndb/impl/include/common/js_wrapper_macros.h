@@ -77,24 +77,11 @@
  http://groups.google.com/group/v8-users/browse_thread/thread/d8bcb33178a55223
 */  
 
-#define DEFINE_JS_CLASS(JSCLASS, NAME, FN) \
-  JSCLASS = NEW_FN_TEMPLATE(FN); \
-  JSCLASS->SetClassName(NEW_SYMBOL(NAME)); \
-  JSCLASS->InstanceTemplate()->SetInternalFieldCount(2);
-
-/* This could be replaced with NODE_SET_PROTOTYPE_METHOD from node.h */
-#define DEFINE_JS_METHOD(CLASS, NAME, FN) \
-  DEFINE_JS_FUNCTION(CLASS->PrototypeTemplate(), NAME, FN);
-
-#define DEFINE_JS_CONSTRUCTOR(TARGET, NAME, JSCLASS) \
-  TARGET->Set(NEW_SYMBOL(NAME), \
-    Persistent<Function>::New(JSCLASS->GetFunction()));
-
 #define DEFINE_JS_ACCESSOR(TARGET, property, getter)                 \
   (TARGET)->SetAccessor(NEW_SYMBOL(property), getter)
 
 #define DEFINE_JS_INT(TARGET, name, value) \
-  (TARGET)->Set(NEW_SYMBOL(name), \
+  (TARGET)->ForceSet(NEW_SYMBOL(name), \
                 Integer::New(v8::Isolate::GetCurrent(), value), \
                 static_cast<PropertyAttribute>(ReadOnly|DontDelete))
 

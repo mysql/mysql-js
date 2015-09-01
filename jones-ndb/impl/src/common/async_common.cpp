@@ -67,7 +67,7 @@ void main_thd_complete_async_call(AsyncCall *m) {
 }
 
 
-void main_thd_complete(uv_work_t *req UV_COMPLETE_EXTRA_ARG) {
+void main_thd_complete(uv_work_t *req, int) {
   AsyncCall *m = (AsyncCall *) req->data;
   main_thd_complete_async_call(m);
   delete req;

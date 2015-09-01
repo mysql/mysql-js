@@ -24,6 +24,7 @@
 #include "SharedList.h"
 #include "ConcurrentFlag.h"
 #include "TransactionImpl.h"
+#include "async_common.h"
 
 /* V1 NdbWaitGroup must be created with a fixed maximum size.
    V2 NdbWaitGroup is created with an initial size and will grow as needed.
@@ -43,7 +44,7 @@
 #endif
 
 extern "C" {
-  void ioCompleted(uv_async_t *, int);
+  void ioCompleted(uv_async_t *);
   void ndbTxCompleted(int, NdbTransaction *, void *);
   PTHREAD_RETURN_TYPE run_ndb_listener_thread(void *);
 }
@@ -66,7 +67,7 @@ public:
 
   /* Friend functions have C linkage but call the protected methods */
   friend PTHREAD_RETURN_TYPE ::run_ndb_listener_thread(void *);
-  friend void ::ioCompleted(uv_async_t *, int);
+  friend void ::ioCompleted(uv_async_t *);
   
 protected:
   void * runListenerThread();

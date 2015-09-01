@@ -38,7 +38,7 @@ V8WrapperFn destroy;
 class AsyncNdbContextEnvelopeClass : public Envelope {
 public:
   AsyncNdbContextEnvelopeClass() : Envelope("AsyncNdbContext") {
-    HandleScope scope;
+    EscapableHandleScope scope(Isolate::GetCurrent());
     addMethod("AsyncNdbContext", createAsyncNdbContext);
     addMethod("shutdown", shutdown);
     addMethod("delete", destroy);
@@ -59,7 +59,7 @@ void createAsyncNdbContext(const Arguments &args) {
   AsyncNdbContext * ctx = new AsyncNdbContext(arg0.toC());
   Local<Object> wrapper = AsyncNdbContextEnvelope.newWrapper();
   wrapPointerInObject(ctx, AsyncNdbContextEnvelope, wrapper);
-  return wrapper;
+  args.GetReturnValue().Set(wrapper);
 }
 
 

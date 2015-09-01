@@ -129,14 +129,6 @@ private:
   int                        tcNodeId;
 };
 
-inline v8::Persistent<v8::Object> TransactionImpl::getJsWrapper() const {
-  return jsWrapper;
-}
-
-inline v8::Persistent<v8::Object> TransactionImpl::getWrappedEmptyOperationSet() const {
-  return emptyOpSetWrapper;
-}
-
 inline bool TransactionImpl::isClosed() const {
   return ! (bool) ndbTransaction;
 }

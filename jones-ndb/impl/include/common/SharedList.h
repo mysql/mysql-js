@@ -19,11 +19,10 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
-#include "node.h"
+// #include "node.h"
 #include "uv.h"
-
-#include "compat_uv.h"
 
 
 /* Simple LIFO sharable list.

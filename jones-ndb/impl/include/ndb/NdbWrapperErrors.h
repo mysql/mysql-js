@@ -18,6 +18,7 @@
  02110-1301  USA
 */
 
+#include "js_wrapper_macros.h"
 #include "NdbWrappers.h"
 
 class NdbNativeCodeError : public NativeCodeError {
@@ -26,9 +27,10 @@ public:
   NdbNativeCodeError(const NdbError &err) : NativeCodeError(0), ndberr(err)  {}
     
   Local<Value> toJS() {
-    Local<String> JSMsg = String::New(ndberr.message);
+    Local<String> JSMsg = String::NewFromUtf8(v8::Isolate::GetCurrent(), ndberr.message);
     Local<Object> Obj = Exception::Error(JSMsg)->ToObject();
-    Obj->Set(String::NewSymbol("ndb_error"), NdbError_Wrapper(ndberr));
+    
+    Obj->Set(NEW_SYMBOL("ndb_error"), NdbError_Wrapper(ndberr));
 
     return Obj;
   }

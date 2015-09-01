@@ -19,7 +19,6 @@
  */
 
 #include "adapter_global.h"
-#include "async_common.h"
 #include "NdbWrapperErrors.h"
 #include "AsyncNdbContext.h"
 #include "AsyncMethodCall.h"
@@ -37,7 +36,7 @@ PTHREAD_RETURN_TYPE run_ndb_listener_thread(void *v) {
    If the waiter thread called uv_async_send() more than once within an 
    interval, libuv might coalesce those into a single call here.
 */
-void ioCompleted(uv_async_t *ndbWaitLoop, int) {
+void ioCompleted(uv_async_t *ndbWaitLoop) {
   AsyncNdbContext * ctx = (AsyncNdbContext *) ndbWaitLoop->data;
   ctx->completeCallbacks();
 }

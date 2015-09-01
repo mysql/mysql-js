@@ -19,20 +19,13 @@
  */
 
 #include "uv.h"
-#include "compat_uv.h"
-
-#ifdef OLDER_UV_AFTER_WORK_CB
-#define UV_COMPLETE_EXTRA_ARG
-#else 
-#define UV_COMPLETE_EXTRA_ARG , int
-#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
   void work_thd_run(uv_work_t *);
-  void main_thd_complete(uv_work_t * UV_COMPLETE_EXTRA_ARG);
+  void main_thd_complete(uv_work_t *, int);
 
 #ifdef __cplusplus
 }

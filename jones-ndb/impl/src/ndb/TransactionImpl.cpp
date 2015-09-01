@@ -155,3 +155,12 @@ int TransactionImpl::executeAsynch(BatchImpl *operations,
                                              callback);
 }                    
 
+// THESE WERE ORIGINALLY INLINED --- MOVE THEM BACK AFTER FIXED
+
+v8::Persistent<v8::Object> TransactionImpl::getJsWrapper() const {
+  return jsWrapper;
+}
+
+v8::Persistent<v8::Object> TransactionImpl::getWrappedEmptyOperationSet() const {
+  return emptyOpSetWrapper;
+}
