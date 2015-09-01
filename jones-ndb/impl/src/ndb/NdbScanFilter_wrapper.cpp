@@ -45,7 +45,7 @@ V8WrapperFn getNdbOperation;
 class NdbScanFilterEnvelopeClass : public Envelope {
 public:
   NdbScanFilterEnvelopeClass() : Envelope("NdbScanFilter") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     WRAPPER_FUNCTION( begin);
     WRAPPER_FUNCTION( end);
     WRAPPER_FUNCTION( istrue);

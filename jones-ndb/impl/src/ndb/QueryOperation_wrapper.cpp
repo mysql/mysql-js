@@ -233,7 +233,7 @@ Handle<Value> querySetTransactionImpl(const Arguments &args) {
   MCALL mcall(& QueryOperation::setTransactionImpl, args);
   mcall.run();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // void prepareAndExecute() 
@@ -246,7 +246,7 @@ Handle<Value> queryPrepareAndExecute(const Arguments &args) {
   MCALL * mcallptr = new MCALL(& QueryOperation::prepareAndExecute, args);
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // fetchAllResults()
@@ -258,7 +258,7 @@ Handle<Value> queryFetchAllResults(const Arguments &args) {
   MCALL * mcallptr = new MCALL(& QueryOperation::fetchAllResults, args);
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 void freeQueryResultAtGC(char *data, void *hint) {
@@ -303,7 +303,7 @@ Handle<Value> queryClose(const Arguments & args) {
   typedef NativeVoidMethodCall_0_<QueryOperation> NCALL;
   NCALL * ncallptr = new NCALL(& QueryOperation::close, args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 #define JSSTRING(a) Persistent<String>::New(String::NewSymbol(a))

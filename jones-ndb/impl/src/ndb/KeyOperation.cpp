@@ -162,5 +162,5 @@ Handle<Value> KeyOperation::readBlobResults() {
     }
     return scope.Close(results);
   }
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }

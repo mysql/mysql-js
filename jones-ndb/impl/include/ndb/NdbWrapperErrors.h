@@ -20,20 +20,17 @@
 
 #include "NdbWrappers.h"
 
-using v8::Arguments;
-
 class NdbNativeCodeError : public NativeCodeError {
 public:
   const NdbError & ndberr;
   NdbNativeCodeError(const NdbError &err) : NativeCodeError(0), ndberr(err)  {}
     
   Local<Value> toJS() {
-    HandleScope scope;
     Local<String> JSMsg = String::New(ndberr.message);
     Local<Object> Obj = Exception::Error(JSMsg)->ToObject();
     Obj->Set(String::NewSymbol("ndb_error"), NdbError_Wrapper(ndberr));
 
-    return scope.Close(Obj);
+    return Obj;
   }
 };
 

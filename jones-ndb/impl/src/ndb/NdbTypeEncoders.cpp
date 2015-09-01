@@ -447,14 +447,14 @@ void pack_bigendian(uint64_t val, char * buf, unsigned int len) {
 Handle<Value> UnsupportedTypeReader(const NdbDictionary::Column *col, 
                                     char *buffer, size_t offset) {
   //TODO EXCEPTION
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 Handle<Value> UnsupportedTypeWriter(const NdbDictionary::Column * col,
                                     Handle<Value> value, 
                                     char *buffer, size_t offset) {
   //TODO EXCEPTION
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // Int
@@ -1636,7 +1636,7 @@ Handle<Value> DateWriter(const NdbDictionary::Column * col,
 // BlobReader is a no-op
 Handle<Value> BlobReader(const NdbDictionary::Column *, char *, size_t) {
   EscapableHandleScope scope(args.GetIsolate());
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // The BlobWriter does write anything, but it does verify that the 

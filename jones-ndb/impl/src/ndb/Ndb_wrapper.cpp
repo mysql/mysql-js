@@ -40,7 +40,7 @@ V8WrapperFn getAutoIncValue,
 class NdbEnvelopeClass : public Envelope {
 public:
   NdbEnvelopeClass() : Envelope("Ndb") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("getNdbError", getNdbError<Ndb>);
     addMethod("close", closeNdb);
     addMethod("getStatistics", getStatistics);
@@ -79,7 +79,7 @@ Handle<Value> create_ndb(const Arguments &args) {
   MCALL * mcallptr = new MCALL(& async_create_ndb, args);
   mcallptr->wrapReturnValueAs(& NdbEnvelope);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
@@ -102,7 +102,7 @@ Handle<Value> getAutoIncValue(const Arguments &args) {
                                  uint32_t> MCALL;
   MCALL * mcallptr = new MCALL(& getAutoInc, args);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
@@ -142,7 +142,7 @@ Handle<Value> closeNdb(const Arguments &args) {
   typedef NativeDestructorCall<Ndb> MCALL;
   MCALL * mcallptr = new MCALL(args);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

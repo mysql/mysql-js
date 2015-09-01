@@ -41,7 +41,7 @@ V8WrapperFn ScanOp_readBlobResults;
 class ScanOperationEnvelopeClass : public Envelope {
 public: 
   ScanOperationEnvelopeClass() : Envelope("ScanOperation") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("getNdbError", getNdbError<ScanOperation>);
     addMethod("prepareAndExecute", prepareAndExecute);
     addMethod("fetchResults", scanFetchResults);
@@ -80,7 +80,7 @@ Handle<Value> prepareAndExecute(const Arguments &args) {
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // void close()
@@ -89,7 +89,7 @@ Handle<Value> ScanOperation_close(const Arguments & args) {
   typedef NativeVoidMethodCall_0_<ScanOperation> NCALL;
   NCALL * ncallptr = new NCALL(& ScanOperation::close, args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // int nextResult(buffer) 
@@ -113,7 +113,7 @@ Handle<Value> scanFetchResults(const Arguments & args) {
   MCALL * ncallptr = new MCALL(& ScanOperation::fetchResults, args);
   ncallptr->errorHandler = getNdbErrorIfLessThanZero;
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 Handle<Value> ScanOp_readBlobResults(const Arguments & args) {

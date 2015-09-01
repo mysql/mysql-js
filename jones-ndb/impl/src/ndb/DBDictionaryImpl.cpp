@@ -186,7 +186,7 @@ void ListTablesCall::doAsyncCallback(Local<Object> ctx) {
    arg1: database name
    arg2: user_callback
 */
-Handle<Value> listTables(const Arguments &args) {
+void listTables(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);  
   REQUIRE_ARGS_LENGTH(3);
   
@@ -195,7 +195,7 @@ Handle<Value> listTables(const Arguments &args) {
   DEBUG_PRINT("listTables in database: %s", ncallptr->arg1);
   ncallptr->runAsync();
 
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
@@ -729,12 +729,12 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
    arg2: table name
    arg3: user_callback
 */
-Handle<Value> getTable(const Arguments &args) {
+void getTable(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   REQUIRE_ARGS_LENGTH(4);
   GetTableCall * ncallptr = new GetTableCall(args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

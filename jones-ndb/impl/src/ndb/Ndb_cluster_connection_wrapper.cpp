@@ -63,7 +63,7 @@ Handle<Value> Ndb_cluster_connection_set_name(const Arguments &args) {
   MCALL mcall(& Ndb_cluster_connection::set_name, args);
   mcall.run();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 /* int connect(int no_retries=30, int retry_delay_in_seconds=1, int verbose=0);
@@ -146,7 +146,7 @@ Handle<Value> Ndb_cluster_connection_delete_wrapper(const Arguments &args) {
   typedef NativeDestructorCall<Ndb_cluster_connection> MCALL;
   MCALL * mcallptr = new MCALL(args);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

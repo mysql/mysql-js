@@ -41,7 +41,7 @@ V8WrapperFn getOperationError,
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
     addMethod("getOperationError", getOperationError);
     addMethod("execute", execute);
@@ -136,7 +136,7 @@ void execute(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(4);
   TxExecuteAndCloseCall * ncallptr = new TxExecuteAndCloseCall(args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
@@ -148,14 +148,14 @@ void executeAsynch(const Arguments &args) {
                               int, int, int, Handle<Function> > MCALL;
   MCALL mcall(& BatchImpl::executeAsynch, args);
   mcall.run();
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(mcall.jsReturnVal());
 }
 
 
 void readBlobResults(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
-  return set->getKeyOperation(n)->readBlobResults();
+  args.GetReturnValue().Set(set->getKeyOperation(n)->readBlobResults());
 }
 
 
@@ -164,7 +164,7 @@ void BatchImpl_freeImpl(const Arguments &args) {
   delete set;
   set = 0;
   wrapPointerInObject(set, BatchImplEnvelope, args.Holder());
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

@@ -40,7 +40,7 @@ V8WrapperFn SessionImplDestructor;
 class SessionImplEnvelopeClass : public Envelope {
 public:
   SessionImplEnvelopeClass() : Envelope("SessionImpl") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("seizeTransaction", seizeTransaction);
     addMethod("releaseTransaction", releaseTransaction);
     addMethod("freeTransactions", freeTransactions);
@@ -81,7 +81,7 @@ Handle<Value> newSessionImpl(const Arguments & args) {
   MCALL * mcallptr = new MCALL(& asyncNewSessionImpl, args);
   mcallptr->wrapReturnValueAs(& SessionImplEnvelope);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 /* The seizeTransaction() wrapper is unusual because a 
@@ -106,7 +106,7 @@ Handle<Value> freeTransactions(const Arguments & args) {
   EscapableHandleScope scope(args.GetIsolate());
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 Handle<Value> SessionImplDestructor(const Arguments &args) {
@@ -114,7 +114,7 @@ Handle<Value> SessionImplDestructor(const Arguments &args) {
   typedef NativeDestructorCall<SessionImpl> DCALL;
   DCALL * dcall = new DCALL(args);
   dcall->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 void SessionImpl_initOnLoad(Handle<Object> target) {

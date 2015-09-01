@@ -41,7 +41,7 @@ public:
      to be reused in JavaScript many times without creating a new wrapper
      each time.
   */
-  v8::Handle<v8::Value> getJsWrapper() const;
+  v8::Persistent<v8::Object> getJsWrapper() const;
 
 
   /****** Executing Operations *******/
@@ -92,7 +92,7 @@ public:
   /* Fetch an empty BatchImpl that can be used for stand-alone 
      COMMIT and ROLLBACK calls.
   */
-  v8::Handle<v8::Value> getWrappedEmptyOperationSet() const;
+  v8::Persistent<v8::Object> getWrappedEmptyOperationSet() const;
 
 
   /****** Accessing operation errors *******/
@@ -119,21 +119,21 @@ protected:
   bool isClosed() const;
 
 private: 
-  int64_t                   token;
-  v8::Persistent<v8::Value> jsWrapper;
-  v8::Persistent<v8::Value> emptyOpSetWrapper;
-  BatchImpl *          emptyOpSet;  
-  SessionImpl * const     parent;
-  TransactionImpl *    next;
-  NdbTransaction *          ndbTransaction; 
-  int                       tcNodeId;
+  int64_t                    token;
+  v8::Persistent<v8::Object> jsWrapper;
+  v8::Persistent<v8::Object> emptyOpSetWrapper;
+  BatchImpl *                emptyOpSet;
+  SessionImpl * const        parent;
+  TransactionImpl *          next;
+  NdbTransaction *           ndbTransaction;
+  int                        tcNodeId;
 };
 
-inline v8::Handle<v8::Value> TransactionImpl::getJsWrapper() const {
+inline v8::Persistent<v8::Object> TransactionImpl::getJsWrapper() const {
   return jsWrapper;
 }
 
-inline v8::Handle<v8::Value> TransactionImpl::getWrappedEmptyOperationSet() const {
+inline v8::Persistent<v8::Object> TransactionImpl::getWrappedEmptyOperationSet() const {
   return emptyOpSetWrapper;
 }
 

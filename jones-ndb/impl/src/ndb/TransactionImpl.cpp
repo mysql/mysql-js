@@ -41,12 +41,13 @@ TransactionImpl::TransactionImpl(SessionImpl *impl) :
 {
   setJsWrapper(this);
   emptyOpSet = new BatchImpl(this, 0);
-  emptyOpSetWrapper = getWrappedObject(emptyOpSet);
+  emptyOpSetWrapper.Reset(v8::Isolate::GetCurrent(), getWrappedObject(emptyOpSet));
 }
 
 TransactionImpl::~TransactionImpl() {
   DEBUG_MARKER(UDEB_DETAIL);
-  jsWrapper.Dispose();
+  jsWrapper.Reset();
+  jsWrapper.MakeWeak();
 }
 
 
