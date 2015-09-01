@@ -63,7 +63,7 @@ Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
     freeFromGC(set, jsobj);
     return scope.Close(jsobj);
   }
-  return Null();
+  return Null(Isolate::GetCurrent());
 }
 
 Handle<Value> BatchImpl_Recycle(Handle<Object> oldWrapper, 
@@ -83,9 +83,9 @@ Persistent<Value> getWrappedObject(BatchImpl *set) {
   return Persistent<Value>::New(localObj);
 }
 
-Handle<Value> getOperationError(const Arguments & args) {
+void getOperationError(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
@@ -97,7 +97,7 @@ Handle<Value> getOperationError(const Arguments & args) {
   return scope.Close(NdbError_Wrapper(*err));
 }
 
-Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
+void tryImmediateStartTransaction(const Arguments &args) {
   BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
   return ctx->tryImmediateStartTransaction() ? True() : False();
 }
@@ -131,8 +131,8 @@ void TxExecuteAndCloseCall::doAsyncCallback(Local<Object> context) {
   NativeMethodCall_3_<int, BatchImpl, int, int, int>::doAsyncCallback(context);
 }
 
-Handle<Value> execute(const Arguments &args) {
-  HandleScope scope;
+void execute(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   REQUIRE_ARGS_LENGTH(4);
   TxExecuteAndCloseCall * ncallptr = new TxExecuteAndCloseCall(args);
   ncallptr->runAsync();
@@ -142,8 +142,8 @@ Handle<Value> execute(const Arguments &args) {
 
 /* IMMEDIATE.
 */
-Handle<Value> executeAsynch(const Arguments &args) {
-  HandleScope scope;
+void executeAsynch(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, BatchImpl,
                               int, int, int, Handle<Function> > MCALL;
   MCALL mcall(& BatchImpl::executeAsynch, args);
@@ -152,14 +152,14 @@ Handle<Value> executeAsynch(const Arguments &args) {
 }
 
 
-Handle<Value> readBlobResults(const Arguments &args) {
+void readBlobResults(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
   return set->getKeyOperation(n)->readBlobResults();
 }
 
 
-Handle<Value> BatchImpl_freeImpl(const Arguments &args) {
+void BatchImpl_freeImpl(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   delete set;
   set = 0;

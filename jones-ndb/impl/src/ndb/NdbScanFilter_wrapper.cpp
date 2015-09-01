@@ -63,7 +63,7 @@ NdbScanFilterEnvelopeClass NdbScanFilterEnvelope;
 
 Handle<Value> newNdbScanFilter(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   PROHIBIT_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
@@ -81,7 +81,7 @@ Handle<Value> newNdbScanFilter(const Arguments & args) {
 
 Handle<Value> begin(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, NdbScanFilter::Group> NCALL;
   NCALL ncall(& NdbScanFilter::begin, args);
   ncall.run();
@@ -90,7 +90,7 @@ Handle<Value> begin(const Arguments & args) {
 
 Handle<Value> end(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::end, args);
   ncall.run();
@@ -99,7 +99,7 @@ Handle<Value> end(const Arguments & args) {
 
 Handle<Value> istrue(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::istrue, args);
   ncall.run();
@@ -108,7 +108,7 @@ Handle<Value> istrue(const Arguments & args) {
 
 Handle<Value> isfalse(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::isfalse, args);
   ncall.run();
@@ -124,7 +124,7 @@ Handle<Value> isfalse(const Arguments & args) {
    ARG4: Length
 */
 Handle<Value> cmp(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   NdbScanFilter * filter = unwrapPointer<NdbScanFilter *>(args.Holder());
   int condition = args[0]->Int32Value();
@@ -142,7 +142,7 @@ Handle<Value> cmp(const Arguments &args) {
 
 Handle<Value> isnull(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, int> NCALL;
   NCALL ncall(& NdbScanFilter::isnull, args);
   ncall.run();
@@ -151,7 +151,7 @@ Handle<Value> isnull(const Arguments & args) {
 
 Handle<Value> isnotnull(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, int> NCALL;
   NCALL ncall(& NdbScanFilter::isnotnull, args);
   ncall.run();
@@ -160,7 +160,7 @@ Handle<Value> isnotnull(const Arguments & args) {
 
 Handle<Value> getInterpretedCode(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<const NdbInterpretedCode *, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::getInterpretedCode, args);
   ncall.wrapReturnValueAs(getConstNdbInterpretedCodeEnvelope());
@@ -170,7 +170,7 @@ Handle<Value> getInterpretedCode(const Arguments & args) {
 
 Handle<Value> getNdbOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<NdbOperation *, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::getNdbOperation, args);
   ncall.run();
@@ -180,7 +180,7 @@ Handle<Value> getNdbOperation(const Arguments & args) {
 
 #define WRAP_CONSTANT(X) DEFINE_JS_INT(sfObj, #X, NdbScanFilter::X)
 void NdbScanFilter_initOnLoad(Handle<Object> target) {  
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   Persistent<String> sfKey = Persistent<String>(String::NewSymbol("NdbScanFilter"));
   Persistent<Object> sfObj = Persistent<Object>(Object::New());

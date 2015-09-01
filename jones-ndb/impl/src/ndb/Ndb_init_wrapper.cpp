@@ -32,7 +32,7 @@ using namespace v8;
 */
 Handle<Value> Ndb_init_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
 
@@ -48,7 +48,7 @@ Handle<Value> Ndb_init_wrapper(const Arguments &args) {
 */
 Handle<Value> Ndb_end_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(1);  
   

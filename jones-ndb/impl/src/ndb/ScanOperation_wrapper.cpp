@@ -60,7 +60,7 @@ Envelope * getScanOperationEnvelope() {
 
 // Constructor wrapper
 Handle<Value> newScanOperation(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   ScanOperation * s = new ScanOperation(args);
   Local<Object> wrapper = ScanOperationEnvelope.newWrapper();
   wrapPointerInObject(s, ScanOperationEnvelope, wrapper);
@@ -72,7 +72,7 @@ Handle<Value> newScanOperation(const Arguments &args) {
 // void prepareAndExecute() 
 // ASYNC
 Handle<Value> prepareAndExecute(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, ScanOperation> MCALL;
@@ -96,7 +96,7 @@ Handle<Value> ScanOperation_close(const Arguments & args) {
 // IMMEDIATE
 Handle<Value> scanNextResult(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, ScanOperation, char *> MCALL;
   MCALL mcall(& ScanOperation::nextResult, args);
   mcall.run();

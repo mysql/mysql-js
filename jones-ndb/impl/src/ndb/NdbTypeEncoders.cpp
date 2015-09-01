@@ -169,7 +169,7 @@ const NdbTypeEncoder * getEncoderForColumn(const NdbDictionary::Column *col) {
 /* read(col, buffer, offset)
 */
 Handle<Value> encoderRead(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
@@ -182,7 +182,7 @@ Handle<Value> encoderRead(const Arguments & args) {
 /* write(col, value, buffer, offset) 
 */
 Handle<Value> encoderWrite(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
@@ -210,32 +210,32 @@ struct encoder_stats_t {
 /* Exports to JavaScript 
 */
 Handle<Value> GET_read_strings_externalized(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.read_strings_externalized));
 }
 
 Handle<Value> GET_read_strings_created(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.read_strings_created));
 }
 
 Handle<Value> GET_read_strings_recoded(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.read_strings_recoded));
 }
 
 Handle<Value> GET_externalized_text_writes(Local<String>, const AccessorInfo &){
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.externalized_text_writes));
 }
 
 Handle<Value> GET_direct_writes(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.direct_writes));
 }
 
 Handle<Value> GET_recode_writes(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return scope.Close(Number::New(stats.recode_writes));
 }
 
@@ -243,7 +243,6 @@ Handle<Value> bufferForText(const Arguments &);
 Handle<Value> textFromBuffer(const Arguments &);
 
 void NdbTypeEncoders_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
   DEFINE_JS_FUNCTION(target, "encoderRead", encoderRead);
   DEFINE_JS_FUNCTION(target, "encoderWrite", encoderWrite);
   DEFINE_JS_FUNCTION(target, "bufferForText", bufferForText);
@@ -461,7 +460,7 @@ Handle<Value> UnsupportedTypeWriter(const NdbDictionary::Column * col,
 // Int
 Handle<Value> IntReader(const NdbDictionary::Column *col, 
                         char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(int, i, buffer+offset);
   return scope.Close(Integer::New(i));                        
 }                        
@@ -488,7 +487,7 @@ Handle<Value> IntWriter(const NdbDictionary::Column * col,
 // Unsigned Int
 Handle<Value> UnsignedIntReader(const NdbDictionary::Column *col, 
                                 char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(uint32_t, i, buffer+offset);
   return scope.Close(Integer::NewFromUnsigned(i));
 }                        
@@ -514,7 +513,7 @@ Handle<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
 template <typename INTSZ>
 Handle<Value> smallintReader(const NdbDictionary::Column *col, 
                              char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(INTSZ, i, buffer+offset);
   return scope.Close(Integer::New(i));
 }
@@ -540,7 +539,7 @@ Handle<Value> smallintWriter(const NdbDictionary::Column * col,
 // Medium signed & unsigned int types
 Handle<Value> MediumReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   char * cbuf = buffer+offset;
   int i = sint3korr(cbuf);
   return scope.Close(Integer::New(i));
@@ -567,7 +566,7 @@ Handle<Value> MediumWriter(const NdbDictionary::Column * col,
 
 Handle<Value> MediumUnsignedReader(const NdbDictionary::Column *col, 
                                    char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   char * cbuf = buffer+offset;
   int i = uint3korr(cbuf);
   return scope.Close(Integer::New(i));
@@ -656,7 +655,7 @@ template <typename BIGT>
 Handle<Value> bigintReader(const NdbDictionary::Column *col, 
                             char *buffer, size_t offset) {
   char strbuf[32];
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(BIGT, bigint, buffer+offset);
   bigintToString(strbuf, bigint);
   return scope.Close(String::New(strbuf));
@@ -678,7 +677,7 @@ Handle<Value> bigintWriter(const NdbDictionary::Column *col,
 // Decimal.  JS Value to and from decimal types is treated as a string.
 Handle<Value> DecimalReader(const NdbDictionary::Column *col,
                             char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   char strbuf[96];
   int scale = col->getScale();
   int prec  = col->getPrecision();
@@ -690,7 +689,7 @@ Handle<Value> DecimalReader(const NdbDictionary::Column *col,
 
 Handle<Value> DecimalWriter(const NdbDictionary::Column *col,
                             Handle<Value> value, char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   char strbuf[96];
   if(! (isfinite(value->NumberValue()))) {
     return K_HY000;
@@ -707,7 +706,7 @@ Handle<Value> DecimalWriter(const NdbDictionary::Column *col,
 Handle<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
                                     Handle<Value> value, char *buffer, 
                                     size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return value->NumberValue() >= 0 ?
     DecimalWriter(col, value, buffer, offset) :
     K_22003_OutOfRange;
@@ -718,7 +717,7 @@ Handle<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
 template<typename FPT> 
 Handle<Value> fpReader(const NdbDictionary::Column *col, 
                        char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(FPT, value, buffer+offset);
   return scope.Close(Number::New(value)); 
 }
@@ -739,7 +738,7 @@ Handle<Value> fpWriter(const NdbDictionary::Column * col,
 
 Handle<Value> BinaryReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   node::Buffer * b = node::Buffer::New(buffer + offset, col->getLength());
   return scope.Close(b->handle_);
 }
@@ -763,7 +762,7 @@ Handle<Value> BinaryWriter(const NdbDictionary::Column * col,
 template<typename LENGTHTYPE>
 Handle<Value> varbinaryReader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * data = buffer+offset+sizeof(length);
   node::Buffer *b = node::Buffer::New(data, length);
@@ -993,7 +992,7 @@ Handle<Value> bufferForText(const Arguments & args) {
 
 Handle<Object> getBufferForText(const NdbDictionary::Column *col, 
                                 Handle<String> str) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
   size_t length, utf8Length;
   node::Buffer * buffer;
@@ -1057,7 +1056,7 @@ Handle<Value> textFromBuffer(const Arguments & args) {
 
 Handle<String> getTextFromBuffer(const NdbDictionary::Column *col, 
                                  Handle<Object> bufferObj) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
   size_t len = node::Buffer::Length(bufferObj);
@@ -1106,7 +1105,7 @@ Handle<String> getTextFromBuffer(const NdbDictionary::Column *col,
 
 Handle<Value> CharReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   char * str = buffer+offset;
   Local<String> string;
   size_t len = col->getLength();
@@ -1174,7 +1173,7 @@ Handle<Value> CharReader(const NdbDictionary::Column *col,
 Handle<Value> CharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
                             char *buffer, size_t offset) {
-  HandleScope scope;  
+  EscapableHandleScope scope(args.GetIsolate());  
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
   writer(col, strval, buffer+offset, true);
@@ -1185,7 +1184,7 @@ Handle<Value> CharWriter(const NdbDictionary::Column * col,
 template<typename LENGTHTYPE>
 Handle<Value> varcharReader(const NdbDictionary::Column *col, 
                             char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * str = buffer+offset+sizeof(length);
   Local<String> string;
@@ -1239,7 +1238,7 @@ template<typename LENGTHTYPE>
 Handle<Value> varcharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
                             char *buffer, size_t offset) {  
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
 
@@ -1285,7 +1284,7 @@ public:
 };
  
 Handle<Value> TimeHelper::toJs() {
-  HandleScope scope;  
+  EscapableHandleScope scope(args.GetIsolate());  
   Local<Object> obj = Object::New();
   obj->Set(K_sign,     Integer::New(sign));
   obj->Set(K_year,     Integer::New(year));
@@ -1303,7 +1302,7 @@ TimeHelper::TimeHelper(Handle<Value> mysqlTime) :
   sign(+1), valid(false), 
   year(0), month(0), day(0), hour(0), minute(0), second(0), microsec(0)
 {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   int nkeys = 0;
 
   if(mysqlTime->IsObject()) {
@@ -1351,7 +1350,7 @@ void writeFraction(const NdbDictionary::Column *col, int usec, char *buf) {
 // Timstamp
 Handle<Value> TimestampReader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(uint32_t, timestamp, buffer+offset);
   double jsdate = timestamp * 1000;  // unix seconds-> js milliseconds
   return scope.Close(Date::New(jsdate));
@@ -1378,7 +1377,7 @@ Handle<Value> TimestampWriter(const NdbDictionary::Column * col,
 */
 Handle<Value> Timestamp2Reader(const NdbDictionary::Column *col, 
                                char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   uint32_t timeSeconds = unpack_bigendian(buffer+offset, 4);
   int timeMilliseconds = readFraction(col, buffer+offset+4) / 1000;
   double jsdate = ((double) timeSeconds * 1000) + timeMilliseconds;
@@ -1406,7 +1405,7 @@ Handle<Value> Timestamp2Writer(const NdbDictionary::Column * col,
 */
 Handle<Value> DatetimeReader(const NdbDictionary::Column *col, 
                              char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   TimeHelper tm;
   LOAD_ALIGNED_DATA(uint64_t, int_datetime, buffer+offset);
   int int_date = int_datetime / 1000000;
@@ -1449,7 +1448,7 @@ Handle<Value> DatetimeWriter(const NdbDictionary::Column * col,
 */
 Handle<Value> Datetime2Reader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   TimeHelper tm;
   uint64_t packedValue = unpack_bigendian(buffer+offset, 5);
   tm.microsec = readFraction(col, buffer+offset+5);
@@ -1486,7 +1485,7 @@ Handle<Value> Datetime2Writer(const NdbDictionary::Column * col,
 // Year
 Handle<Value> YearReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   LOAD_ALIGNED_DATA(uint8_t, myr, buffer+offset);
   int year = 1900 + myr;
   return scope.Close(Number::New(year));
@@ -1507,7 +1506,7 @@ Handle<Value> YearWriter(const NdbDictionary::Column * col,
 // Time.  Uses TimeHelper.
 Handle<Value> TimeReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   TimeHelper tm; 
   char * cbuf = buffer+offset;
   int sqlTime = sint3korr(cbuf);
@@ -1545,7 +1544,7 @@ Handle<Value> TimeWriter(const NdbDictionary::Column * col,
 */
 Handle<Value> Time2Reader(const NdbDictionary::Column *col, 
                           char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   TimeHelper tm;
   int prec = col->getPrecision();
   int fsp_size = (1 + prec) / 2;
@@ -1610,7 +1609,7 @@ Handle<Value> Time2Writer(const NdbDictionary::Column * col,
 // Date
 Handle<Value> DateReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   TimeHelper tm; 
   char * cbuf = buffer+offset;
   int encodedDate = uint3korr(cbuf);
@@ -1636,7 +1635,7 @@ Handle<Value> DateWriter(const NdbDictionary::Column * col,
 // BLOB
 // BlobReader is a no-op
 Handle<Value> BlobReader(const NdbDictionary::Column *, char *, size_t) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   return Undefined();
 }
 

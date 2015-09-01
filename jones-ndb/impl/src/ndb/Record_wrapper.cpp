@@ -57,7 +57,7 @@ RecordEnvelopeClass RecordEnvelope;
 /****  CALL THIS FROM C++ CODE TO CREATE A WRAPPED RECORD OBJECT. 
 *****/
 Handle<Value> Record_Wrapper(const Record *rec) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   Local<Object> js_record = RecordEnvelope.newWrapper();
   wrapPointerInObject(rec, RecordEnvelope, js_record);
@@ -68,7 +68,7 @@ Handle<Value> Record_Wrapper(const Record *rec) {
 
 Handle<Value> getColumnOffset_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(1);
 
@@ -83,7 +83,7 @@ Handle<Value> getColumnOffset_wrapper(const Arguments &args) {
 
 Handle<Value> getBufferSize_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
 
@@ -97,7 +97,7 @@ Handle<Value> getBufferSize_wrapper(const Arguments &args) {
 
 Handle<Value> setNull_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(2);
 
@@ -111,7 +111,7 @@ Handle<Value> setNull_wrapper(const Arguments &args) {
 
 Handle<Value> isNull_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(2);
 
@@ -127,7 +127,7 @@ Handle<Value> isNull_wrapper(const Arguments &args) {
 /* read(columnNumber, buffer)
 */
 Handle<Value> record_encoderRead(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const Record * record = unwrapPointer<Record *>(args.Holder());
   int columnNumber = args[0]->Uint32Value();
   char * buffer = node::Buffer::Data(args[1]->ToObject());
@@ -144,7 +144,7 @@ Handle<Value> record_encoderRead(const Arguments & args) {
 /* write(columnNumber, buffer, value)
 */
 Handle<Value> record_encoderWrite(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   const Record * record = unwrapPointer<const Record *>(args.Holder());
   int columnNumber = args[0]->Uint32Value();

@@ -107,7 +107,7 @@ Handle<Value> getAutoIncValue(const Arguments &args) {
 
 
 Handle<Value> getStatistics(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Ndb *ndb = unwrapPointer<Ndb *>(args.Holder());
   Local<Object> stats = Object::New();
   for(int i = 0 ; i < Ndb::NumClientStatistics ; i ++) {
@@ -120,7 +120,7 @@ Handle<Value> getStatistics(const Arguments &args) {
 
 
 Handle<Value> getConnectionStatistics(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Uint64 ndb_stats[Ndb::NumClientStatistics];
 
   Ndb *ndb = unwrapPointer<Ndb *>(args.Holder());

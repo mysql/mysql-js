@@ -75,7 +75,7 @@ public:
 QueryOperationEnvelopeClass QueryOperationEnvelope;
 
 Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   if(queryOp) {
     Local<Object> jsobj = QueryOperationEnvelope.newWrapper();
@@ -239,7 +239,7 @@ Handle<Value> querySetTransactionImpl(const Arguments &args) {
 // void prepareAndExecute() 
 // ASYNC
 Handle<Value> queryPrepareAndExecute(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
@@ -252,7 +252,7 @@ Handle<Value> queryPrepareAndExecute(const Arguments &args) {
 // fetchAllResults()
 // ASYNC
 Handle<Value> queryFetchAllResults(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
   MCALL * mcallptr = new MCALL(& QueryOperation::fetchAllResults, args);
@@ -309,8 +309,6 @@ Handle<Value> queryClose(const Arguments & args) {
 #define JSSTRING(a) Persistent<String>::New(String::NewSymbol(a))
 
 void QueryOperation_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-
   Persistent<Object> ibObj = Persistent<Object>(Object::New());
   Persistent<String> ibKey = Persistent<String>(String::NewSymbol("QueryOperation"));
   target->Set(ibKey, ibObj);

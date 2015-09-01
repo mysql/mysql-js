@@ -51,7 +51,7 @@ public:
 SessionImplEnvelopeClass SessionImplEnvelope;
 
 Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   if(dbsi) {
     Local<Object> jsobj = SessionImplEnvelope.newWrapper();
@@ -71,7 +71,7 @@ SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
 
 Handle<Value> newSessionImpl(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   PROHIBIT_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(5);
@@ -95,7 +95,7 @@ Handle<Value> seizeTransaction(const Arguments & args) {
 }
 
 Handle<Value> releaseTransaction(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<bool, SessionImpl, TransactionImpl *> MCALL;
   MCALL mcall(& SessionImpl::releaseTransaction, args);
   mcall.run();
@@ -103,7 +103,7 @@ Handle<Value> releaseTransaction(const Arguments & args) {
 }
 
 Handle<Value> freeTransactions(const Arguments & args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
   return Undefined();
@@ -118,8 +118,6 @@ Handle<Value> SessionImplDestructor(const Arguments &args) {
 }
 
 void SessionImpl_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-
   Persistent<String> jsKey = Persistent<String>(String::NewSymbol("DBSession"));
   Persistent<Object> jsObj = Persistent<Object>(Object::New());
 

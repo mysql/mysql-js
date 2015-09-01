@@ -831,7 +831,7 @@ Handle<Value> getDefaultValue(const NdbDictionary::Column *col) {
 */
 Handle<Value> getRecordForMapping(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const NdbDictionary::Table *table = 
     unwrapPointer<const NdbDictionary::Table *>(args[0]->ToObject());
   Ndb * ndb = unwrapPointer<Ndb *>(args[1]->ToObject());

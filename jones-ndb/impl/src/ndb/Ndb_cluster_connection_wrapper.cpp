@@ -33,7 +33,7 @@ Envelope NdbccEnvelope("Ndb_cluster_connection");
 */
 Handle<Value> Ndb_cluster_connection_new_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
@@ -71,7 +71,7 @@ Handle<Value> Ndb_cluster_connection_set_name(const Arguments &args) {
 */
 Handle<Value> Ndb_cluster_connection_connect(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<Value> ret = Local<Value>(*Undefined());
   
   REQUIRE_MIN_ARGS(3);
@@ -102,7 +102,7 @@ Handle<Value> Ndb_cluster_connection_connect(const Arguments &args) {
 */
 Handle<Value> Ndb_cluster_connection_wait_until_ready(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<Value> ret = Local<Value>(*Undefined());
   
   REQUIRE_MIN_ARGS(2);
@@ -129,7 +129,7 @@ Handle<Value> Ndb_cluster_connection_wait_until_ready(const Arguments &args) {
 */
 Handle<Value> Ndb_cluster_connection_node_id(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);  
   
@@ -152,7 +152,7 @@ Handle<Value> Ndb_cluster_connection_delete_wrapper(const Arguments &args) {
 
 Handle<Value> get_latest_error_msg_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
   

@@ -140,7 +140,7 @@ Envelope * getConstNdbInterpretedCodeEnvelope() {
 
 Handle<Value> newNdbInterpretedCode(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   PROHIBIT_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
@@ -157,7 +157,7 @@ Handle<Value> newNdbInterpretedCode(const Arguments & args) {
 
 Handle<Value> load_const_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_null, args);
   ncall.run();
@@ -166,7 +166,7 @@ Handle<Value> load_const_null(const Arguments &args) {
 
 Handle<Value> load_const_u16(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_u16, args);
   ncall.run();
@@ -175,7 +175,7 @@ Handle<Value> load_const_u16(const Arguments &args) {
 
 Handle<Value> load_const_u32(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_u32, args);
   ncall.run();
@@ -186,7 +186,7 @@ Handle<Value> load_const_u32(const Arguments &args) {
 /* TODO: read_attr and write_attr have two forms */
 Handle<Value> read_attr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, 
                               const NdbDictionary::Column *> NCALL;
   NCALL ncall(& NdbInterpretedCode::read_attr, args);
@@ -196,7 +196,7 @@ Handle<Value> read_attr(const Arguments &args) {
 
 Handle<Value> write_attr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               const NdbDictionary::Column *,
                               uint32_t> NCALL;
@@ -207,7 +207,7 @@ Handle<Value> write_attr(const Arguments &args) {
 
 Handle<Value> add_reg(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::add_reg, args);
@@ -217,7 +217,7 @@ Handle<Value> add_reg(const Arguments &args) {
 
 Handle<Value> sub_reg(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::sub_reg, args);
@@ -227,7 +227,7 @@ Handle<Value> sub_reg(const Arguments &args) {
 
 Handle<Value> def_label(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, int> NCALL;
   NCALL ncall(& NdbInterpretedCode::def_label, args);
   ncall.run();
@@ -236,7 +236,7 @@ Handle<Value> def_label(const Arguments &args) {
 
 Handle<Value> branch_label(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_label, args);
   ncall.run();
@@ -245,7 +245,7 @@ Handle<Value> branch_label(const Arguments &args) {
 
 Handle<Value> branch_ge(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ge, args);
@@ -255,7 +255,7 @@ Handle<Value> branch_ge(const Arguments &args) {
 
 Handle<Value> branch_gt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_gt, args);
@@ -265,7 +265,7 @@ Handle<Value> branch_gt(const Arguments &args) {
 
 Handle<Value> branch_le(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_le, args);
@@ -275,7 +275,7 @@ Handle<Value> branch_le(const Arguments &args) {
 
 Handle<Value> branch_lt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_lt, args);
@@ -285,7 +285,7 @@ Handle<Value> branch_lt(const Arguments &args) {
 
 Handle<Value> branch_eq(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_eq, args);
@@ -295,7 +295,7 @@ Handle<Value> branch_eq(const Arguments &args) {
 
 Handle<Value> branch_ne(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ne, args);
@@ -305,7 +305,7 @@ Handle<Value> branch_ne(const Arguments &args) {
 
 Handle<Value> branch_ne_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ne_null, args);
@@ -315,7 +315,7 @@ Handle<Value> branch_ne_null(const Arguments &args) {
 
 Handle<Value> branch_eq_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_eq_null, args);
@@ -336,7 +336,7 @@ Handle<Value> branch_eq_null(const Arguments &args) {
 /* Utility function */
 const void * getValueAddr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<Object> buffer = args[0]->ToObject();
   size_t offset = args[1]->Uint32Value();
   return node::Buffer::Data(buffer) + offset;
@@ -344,7 +344,7 @@ const void * getValueAddr(const Arguments &args) {
 
 Handle<Value> branch_col_eq(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_eq(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -353,7 +353,7 @@ Handle<Value> branch_col_eq(const Arguments &args) {
 
 Handle<Value> branch_col_ne(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_ne(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -362,7 +362,7 @@ Handle<Value> branch_col_ne(const Arguments &args) {
 
 Handle<Value> branch_col_lt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_lt(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -371,7 +371,7 @@ Handle<Value> branch_col_lt(const Arguments &args) {
 
 Handle<Value> branch_col_le(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_le(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -380,7 +380,7 @@ Handle<Value> branch_col_le(const Arguments &args) {
 
 Handle<Value> branch_col_gt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_gt(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -389,7 +389,7 @@ Handle<Value> branch_col_gt(const Arguments &args) {
 
 Handle<Value> branch_col_ge(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_ge(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
@@ -398,7 +398,7 @@ Handle<Value> branch_col_ge(const Arguments &args) {
 
 Handle<Value> branch_col_and_mask_eq_mask(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_eq_mask(
@@ -408,7 +408,7 @@ Handle<Value> branch_col_and_mask_eq_mask(const Arguments &args) {
 
 Handle<Value> branch_col_and_mask_ne_mask(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_ne_mask(
@@ -418,7 +418,7 @@ Handle<Value> branch_col_and_mask_ne_mask(const Arguments &args) {
 
 Handle<Value> branch_col_and_mask_eq_zero(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_eq_zero(
@@ -428,7 +428,7 @@ Handle<Value> branch_col_and_mask_eq_zero(const Arguments &args) {
 
 Handle<Value> branch_col_and_mask_ne_zero(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_ne_zero(
@@ -442,7 +442,7 @@ Handle<Value> branch_col_and_mask_ne_zero(const Arguments &args) {
  ****************************************************************/
 Handle<Value> branch_col_eq_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_eq_null, args);
@@ -452,7 +452,7 @@ Handle<Value> branch_col_eq_null(const Arguments &args) {
 
 Handle<Value> branch_col_ne_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_ne_null, args);
@@ -463,7 +463,7 @@ Handle<Value> branch_col_ne_null(const Arguments &args) {
 // FIXME: arg[0] needs to be converted from String
 Handle<Value> branch_col_like(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, NdbInterpretedCode,  
                               const void *, uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_like, args);
@@ -474,7 +474,7 @@ Handle<Value> branch_col_like(const Arguments &args) {
 // FIXME: arg[0] needs to be converted from String
 Handle<Value> branch_col_notlike(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, NdbInterpretedCode,  
                               const void *, uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_notlike, args);
@@ -490,7 +490,7 @@ Handle<Value> branch_col_notlike(const Arguments &args) {
 
 Handle<Value> interpret_exit_ok(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_ok, args);
   ncall.run();
@@ -499,7 +499,7 @@ Handle<Value> interpret_exit_ok(const Arguments &args) {
 
 Handle<Value> interpret_exit_nok(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_nok, args);
   ncall.run();
@@ -508,7 +508,7 @@ Handle<Value> interpret_exit_nok(const Arguments &args) {
 
 Handle<Value> interpret_exit_last_row(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_last_row, args);
   ncall.run();
@@ -517,7 +517,7 @@ Handle<Value> interpret_exit_last_row(const Arguments &args) {
 
 Handle<Value> add_val(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::add_val, args);
@@ -527,7 +527,7 @@ Handle<Value> add_val(const Arguments &args) {
 
 Handle<Value> sub_val(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::sub_val, args);
@@ -537,7 +537,7 @@ Handle<Value> sub_val(const Arguments &args) {
 
 Handle<Value> def_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::def_sub, args);
   ncall.run();
@@ -546,7 +546,7 @@ Handle<Value> def_sub(const Arguments &args) {
 
 Handle<Value> call_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::call_sub, args);
   ncall.run();
@@ -555,7 +555,7 @@ Handle<Value> call_sub(const Arguments &args) {
 
 Handle<Value> ret_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::ret_sub, args);
   ncall.run();
@@ -564,7 +564,7 @@ Handle<Value> ret_sub(const Arguments &args) {
 
 Handle<Value> finalise(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::finalise, args);
   ncall.run();
@@ -573,7 +573,7 @@ Handle<Value> finalise(const Arguments &args) {
 
 Handle<Value> NdbInterpretedCode_getTable_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<const NdbDictionary::Table*, 
                                    NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::getTable, args);
@@ -584,7 +584,7 @@ Handle<Value> NdbInterpretedCode_getTable_wrapper(const Arguments &args) {
 
 Handle<Value> getWordsUsed(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<uint32_t, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::getWordsUsed, args);
   ncall.run();
@@ -593,13 +593,9 @@ Handle<Value> getWordsUsed(const Arguments &args) {
 
 
 void NdbInterpretedCode_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-
   Persistent<String> ic_key = Persistent<String>(String::NewSymbol("NdbInterpretedCode"));
   Persistent<Object> ic_obj = Persistent<Object>(Object::New());
-
   target->Set(ic_key, ic_obj);
-
   DEFINE_JS_FUNCTION(ic_obj, "create", newNdbInterpretedCode);
 }
 

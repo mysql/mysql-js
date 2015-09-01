@@ -117,7 +117,7 @@ void nroSetter(Local<String>, Local<Value> value, const AccessorInfo& info)
  * args.This(): VO built from the mapping-specific InstanceTemplate
 */
 Handle<Value> nroConstructor(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   if(args.IsConstructCall()) {
     /* Unwrap record from mapData */
@@ -152,7 +152,7 @@ Handle<Value> nroConstructor(const Arguments &args) {
 */
 Handle<Value> getValueObjectConstructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<FunctionTemplate> ft = FunctionTemplate::New();
   Local<ObjectTemplate> inst = ft->InstanceTemplate();
   inst->SetInternalFieldCount(2);
@@ -197,7 +197,7 @@ Handle<Value> getValueObjectConstructor(const Arguments &args) {
 
 
 Handle<Value> isValueObject(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   bool answer = false;  
   Handle<Value> v = args[0];
 
@@ -216,21 +216,20 @@ Handle<Value> isValueObject(const Arguments &args) {
 
 
 Handle<Value> getValueObjectWriteCount(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   NdbRecordObject * nro = unwrapPointer<NdbRecordObject *>(args[0]->ToObject());
   return scope.Close(Number::New(nro->getWriteCount()));
 }
 
 
 Handle<Value> prepareForUpdate(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   NdbRecordObject * nro = unwrapPointer<NdbRecordObject *>(args[0]->ToObject());
   return scope.Close(nro->prepare());
 }
 
 
 void ValueObject_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
   DEFINE_JS_FUNCTION(target, "getValueObjectConstructor", getValueObjectConstructor);
   DEFINE_JS_FUNCTION(target, "isValueObject", isValueObject);
   DEFINE_JS_FUNCTION(target, "getValueObjectWriteCount", getValueObjectWriteCount);

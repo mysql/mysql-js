@@ -60,7 +60,7 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op);
    Returns: BatchImpl
 */
 Handle<Value> DBOperationHelper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   int length = args[0]->Int32Value();
   const Local<Object> array = args[1]->ToObject();

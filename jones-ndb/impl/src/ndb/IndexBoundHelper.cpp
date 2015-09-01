@@ -54,7 +54,7 @@ void debug_print_bound(NdbIndexScanOperation::IndexBound * bound) {
 }
 
 Handle<Value> newIndexBound(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   const Local<Object> spec = args[0]->ToObject();
   Local<Value> v;

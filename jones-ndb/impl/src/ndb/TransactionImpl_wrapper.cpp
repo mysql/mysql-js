@@ -42,7 +42,7 @@ public:
 TransactionImplEnvelopeClass TransactionImplEnvelope;
 
 void setJsWrapper(TransactionImpl *ctx) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<Object> localObj = TransactionImplEnvelope.newWrapper();
   wrapPointerInObject(ctx, TransactionImplEnvelope, localObj);
   ctx->jsWrapper = Persistent<Value>::New(localObj);
@@ -50,7 +50,7 @@ void setJsWrapper(TransactionImpl *ctx) {
 
 
 Handle<Value> getEmptyOperationSet(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   TransactionImpl * ctx = unwrapPointer<TransactionImpl *>(args.Holder());
   return ctx->getWrappedEmptyOperationSet();

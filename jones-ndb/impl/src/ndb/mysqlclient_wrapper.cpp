@@ -27,7 +27,7 @@
 using namespace v8;
 
 Handle<Value> mysql_init_wrapper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);  // there is one arg but we supply it here
   
@@ -40,7 +40,7 @@ Handle<Value> mysql_init_wrapper(const Arguments &args) {
 
 
 Handle<Value> mysql_close_wrapper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
   
@@ -52,7 +52,7 @@ Handle<Value> mysql_close_wrapper(const Arguments &args) {
 
 
 Handle<Value> mysql_real_connect_wrapper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(8);
   
@@ -66,7 +66,7 @@ Handle<Value> mysql_real_connect_wrapper(const Arguments &args) {
 
 
 Handle<Value> mysql_error_wrapper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(1);
   
@@ -78,7 +78,7 @@ Handle<Value> mysql_error_wrapper(const Arguments &args) {
 
 
 Handle<Value> mysql_query_wrapper(const Arguments &args) {
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(2);
   

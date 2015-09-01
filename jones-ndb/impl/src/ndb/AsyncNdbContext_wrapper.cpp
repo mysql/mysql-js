@@ -39,7 +39,7 @@ Envelope AsyncNdbContextEnvelope("AsyncNdbContext");
 
 /* Constructor 
 */
-Handle<Value> createAsyncNdbContext(const Arguments &args) {
+void createAsyncNdbContext(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
 
   REQUIRE_CONSTRUCTOR_CALL();
@@ -49,37 +49,36 @@ Handle<Value> createAsyncNdbContext(const Arguments &args) {
   AsyncNdbContext * ctx = new AsyncNdbContext(arg0.toC());
   
   wrapPointerInObject(ctx, AsyncNdbContextEnvelope, args.This());
-  return args.This();
+  args.GetReturnValue.Set(args.This());
 }
 
 
 /* shutdown() 
    IMMEDIATE
 */
-Handle<Value> shutdown(const Arguments &args) {
+void shutdown(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);  
   REQUIRE_ARGS_LENGTH(0);
   
   typedef NativeVoidMethodCall_0_<AsyncNdbContext> NCALL;
   NCALL ncall(& AsyncNdbContext::shutdown, args);
   ncall.run();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 /* Call destructor 
 */
-Handle<Value> destroy(const Arguments &args) {
+void destroy(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);  
   REQUIRE_ARGS_LENGTH(0);
 
   AsyncNdbContext *c = unwrapPointer<AsyncNdbContext *>(args.Holder());
   delete c;
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
 void AsyncNdbContext_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
   Local<FunctionTemplate> JsAsyncNdbContext;
   
   DEFINE_JS_CLASS(JsAsyncNdbContext, "AsyncNdbContext", createAsyncNdbContext);
