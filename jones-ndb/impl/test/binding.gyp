@@ -16,7 +16,8 @@
       [
          "c-api.cc",
          "api-mapper.cc",
-         "../src/common/async_common.cpp"
+         "../src/common/async_common.cpp",
+         "../src/common/unified_debug.cpp"
       ]
     }
   ]

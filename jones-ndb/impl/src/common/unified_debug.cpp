@@ -27,6 +27,7 @@
 
 #include <node.h>
 
+#include "JsWrapper.h"
 #include "js_wrapper_macros.h"
 #include "adapter_global.h"
 
@@ -43,7 +44,7 @@ int udeb_per_file    = 0;
 
 using namespace v8;
 
-Persistent<Function> JSLoggerFunction;
+Persistent<Object> JSLoggerFunction;
 
 /* Initialized to all zeros? */
 unsigned char bit_index[UDEB_SOURCE_FILE_BITMASK_BYTES];
@@ -134,12 +135,12 @@ void udeb_print(const char *src_path, int level, const char *fmt, ...) {
 
   if(udeb_initialized && log_level(src_file) >= level) {
 #if SEND_MESSAGES_TO_JAVASCRIPT
-    HandleScope scope;
-    Handle<Value> jsArgs[3];
-    jsArgs[0] = Number::New(level);
-    jsArgs[1] = String::New(src_file);
-    jsArgs[2] = String::New(message, sz);
-    JSLoggerFunction->Call(Context::GetCurrent()->Global(), 3, jsArgs);
+//    HandleScope scope;
+//    Handle<Value> jsArgs[3];
+//    jsArgs[0] = Number::New(level);
+//    jsArgs[1] = String::New(src_file);
+//    jsArgs[2] = String::New(message, sz);
+//    JSLoggerFunction->Call(Context::GetCurrent()->Global(), 3, jsArgs);
 #else
     sprintf(message + sz, "\n");
     fputs(message, stderr);
@@ -155,44 +156,42 @@ void udeb_print(const char *src_path, int level, const char *fmt, ...) {
  * setLogger():  JS introduces itself to C and provides a logging function
  ***************/
 
-Handle<Value> udeb_setLogger(const Arguments &args) {
-  HandleScope scope;
+void udeb_setLogger(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
 
   if(! udeb_initialized) {
-    Local<Function> f = Function::Cast(* (args[0]));
-    JSLoggerFunction = Persistent<Function>::New(f);
+    JSLoggerFunction.Reset(args.GetIsolate(), args[0]->ToObject());
+    // JSLoggerFunction.Reset(Function::Cast(* (args[0])));
+    // Local<Function> f = Function::Cast(* (args[0]));
+    // JSLoggerFunction = Persistent<Function>::New(f);
     udeb_initialized = 1;
 
     udeb_print("unified_debug.cpp", UDEB_DEBUG, 
                "unified_debug.cpp C++ unified_debug enabled");
   }
-  return scope.Close(True());
+  args.GetReturnValue().Set(true);
 }
 
 
-Handle<Value> udeb_setLevel(const Arguments &args) {
-  HandleScope scope;
-  
+void udeb_setLevel(const Arguments &args) {
   udeb_level = args[0]->Int32Value();
   // C code cannot log below UDEB_INFO
   uni_debug = (udeb_per_file || (udeb_level > UDEB_NOTICE)) ? 1 : 0;
   
   // leave uni_debug off until stack corruption in udeb_print() is fixed
   //uni_debug = 0;
-
   
-  return scope.Close(True());
+  args.GetReturnValue().Set(true);
 }
 
-Handle<Value> udeb_setFileLevel(const Arguments &args) {
-  HandleScope scope;
-  char filename[250];
+void udeb_setFileLevel(const Arguments &args) {
+  unsigned char filename[250];
   
-  args[0]->ToString()->WriteAscii(filename, 0, 250);
-  index_set(udeb_hash(udeb_basename(filename)));
+  args[0]->ToString()->WriteOneByte(filename, 0, 250);
+  index_set(udeb_hash(udeb_basename((const char *) filename)));
   uni_debug = udeb_per_file = 1;
 
-  return scope.Close(True());
+  args.GetReturnValue().Set(true);
 }
 
 void udebug_initOnLoad(Handle<Object> target) {
