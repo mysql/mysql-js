@@ -66,7 +66,7 @@ Envelope NdbDictTableEnv("const NdbDictionary::Table");
 Envelope NdbDictColumnEnv("const NdbDictionary::Column");
 Envelope NdbDictIndexEnv("const NdbDictionary::Index");
 
-Handle<Value> getColumnType(const NdbDictionary::Column *);
+const char * getColumnType(const NdbDictionary::Column *);
 Handle<Value> getIntColumnUnsigned(const NdbDictionary::Column *);
 Handle<Value> getDefaultValue(const NdbDictionary::Column *);
 
@@ -639,7 +639,7 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
            ReadOnly);
   
   obj->Set(String::NewSymbol("columnType"), 
-           getColumnType(col), 
+           String::New(getColumnType(col)),
            ReadOnly);
 
   obj->Set(String::NewSymbol("isIntegral"),
@@ -738,8 +738,7 @@ void getTable(const Arguments &args) {
 }
 
 
-Handle<Value> getColumnType(const NdbDictionary::Column * col) {
-  HandleScope scope;
+const char * getColumnType(const NdbDictionary::Column * col) {
 
   /* Based on ndb_constants.h */
   const char * typenames[NDB_TYPE_MAX] = {
@@ -782,15 +781,7 @@ Handle<Value> getColumnType(const NdbDictionary::Column * col) {
 #endif
   };
 
-  const char * name = typenames[col->getType()];
-
-  if(name == 0 || *name == 0) {   /* One of the undefined types */
-    return scope.Close(Undefined());
-  }
-
-  Local<String> s = String::New(name);
-  
-  return scope.Close(s);
+  return typenames[col->getType()];
 }
 
 
