@@ -159,6 +159,9 @@ template <> inline void wrapPointerInObject(unsigned long long int, Envelope &, 
 template <> inline void wrapPointerInObject(unsigned int, Envelope &, Handle<Object>) {
   assert(0);
 }
+template <> inline void wrapPointerInObject(double, Envelope &, Handle<Object>) {
+  assert(0);
+}
 
 /*****************************************************************
  Unwrap a native pointer from a JavaScript object

@@ -27,7 +27,7 @@ using namespace v8;
 
 
 void report_error(TryCatch * err) {
-  HandleScope scope;
+  EscapableHandleScope scope(Isolate::GetCurrent());
   String::Utf8Value exception(err->Exception());
   String::Utf8Value stack(err->StackTrace());
   Handle<Message> message = err->Message();
@@ -51,11 +51,11 @@ void work_thd_run(uv_work_t *req) {
 
 
 void main_thd_complete_async_call(AsyncCall *m) {
-  v8::HandleScope scope;
+  EscapableHandleScope scope(Isolate::GetCurrent());
   v8::TryCatch try_catch;
   try_catch.SetVerbose(true);
 
-  m->doAsyncCallback(v8::Context::GetCurrent()->Global());
+  m->doAsyncCallback(Isolate::GetCurrent()->GetCurrentContext()->Global());
 
   /* exceptions */
   if(try_catch.HasCaught()) {

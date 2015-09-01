@@ -3,6 +3,7 @@
 
 #include "JsConverter.h"
 #include "js_wrapper_macros.h"
+#include "NativeMethodCall.h"
 
 using namespace v8;
 
@@ -68,11 +69,13 @@ void Point_quadrant_wrapper(const Arguments &args) {
 /* Circle */
 
 V8WrapperFn Circle_area_wrapper;
+V8WrapperFn Circle_area_async_wrapper;
 
 class CircleEnvelopeClass : public Envelope {
 public:
   CircleEnvelopeClass() : Envelope("Circle") {
     addMethod("area", Circle_area_wrapper);
+    addMethod("areaAsync", Circle_area_async_wrapper);
   }
 };
 
@@ -100,6 +103,13 @@ void Circle_area_wrapper(const Arguments  &args) {
   args.GetReturnValue().Set(c->area());
 }
 
+void Circle_area_async_wrapper(const Arguments &args) {
+  REQUIRE_ARGS_LENGTH(1);
+  typedef NativeMethodCall_0_<double, Circle> MCALL;
+  MCALL * mcallptr = new MCALL(& Circle::area, args);
+  mcallptr->runAsync();
+  args.GetReturnValue().SetUndefined();
+}
 
 /* Initializer for the whole module
 */

@@ -71,18 +71,20 @@ class AsyncCall {
     Persistent<Function> callback;
     
     /* Protected constructor chain from AsyncAsyncCall */
-    AsyncCall(Handle<Function> cb) {
-      callback = Persistent<Function>::New(cb);
+    AsyncCall(Handle<Function> cb)
+    {
+      callback.Reset(Isolate::GetCurrent(), cb);
     };
 
   public:
-    AsyncCall(Local<Value> callbackFunc) {
-      callback = Persistent<Function>::New(Local<Function>::Cast(callbackFunc));
+    AsyncCall(Local<Value> callbackFunc)
+    {
+      callback.Reset(Isolate::GetCurrent(), Local<Function>::Cast(callbackFunc));
     }
 
     /* Destructor */
     virtual ~AsyncCall() {
-      callback.Dispose();
+      callback.Reset();
     }
 
     /* Methods (Pure virtual) */
@@ -94,14 +96,15 @@ class AsyncCall {
 
     /* Base Class Fixed Methods */
     void runAsync() {
-      if (callback->IsCallable()) {
+      // if (callback->IsCallable()) {
         uv_work_t * req = new uv_work_t;
         req->data = (void *) this;
         uv_queue_work(uv_default_loop(), req, work_thd_run, main_thd_complete);
-      }
-      else {
-        ThrowException(Exception::TypeError(String::New("Uncallable Callback")));
-      }
+      // }
+      //else {
+      //   Isolate::GetCurrent()->ThrowException(
+      //    Exception::TypeError(String::New("Uncallable Callback")));
+      //}
     }
 };
 
@@ -143,36 +146,31 @@ public:
   }
   
   Local<Value> jsReturnVal() {
-    HandleScope scope;
+    EscapableHandleScope scope(Isolate::GetCurrent());
 
     if(isWrappedPointer(return_val)) {
       DEBUG_ASSERT(returnValueEnvelope);
       Local<Object> obj = returnValueEnvelope->newWrapper();
       wrapPointerInObject(return_val, *returnValueEnvelope, obj);
-      return scope.Close(obj);
+      return scope.Escape(obj);
     }
     else {
-      /* Optimization for a common case */
-      if(return_val == 0) {
-        return scope.Close(Zero());
-      } else {
-        return scope.Close(toJS(return_val));
-      }
+      return scope.Escape(toJS(return_val));
     }
   }
 
   /* doAsyncCallback() is an async callback, run by main_thread_complete().
   */
   void doAsyncCallback(Local<Object> context) {
-    HandleScope scope;
+    EscapableHandleScope scope(Isolate::GetCurrent());
     Handle<Value> cb_args[2];
 
     if(error) cb_args[0] = error->toJS();
-    else      cb_args[0] = Null();
+    else      cb_args[0] = Null(Isolate::GetCurrent());
 
     cb_args[1] = jsReturnVal();
 
-    callback->Call(context, 2, cb_args);
+    ToLocal(& callback)->Call(context, 2, cb_args);
   }
 };
 

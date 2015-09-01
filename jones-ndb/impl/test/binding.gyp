@@ -15,7 +15,8 @@
       'sources':
       [
          "c-api.cc",
-         "api-mapper.cc"
+         "api-mapper.cc",
+         "../src/common/async_common.cpp"
       ]
     }
   ]

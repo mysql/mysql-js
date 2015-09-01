@@ -1,9 +1,9 @@
 console.log("line 1");
 // var udebug = require("../../api/unified_debug.js").getLogger("maptest.js");
-// var mapper = require("./build/Release/api_mapper_test");
 // var dmapper = require("../build/Release/test/outermapper.node");
 
-var mapper = require("./build/Debug/api_mapper_test");
+var mapper = require("./build/Release/api_mapper_test");
+// var mapper = require("./build/Debug/api_mapper_test");
 
 // udebug.on();
 // udebug.all_files();
@@ -29,6 +29,10 @@ console.log("area: %d", c.area());
 var d = c;
 console.dir(d);
 console.log("d area: %d", d.area());
+
+c.areaAsync(function(err, val) {
+  console.log("Got Async Area callback", err, val);
+});
 
 // var x = dmapper.doubleminus(4);
 // console.log("doubleminus 4: %d", x);

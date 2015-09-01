@@ -182,8 +182,8 @@ public:
 // pointer types
 template <typename T> Local<Value> toJS(T cptr) {
   /* This can't be done.  Use wrapPointerInObject() instead. */
+  int i = static_cast<int>(cptr);
   assert("WRONG TEMPLATE SPECIALIZATION" == 0);
-  // return Local<Value>::New(Null(Isolate::GetCurrent()));
 }
 
 // int
