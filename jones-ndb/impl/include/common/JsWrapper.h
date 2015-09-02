@@ -26,6 +26,7 @@
 
 using v8::Isolate;
 using v8::Persistent;
+using v8::Eternal;
 using v8::ObjectTemplate;
 using v8::EscapableHandleScope;
 using v8::Handle;
@@ -93,7 +94,7 @@ public:
   int magic;                            // for safety when unwrapping 
   TYPE_CHECK_T(class_id);               // for checking type of wrapped object
   const char * classname;               // for debugging output
-  Persistent<ObjectTemplate> stencil;   // for creating JavaScript objects
+  Eternal<ObjectTemplate> stencil;     // for creating JavaScript objects
   Isolate * isolate;
 
   /* Constructor */
@@ -105,16 +106,16 @@ public:
     EscapableHandleScope scope(isolate);
     Local<ObjectTemplate> proto = ObjectTemplate::New();
     proto->SetInternalFieldCount(2);
-    stencil.Reset(isolate, proto);
+    stencil.Set(isolate, proto);
   }
 
   /* Instance Methods */
   Local<Object> newWrapper() { 
-    return ToLocal(& stencil)->NewInstance();
+    return stencil.Get(isolate)->NewInstance();
   }
 
   void addMethod(const char *name, V8WrapperFn wrapper) {
-    ToLocal(& stencil)->Set(
+    stencil.Get(isolate)->Set(
       String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
       FunctionTemplate::New(isolate, wrapper)->GetFunction()
     );
