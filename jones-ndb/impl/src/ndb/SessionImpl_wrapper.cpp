@@ -40,7 +40,6 @@ V8WrapperFn SessionImplDestructor;
 class SessionImplEnvelopeClass : public Envelope {
 public:
   SessionImplEnvelopeClass() : Envelope("SessionImpl") {
-    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("seizeTransaction", seizeTransaction);
     addMethod("releaseTransaction", releaseTransaction);
     addMethod("freeTransactions", freeTransactions);
@@ -51,15 +50,13 @@ public:
 SessionImplEnvelopeClass SessionImplEnvelope;
 
 Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
-  EscapableHandleScope scope(args.GetIsolate());
 
   if(dbsi) {
-    Local<Object> jsobj = SessionImplEnvelope.newWrapper();
-    wrapPointerInObject(dbsi, SessionImplEnvelope, jsobj);
-    freeFromGC(dbsi, jsobj);
-    return scope.Close(jsobj);
+    Local<Object> jsobj = SessionImplEnvelope.wrap(dbsi);
+    SessionImplEnvelope.freeFromGC(dbsi, jsobj);
+    return jsobj;
   }
-  return scope.Close(Null());
+  return SessionImplEnvelope.getNull();
 }
 
 SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
@@ -69,7 +66,7 @@ SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
 }
 
 
-Handle<Value> newSessionImpl(const Arguments & args) {
+void newSessionImpl(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   
@@ -87,29 +84,31 @@ Handle<Value> newSessionImpl(const Arguments & args) {
 /* The seizeTransaction() wrapper is unusual because a 
    TransactionImpl holds a reference to its own JS wrapper
 */   
-Handle<Value> seizeTransaction(const Arguments & args) {
+void seizeTransaction(const Arguments & args) {
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   TransactionImpl * ctx = session->seizeTransaction();
-  if(ctx) return ctx->getJsWrapper();
-  return Null();
+  if(ctx)
+    args.GetReturnValue().Set(ctx->getJsWrapper());
+  else
+    args.GetReturnValue().SetNull();
 }
 
-Handle<Value> releaseTransaction(const Arguments & args) {
+void releaseTransaction(const Arguments & args) {
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<bool, SessionImpl, TransactionImpl *> MCALL;
   MCALL mcall(& SessionImpl::releaseTransaction, args);
   mcall.run();
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(mcall.jsReturnVal()));
 }
 
-Handle<Value> freeTransactions(const Arguments & args) {
+void freeTransactions(const Arguments & args) {
   EscapableHandleScope scope(args.GetIsolate());
   SessionImpl * session = unwrapPointer<SessionImpl *>(args.Holder());
   session->freeTransactions();
   args.GetReturnValue().SetUndefined();
 }
 
-Handle<Value> SessionImplDestructor(const Arguments &args) {
+void SessionImplDestructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   typedef NativeDestructorCall<SessionImpl> DCALL;
   DCALL * dcall = new DCALL(args);
@@ -118,8 +117,8 @@ Handle<Value> SessionImplDestructor(const Arguments &args) {
 }
 
 void SessionImpl_initOnLoad(Handle<Object> target) {
-  Persistent<String> jsKey = Persistent<String>(String::NewSymbol("DBSession"));
-  Persistent<Object> jsObj = Persistent<Object>(Object::New());
+  Local<String> jsKey = NEW_SYMBOL("DBSession");
+  Local<Object> jsObj = Object::New(Isolate::GetCurrent());
 
   target->Set(jsKey, jsObj);
 

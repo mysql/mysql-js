@@ -46,8 +46,8 @@ TransactionImpl::TransactionImpl(SessionImpl *impl) :
 
 TransactionImpl::~TransactionImpl() {
   DEBUG_MARKER(UDEB_DETAIL);
-  jsWrapper.Reset();
-  jsWrapper.MakeWeak();
+//  jsWrapper.Reset();
+//  jsWrapper.MakeWeak();
 }
 
 

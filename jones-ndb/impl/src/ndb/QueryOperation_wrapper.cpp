@@ -63,7 +63,6 @@ V8WrapperFn queryPrepareAndExecute,
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
-    HandleScope scope;
     addMethod("prepareAndExecute", queryPrepareAndExecute);
     addMethod("setTransactionImpl", querySetTransactionImpl);
     addMethod("fetchAllResults", queryFetchAllResults);
@@ -75,15 +74,12 @@ public:
 QueryOperationEnvelopeClass QueryOperationEnvelope;
 
 Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
-  EscapableHandleScope scope(args.GetIsolate());
-
   if(queryOp) {
-    Local<Object> jsobj = QueryOperationEnvelope.newWrapper();
-    wrapPointerInObject(queryOp, QueryOperationEnvelope, jsobj);
-    freeFromGC(queryOp, jsobj);
-    return scope.Close(jsobj);
+    Local<Object> jsobj = QueryOperationEnvelope.wrap(queryOp);
+    QueryOperationEnvelope.freeFromGC(queryOp, jsobj);
+    return jsobj;
   }
-  return Null();
+  return QueryOperationEnvelope.getNull();
 }
 
 
@@ -192,7 +188,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   const NdbQueryOperand * key_parts[nKeyParts+1];
 
   for(int i = 0 ; i < nKeyParts ; i++) {
-    String::AsciiValue column_name(joinColumns->Get(i));
+    String::Utf8Value column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
   }
   key_parts[nKeyParts] = 0;
@@ -201,7 +197,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
 }
 
 
-Handle<Value> createQueryOperation(const Arguments & args) {
+void createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(3);
 
@@ -223,10 +219,10 @@ Handle<Value> createQueryOperation(const Arguments & args) {
     setRowBuffers(queryOperation, spec);
   }
   queryOperation->prepare(root);
-  return QueryOperation_Wrapper(queryOperation);
+  args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
 }
 
-Handle<Value> querySetTransactionImpl(const Arguments &args) {
+void querySetTransactionImpl(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(1);
 
   typedef NativeVoidMethodCall_1_<QueryOperation, TransactionImpl *> MCALL;
@@ -238,7 +234,7 @@ Handle<Value> querySetTransactionImpl(const Arguments &args) {
 
 // void prepareAndExecute() 
 // ASYNC
-Handle<Value> queryPrepareAndExecute(const Arguments &args) {
+void queryPrepareAndExecute(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(1);
@@ -251,7 +247,7 @@ Handle<Value> queryPrepareAndExecute(const Arguments &args) {
 
 // fetchAllResults()
 // ASYNC
-Handle<Value> queryFetchAllResults(const Arguments &args) {
+void queryFetchAllResults(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
@@ -272,8 +268,9 @@ void doNotFreeQueryResultAtGC(char *data, void *hint) {
 }
 
 // getResult(id, objectWrapper):  IMMEDIATE
-Handle<Value> queryGetResult(const Arguments & args) {
+void queryGetResult(const Arguments & args) {
   REQUIRE_ARGS_LENGTH(2);
+  v8::Isolate * isolate = args.GetIsolate();
 
   QueryOperation * op = unwrapPointer<QueryOperation *>(args.Holder());
   size_t id = args[0]->Uint32Value();
@@ -283,56 +280,54 @@ Handle<Value> queryGetResult(const Arguments & args) {
 
   if(header) {
     if(header->data) {
-      node::Buffer *buff = node::Buffer::New(header->data,
-                                            op->getResultRowSize(header->depth),
-                                            doNotFreeQueryResultAtGC, 0);
-      wrapper->Set(K_data, Persistent<Object>(buff->handle_));
+      wrapper->Set(K_data, node::Buffer::New(header->data,
+                                             op->getResultRowSize(header->depth),
+                                             doNotFreeQueryResultAtGC, 0));
     } else {
-      wrapper->Set(K_data, Null());
+      wrapper->Set(K_data, Null(isolate));
     }
-    wrapper->Set(K_level, Persistent<Value>(v8::Uint32::New(header->depth)));
-    wrapper->Set(K_tag,   Persistent<Value>(v8::Uint32::New(header->tag)));
-    return True();
+    wrapper->Set(K_level, v8::Uint32::New(isolate, header->depth));
+    wrapper->Set(K_tag,   v8::Uint32::New(isolate, header->tag));
+    args.GetReturnValue().Set(true);
+  } else {
+    args.GetReturnValue().Set(false);
   }
-  return False();
 }
 
 // void close()
 // ASYNC
-Handle<Value> queryClose(const Arguments & args) {
+void queryClose(const Arguments & args) {
   typedef NativeVoidMethodCall_0_<QueryOperation> NCALL;
   NCALL * ncallptr = new NCALL(& QueryOperation::close, args);
   ncallptr->runAsync();
   args.GetReturnValue().SetUndefined();
 }
 
-#define JSSTRING(a) Persistent<String>::New(String::NewSymbol(a))
-
 void QueryOperation_initOnLoad(Handle<Object> target) {
-  Persistent<Object> ibObj = Persistent<Object>(Object::New());
-  Persistent<String> ibKey = Persistent<String>(String::NewSymbol("QueryOperation"));
+  Local<Object> ibObj = Object::New(Isolate::GetCurrent());
+  Local<String> ibKey = NEW_SYMBOL("QueryOperation");
   target->Set(ibKey, ibObj);
 
   DEFINE_JS_FUNCTION(ibObj, "create", createQueryOperation);
 
-  K_next          = JSSTRING("next");
-  K_root          = JSSTRING("root");
-  K_hasScan       = JSSTRING("hasScan");
-  K_keyFields     = JSSTRING("keyFields");
-  K_joinTo        = JSSTRING("joinTo");
-  K_depth         = JSSTRING("depth");
-  K_tableHandler  = JSSTRING("tableHandler");
-  K_rowRecord     = JSSTRING("rowRecord"),
-  K_indexHandler  = JSSTRING("indexHandler");
-  K_keyRecord     = JSSTRING("keyRecord");
-  K_isPrimaryKey  = JSSTRING("isPrimaryKey");
-  K_relatedField  = JSSTRING("relatedField");
+  K_next          = NEW_SYMBOL("next");
+  K_root          = NEW_SYMBOL("root");
+  K_hasScan       = NEW_SYMBOL("hasScan");
+  K_keyFields     = NEW_SYMBOL("keyFields");
+  K_joinTo        = NEW_SYMBOL("joinTo");
+  K_depth         = NEW_SYMBOL("depth");
+  K_tableHandler  = NEW_SYMBOL("tableHandler");
+  K_rowRecord     = NEW_SYMBOL("rowRecord"),
+  K_indexHandler  = NEW_SYMBOL("indexHandler");
+  K_keyRecord     = NEW_SYMBOL("keyRecord");
+  K_isPrimaryKey  = NEW_SYMBOL("isPrimaryKey");
+  K_relatedField  = NEW_SYMBOL("relatedField");
 
-  K_dbTable       = JSSTRING("dbTable");
-  K_dbIndex       = JSSTRING("dbIndex");
+  K_dbTable       = NEW_SYMBOL("dbTable");
+  K_dbIndex       = NEW_SYMBOL("dbIndex");
 
-  K_level         = JSSTRING("level");
-  K_data          = JSSTRING("data");
-  K_tag           = JSSTRING("tag");
+  K_level         = NEW_SYMBOL("level");
+  K_data          = NEW_SYMBOL("data");
+  K_tag           = NEW_SYMBOL("tag");
 }
 

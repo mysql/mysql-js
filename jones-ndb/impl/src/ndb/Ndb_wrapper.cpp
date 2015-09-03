@@ -65,7 +65,7 @@ Ndb * async_create_ndb(Ndb_cluster_connection *conn, const char *db) {
   return ndb;
 }
 
-Handle<Value> create_ndb(const Arguments &args) {
+void create_ndb(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(3);  
 
   typedef NativeCFunctionCall_2_<Ndb *, Ndb_cluster_connection *, const char *> MCALL;
@@ -88,7 +88,7 @@ Uint64 getAutoInc(Ndb *ndb, const NdbDictionary::Table * table, uint32_t batch) 
   return autoinc;
 }
 
-Handle<Value> getAutoIncValue(const Arguments &args) {
+void getAutoIncValue(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(4);  
   typedef NativeCFunctionCall_3_<Uint64, Ndb *, const NdbDictionary::Table *,
@@ -99,20 +99,21 @@ Handle<Value> getAutoIncValue(const Arguments &args) {
 }
 
 
-Handle<Value> getStatistics(const Arguments &args) {
+void getStatistics(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   Ndb *ndb = unwrapPointer<Ndb *>(args.Holder());
-  Local<Object> stats = Object::New();
+
+  Local<Object> stats = Object::New(args.GetIsolate());
   for(int i = 0 ; i < Ndb::NumClientStatistics ; i ++) {
-    stats->Set(String::NewSymbol(ndb->getClientStatName(i)),
-               Number::New(ndb->getClientStat(i)),
-               ReadOnly);
+    stats->Set(String::NewFromUtf8(args.GetIsolate(), ndb->getClientStatName(i)),
+               Number::New(args.GetIsolate(), ndb->getClientStat(i)));
   }
-  return scope.Close(stats);
+
+  args.GetReturnValue().Set(scope.Escape(stats));
 }
 
 
-Handle<Value> getConnectionStatistics(const Arguments &args) {
+void getConnectionStatistics(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   Uint64 ndb_stats[Ndb::NumClientStatistics];
 
@@ -121,16 +122,16 @@ Handle<Value> getConnectionStatistics(const Arguments &args) {
 
   c.collect_client_stats(ndb_stats, Ndb::NumClientStatistics);
 
-  Local<Object> stats = Object::New();
+  Local<Object> stats = Object::New(args.GetIsolate());
   for(int i = 0 ; i < Ndb::NumClientStatistics ; i ++) {
-    stats->Set(String::NewSymbol(ndb->getClientStatName(i)),
-               Number::New(ndb_stats[i]),
-               ReadOnly);
+    stats->Set(String::NewFromUtf8(args.GetIsolate(), ndb->getClientStatName(i)),
+               Number::New(args.GetIsolate(), ndb_stats[i]));
   }
-  return scope.Close(stats);
+
+  args.GetReturnValue().Set(scope.Escape(stats));
 }
 
-Handle<Value> closeNdb(const Arguments &args) {
+void closeNdb(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   typedef NativeDestructorCall<Ndb> MCALL;
   MCALL * mcallptr = new MCALL(args);

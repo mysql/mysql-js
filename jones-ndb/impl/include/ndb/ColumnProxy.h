@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -34,9 +34,6 @@ public:
   Handle<Value> get(char *);
   void          set(Handle<Value>);
   Handle<Value> write(char *);
-
-protected:
-  void Dispose();
 
 private:
   const ColumnHandler *handler;

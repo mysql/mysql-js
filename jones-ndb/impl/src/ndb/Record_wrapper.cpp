@@ -59,9 +59,8 @@ RecordEnvelopeClass RecordEnvelope;
 Handle<Value> Record_Wrapper(const Record *rec) {
   EscapableHandleScope scope(args.GetIsolate());
   
-  Local<Object> js_record = RecordEnvelope.newWrapper();
-  wrapPointerInObject(rec, RecordEnvelope, js_record);
-  freeFromGC(rec, js_record);
+  Local<Object> js_record = RecordEnvelope.wrap(rec);
+  RecordEnvelope.freeFromGC(rec, js_record);
   return scope.Close(js_record);
 }
 

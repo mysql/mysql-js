@@ -134,7 +134,7 @@ Handle<Value> nroConstructor(const Arguments &args) {
 
     /* Wrap for JavaScript */
     wrapPointerInObject<NdbRecordObject *>(nro, nroEnvelope, args.This());
-    freeFromGC(nro, args.This());
+    nroEnvelope.freeFromGC(nro, args.This());
   }
   else {
     ThrowException(Exception::Error(String::New("must be a called as constructor")));

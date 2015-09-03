@@ -24,38 +24,28 @@
 
 using namespace v8;
 
-ColumnProxy::~ColumnProxy() {
-  Dispose();
-}
-
-/* Drop our claim on the old value */
-void ColumnProxy::Dispose() {
-  if(! jsValue.IsEmpty()) jsValue.Dispose();
-  if(! blobBuffer.IsEmpty()) blobBuffer.Dispose();
-}
-
+// TODO: Assure that caller has a HandleScope
 Handle<Value> ColumnProxy::get(char *buffer) {
-  HandleScope scope;
-  
+  Handle<Value> val;
+
   if(! isLoaded) {
-    Handle<Value> val = handler->read(buffer, blobBuffer);
-    jsValue = Persistent<Value>::New(val);
+    val = handler->read(buffer, blobBuffer);
+    jsValue.Reset(val);
     isLoaded = true;
   }
-  return scope.Close(jsValue);
+  return val;
 }
 
 void ColumnProxy::set(Handle<Value> newValue) {
-  Dispose();
   isNull = (newValue->IsNull());
   isLoaded = isDirty = true;
-  jsValue = Persistent<Value>::New(newValue);
+  blobBuffer.Reset();
+  jsValue.Reset(newValue);
   DEBUG_PRINT("set %s", handler->column->getName());
 }
 
-
+// TODO: Assure that caller has a HandleScope
 Handle<Value> ColumnProxy::write(char *buffer) {
-  HandleScope scope;
   Handle<Value> rval = Undefined();
 
   /* Write dirty, non-blob values */
@@ -64,7 +54,7 @@ Handle<Value> ColumnProxy::write(char *buffer) {
     DEBUG_PRINT("write %s", handler->column->getName());
     isDirty = false;
   }
-  return scope.Close(rval);
+  return rval;
 }
 
 
@@ -79,5 +69,5 @@ BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
 }
 
 void ColumnProxy::setBlobBuffer(Handle<Object> buffer) {
-  blobBuffer = Persistent<Object>::New(buffer);
+  blobBuffer.Reset(buffer);
 }

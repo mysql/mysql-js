@@ -69,9 +69,9 @@ NativeCodeError * getNdbErrorAlways(R return_val, C * ndbApiObject) {
 
 
 template<typename C> 
-Handle<Value> getNdbError(const Arguments &args) {
+void getNdbError(const Arguments &args) {
   C * ndbApiObject = unwrapPointer<C *>(args.Holder());
   const NdbError & ndberr = ndbApiObject->getNdbError();
-  return NdbError_Wrapper(ndberr);
+  args.GetReturnValue().Set(NdbError_Wrapper(ndberr));
 };
 

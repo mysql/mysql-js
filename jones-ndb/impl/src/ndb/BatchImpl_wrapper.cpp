@@ -58,9 +58,8 @@ Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
   DEBUG_PRINT("BatchImpl wrapper");
 
   if(set) {
-    Local<Object> jsobj = BatchImplEnvelope.newWrapper();
-    wrapPointerInObject(set, BatchImplEnvelope, jsobj);
-    freeFromGC(set, jsobj);
+    Local<Object> jsobj = BatchImplEnvelope.wrap(set);
+    BatchImplEnvelope.freeFromGC(set, jsobj);
     return jsobj;
   }
   return Null(Isolate::GetCurrent());

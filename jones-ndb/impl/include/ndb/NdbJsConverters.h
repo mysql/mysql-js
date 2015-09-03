@@ -109,6 +109,6 @@ template <> inline bool isWrappedPointer(const NdbDictionary::Table * typ) {
 // int
 template <>
 inline Local<Value> toJS<NdbTransaction::CommitStatusType>(NdbTransaction::CommitStatusType cval){ 
-  return Number::New(static_cast<int>(cval));
+  return Number::New(Isolate::GetCurrent(), static_cast<int>(cval));
 };
 

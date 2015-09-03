@@ -38,6 +38,7 @@ using v8::String;
 using v8::FunctionCallbackInfo;
 using v8::FunctionTemplate;
 using v8::PropertyCallbackInfo;
+using v8::WeakCallbackData;
 
 /* A Persistent<T> can be cast to a Local<T>.  See:
    https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ
@@ -88,6 +89,14 @@ inline void check_class_id(const char *a, const char *b) {
 #define CHECK_CLASS_ID(env, PTR)
 #endif
 
+///*  Delete a native C++ object when the Garbage Collector reclaims its
+//    JavaScript handle.
+//*/
+//template<typename PTR>
+//void onGcReclaim(const WeakCallbackData<Object, PTR> data) {
+//  PTR ptr = data.GetParameter();
+//  if(ptr) delete ptr;
+//}
 
 /*****************************************************************
  An Envelope is a simple structure providing some safety 
@@ -131,7 +140,7 @@ public:
 
   template<typename PTR>
   Local<Object> wrap(PTR ptr) {
-    DEBUG_PRINT("Constructor wrapping %s: %p", classname, ptr);
+    DEBUG_PRINT("Envelope wrapping %s: %p", classname, ptr);
     SET_CLASS_ID(this, PTR);
     Local<Object> wrapper = newWrapper();
     wrapper->SetAlignedPointerInInternalField(0, (void *) this);
@@ -140,15 +149,36 @@ public:
     return wrapper;
   }
 
+  /* If PTR p is null, the wrapper's user may want to return a JS Null
+     rather than a wrapped pointer:
+  */
+  Handle<Value> getNull() const {
+    return Null(isolate);
+  }
+
   void addAccessor(const char *name, AccessorGetter accessor) {
     stencil.Get(isolate)->SetAccessor(
       String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
       accessor
     );
   }
+
+  /*****************************************************************
+   Create a weak handle for a wrapped object.
+   Use it to delete the wrapped object when the GC wants to reclaim the handle.
+   For safety, the compiler will not let you use this on any "const PTR" type;
+   (if you hold a const pointer to something, you probably don't own its
+   memory allocation).
+   ******************************************************************/
+  template<typename PTR> 
+  void freeFromGC(PTR ptr, Handle<Object> obj) {
+    Persistent<Object> notifier;
+    notifier.Reset(isolate, obj);
+    notifier.MarkIndependent();
+//  TODO: Figure this out
+//    notifier.SetWeak((void *) ptr, onGcReclaim<PTR>);
+  }
 };
-
-
 
 /*****************************************************************
  Construct a wrapped object. 

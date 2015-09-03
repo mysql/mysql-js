@@ -30,7 +30,7 @@
   ThrowException(Exception::Error(NEW_STRING(MESSAGE))))
   
 #define THROW_TYPE_ERROR(MESSAGE) \
-  ThrowException(Exception::TypeError(NEW_STRING(MESSAGE)))
+  Isolate::GetCurrent()->ThrowException(Exception::TypeError(NEW_STRING(MESSAGE)))
   
 /*#define REQUIRE_ARGS_LENGTH(N) \
   if(args.Length() != N) { \
@@ -44,13 +44,11 @@
 #define REQUIRE_MIN_ARGS(N) \
   if(args.Length() < N) { \
     THROW_TYPE_ERROR("Requires at least " #N " arguments"); \
-    return scope.Close(Undefined()); \
   }
 
 #define REQUIRE_MAX_ARGS(N) \
   if(args.Length() > N) { \
     THROW_TYPE_ERROR("Requires no more than " #N " arguments"); \
-    return scope.Close(Undefined()); \
   }
 
 /* #define REQUIRE_CONSTRUCTOR_CALL() \
