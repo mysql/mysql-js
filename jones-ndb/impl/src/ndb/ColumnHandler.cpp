@@ -21,17 +21,19 @@
 #include "adapter_global.h"
 #include "ColumnHandler.h"
 #include "BlobHandler.h"
+#include "JsWrapper.h"
+#include "js_wrapper_macros.h"
 
 using namespace v8;
 
 class Keys {
 public:
-  Persistent<String> toDB;
-  Persistent<String> fromDB;
+  Eternal<String> toDB;
+  Eternal<String> fromDB;
   Keys() {
-    HandleScope scope;
-    toDB = Persistent<String>::New(String::NewSymbol("toDB"));
-    fromDB = Persistent<String>::New(String::NewSymbol("fromDB"));
+    HandleScope scope(Isolate::GetCurrent());
+    toDB.Set(Isolate::GetCurrent(), NEW_SYMBOL("toDB"));
+    fromDB.Set(Isolate::GetCurrent(), NEW_SYMBOL("fromDB"));
   }
 };
 
@@ -47,19 +49,19 @@ ColumnHandler::ColumnHandler() :
 
 
 ColumnHandler::~ColumnHandler() {
-  if(! converterClass.IsEmpty()) converterClass.Dispose();
-  if(hasConverterReader) converterReader.Dispose();
-  if(hasConverterWriter) converterWriter.Dispose();
+  // Persistent handles will be disposed by calling of their destructors
 }
 
-void ColumnHandler::init(const NdbDictionary::Column *_column,
+void ColumnHandler::init(v8::Isolate * isolate,
+                         const NdbDictionary::Column *_column,
                          size_t _offset,
                          Handle<Value> typeConverter) {
-  HandleScope scope;
+  EscapableHandleScope scope(isolate);
   column = _column;
   encoder = getEncoderForColumn(column);
   offset = _offset;
   Local<Object> t;
+  Local<Object> converter;
 
   switch(column->getType()) {
     case NDB_TYPE_TEXT: 
@@ -72,29 +74,29 @@ void ColumnHandler::init(const NdbDictionary::Column *_column,
   }
 
   if(typeConverter->IsObject()) {
-    converterClass = Persistent<Object>::New(typeConverter->ToObject());
+    converter = typeConverter->ToObject();
+    converterClass.Reset(isolate, converter);
 
-    if(converterClass->Has(keys.toDB)) {
-      t = converterClass->Get(keys.toDB)->ToObject();
+    if(converter->Has(keys.toDB.Get(isolate))) {
+      t = converter->Get(keys.toDB.Get(isolate))->ToObject();
       if(t->IsFunction()) {
-        converterWriter = Persistent<Object>::New(t);
+        converterWriter.Reset(isolate, t);
         hasConverterWriter = true;
       }
     }
 
-    if(converterClass->Has(keys.fromDB)) {
-      t = converterClass->Get(keys.fromDB)->ToObject();
+    if(converter->Has(keys.fromDB.Get(isolate))) {
+      t = converter->Get(keys.fromDB.Get(isolate))->ToObject();
       if(t->IsFunction()) {
-        converterReader = Persistent<Object>::New(t);
+        converterReader.Reset(isolate, t);
         hasConverterReader = true;
       }
     }
   }
 }
 
-
+// TODO: verify that caller has HandleScope
 Handle<Value> ColumnHandler::read(char * rowBuffer, Handle<Object> blobBuffer) const {
-  HandleScope scope;
   Handle<Value> val;
 
   if(isText) {
@@ -111,15 +113,14 @@ Handle<Value> ColumnHandler::read(char * rowBuffer, Handle<Object> blobBuffer) c
     TryCatch tc;
     Handle<Value> arguments[1];
     arguments[0] = val;
-    val = converterReader->CallAsFunction(converterClass, 1, arguments);
+    val = ToLocal(& converterReader)->CallAsFunction(ToLocal(& converterClass), 1, arguments);
     if(tc.HasCaught()) tc.ReThrow();
   }
-  return scope.Close(val);
+  return val;
 }
 
 
 Handle<Value> ColumnHandler::write(Handle<Value> val, char *buffer) const {
-  HandleScope scope;
   Handle<Value> writeStatus;
 
   DEBUG_PRINT("write %s", column->getName());
@@ -127,20 +128,19 @@ Handle<Value> ColumnHandler::write(Handle<Value> val, char *buffer) const {
     TryCatch tc;
     Handle<Value> arguments[1];
     arguments[0] = val;
-    val = converterWriter->CallAsFunction(converterClass, 1, arguments);
+    val = ToLocal(& converterWriter)->CallAsFunction(ToLocal(& converterClass), 1, arguments);
     if(tc.HasCaught())
-      return scope.Close(tc.Exception());
+      return tc.Exception();
    }
   
   writeStatus = encoder->write(column, val, buffer, offset);
-  return scope.Close(writeStatus);
+  return writeStatus;
 }
 
 
 BlobWriteHandler * ColumnHandler::createBlobWriteHandle(Handle<Value> val, 
                                                         int fieldNo) const {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
   BlobWriteHandler * b = 0;
   Handle<Object> obj = val->ToObject();
   if(isLob) {

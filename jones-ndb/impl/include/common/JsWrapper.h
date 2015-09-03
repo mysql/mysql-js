@@ -47,6 +47,11 @@ inline Local<T> ToLocal(Persistent<T>* p_) {
   return *reinterpret_cast<Local<T>*>(p_);
 }
 
+template<class T>
+inline Local<T> ToLocal(const Persistent<T>* p_) {
+  return *reinterpret_cast<const Local<T>*>(p_);
+}
+
 /* Recast the new (node 0.12) API in terms of the 
    Arguments type from the previous API
 */
@@ -94,7 +99,7 @@ public:
   int magic;                            // for safety when unwrapping 
   TYPE_CHECK_T(class_id);               // for checking type of wrapped object
   const char * classname;               // for debugging output
-  Eternal<ObjectTemplate> stencil;     // for creating JavaScript objects
+  Eternal<ObjectTemplate> stencil;      // for creating JavaScript objects
   Isolate * isolate;
 
   /* Constructor */

@@ -150,17 +150,21 @@ int KeyOperation::createBlobWriteHandles(Handle<Object> blobsArray,
 }
 
 
-Handle<Value> KeyOperation::readBlobResults() {
+void KeyOperation::readBlobResults(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   if(isBlobReadOperation()) {
-    Handle<Object> results = Array::New();
+    Local<Object> results = Array::New(args.GetIsolate());
     BlobReadHandler * readHandler = static_cast<BlobReadHandler *>(blobHandler);
     while(readHandler) {
-      results->Set(readHandler->getFieldNumber(), readHandler->getResultBuffer());
+      Local<Value> buffer = readHandler->getResultBuffer();
+      if(buffer.IsEmpty()) {
+        buffer = Null(args.GetIsolate());
+      }
+      results->ToObject()->Set(readHandler->getFieldNumber(), buffer);
       readHandler = static_cast<BlobReadHandler *>(readHandler->getNext());
     }
-    return scope.Close(results);
+    args.GetReturnValue().Set(scope.Escape(results));
   }
   args.GetReturnValue().SetUndefined();
 }

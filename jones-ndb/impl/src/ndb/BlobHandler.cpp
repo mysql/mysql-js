@@ -81,17 +81,15 @@ int BlobReadHandler::runActiveHook(NdbBlob *b) {
   return 0;
 }
 
-v8::Handle<v8::Value> BlobReadHandler::getResultBuffer() {
-  v8::HandleScope scope;
+v8::Local<v8::Object> BlobReadHandler::getResultBuffer() {
+  v8::Local<v8::Object> buffer;
   if(content) {
-    node::Buffer * buffer;
     buffer = node::Buffer::New(content, length, freeBufferContentsFromJs, 0);
     /* Content belongs to someone else now; clear it for the next user */
     content = 0;
     length = 0;
-    return scope.Close(buffer->handle_);
   }
-  return v8::Null();
+  return buffer;
 }
 
 

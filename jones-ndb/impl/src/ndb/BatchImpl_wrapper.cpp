@@ -53,15 +53,15 @@ public:
 
 BatchImplEnvelopeClass BatchImplEnvelope;
 
+// CALLER in DBOperationHelper has a HandleScope
 Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
   DEBUG_PRINT("BatchImpl wrapper");
-  HandleScope scope;
 
   if(set) {
     Local<Object> jsobj = BatchImplEnvelope.newWrapper();
     wrapPointerInObject(set, BatchImplEnvelope, jsobj);
     freeFromGC(set, jsobj);
-    return scope.Close(jsobj);
+    return jsobj;
   }
   return Null(Isolate::GetCurrent());
 }
@@ -155,7 +155,8 @@ void executeAsynch(const Arguments &args) {
 void readBlobResults(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
-  args.GetReturnValue().Set(set->getKeyOperation(n)->readBlobResults());
+  getKeyOperation(n)->readBlobResults(args);
+//  args.GetReturnValue().Set(set->getKeyOperation(n)->readBlobResults());
 }
 
 

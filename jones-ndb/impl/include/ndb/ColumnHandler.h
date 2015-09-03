@@ -32,7 +32,7 @@ class ColumnHandler {
 public:
   ColumnHandler();
   ~ColumnHandler();
-  void init(const NdbDictionary::Column *, size_t, Handle<Value>);
+  void init(v8::Isolate *, const NdbDictionary::Column *, size_t, Handle<Value>);
   Handle<Value> read(char *, Handle<Object>) const;
   Handle<Value> write(Handle<Value>, char *) const;
   BlobWriteHandler * createBlobWriteHandle(Handle<Value>, int fieldNo) const;
