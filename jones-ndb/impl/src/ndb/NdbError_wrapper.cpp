@@ -47,12 +47,6 @@ public:
     addAccessor("message", get_message);
 }
 
-  Local<Object> wrap(const NdbError * err) {
-    HandleScope scope;    
-    Local<Object> wrapper = Envelope::stencil->NewInstance();
-    wrapPointerInObject(err, *this, wrapper);
-    return scope.Close(wrapper);
-  }
 };
 
 NdbErrorEnvelopeClass NdbErrorEnvelope;
