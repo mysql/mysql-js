@@ -57,10 +57,13 @@ inline Local<T> ToLocal(const Persistent<T>* p_) {
 */
 typedef FunctionCallbackInfo<Value> Arguments;
 
+typedef PropertyCallbackInfo<Value> AccessorInfo;
+
 /* Signature of a V8 function wrapper
 */
 typedef void V8WrapperFn(const Arguments &);
-typedef Handle<Value> V8Accessor(Local<String>, const PropertyCallbackInfo<Value> &);
+
+typedef void (*AccessorGetter) (Local<String>, const AccessorInfo &);
 
 /*****************************************************************
  Code to confirm that C++ types wrapped as JavaScript values
@@ -126,19 +129,22 @@ public:
     );
   }
 
-  void addAccessor(const char *name, V8Accessor accessor) {
-    stencil->SetAccessor(String::NewSymbol(name), accessor);
-  }
-
   template<typename PTR>
   Local<Object> wrap(PTR ptr) {
     DEBUG_PRINT("Constructor wrapping %s: %p", classname, ptr);
     SET_CLASS_ID(this, PTR);
     Local<Object> wrapper = newWrapper();
-    wrapper->SetPointerInInternalField(0, (void *) this);
-    wrapper->SetPointerInInternalField(1, (void *) ptr);
+    wrapper->SetAlignedPointerInInternalField(0, (void *) this);
+    wrapper->SetAlignedPointerInInternalField(1, (void *) ptr);
 
     return wrapper;
+  }
+
+  void addAccessor(const char *name, AccessorGetter accessor) {
+    stencil.Get(isolate)->SetAccessor(
+      String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
+      accessor
+    );
   }
 };
 
