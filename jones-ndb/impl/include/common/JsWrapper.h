@@ -126,12 +126,20 @@ public:
     );
   }
 
-//  void addAccessor(const char *name, V8Accessor accessor) {
-//    ToLocal(& stencil)->SetAccessor(
-//      String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
-//      accessor
-//    );
-//  }
+  void addAccessor(const char *name, V8Accessor accessor) {
+    stencil->SetAccessor(String::NewSymbol(name), accessor);
+  }
+
+  template<typename PTR>
+  Local<Object> wrap(PTR ptr) {
+    DEBUG_PRINT("Constructor wrapping %s: %p", classname, ptr);
+    SET_CLASS_ID(this, PTR);
+    Local<Object> wrapper = newWrapper();
+    wrapper->SetPointerInInternalField(0, (void *) this);
+    wrapper->SetPointerInInternalField(1, (void *) ptr);
+
+    return wrapper;
+  }
 };
 
 
@@ -142,6 +150,7 @@ public:
  arg1: an Envelope reference
  arg2: a reference to a v8 object, which must have already been 
        initialized from a proper ObjectTemplate.
+ THIS COULD BE DEPRECATED IN FAVOR OF ENVELOPE.WRAP()
 ******************************************************************/
 template <typename PTR>
 void wrapPointerInObject(PTR ptr,

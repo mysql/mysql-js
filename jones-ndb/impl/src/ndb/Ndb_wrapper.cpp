@@ -46,13 +46,6 @@ public:
     addMethod("getStatistics", getStatistics);
     addMethod("getConnectionStatistics", getConnectionStatistics);
   }
-  
-  Local<Object> wrap(Ndb *ndb) {
-    HandleScope scope;    
-    Local<Object> wrapper = Envelope::stencil->NewInstance();
-    wrapPointerInObject(ndb, *this, wrapper);
-    return scope.Close(wrapper);
-  }
 };
 
 NdbEnvelopeClass NdbEnvelope;
