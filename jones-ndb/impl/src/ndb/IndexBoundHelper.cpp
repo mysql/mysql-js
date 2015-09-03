@@ -53,16 +53,16 @@ void debug_print_bound(NdbIndexScanOperation::IndexBound * bound) {
               bound->high_inclusive ? "inc]" : "exc)");
 }
 
-Handle<Value> newIndexBound(const Arguments &args) {
+void newIndexBound(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
 
   const Local<Object> spec = args[0]->ToObject();
+  Local<Object> jsBound = IndexBoundEnvelope.newWrapper();
   Local<Value> v;
   Local<Object> o;
 
   NdbIndexScanOperation::IndexBound * bound = 
     new NdbIndexScanOperation::IndexBound;
-  Local<Object> jsBound = IndexBoundEnvelope.newWrapper();
   wrapPointerInObject(bound, IndexBoundEnvelope, jsBound);
 
   bound->low_key = 0;
@@ -115,20 +115,20 @@ Handle<Value> newIndexBound(const Arguments &args) {
 
   debug_print_bound(bound);
 
-  return scope.Close(jsBound);
+  args.GetReturnValue().Set(scope.Escape(jsBound));
 }
 
 
 
 void IndexBound_initOnLoad(Handle<Object> target) {
-  Persistent<Object> ibObj = Persistent<Object>(Object::New());
-  Persistent<String> ibKey = Persistent<String>(String::NewSymbol("IndexBound"));
+  Local<Object> ibObj = Object::New(Isolate::GetCurrent());
+  Local<String> ibKey = NEW_SYMBOL("IndexBound");
   target->Set(ibKey, ibObj);
 
   DEFINE_JS_FUNCTION(ibObj, "create", newIndexBound);
 
-  Persistent<Object> BoundHelper = Persistent<Object>(Object::New());
-  ibObj->Set(Persistent<String>(String::NewSymbol("helper")), BoundHelper);
+  Local<Object> BoundHelper = Object::New(Isolate::GetCurrent());
+  ibObj->Set(NEW_SYMBOL("helper"), BoundHelper);
 
   DEFINE_JS_INT(BoundHelper, "low_key", BOUND_LOW_KEY);
   DEFINE_JS_INT(BoundHelper, "low_key_count", BOUND_LOW_KEY_COUNT);

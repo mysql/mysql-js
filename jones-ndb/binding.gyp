@@ -92,7 +92,6 @@
           {
             'sources' : 
             [
-               "impl/src/ndb/mysqlclient_wrapper.cpp"
             ],
             'libraries':
             [

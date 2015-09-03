@@ -18,10 +18,13 @@
  02110-1301  USA
  */
 
-#define NEW_STRING(S) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), S)
+#define STRING(I, S) v8::String::NewFromUtf8(I, S)
 
-#define NEW_SYMBOL(S) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), S, \
-  v8::String::kInternalizedString)
+#define NEW_STRING(S) STRING(v8::Isolate::GetCurrent(), S)
+
+#define SYMBOL(I, S) v8::String::NewFromUtf8(I, S, v8::String::kInternalizedString)
+
+#define NEW_SYMBOL(S) SYMBOL(v8::Isolate::GetCurrent(), S)
 
 #define THROW_ERROR(MESSAGE) \
   ThrowException(Exception::Error(NEW_STRING(MESSAGE))))
