@@ -50,7 +50,7 @@ public:
 NdbErrorEnvelopeClass NdbErrorEnvelope;
 
 // TODO: Verify that all callers have a HandleScope
-Handle<Value> NdbError_Wrapper(const NdbError &err) {
+Local<Value> NdbError_Wrapper(const NdbError &err) {
   return NdbErrorEnvelope.wrap(& err);
 }
 

@@ -56,7 +56,7 @@ RecordEnvelopeClass RecordEnvelope;
 /****  CALL THIS FROM C++ CODE TO CREATE A WRAPPED RECORD OBJECT. 
 *****/
 Local<Value> Record_Wrapper(const Record *rec) {
-  Local<Object> js_record = RecordEnvelope.wrap(rec);
+  Local<Value> js_record = RecordEnvelope.wrap(rec);
   RecordEnvelope.freeFromGC(rec, js_record);
   return js_record;
 }

@@ -61,7 +61,7 @@ Envelope * getScanOperationEnvelope() {
 void newScanOperation(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   ScanOperation * s = new ScanOperation(args);
-  Local<Object> wrapper = ScanOperationEnvelope.wrap(s);
+  Local<Value> wrapper = ScanOperationEnvelope.wrap(s);
   // freeFromGC: Disabled as it leads to segfaults during garbage collection
   // ScanOperationEnvelope.freeFromGC(helper, wrapper);
   args.GetReturnValue().Set(scope.Escape(wrapper));

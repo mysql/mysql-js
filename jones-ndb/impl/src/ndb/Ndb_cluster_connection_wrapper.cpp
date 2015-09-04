@@ -68,7 +68,7 @@ void Ndb_cluster_connection_new_wrapper(const Arguments &args) {
   */
   c->set_max_adaptive_send_time(1);
 
-  Local<Object> wrapper = NdbccEnvelope.wrap(c);
+  Local<Value> wrapper = NdbccEnvelope.wrap(c);
   NdbccEnvelope.freeFromGC(c, wrapper);
 
   args.GetReturnValue().Set(wrapper);

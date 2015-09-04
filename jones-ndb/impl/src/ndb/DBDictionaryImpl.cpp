@@ -620,7 +620,7 @@ Handle<Object> GetTableCall::buildDBForeignKey(const NdbDictionary::ForeignKey *
 Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
   EscapableHandleScope scope(isolate);
   
-  Local<Object> obj = NdbDictColumnEnv.wrap(col);
+  Local<Object> obj = NdbDictColumnEnv.wrap(col)->ToObject();
   
   NdbDictionary::Column::Type col_type = col->getType();
   bool is_int = (col_type <= NDB_TYPE_BIGUNSIGNED);

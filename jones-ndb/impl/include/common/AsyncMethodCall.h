@@ -165,7 +165,7 @@ public:
 
   AsyncCall_Returning<RETURN_TYPE>(Isolate * isol, Local<Value> callback, RETURN_TYPE rv) :
     AsyncCall(isol, callback), ReturnValueHandler<RETURN_TYPE>(), error(0),
-    return_val(rv)                                                        {}
+    return_val(rv)                                                          {}
 
   /* Destructor */
   virtual ~AsyncCall_Returning<RETURN_TYPE>() {

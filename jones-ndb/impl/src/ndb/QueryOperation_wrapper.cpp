@@ -74,12 +74,9 @@ public:
 QueryOperationEnvelopeClass QueryOperationEnvelope;
 
 Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
-  if(queryOp) {
-    Local<Object> jsobj = QueryOperationEnvelope.wrap(queryOp);
-    QueryOperationEnvelope.freeFromGC(queryOp, jsobj);
-    return jsobj;
-  }
-  return QueryOperationEnvelope.getNull();
+  Local<Value> jsobj = QueryOperationEnvelope.wrap(queryOp);
+  QueryOperationEnvelope.freeFromGC(queryOp, jsobj);
+  return jsobj;
 }
 
 
