@@ -109,19 +109,47 @@ class AsyncCall {
 };
 
 
+/** ReturnValueHandler is a base class for AsyncCall_Returning<RETURN_TYPE>
+    with one specialization for wrapped pointers to native objects, and
+    another specialization for everything else.
+**/
+
+// Primary Template: ReturnValueHandler for all non-pointer types
+template<typename T>
+class ReturnValueHandler {
+public:
+  ReturnValueHandler<T>() {};
+  void wrapReturnValueAs(Envelope * e)     { assert(false); }
+  Local<Value> getJsValue(T value) {
+    return toJS(value);
+  }
+};
+
+// ReturnValueHandler specialization for wrapped pointer types
+template<typename T>
+class ReturnValueHandler<T*> {
+private:
+  Envelope * envelope;
+public:
+  ReturnValueHandler<T *>() : envelope(0) {}
+  void wrapReturnValueAs(Envelope * e)     { envelope = e; }
+  Local<Value> getJsValue(T * objPtr) {
+    return envelope->wrap(objPtr);
+  }
+};
+
+
 /** First-level template class;
     templated over return types
 **/
 template <typename RETURN_TYPE>
-class AsyncCall_Returning : public AsyncCall {
-private:
-  /* Private Member variables */
-  Envelope * returnValueEnvelope;
-
+class AsyncCall_Returning : public AsyncCall,
+                            public ReturnValueHandler<RETURN_TYPE>
+{
 protected:
   /* Protected Constructor Chain */
-  AsyncCall_Returning<RETURN_TYPE>(Handle<Function> callback) :
-    AsyncCall(callback), returnValueEnvelope(0), error(0)  {}
+  AsyncCall_Returning<RETURN_TYPE>(Isolate * isol, Handle<Function> callback) :
+    AsyncCall(callback), ReturnValueHandler<RETURN_TYPE>(isol), error(0)  {}
     
 public:
   /* Member variables */
@@ -130,10 +158,11 @@ public:
 
   /* Constructors */
   AsyncCall_Returning<RETURN_TYPE>(Local<Value> callback) :
-    AsyncCall(callback), returnValueEnvelope(0), error(0)  {}
+    AsyncCall(callback), ReturnValueHandler<RETURN_TYPE>(isol), error(0)  {}
 
   AsyncCall_Returning<RETURN_TYPE>(Local<Value> callback, RETURN_TYPE rv) :
-    AsyncCall(callback), returnValueEnvelope(0), error(0), return_val(rv)    {}
+    AsyncCall(callback), ReturnValueHandler<RETURN_TYPE>(isol), error(0),
+    return_val(rv)                                                        {}
 
   /* Destructor */
   virtual ~AsyncCall_Returning<RETURN_TYPE>() {
@@ -141,33 +170,21 @@ public:
   }
 
   /* Methods */
-  void wrapReturnValueAs(Envelope *env) {
-    returnValueEnvelope = env;
-  }
-  
   Local<Value> jsReturnVal() {
-    EscapableHandleScope scope(Isolate::GetCurrent());
-
-    if(isWrappedPointer(return_val)) {
-      DEBUG_ASSERT(returnValueEnvelope);
-      Local<Object> obj = returnValueEnvelope->wrap(return_val);
-      return scope.Escape(obj);
-    }
-    else {
-      return scope.Escape(toJS(return_val));
-    }
+    EscapeHandleScope scope(isolate);
+    return scope.Close(this->getJsValue(return_val));
   }
 
   /* doAsyncCallback() is an async callback, run by main_thread_complete().
   */
   void doAsyncCallback(Local<Object> context) {
-    EscapableHandleScope scope(Isolate::GetCurrent());
+    EscapableHandleScope scope(isolate);
     Handle<Value> cb_args[2];
 
     if(error) cb_args[0] = error->toJS();
-    else      cb_args[0] = Null(Isolate::GetCurrent());
+    else      cb_args[0] = Null(isolate);
 
-    cb_args[1] = jsReturnVal();
+    cb_args[1] = this->getJsValue(return_val);
 
     ToLocal(& callback)->Call(context, 2, cb_args);
   }
@@ -188,7 +205,7 @@ public:
 
   /* Constructor */
   NativeMethodCall<R, C>(const Arguments &args, int callback_idx) :
-    AsyncCall_Returning<R>(args[callback_idx]),  /*callback*/
+    AsyncCall_Returning<R>(args.GetIsolate(), args[callback_idx]),
     errorHandler(0)
   {
     native_obj = unwrapPointer<C *>(args.Holder());

@@ -82,10 +82,12 @@ inline void check_class_id(const char *a, const char *b) {
 }
 #define TYPE_CHECK_T(x) const char * x
 #define SET_CLASS_ID(env, PTR) env.class_id = typeid(PTR).name()
-#define CHECK_CLASS_ID(env, PTR) check_class_id(env->class_id, typeid(PTR).name()) 
+#define SET_THIS_CLASS_ID(PTR) class_id = typeid(PTR).name()
+#define CHECK_CLASS_ID(env, PTR) check_class_id(env->class_id, typeid(PTR).name())
 #else
 #define TYPE_CHECK_T(x)
 #define SET_CLASS_ID(env, PTR)
+#define SET_THIS_CLASS_ID(PTR)
 #define CHECK_CLASS_ID(env, PTR)
 #endif
 
@@ -139,15 +141,20 @@ public:
   }
 
   template<typename PTR>
-  Local<Object> wrap(PTR ptr) {
+  Local<Value> wrap(PTR ptr) {
     DEBUG_PRINT("Envelope wrapping %s: %p", classname, ptr);
-    SET_CLASS_ID(this, PTR);
+    SET_THIS_CLASS_ID(PTR);
     Local<Object> wrapper = newWrapper();
     wrapper->SetAlignedPointerInInternalField(0, (void *) this);
     wrapper->SetAlignedPointerInInternalField(1, (void *) ptr);
 
     return wrapper;
   }
+
+  /* An overloaded wrap() method for the special case of converting a
+     const char * to a JS String.
+  */
+  Local<Value> wrap(const char * str) { return String::New(isolate, str); }
 
   /* If PTR p is null, the wrapper's user may want to return a JS Null
      rather than a wrapped pointer:

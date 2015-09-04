@@ -166,125 +166,70 @@ public:
 /*****************************************************************
  toJs functions
  Value Conversion from C to JavaScript
-
- If we have a correct isWrappedPointer()<T> for every T, then toJS()
- should never be called with a pointer type at runtime.  
- See AsyncCall_Returning::jsReturnVal() at AsyncMethodCall.h line 130.
  
- The generic function should either be undefined or should throw a
- run-time assert.
+ These are called from the ReturnValueHandler for non-pointer types.
+ We do not expect them ever to be called with pointer types.
+
+ The generic function treats its argument as a JS Integer.
 
  SPECIALIZATIONS should be over C PRIMITIVE types only.
 
  These functions do not declare a HandleScope
 ******************************************************************/
 
-// pointer types
-template <typename T> Local<Value> toJS(T cptr) {
-  /* This can't be done.  Use wrapPointerInObject() instead. */
-  int i = static_cast<int>(cptr);
-  assert("WRONG TEMPLATE SPECIALIZATION" == 0);
-}
-
-// int
-template <>
-inline Local<Value> toJS<int>(int cval) {
-  return v8::Integer::New(Isolate::GetCurrent(), cval);
+template <typename T> Local<Value> toJS(Isolate * isolate, T cval) {
+  return v8::Integer::New(isolate, cval);
 }
 
 // unsigned int
 template <>
-inline Local<Value> toJS<unsigned int>(unsigned int cval) {
-  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
-}
-
-// short
-template <>
-inline Local<Value> toJS<short>(short cval) {
-  return v8::Integer::New(Isolate::GetCurrent(), cval);
+inline Local<Value> toJS<unsigned int>(Isolate * isolate, unsigned int cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned short
 template <>
-inline Local<Value> toJS<unsigned short>(unsigned short cval) {
-  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
-}
-
-// long 
-template <>
-inline Local<Value> toJS<long>(long cval) {
-  return v8::Integer::New(Isolate::GetCurrent(), cval);
+inline Local<Value> toJS<unsigned short>(Isolate * isolate, unsigned short cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned long
 template <>
-inline Local<Value> toJS<unsigned long >(unsigned long cval) {
-  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), cval);
+inline Local<Value> toJS<unsigned long >(Isolate * isolate, unsigned long cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned long long 
 // (the value may actually be too large to represent in JS!?)
 template <>
-inline Local<Value> toJS<unsigned long long>(unsigned long long cval) {
-  return v8::Integer::NewFromUnsigned(Isolate::GetCurrent(), (uint32_t) cval);
+inline Local<Value> toJS<unsigned long long>(Isolate * isolate, unsigned long long cval) {
+  return v8::Integer::NewFromUnsigned(isolate, (uint32_t) cval);
 }
 
 // double
 template <>
-inline Local<Value> toJS<double>(double cval) {
-  return Number::New(Isolate::GetCurrent(), cval);
+inline Local<Value> toJS<double>(Isolate * isolate, double cval) {
+  return Number::New(isolate, cval);
 };
 
 // const char *
 template <> 
-inline Local<Value> toJS<const char *>(const char * cval) {
-  return v8::String::NewFromUtf8(Isolate::GetCurrent(), cval);
+inline Local<Value> toJS<const char *>(Isolate * isolate, const char * cval) {
+  return v8::String::NewFromUtf8(isolate, cval);
 }
 
 // const bool * 
 template <> 
-inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  // return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), *cbp));
-  return *cbp ? True(Isolate::GetCurrent()) : False(Isolate::GetCurrent());
+inline Local<Value> toJS<const bool *>(Isolate * isolate, const bool * cbp) {
+  // return Local<Value>::New(Boolean::New(isolate, *cbp));
+  return *cbp ? True(isolate) : False(isolate);
 }
 
 // bool 
 template <>
-inline Local<Value> toJS<bool>(bool b) {
-  // return Local<Value>::New(Boolean::New(Isolate::GetCurrent(), b));
-  return b ? True(Isolate::GetCurrent()) : False(Isolate::GetCurrent());
+inline Local<Value> toJS<bool>(Isolate * isolate, bool b) {
+  // return Local<Value>::New(Boolean::New(isolate, b));
+  return b ? True(isolate) : False(isolate);
 }
-
-/*****************************************************************
- isWrappedPointer() functions
- Used in AsyncMethodCall.h: if(isWrappedPointer(return_val)) ...
-
- The top generic method (the one that returns true) 
- contains a compile-time safety check.
-******************************************************************/
-#ifdef __GNUC__
-#define UNUSED __attribute__((unused))
-#else
-#define UNUSED
-#endif
-template <typename T> bool isWrappedPointer(T typ)                {
-  UNUSED void * v;
-  v = static_cast<void *> (typ);
-  return true; 
-}
-
-template <> inline bool isWrappedPointer(int typ)              { return false; }
-template <> inline bool isWrappedPointer(unsigned int typ)     { return false; }
-template <> inline bool isWrappedPointer(short typ)            { return false; }
-template <> inline bool isWrappedPointer(unsigned short typ)   { return false; }
-template <> inline bool isWrappedPointer(long typ)             { return false; }
-template <> inline bool isWrappedPointer(unsigned long typ)    { return false; }
-template <> inline bool isWrappedPointer(unsigned long long t) { return false; }
-template <> inline bool isWrappedPointer(double typ)           { return false; }
-template <> inline bool isWrappedPointer(const char * typ)     { return false; }
-template <> inline bool isWrappedPointer(const bool * typ)     { return false; }
-template <> inline bool isWrappedPointer(bool typ)             { return false; }
-template <> inline bool isWrappedPointer(char * typ)           { return false; }
-template <> inline bool isWrappedPointer(Handle<Function> typ) { return false; }
 
 #endif

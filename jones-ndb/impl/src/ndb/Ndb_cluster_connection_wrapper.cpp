@@ -48,7 +48,7 @@ public:
 };
 
 NdbccEnvelopeClass NdbccEnvelope;
-
+Envelope ErrorMessageEnvelope("Error Message from const char *");
 
 /*  Ndb_cluster_connection(const char * connectstring = 0);
 */
@@ -176,6 +176,7 @@ void get_latest_error_msg_wrapper(const Arguments &args) {
   
   typedef NativeConstMethodCall_0_<const char *, Ndb_cluster_connection> MCALL;
   MCALL mcall(& Ndb_cluster_connection::get_latest_error_msg, args);
+  mcall.wrapReturnValueAs(& ErrorMessageEnvelope);
   mcall.run();
   
   args.GetReturnValue().Set(mcall.jsReturnVal());
