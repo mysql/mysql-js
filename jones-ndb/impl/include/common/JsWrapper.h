@@ -142,13 +142,17 @@ public:
 
   template<typename PTR>
   Local<Value> wrap(PTR ptr) {
-    DEBUG_PRINT("Envelope wrapping %s: %p", classname, ptr);
-    SET_THIS_CLASS_ID(PTR);
-    Local<Object> wrapper = newWrapper();
-    wrapper->SetAlignedPointerInInternalField(0, (void *) this);
-    wrapper->SetAlignedPointerInInternalField(1, (void *) ptr);
+    if(ptr) {
+      DEBUG_PRINT("Envelope wrapping %s: %p", classname, ptr);
+      SET_THIS_CLASS_ID(PTR);
+      Local<Object> wrapper = newWrapper();
+      wrapper->SetAlignedPointerInInternalField(0, (void *) this);
+      wrapper->SetAlignedPointerInInternalField(1, (void *) ptr);
+      return wrapper;
+    }
 
-    return wrapper;
+    /* But if ptr was null, return a JavaScript null: */
+    return Null(isolate);
   }
 
   /* An overloaded wrap() method for the special case of converting a
@@ -156,13 +160,6 @@ public:
   */
   Local<Value> wrap(const char * str) {
     return String::NewFromUtf8(isolate, str);
-  }
-
-  /* If PTR p is null, the wrapper's user may want to return a JS Null
-     rather than a wrapped pointer:
-  */
-  Handle<Value> getNull() const {
-    return Null(isolate);
   }
 
   void addAccessor(const char *name, AccessorGetter accessor) {
@@ -175,17 +172,22 @@ public:
   /*****************************************************************
    Create a weak handle for a wrapped object.
    Use it to delete the wrapped object when the GC wants to reclaim the handle.
+
+   Don't do this if ptr is null (and wrapper object is therefore JS Null).
+
    For safety, the compiler will not let you use this on any "const PTR" type;
    (if you hold a const pointer to something, you probably don't own its
    memory allocation).
    ******************************************************************/
   template<typename PTR> 
-  void freeFromGC(PTR ptr, Handle<Object> obj) {
-    Persistent<Object> notifier;
-    notifier.Reset(isolate, obj);
-    notifier.MarkIndependent();
-//  TODO: Figure this out
-//    notifier.SetWeak((void *) ptr, onGcReclaim<PTR>);
+  void freeFromGC(PTR ptr, Handle<Value> obj) {
+    if(ptr) {
+      Persistent<Object> notifier;
+      notifier.Reset(isolate, obj->ToObject());
+      notifier.MarkIndependent();
+//      TODO: Figure this out
+//      notifier.SetWeak((void *) ptr, onGcReclaim<PTR>);
+    }
   }
 };
 
