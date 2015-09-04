@@ -148,8 +148,8 @@ void newNdbInterpretedCode(const Arguments & args) {
   JsValueConverter<const NdbDictionary::Table *> arg0(args[0]);
   NdbInterpretedCode * c = new NdbInterpretedCode(arg0.toC());
   Local<Object> jsObject = NdbInterpretedCodeEnvelope.wrap(c);
-  freeFromGC(c, jsObject);
-  return scope.Close(jsObject);
+  NdbInterpretedCodeEnvelope.freeFromGC(c, jsObject);
+  args.GetReturnValue().Set(scope.Escape(jsObject));
 }
 
 void load_const_null(const Arguments &args) {
@@ -587,10 +587,9 @@ void getWordsUsed(const Arguments &args) {
   args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-
-Handle<Value> NdbInterpretedCode_initOnLoad(Handle<Object> target) {
-  Persistent<String> ic_key = Persistent<String>(String::NewSymbol("NdbInterpretedCode"));
-  Persistent<Object> ic_obj = Persistent<Object>(Object::New());
+void NdbInterpretedCode_initOnLoad(Handle<Object> target) {
+  Local<String> ic_key = NEW_SYMBOL("NdbInterpretedCode");
+  Local<Object> ic_obj = Object::New(v8::Isolate::GetCurrent());
   target->Set(ic_key, ic_obj);
   DEFINE_JS_FUNCTION(ic_obj, "create", newNdbInterpretedCode);
 }

@@ -50,7 +50,7 @@ public:
 
 NdbEnvelopeClass NdbEnvelope;
 
-Handle<Value> Ndb_Wrapper(Ndb *ndb) {
+Local<Value> Ndb_Wrapper(Ndb *ndb) {
   return NdbEnvelope.wrap(ndb);
 }
 

@@ -150,8 +150,7 @@ public:
 
     if(isWrappedPointer(return_val)) {
       DEBUG_ASSERT(returnValueEnvelope);
-      Local<Object> obj = returnValueEnvelope->newWrapper();
-      wrapPointerInObject(return_val, *returnValueEnvelope, obj);
+      Local<Object> obj = returnValueEnvelope->wrap(return_val);
       return scope.Escape(obj);
     }
     else {

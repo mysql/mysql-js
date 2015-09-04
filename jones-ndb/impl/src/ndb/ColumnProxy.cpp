@@ -21,26 +21,27 @@
 #include "adapter_global.h"
 #include "unified_debug.h"
 #include "ColumnProxy.h"
+#include "JsWrapper.h"
 
 using namespace v8;
 
 // TODO: Assure that caller has a HandleScope
-Handle<Value> ColumnProxy::get(char *buffer) {
+Handle<Value> ColumnProxy::get(v8::Isolate *isolate, char *buffer) {
   Handle<Value> val;
 
   if(! isLoaded) {
-    val = handler->read(buffer, blobBuffer);
-    jsValue.Reset(val);
+    val = handler->read(buffer, ToLocal(& blobBuffer));
+    jsValue.Reset(isolate, val);
     isLoaded = true;
   }
   return val;
 }
 
-void ColumnProxy::set(Handle<Value> newValue) {
+void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
   isNull = (newValue->IsNull());
   isLoaded = isDirty = true;
   blobBuffer.Reset();
-  jsValue.Reset(newValue);
+  jsValue.Reset(isolate, newValue);
   DEBUG_PRINT("set %s", handler->column->getName());
 }
 

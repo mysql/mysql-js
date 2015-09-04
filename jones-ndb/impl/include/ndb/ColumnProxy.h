@@ -32,7 +32,7 @@ public:
   BlobWriteHandler * createBlobWriteHandle(int);
 
   Handle<Value> get(char *);
-  void          set(Handle<Value>);
+  void          set(v8::Isolate *, Handle<Value>);
   Handle<Value> write(char *);
 
 private:

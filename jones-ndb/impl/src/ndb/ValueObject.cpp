@@ -130,7 +130,7 @@ Handle<Value> nroConstructor(const Arguments &args) {
       unwrapPointer<ColumnHandlerSet *>(mapData->Get(1)->ToObject());
 
     /* Build NdbRecordObject */
-    NdbRecordObject * nro = new NdbRecordObject(record, handlers, args[0], args[1]);
+    NdbRecordObject * nro = new NdbRecordObject(record, handlers, args);
 
     /* Wrap for JavaScript */
     wrapPointerInObject<NdbRecordObject *>(nro, nroEnvelope, args.This());

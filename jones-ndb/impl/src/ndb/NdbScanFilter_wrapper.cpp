@@ -45,7 +45,6 @@ V8WrapperFn getNdbOperation;
 class NdbScanFilterEnvelopeClass : public Envelope {
 public:
   NdbScanFilterEnvelopeClass() : Envelope("NdbScanFilter") {
-    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     WRAPPER_FUNCTION( begin);
     WRAPPER_FUNCTION( end);
     WRAPPER_FUNCTION( istrue);
@@ -61,7 +60,7 @@ public:
 
 NdbScanFilterEnvelopeClass NdbScanFilterEnvelope;
 
-Handle<Value> newNdbScanFilter(const Arguments & args) {
+void newNdbScanFilter(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   
@@ -74,44 +73,44 @@ Handle<Value> newNdbScanFilter(const Arguments & args) {
   
   Local<Object> jsObject = NdbScanFilterEnvelope.wrap(f);
   NdbScanFilterEnvelope.freeFromGC(f, jsObject);
-  return scope.Close(jsObject);
+  args.GetReturnValue().Set(scope.Escape(jsObject));
 }
 
 
-Handle<Value> begin(const Arguments & args) {
+void begin(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, NdbScanFilter::Group> NCALL;
   NCALL ncall(& NdbScanFilter::begin, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> end(const Arguments & args) {
+void end(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::end, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> istrue(const Arguments & args) {
+void istrue(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::istrue, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> isfalse(const Arguments & args) {
+void isfalse(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::isfalse, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
@@ -122,9 +121,7 @@ Handle<Value> isfalse(const Arguments & args) {
    ARG3: Offset
    ARG4: Length
 */
-Handle<Value> cmp(const Arguments &args) {
-  EscapableHandleScope scope(args.GetIsolate());
-
+void cmp(const Arguments &args) {
   NdbScanFilter * filter = unwrapPointer<NdbScanFilter *>(args.Holder());
   int condition = args[0]->Int32Value();
   int columnId  = args[1]->Uint32Value();
@@ -135,54 +132,53 @@ Handle<Value> cmp(const Arguments &args) {
   int rval = filter->cmp(NdbScanFilter::BinaryCondition(condition), 
                          columnId, buffer + offset, length);
 
-  return scope.Close(toJS(rval));
+  args.GetReturnValue().Set(rval);
 }
 
 
-Handle<Value> isnull(const Arguments & args) {
+void isnull(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, int> NCALL;
   NCALL ncall(& NdbScanFilter::isnull, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> isnotnull(const Arguments & args) {
+void isnotnull(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbScanFilter, int> NCALL;
   NCALL ncall(& NdbScanFilter::isnotnull, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> getInterpretedCode(const Arguments & args) {
+void getInterpretedCode(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<const NdbInterpretedCode *, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::getInterpretedCode, args);
   ncall.wrapReturnValueAs(getConstNdbInterpretedCodeEnvelope());
   ncall.run();  
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> getNdbOperation(const Arguments & args) {
+void getNdbOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<NdbOperation *, NdbScanFilter> NCALL;
   NCALL ncall(& NdbScanFilter::getNdbOperation, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
 #define WRAP_CONSTANT(X) DEFINE_JS_INT(sfObj, #X, NdbScanFilter::X)
-void NdbScanFilter_initOnLoad(Handle<Object> target) {  
-  EscapableHandleScope scope(args.GetIsolate());
 
-  Persistent<String> sfKey = Persistent<String>(String::NewSymbol("NdbScanFilter"));
-  Persistent<Object> sfObj = Persistent<Object>(Object::New());
+void NdbScanFilter_initOnLoad(Handle<Object> target) {
+  Local<String> sfKey = NEW_SYMBOL("NdbScanFilter");
+  Local<Object> sfObj = Object::New(v8::Isolate::GetCurrent());
 
   target->Set(sfKey, sfObj);
 

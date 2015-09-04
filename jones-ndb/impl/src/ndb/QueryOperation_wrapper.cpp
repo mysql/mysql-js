@@ -73,7 +73,7 @@ public:
 
 QueryOperationEnvelopeClass QueryOperationEnvelope;
 
-Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
+Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
   if(queryOp) {
     Local<Object> jsobj = QueryOperationEnvelope.wrap(queryOp);
     QueryOperationEnvelope.freeFromGC(queryOp, jsobj);
@@ -181,7 +181,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   }
 
   v = spec->Get(K_joinTo);
-  Local<Array> joinColumns = Array::Cast(*v);
+  Array * joinColumns = Array::Cast(*v);
 
   /* Build the key */
   int nKeyParts = joinColumns->Length();
