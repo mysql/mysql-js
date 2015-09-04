@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
 
  This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ public:
 
   /* Constructor */
   NativeCFunctionCall_0_<R>(Function_T f, const Arguments &args) :
-  AsyncCall_Returning<R>(args[0]) /*callback*/ ,
+  AsyncCall_Returning<R>(args.GetIsolate(), args[0]) /*callback*/ ,
   function(f)
   { }
 
@@ -72,7 +72,7 @@ public:
 
   /* Constructor */
   NativeCFunctionCall_1_<R, A0>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[1]), /* callback */
+    AsyncCall_Returning<R>(args.GetIsolate(), args[1]), /* callback */
     Call_1_<A0>(args),
     function(f)
   { }
@@ -100,7 +100,7 @@ public:
 
   /* Constructor */
   NativeCFunctionCall_2_<R, A0, A1>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[2]), // callback
+    AsyncCall_Returning<R>(args.GetIsolate(), args[2]), // callback
     Call_2_<A0, A1>(args),
     function(f)
   { }
@@ -131,7 +131,7 @@ public:
 
   /* Constructor */
   NativeCFunctionCall_3_<R, A0, A1, A2>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[3]), /* callback */
+    AsyncCall_Returning<R>(args.GetIsolate(), args[3]), /* callback */
     Call_3_<A0, A1, A2>(args),
     function(f)
   { }
@@ -164,7 +164,7 @@ public:
   
   /* Constructor */
   NativeCFunctionCall_4_<R, A0, A1, A2, A3>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[4]),  /* callback */
+    AsyncCall_Returning<R>(args.GetIsolate(), args[4]),  /* callback */
     Call_4_<A0, A1, A2, A3>(args),
     function(f)
   { }
@@ -198,7 +198,7 @@ public:
   
   /* Constructor */
   NativeCFunctionCall_6_<R, A0, A1, A2, A3, A4, A5>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[8]),  /* callback */
+    AsyncCall_Returning<R>(args.GetIsolate(), args[6]),  /* callback */
     Call_6_<A0, A1, A2, A3, A4, A5>(args),
     function(f)
   { }
@@ -234,7 +234,7 @@ public:
   
   /* Constructor */
   NativeCFunctionCall_8_<R, A0, A1, A2, A3, A4, A5, A6, A7>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<R>(args[8]),  /* callback */
+    AsyncCall_Returning<R>(args.GetIsolate(), args[8]),  /* callback */
     Call_8_<A0, A1, A2, A3, A4, A5, A6, A7>(args),
     function(f)
   { }
@@ -271,7 +271,7 @@ public:
 
   /* Constructor */
   NativeCVoidFunctionCall_0_(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<int>(args[1], 1) /*callback*/,
+    AsyncCall_Returning<int>(args.GetIsolate(), args[1], 1) /*callback*/,
     function(f)
   { }
 
@@ -300,7 +300,7 @@ public:
 
   /* Constructor */
   NativeCVoidFunctionCall_1_<A0>(Function_T f, const Arguments &args) :
-    AsyncCall_Returning<int>(args[1], 1), // callback
+    AsyncCall_Returning<int>(args.GetIsolate(), args[1], 1), // callback
     Call_1_<A0>(args),
     function(f)
   { }

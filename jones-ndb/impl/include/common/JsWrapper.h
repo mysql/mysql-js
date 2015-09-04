@@ -154,7 +154,9 @@ public:
   /* An overloaded wrap() method for the special case of converting a
      const char * to a JS String.
   */
-  Local<Value> wrap(const char * str) { return String::New(isolate, str); }
+  Local<Value> wrap(const char * str) {
+    return String::NewFromUtf8(isolate, str);
+  }
 
   /* If PTR p is null, the wrapper's user may want to return a JS Null
      rather than a wrapped pointer:
