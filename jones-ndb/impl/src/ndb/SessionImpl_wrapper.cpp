@@ -50,13 +50,9 @@ public:
 SessionImplEnvelopeClass SessionImplEnvelope;
 
 Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
-
-  if(dbsi) {
-    Local<Object> jsobj = SessionImplEnvelope.wrap(dbsi);
-    SessionImplEnvelope.freeFromGC(dbsi, jsobj);
-    return jsobj;
-  }
-  return SessionImplEnvelope.getNull();
+  Local<Value> jsobj = SessionImplEnvelope.wrap(dbsi);
+  SessionImplEnvelope.freeFromGC(dbsi, jsobj);
+  return jsobj;
 }
 
 SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,

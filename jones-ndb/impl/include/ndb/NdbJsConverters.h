@@ -27,7 +27,6 @@
 
 using namespace v8;
 typedef Local<Value> jsvalue;
-typedef Handle<Object> jsobject;
 
 
 /*****************************************************************
@@ -86,7 +85,9 @@ public:
 
 // int
 template <>
-inline Local<Value> toJS<NdbTransaction::CommitStatusType>(NdbTransaction::CommitStatusType cval){ 
-  return Number::New(Isolate::GetCurrent(), static_cast<int>(cval));
+inline Local<Value> toJS<NdbTransaction::CommitStatusType>
+                        (Isolate * isolate,
+                         NdbTransaction::CommitStatusType cval) {
+  return Number::New(isolate, static_cast<int>(cval));
 };
 

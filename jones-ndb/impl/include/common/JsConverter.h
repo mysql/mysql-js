@@ -152,16 +152,15 @@ public:
 };
 
 /* Pass through of JavaScript value */
-//template <>
-//class JsValueConverter <Handle<Function> > {
-//public:
-//  HandleScope scope;
-//  Local<Function> jsval;
-//  JsValueConverter(Local<Value> v) {
-//    jsval = Local<Function>::New(Local<Function>::Cast(v));
-//  };
-//  Handle<Function> toC()  { return jsval;  };
-//};
+template <>
+class JsValueConverter <Handle<Function> > {
+public:
+  Local<Function> jsval;
+  JsValueConverter(Local<Value> v) {
+    jsval = Local<Function>::New(v8::Isolate::GetCurrent(), Local<Function>::Cast(v));
+  };
+  Handle<Function> toC()  { return jsval;  };
+};
 
 /*****************************************************************
  toJs functions

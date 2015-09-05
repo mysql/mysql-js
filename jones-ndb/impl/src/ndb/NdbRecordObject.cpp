@@ -84,15 +84,15 @@ NdbRecordObject::~NdbRecordObject() {
 }
 
 
-Handle<Value> NdbRecordObject::getField(int nField) {
+Local<Value> NdbRecordObject::getField(int nField) {
   if(record->isNull(nField, buffer))
     return Null(isolate);
   else
-    return proxy[nField].get(buffer);
+    return proxy[nField].get(isolate, buffer);
 }
 
 
-Handle<Value> NdbRecordObject::prepare() {
+Local<Value> NdbRecordObject::prepare() {
   EscapableHandleScope scope(isolate);
   int n = 0;
   Local<Value> writeStatus;

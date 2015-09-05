@@ -27,9 +27,9 @@ public:
   NdbRecordObject(const Record *, ColumnHandlerSet *, const Arguments &);
   ~NdbRecordObject();
   
-  Handle<Value> getField(int);
+  Local<Value> getField(int);
   void setField(int nField, Handle<Value> value);
-  Handle<Value> prepare();
+  Local<Value> prepare();
   void resetMask();
 
   const Record * getRecord() const;

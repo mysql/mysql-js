@@ -41,7 +41,6 @@ V8WrapperFn getOperationError,
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
-    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
     addMethod("getOperationError", getOperationError);
     addMethod("execute", execute);
@@ -54,33 +53,27 @@ public:
 BatchImplEnvelopeClass BatchImplEnvelope;
 
 // CALLER in DBOperationHelper has a HandleScope
-Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
-  DEBUG_PRINT("BatchImpl wrapper");
-
-  if(set) {
-    Local<Object> jsobj = BatchImplEnvelope.wrap(set);
-    BatchImplEnvelope.freeFromGC(set, jsobj);
-    return jsobj;
-  }
-  return Null(Isolate::GetCurrent());
+Local<Value> BatchImpl_Wrapper(BatchImpl *set) {
+  Local<Value> jsobj = BatchImplEnvelope.wrap(set);
+  BatchImplEnvelope.freeFromGC(set, jsobj);
+  return jsobj;
 }
 
-Handle<Value> BatchImpl_Recycle(Handle<Object> oldWrapper, 
-                                     BatchImpl * newSet) {
+// This version is *not* freed from GC
+Local<Object> getWrappedObject(BatchImpl *set) {
+  return BatchImplEnvelope.wrap(set)->ToObject();
+}
+
+Local<Value> BatchImpl_Recycle(Handle<Object> oldWrapper,
+                               BatchImpl * newSet) {
   DEBUG_PRINT("BatchImpl *Recycle*");
-  assert(newSet);
   BatchImpl * oldSet = unwrapPointer<BatchImpl *>(oldWrapper);
   assert(oldSet == 0);
+  assert(newSet != 0);
   wrapPointerInObject(newSet, BatchImplEnvelope, oldWrapper);
   return oldWrapper;
 }
 
-Persistent<Value> getWrappedObject(BatchImpl *set) {
-  HandleScope scope;
-  Local<Object> localObj = BatchImplEnvelope.newWrapper();
-  wrapPointerInObject(set, BatchImplEnvelope, localObj);
-  return Persistent<Value>::New(localObj);
-}
 
 void getOperationError(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
@@ -91,14 +84,17 @@ void getOperationError(const Arguments & args) {
 
   const NdbError * err = set->getError(n);
 
-  if(err == 0) return True();
-  if(err->code == 0) return Null();
-  return scope.Close(NdbError_Wrapper(*err));
+  Local<Value> opErrHandle;
+  if(err == 0) opErrHandle = True(args.GetIsolate());
+  else if(err->code == 0) opErrHandle = Null(args.GetIsolate());
+  else opErrHandle = NdbError_Wrapper(*err);
+
+  args.GetReturnValue().Set(scope.Escape(opErrHandle));
 }
 
 void tryImmediateStartTransaction(const Arguments &args) {
   BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
-  return ctx->tryImmediateStartTransaction() ? True() : False();
+  args.GetReturnValue().Set((bool) ctx->tryImmediateStartTransaction());
 }
 
 
@@ -154,7 +150,7 @@ void executeAsynch(const Arguments &args) {
 void readBlobResults(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
-  getKeyOperation(n)->readBlobResults(args);
+  set->getKeyOperation(n)->readBlobResults(args);
 //  args.GetReturnValue().Set(set->getKeyOperation(n)->readBlobResults());
 }
 

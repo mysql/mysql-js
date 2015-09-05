@@ -45,19 +45,17 @@ void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
   DEBUG_PRINT("set %s", handler->column->getName());
 }
 
-// TODO: Assure that caller has a HandleScope
 Handle<Value> ColumnProxy::write(char *buffer) {
   Handle<Value> rval = Undefined();
 
   /* Write dirty, non-blob values */
   if(isDirty && blobBuffer.IsEmpty()) {
-    rval = handler->write(jsValue, buffer);
+    rval = handler->write(ToLocal(& jsValue), buffer);
     DEBUG_PRINT("write %s", handler->column->getName());
     isDirty = false;
   }
   return rval;
 }
-
 
 BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
   BlobWriteHandler * b = 0;

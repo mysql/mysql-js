@@ -87,24 +87,23 @@
 Envelope columnHandlerSetEnvelope("ColumnHandlerSet");
 Envelope nroEnvelope("NdbRecordObject");
 
-
 /* Generic getter for all NdbRecordObjects
 */
-Handle<Value> nroGetter(Local<String>, const AccessorInfo & info) 
+void nroGetter(Local<String>, const AccessorInfo & info)
 {
   NdbRecordObject * nro = 
-    static_cast<NdbRecordObject *>(info.Holder()->GetPointerFromInternalField(1));
+    static_cast<NdbRecordObject *>(info.Holder()->GetAlignedPointerFromInternalField(1));
   int nField = info.Data()->Int32Value();
-  return nro->getField(nField);
+  info.GetReturnValue().Set(nro->getField(nField));
 }                    
 
 
 /* Generic setter for all NdbRecordObjects
 */
-void nroSetter(Local<String>, Local<Value> value, const AccessorInfo& info) 
+void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
 {
   NdbRecordObject * nro = 
-    static_cast<NdbRecordObject *>(info.Holder()->GetPointerFromInternalField(1));
+    static_cast<NdbRecordObject *>(info.Holder()->GetAlignedPointerFromInternalField(1));
   int nField = info.Data()->Int32Value();
   nro->setField(nField, value);
 }
@@ -137,7 +136,8 @@ Handle<Value> nroConstructor(const Arguments &args) {
     nroEnvelope.freeFromGC(nro, args.This());
   }
   else {
-    ThrowException(Exception::Error(String::New("must be a called as constructor")));
+    args.GetIsolate()->ThrowException(Exception::Error(
+      String::NewFromUtf8(args.GetIsolate(), "must be a called as constructor")));
   }
   return args.This();
 }
@@ -150,15 +150,15 @@ Handle<Value> nroConstructor(const Arguments &args) {
    Returns: a constructor function that can be used to create native-backed 
    objects
 */
-Handle<Value> getValueObjectConstructor(const Arguments &args) {
+void getValueObjectConstructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
   EscapableHandleScope scope(args.GetIsolate());
-  Local<FunctionTemplate> ft = FunctionTemplate::New();
+  Local<FunctionTemplate> ft = FunctionTemplate::New(args.GetIsolate());
   Local<ObjectTemplate> inst = ft->InstanceTemplate();
   inst->SetInternalFieldCount(2);
 
   /* Initialize the mapData */
-  Local<Object> mapData = Object::New();
+  Local<Object> mapData = Object::New(args.GetIsolate());
   
   /* Store the record in the mapData at 0 */
   mapData->Set(0, args[0]);
@@ -171,12 +171,9 @@ Handle<Value> getValueObjectConstructor(const Arguments &args) {
     const NdbDictionary::Column * col = record->getColumn(i);
     size_t offset = record->getColumnOffset(i);
     ColumnHandler * handler = columnHandlers->getHandler(i);
-    handler->init(col, offset, args[2]->ToObject()->Get(i));
+    handler->init(args.GetIsolate(), col, offset, args[2]->ToObject()->Get(i));
   }
-  Local<Object> jsHandlerSet = columnHandlerSetEnvelope.newWrapper();
-  wrapPointerInObject<ColumnHandlerSet *>(columnHandlers, 
-                                          columnHandlerSetEnvelope,
-                                          jsHandlerSet);
+  Local<Object> jsHandlerSet = columnHandlerSetEnvelope.wrap(columnHandlers);
   mapData->Set(1, jsHandlerSet);
 
   /* Create accessors for the mapped fields in the instance template.
@@ -185,18 +182,18 @@ Handle<Value> getValueObjectConstructor(const Arguments &args) {
   Local<Object> jsFields = args[1]->ToObject();
   for(unsigned int i = 0 ; i < ncol; i++) {
     Handle<String> fieldName = jsFields->Get(i)->ToString();
-    inst->SetAccessor(fieldName, nroGetter, nroSetter, Number::New(i),
+    inst->SetAccessor(fieldName, nroGetter, nroSetter, Number::New(args.GetIsolate(), i),
                       DEFAULT, DontDelete);
   }
 
   /* The generic constructor is the CallHandler */
-  ft->SetCallHandler(nroConstructor, Persistent<Object>::New(mapData));
+  ft->SetCallHandler(nroConstructor, mapData);
 
-  return scope.Close(ft->GetFunction());
+  args.GetReturnValue().Set(scope.Escape(ft->GetFunction()));
 }
 
 
-Handle<Value> isValueObject(const Arguments &args) {
+void isValueObject(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   bool answer = false;  
   Handle<Value> v = args[0];
@@ -204,28 +201,27 @@ Handle<Value> isValueObject(const Arguments &args) {
   if(v->IsObject()) {
     Local<Object> o = v->ToObject();
     if(o->InternalFieldCount() == 2) {
-      Envelope * n = (Envelope *) o->GetPointerFromInternalField(0);
+      Envelope * n = (Envelope *) o->GetAlignedPointerFromInternalField(0);
       if(n == & nroEnvelope) {
         answer = true;
       }
     }
   }
 
-  return scope.Close(Boolean::New(answer));
+  args.GetReturnValue().Set(answer);
 }
 
 
-Handle<Value> getValueObjectWriteCount(const Arguments &args) {
-  EscapableHandleScope scope(args.GetIsolate());
+void getValueObjectWriteCount(const Arguments &args) {
   NdbRecordObject * nro = unwrapPointer<NdbRecordObject *>(args[0]->ToObject());
-  return scope.Close(Number::New(nro->getWriteCount()));
+  args.GetReturnValue().Set(nro->getWriteCount());
 }
 
 
-Handle<Value> prepareForUpdate(const Arguments &args) {
+void prepareForUpdate(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
   NdbRecordObject * nro = unwrapPointer<NdbRecordObject *>(args[0]->ToObject());
-  return scope.Close(nro->prepare());
+  args.GetReturnValue().Set(scope.Escape(nro->prepare()));
 }
 
 

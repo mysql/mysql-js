@@ -53,17 +53,15 @@ inline Local<T> ToLocal(const Persistent<T>* p_) {
   return *reinterpret_cast<const Local<T>*>(p_);
 }
 
-/* Recast the new (node 0.12) API in terms of the 
-   Arguments type from the previous API
-*/
-typedef FunctionCallbackInfo<Value> Arguments;
-
-typedef PropertyCallbackInfo<Value> AccessorInfo;
-
 /* Signature of a V8 function wrapper
 */
+typedef FunctionCallbackInfo<Value> Arguments;
 typedef void V8WrapperFn(const Arguments &);
 
+/* Signatures for property setters & getters
+*/
+typedef PropertyCallbackInfo<Value> AccessorInfo;  // for getter
+typedef PropertyCallbackInfo<void>  SetterInfo;
 typedef void (*AccessorGetter) (Local<String>, const AccessorInfo &);
 
 /*****************************************************************

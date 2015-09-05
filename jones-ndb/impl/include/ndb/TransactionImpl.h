@@ -41,7 +41,7 @@ public:
      to be reused in JavaScript many times without creating a new wrapper
      each time.
   */
-  v8::Persistent<v8::Object> getJsWrapper() const;
+  v8::Local<v8::Object> getJsWrapper() const;
 
 
   /****** Executing Operations *******/
@@ -92,7 +92,7 @@ public:
   /* Fetch an empty BatchImpl that can be used for stand-alone 
      COMMIT and ROLLBACK calls.
   */
-  v8::Persistent<v8::Object> getWrappedEmptyOperationSet() const;
+  v8::Local<v8::Object> getWrappedEmptyOperationSet() const;
 
 
   /****** Accessing operation errors *******/

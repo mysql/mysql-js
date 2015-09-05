@@ -147,7 +147,7 @@ void newNdbInterpretedCode(const Arguments & args) {
 
   JsValueConverter<const NdbDictionary::Table *> arg0(args[0]);
   NdbInterpretedCode * c = new NdbInterpretedCode(arg0.toC());
-  Local<Object> jsObject = NdbInterpretedCodeEnvelope.wrap(c);
+  Local<Value> jsObject = NdbInterpretedCodeEnvelope.wrap(c);
   NdbInterpretedCodeEnvelope.freeFromGC(c, jsObject);
   args.GetReturnValue().Set(scope.Escape(jsObject));
 }

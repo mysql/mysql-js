@@ -71,7 +71,7 @@ void newNdbScanFilter(const Arguments & args) {
   
   NdbScanFilter * f = new NdbScanFilter(arg0.toC());
   
-  Local<Object> jsObject = NdbScanFilterEnvelope.wrap(f);
+  Local<Value> jsObject = NdbScanFilterEnvelope.wrap(f);
   NdbScanFilterEnvelope.freeFromGC(f, jsObject);
   args.GetReturnValue().Set(scope.Escape(jsObject));
 }

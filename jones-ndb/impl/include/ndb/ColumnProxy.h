@@ -31,7 +31,7 @@ public:
   bool valueIsNull();
   BlobWriteHandler * createBlobWriteHandle(int);
 
-  Handle<Value> get(char *);
+  Handle<Value> get(v8::Isolate *, char *);
   void          set(v8::Isolate *, Handle<Value>);
   Handle<Value> write(char *);
 

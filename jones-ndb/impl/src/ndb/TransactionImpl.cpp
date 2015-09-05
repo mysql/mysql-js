@@ -28,10 +28,11 @@
 #include "BatchImpl.h"
 
 extern void setJsWrapper(TransactionImpl *);
-extern Persistent<Value> getWrappedObject(BatchImpl *set);
+extern Local<Object> getWrappedObject(BatchImpl *set);
 
 const char * modes[4] = { "Prepare ","NoCommit","Commit  ","Rollback" };
 
+// TODO: verify that caller has HandleScope
 TransactionImpl::TransactionImpl(SessionImpl *impl) :
   token(0),
   parent(impl),
@@ -157,10 +158,10 @@ int TransactionImpl::executeAsynch(BatchImpl *operations,
 
 // THESE WERE ORIGINALLY INLINED --- MOVE THEM BACK AFTER FIXED
 
-v8::Persistent<v8::Object> TransactionImpl::getJsWrapper() const {
-  return jsWrapper;
+v8::Local<v8::Object> TransactionImpl::getJsWrapper() const {
+  return ToLocal( &jsWrapper);
 }
 
-v8::Persistent<v8::Object> TransactionImpl::getWrappedEmptyOperationSet() const {
-  return emptyOpSetWrapper;
+v8::Local<v8::Object> TransactionImpl::getWrappedEmptyOperationSet() const {
+  return ToLocal(& emptyOpSetWrapper);
 }
