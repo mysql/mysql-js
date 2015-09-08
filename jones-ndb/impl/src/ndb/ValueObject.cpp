@@ -115,7 +115,7 @@ void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
  * args.Data(): mapData holding the record and ColumnHandlers
  * args.This(): VO built from the mapping-specific InstanceTemplate
 */
-Handle<Value> nroConstructor(const Arguments &args) {
+void nroConstructor(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
 
   if(args.IsConstructCall()) {
@@ -139,7 +139,7 @@ Handle<Value> nroConstructor(const Arguments &args) {
     args.GetIsolate()->ThrowException(Exception::Error(
       String::NewFromUtf8(args.GetIsolate(), "must be a called as constructor")));
   }
-  return args.This();
+  args.GetReturnValue().Set(args.This());
 }
 
 
@@ -173,7 +173,7 @@ void getValueObjectConstructor(const Arguments &args) {
     ColumnHandler * handler = columnHandlers->getHandler(i);
     handler->init(args.GetIsolate(), col, offset, args[2]->ToObject()->Get(i));
   }
-  Local<Object> jsHandlerSet = columnHandlerSetEnvelope.wrap(columnHandlers);
+  Local<Value> jsHandlerSet = columnHandlerSetEnvelope.wrap(columnHandlers);
   mapData->Set(1, jsHandlerSet);
 
   /* Create accessors for the mapped fields in the instance template.

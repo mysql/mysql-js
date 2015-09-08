@@ -45,8 +45,8 @@ void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
   DEBUG_PRINT("set %s", handler->column->getName());
 }
 
-Handle<Value> ColumnProxy::write(char *buffer) {
-  Handle<Value> rval = Undefined();
+Handle<Value> ColumnProxy::write(v8::Isolate *isolate, char *buffer) {
+  Handle<Value> rval = Undefined(isolate);
 
   /* Write dirty, non-blob values */
   if(isDirty && blobBuffer.IsEmpty()) {
@@ -61,12 +61,12 @@ BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
   BlobWriteHandler * b = 0;
   if(isDirty && ! isNull) {
     DEBUG_PRINT("createBlobWriteHandle %s", handler->column->getName());
-    b = handler->createBlobWriteHandle(blobBuffer, i);
+    b = handler->createBlobWriteHandle(ToLocal(& blobBuffer), i);
   }
   isDirty = false;
   return b;
 }
 
-void ColumnProxy::setBlobBuffer(Handle<Object> buffer) {
-  blobBuffer.Reset(buffer);
+void ColumnProxy::setBlobBuffer(v8::Isolate *isolate, Handle<Object> buffer) {
+  blobBuffer.Reset(isolate, buffer);
 }

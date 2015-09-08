@@ -62,7 +62,7 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
         nblobs++;
         Handle<Object> buf = b->ToObject();
         assert(node::Buffer::HasInstance(buf));
-        proxy[i].setBlobBuffer(buf);
+        proxy[i].setBlobBuffer(isolate, buf);
         record->setNotNull(i, buffer);
       } else if(b->IsNull()) {
        nblobs++;
@@ -104,7 +104,7 @@ Local<Value> NdbRecordObject::prepare() {
         record->setNull(i, buffer);
       }
       else {
-        writeStatus = proxy[i].write(buffer);
+        writeStatus = proxy[i].write(isolate, buffer);
         if(! writeStatus->IsUndefined()) savedError = writeStatus;
       }
     }

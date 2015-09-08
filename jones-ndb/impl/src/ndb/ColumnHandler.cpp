@@ -145,7 +145,7 @@ BlobWriteHandler * ColumnHandler::createBlobWriteHandle(Handle<Value> val,
   Handle<Object> obj = val->ToObject();
   if(isLob) {
     if(isText && val->IsString()) {
-      obj = getBufferForText(column, val->ToString());
+      obj = getBufferForText(column, val->ToString())->ToObject();
     }
     b = new BlobWriteHandler(column->getColumnNo(), fieldNo, obj);
   }

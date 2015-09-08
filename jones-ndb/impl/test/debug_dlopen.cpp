@@ -34,26 +34,25 @@
 #include <dlfcn.h>
 
 #include "adapter_global.h"
+#include "JsConverter.h"
 #include "js_wrapper_macros.h"
 
 using namespace v8;
 
-Handle<Value> dlopen_wrapper(const Arguments &args) {
-  HandleScope scope;
+void dlopen_wrapper(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(1);
 
-  v8::String::AsciiValue pathname(args[0]);
-  Local<String> result;
-  
+  v8::String::Utf8Value pathname(args[0]);
+  const char * result = "OK";
+
   if(dlopen(*pathname, RTLD_LAZY) == NULL) {
-    result = String::New(dlerror());
+    result = dlerror();
   }
-  else {
-    result = String::New("OK");
-  }
-  
-  return scope.Close(result);
+  Local<Value> rval = String::NewFromUtf8(args.GetIsolate(), result);
+
+  args.GetReturnValue().Set(rval);
 }
 
 
@@ -61,5 +60,5 @@ void dlopen_initOnLoad(Handle<Object> target) {
   DEFINE_JS_FUNCTION(target, "debug_dlopen", dlopen_wrapper);
 }
 
-V8BINDER_LOADABLE_MODULE(debug_dlopen, dlopen_initOnLoad)
+NODE_MODULE(debug_dlopen, dlopen_initOnLoad)
 

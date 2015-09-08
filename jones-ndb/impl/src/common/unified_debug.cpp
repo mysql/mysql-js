@@ -27,9 +27,9 @@
 
 #include <node.h>
 
+#include "adapter_global.h"
 #include "JsWrapper.h"
 #include "js_wrapper_macros.h"
-#include "adapter_global.h"
 
 /* Undefine UNIFIED_DEBUG here so macros are not expanded 
    and uni_debug is not declared as an extern

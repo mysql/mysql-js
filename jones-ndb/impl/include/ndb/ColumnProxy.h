@@ -27,13 +27,13 @@ public:
   ColumnProxy();
   ~ColumnProxy();
   void setHandler(const ColumnHandler *);
-  void setBlobBuffer(Handle<Object>);
+  void setBlobBuffer(v8::Isolate *, Handle<Object>);
   bool valueIsNull();
   BlobWriteHandler * createBlobWriteHandle(int);
 
   Handle<Value> get(v8::Isolate *, char *);
   void          set(v8::Isolate *, Handle<Value>);
-  Handle<Value> write(char *);
+  Handle<Value> write(v8::Isolate *, char *);
 
 private:
   const ColumnHandler *handler;

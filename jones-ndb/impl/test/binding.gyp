@@ -8,8 +8,7 @@
 
       'include_dirs':
       [
-        '../include/common',
-        '../include/ndb'
+        '../include/common'
       ],
 
       'sources':
@@ -19,6 +18,11 @@
          "../src/common/async_common.cpp",
          "../src/common/unified_debug.cpp"
       ]
+    },
+    {
+      'target_name' : "debug_dlopen",
+      'sources'     : [ "debug_dlopen.cpp"  ],
+      'include_dirs': [ "../include/common" ],
     }
   ]
 }

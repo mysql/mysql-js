@@ -20,6 +20,7 @@
 
 #include "ndb_util/NdbQueryOperation.hpp"
 
+#include "adapter_global.h"
 #include "TransactionImpl.h"
 #include "QueryOperation.h"
 
