@@ -150,9 +150,10 @@ function getType(obj) {
 }
 
 function compare(o1, o2) {
+  if (o1 === undefined && o2 === undefined)   { return true;  }
+  if (o1 === undefined || o2 === undefined)   { return false; }
   if (o1 == o2)                               { return true;  }
   if (o1 == null && o2 == null)               { return true;  }
-  if (o1 === undefined && o2 === undefined)   { return true;  }
   if (typeof o1 !== typeof o2)                { return false; }
   if (o1.toString() === o2.toString())        { return true;  }
   return false;
