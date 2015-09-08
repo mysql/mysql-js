@@ -731,7 +731,7 @@ Local<Value> fpWriter(const NdbDictionary::Column * col,
 
 Local<Value> BinaryReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  return node::Buffer::New(buffer + offset, col->getLength());
+  return node::Buffer::New(isolate, buffer + offset, col->getLength());
 }
 
 Local<Value> BinaryWriter(const NdbDictionary::Column * col,
@@ -755,7 +755,7 @@ Local<Value> varbinaryReader(const NdbDictionary::Column *col,
                               char *buffer, size_t offset) {
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * data = buffer+offset+sizeof(length);
-  return node::Buffer::New(data, length);
+  return node::Buffer::New(isolate, data, length);
 }
 
 template<typename LENGTHTYPE>

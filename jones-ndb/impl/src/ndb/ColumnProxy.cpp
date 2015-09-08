@@ -68,5 +68,6 @@ BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
 }
 
 void ColumnProxy::setBlobBuffer(v8::Isolate *isolate, Handle<Object> buffer) {
+  DEBUG_ENTER();
   blobBuffer.Reset(isolate, buffer);
 }

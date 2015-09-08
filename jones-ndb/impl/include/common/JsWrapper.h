@@ -195,13 +195,13 @@ public:
  arg1: an Envelope reference
  arg2: a reference to a v8 object, which must have already been 
        initialized from a proper ObjectTemplate.
- THIS COULD BE DEPRECATED IN FAVOR OF ENVELOPE.WRAP()
+ The *usual* case is to use Envelope.wrap() instead of this.
 ******************************************************************/
 template <typename PTR>
 void wrapPointerInObject(PTR ptr,
                          Envelope & env,
                          Handle<Object> obj) {
-  DEBUG_PRINT("Constructor wrapping %s: %p", env.classname, ptr);
+  DEBUG_PRINT("wrapPointerInObject for %s: %p", env.classname, ptr);
   DEBUG_ASSERT(obj->InternalFieldCount() == 2);
   SET_CLASS_ID(env, PTR);
   obj->SetAlignedPointerInInternalField(0, (void *) & env);

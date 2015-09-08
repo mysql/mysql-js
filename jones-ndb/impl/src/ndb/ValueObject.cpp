@@ -116,6 +116,7 @@ void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
  * args.This(): VO built from the mapping-specific InstanceTemplate
 */
 void nroConstructor(const Arguments &args) {
+  DEBUG_MARKER(UDEB_DEBUG);
   EscapableHandleScope scope(args.GetIsolate());
 
   if(args.IsConstructCall()) {
@@ -132,14 +133,14 @@ void nroConstructor(const Arguments &args) {
     NdbRecordObject * nro = new NdbRecordObject(record, handlers, args);
 
     /* Wrap for JavaScript */
-    wrapPointerInObject<NdbRecordObject *>(nro, nroEnvelope, args.This());
-    nroEnvelope.freeFromGC(nro, args.This());
+    Local<Value> recordObject = nroEnvelope.wrap(nro);
+    nroEnvelope.freeFromGC(nro, recordObject);
+    args.GetReturnValue().Set(scope.Escape(recordObject));
   }
   else {
     args.GetIsolate()->ThrowException(Exception::Error(
       String::NewFromUtf8(args.GetIsolate(), "must be a called as constructor")));
   }
-  args.GetReturnValue().Set(args.This());
 }
 
 
