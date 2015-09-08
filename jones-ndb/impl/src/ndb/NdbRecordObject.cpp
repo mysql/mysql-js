@@ -42,8 +42,8 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
   const Handle<Value> & blobBufferArray = args[1];
 
   unsigned int nblobs = 0;
-  /* Retain a handle on the buffer for our whole lifetime */
 
+  /* Retain a handle on the buffer for our whole lifetime */
   persistentBufferHandle.Reset(isolate, jsBuffer);
   buffer = node::Buffer::Data(jsBuffer);
 

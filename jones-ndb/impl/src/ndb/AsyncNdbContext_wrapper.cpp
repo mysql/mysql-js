@@ -57,8 +57,7 @@ void createAsyncNdbContext(const Arguments &args) {
 
   JsValueConverter<Ndb_cluster_connection *> arg0(args[0]);
   AsyncNdbContext * ctx = new AsyncNdbContext(arg0.toC());
-  Local<Object> wrapper = AsyncNdbContextEnvelope.newWrapper();
-  wrapPointerInObject(ctx, AsyncNdbContextEnvelope, wrapper);
+  Local<Value> wrapper = AsyncNdbContextEnvelope.wrap(ctx);
   args.GetReturnValue().Set(wrapper);
 }
 

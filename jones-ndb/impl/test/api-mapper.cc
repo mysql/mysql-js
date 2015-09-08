@@ -47,8 +47,7 @@ void Point_new_wrapper(const Arguments &args) {
 
   Point * p = new Point(arg0.toC(), arg1.toC());
 
-  Local<Object> jsObject = PointEnvelope.newWrapper();
-  wrapPointerInObject(p, PointEnvelope, jsObject);
+  Local<Object> jsObject = PointEnvelope.wrap(p);
 
   args.GetReturnValue().Set(jsObject);
 }
@@ -90,8 +89,7 @@ void Circle_new_wrapper(const Arguments &args) {
 
   Circle * c = new Circle(* arg0.toC(), arg1.toC());
 
-  Local<Object> jsObject = CircleEnvelope.newWrapper();
-  wrapPointerInObject(c, CircleEnvelope, jsObject);
+  Local<Object> jsObject = CircleEnvelope.wrap(c);
 
   args.GetReturnValue().Set(jsObject);
  }

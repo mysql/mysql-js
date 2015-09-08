@@ -56,14 +56,14 @@ void debug_print_bound(NdbIndexScanOperation::IndexBound * bound) {
 void newIndexBound(const Arguments &args) {
   EscapableHandleScope scope(args.GetIsolate());
 
+  NdbIndexScanOperation::IndexBound * bound = 
+    new NdbIndexScanOperation::IndexBound;
+  Local<Value> jsBound = IndexBoundEnvelope.wrap(bound);
+
   const Local<Object> spec = args[0]->ToObject();
-  Local<Object> jsBound = IndexBoundEnvelope.newWrapper();
   Local<Value> v;
   Local<Object> o;
 
-  NdbIndexScanOperation::IndexBound * bound = 
-    new NdbIndexScanOperation::IndexBound;
-  wrapPointerInObject(bound, IndexBoundEnvelope, jsBound);
 
   bound->low_key = 0;
   v = spec->Get(BOUND_LOW_KEY);

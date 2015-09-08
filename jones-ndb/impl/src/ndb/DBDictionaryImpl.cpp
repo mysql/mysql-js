@@ -406,10 +406,7 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
     };
   */    
   if(ndb_table && ! return_val) {
-
-    Local<Object> table = NdbDictTableEnv.newWrapper();
-    const NdbDictionary::Table * js_ndb_table = ndb_table;
-    wrapPointerInObject(js_ndb_table, NdbDictTableEnv, table);
+    Local<Object> table = NdbDictTableEnv.wrap(ndb_table)->ToObject();
 
     // database
     table->Set(SYMBOL(isolate, "database"), String::NewFromUtf8(isolate, arg1));
