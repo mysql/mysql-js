@@ -33,8 +33,10 @@
 
 using namespace v8;
 
+#define SET_KEY(X,Y) X.Set(isolate, String::NewFromUtf8(isolate, Y))
+#define GET_KEY(X) X.Get(isolate)
 
-Handle<String>    /* keys of NdbProjection */
+Eternal<String>    /* keys of NdbProjection */
   K_next,
   K_root,
   K_hasScan,
@@ -82,14 +84,17 @@ Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
 
 
 void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
+  DEBUG_ENTER();
+  Isolate * isolate = Isolate::GetCurrent();
   Record * record = 0;
-  int level = spec->Get(K_depth)->Int32Value();
-  if(spec->Get(K_rowRecord)->IsObject()) {
-    record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
+  int level = spec->Get(GET_KEY(K_depth))->Int32Value();
+  if(spec->Get(GET_KEY(K_rowRecord))->IsObject()) {
+    record = unwrapPointer<Record *>(spec->Get(GET_KEY(K_rowRecord))->ToObject());
   }
+  assert(record);
   queryOp->createRowBuffer(level, record);
 
-  if(spec->Get(K_relatedField)->IsNull()) {
+  if(spec->Get(GET_KEY(K_relatedField))->IsNull()) {
     queryOp->levelIsJoinTable(level);
   }
 }
@@ -99,6 +104,7 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
   DEBUG_ENTER();
+  Isolate * isolate = Isolate::GetCurrent();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
   /* Pull values out of the JavaScript object */
@@ -107,23 +113,23 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
 
-  v = spec->Get(K_keyRecord);
+  v = spec->Get(GET_KEY(K_keyRecord));
   if(v->IsObject()) {
     keyRecord = unwrapPointer<const Record *>(v->ToObject());
   };
-  v = spec->Get(K_tableHandler);
+  v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
-    v = v->ToObject()->Get(K_dbTable);
+    v = v->ToObject()->Get(GET_KEY(K_dbTable));
     if(v->IsObject()) {
       table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
     }
   }
-  bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
+  bool isPrimaryKey = spec->Get(GET_KEY(K_isPrimaryKey))->BooleanValue();
   const char * key_buffer = node::Buffer::Data(keyBuffer);
   if(! isPrimaryKey) {
-    v = spec->Get(K_indexHandler);
+    v = spec->Get(GET_KEY(K_indexHandler));
     if(v->IsObject()) {
-      v = v->ToObject()->Get(K_dbIndex);
+      v = v->ToObject()->Get(GET_KEY(K_dbIndex));
       if(v->IsObject()) {
         index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
       }
@@ -150,27 +156,28 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
                                              Handle<Object> spec,
                                              const NdbQueryOperationDef * parent) {
   NdbQueryBuilder *builder = queryOp->getBuilder();
+  Isolate * isolate = Isolate::GetCurrent();
 
   /* Pull values out of the JavaScript object */
   Local<Value> v;
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
-  int depth = spec->Get(K_depth)->Int32Value();
+  int depth = spec->Get(GET_KEY(K_depth))->Int32Value();
   DEBUG_PRINT("Creating QueryOperationDef at level %d",depth);
 
-  v = spec->Get(K_tableHandler);
+  v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
-    v = v->ToObject()->Get(K_dbTable);
+    v = v->ToObject()->Get(GET_KEY(K_dbTable));
     if(v->IsObject()) {
       table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
     }
   }
-  bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
+  bool isPrimaryKey = spec->Get(GET_KEY(K_isPrimaryKey))->BooleanValue();
 
   if(! isPrimaryKey) {
-    v = spec->Get(K_indexHandler);
+    v = spec->Get(GET_KEY(K_indexHandler));
     if(v->IsObject()) {
-      v = v->ToObject()->Get(K_dbIndex);
+      v = v->ToObject()->Get(GET_KEY(K_dbIndex));
       if(v->IsObject()) {
         index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
       }
@@ -178,7 +185,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
     assert(index);
   }
 
-  v = spec->Get(K_joinTo);
+  v = spec->Get(GET_KEY(K_joinTo));
   Array * joinColumns = Array::Cast(*v);
 
   /* Build the key */
@@ -194,10 +201,12 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   return queryOp->defineOperation(index, table, key_parts);
 }
 
-
+/* JS QueryOperation.create(ndbRootProjection, keyBuffer, depth)
+*/
 void createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(3);
+  Isolate * isolate = Isolate::GetCurrent();
 
   int size = args[2]->Int32Value();
   QueryOperation * queryOperation = new QueryOperation(size);
@@ -210,10 +219,10 @@ void createQueryOperation(const Arguments & args) {
   current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
 
-  while(! (v = spec->Get(K_next))->IsNull()) {
+  while(! (v = spec->Get(GET_KEY(K_next)))->IsNull()) {
     spec = v->ToObject();
     current = createNextLevel(queryOperation, spec, current);
-    assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
+    assert(current->getOpNo() == spec->Get(GET_KEY(K_depth))->Uint32Value());
     setRowBuffers(queryOperation, spec);
   }
   queryOperation->prepare(root);
@@ -278,14 +287,15 @@ void queryGetResult(const Arguments & args) {
 
   if(header) {
     if(header->data) {
-      wrapper->Set(K_data, node::Buffer::New(header->data,
-                                             op->getResultRowSize(header->depth),
-                                             doNotFreeQueryResultAtGC, 0));
+      wrapper->Set(GET_KEY(K_data),
+        node::Buffer::New(header->data,
+                          op->getResultRowSize(header->depth),
+                          doNotFreeQueryResultAtGC, 0));
     } else {
-      wrapper->Set(K_data, Null(isolate));
+      wrapper->Set(GET_KEY(K_data), Null(isolate));
     }
-    wrapper->Set(K_level, v8::Uint32::New(isolate, header->depth));
-    wrapper->Set(K_tag,   v8::Uint32::New(isolate, header->tag));
+    wrapper->Set(GET_KEY(K_level), v8::Uint32::New(isolate, header->depth));
+    wrapper->Set(GET_KEY(K_tag),   v8::Uint32::New(isolate, header->tag));
     args.GetReturnValue().Set(true);
   } else {
     args.GetReturnValue().Set(false);
@@ -302,30 +312,31 @@ void queryClose(const Arguments & args) {
 }
 
 void QueryOperation_initOnLoad(Handle<Object> target) {
+  Isolate * isolate = Isolate::GetCurrent();
   Local<Object> ibObj = Object::New(Isolate::GetCurrent());
   Local<String> ibKey = NEW_SYMBOL("QueryOperation");
   target->Set(ibKey, ibObj);
 
   DEFINE_JS_FUNCTION(ibObj, "create", createQueryOperation);
 
-  K_next          = NEW_SYMBOL("next");
-  K_root          = NEW_SYMBOL("root");
-  K_hasScan       = NEW_SYMBOL("hasScan");
-  K_keyFields     = NEW_SYMBOL("keyFields");
-  K_joinTo        = NEW_SYMBOL("joinTo");
-  K_depth         = NEW_SYMBOL("depth");
-  K_tableHandler  = NEW_SYMBOL("tableHandler");
-  K_rowRecord     = NEW_SYMBOL("rowRecord"),
-  K_indexHandler  = NEW_SYMBOL("indexHandler");
-  K_keyRecord     = NEW_SYMBOL("keyRecord");
-  K_isPrimaryKey  = NEW_SYMBOL("isPrimaryKey");
-  K_relatedField  = NEW_SYMBOL("relatedField");
+  SET_KEY(K_next, "next");
+  SET_KEY(K_root, "root");
+  SET_KEY(K_hasScan, "hasScan");
+  SET_KEY(K_keyFields, "keyFields");
+  SET_KEY(K_joinTo, "joinTo");
+  SET_KEY(K_depth, "depth");
+  SET_KEY(K_tableHandler, "tableHandler");
+  SET_KEY(K_rowRecord, "rowRecord"),
+  SET_KEY(K_indexHandler, "indexHandler");
+  SET_KEY(K_keyRecord, "keyRecord");
+  SET_KEY(K_isPrimaryKey, "isPrimaryKey");
+  SET_KEY(K_relatedField, "relatedField");
 
-  K_dbTable       = NEW_SYMBOL("dbTable");
-  K_dbIndex       = NEW_SYMBOL("dbIndex");
+  SET_KEY(K_dbTable, "dbTable");
+  SET_KEY(K_dbIndex, "dbIndex");
 
-  K_level         = NEW_SYMBOL("level");
-  K_data          = NEW_SYMBOL("data");
-  K_tag           = NEW_SYMBOL("tag");
+  SET_KEY(K_level, "level");
+  SET_KEY(K_data, "data");
+  SET_KEY(K_tag, "tag");
 }
 

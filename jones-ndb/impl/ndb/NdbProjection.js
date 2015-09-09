@@ -72,7 +72,6 @@ function NdbProjection(tableHandler, indexHandler, parent) {
 }
 
 
-// Note: relatedFieldMapping is now called parentFieldMapping
 // parentSectorIndex : index into sectors array of parent sector
 // childSectorIndexes:  array of ...
 // recommended: change relatedField to parentField

@@ -855,7 +855,7 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 storeNativeConstructorInMapping = function(dbTableHandler) {
   var i, nfields, record, fieldNames, typeConverters;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
-  if(dbTableHandler.ValueObject) { 
+  if(dbTableHandler.ValueObject && dbTableHandler.resultRecord) {
     return;
   }
   /* Step 1: Create Record
