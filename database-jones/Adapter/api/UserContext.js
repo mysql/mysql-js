@@ -764,22 +764,6 @@ function checkOperation(err, dbOperation) {
 }
 
 /** Create a sector object for a domain object in a projection.
- * The topmost outer loop projection's sectors are all created, creating one sector
- * for each inner loop projection, then the outer projection for the next level down.
- * For each inner loop projection, a sector is constructed
- * and then the sector for the included relationship is constructed by recursion.
- * The sector contains a list of primary key fields and a list of non-primary key fields,
- * and if this is not the root sector, the name of the field and the field in the previous sector.
- * The fields are references to the field objects in DBTableHandler and contain names, types,
- * and converters.
- * This function is synchronous. When complete, this function returns to the caller.
- * @param inout parameter: outerLoopProjection the projection at the outer loop
- *   which is modified by this function to add the sectors field
- * @param inout parameter: innerLoopProjection the projection at the inner loop
- *   which is modified by this function to add the sectors field
- * @param sectors the outer loop projection.sectors which will grow as createSector is called recursively
- * @param index the index into sectors for the sector being constructed
- * @param offset the number of fields in all sectors already processed
  */
 function Sector() {
   this.keyFields = [];      // array of FieldMapping
@@ -790,134 +774,227 @@ function Sector() {
   this.projection = null;
   this.offset = 0;
   this.tableHandler = null;
-  this.relatedFieldMapping = null;
-  this.relatedTableHandler = null;
+  this.parentFieldMapping = null;
+  this.parentTableHandler = null;
   this.joinTableHandler = null;
   this.thisJoinColumns = [];
   this.otherJoinColumns = [];
+  this.toManyRelationships = [];
+  this.toOneRelationships = [];
+  this.parentSectorIndex = 0;
+  this.childSectorIndexes = [];
 }
 
 Sector.prototype.inspect = function() {
   var s = "Sector for " + this.tableHandler.dbTable.name;
   if(this.thisJoinColumns.length) {
     s += " where this." + this.thisJoinColumns.join(",") + "=" +
-      this.relatedTableHandler.dbTable.name + "." + this.otherJoinColumns.join(",");
+      this.parentTableHandler.dbTable.name + "." + this.otherJoinColumns.join(",");
   } else {
     s+= " with keys [" + this.keyFieldNames.join(",") + "]";
   }
   s += " at offset " + this.offset;
-  s += " relationship: " + util.inspect(this.relatedFieldMapping);
+  s += " parent: " + util.inspect(this.parentFieldMapping);
   return s;
 };
 
-function createSector(outerLoopProjection, innerLoopProjection, sectors, index, offset) {
-  udebug.log('createSector ' + outerLoopProjection.name + ' for ' + outerLoopProjection.domainObject.name +
-      ' inner: ' + innerLoopProjection.name + ' for ' + innerLoopProjection.domainObject.name +
+/**
+ * Recursively create sector objects, each describing a projection in the context of parent projections.
+ * The topmost outer loop projection's sectors are all created, creating one sector
+ * for each inner loop projection, then the outer projection for the next level down.
+ * For each inner loop projection, a sector is constructed
+ * and then the sector for the included relationships are constructed by recursion.
+ *
+ * The sector contains a list of primary key fields and a list of non-primary key fields,
+ * and if this is not the root sector, the name of the field and the field in the previous sector.
+ * The fields are references to the field objects in DBTableHandler and contain names, types,
+ * and converters.
+ * This function is synchronous. When complete, this function returns to the caller.
+ * After creating the sectors, the projection is read-only and each projection can independently
+ * be used as the parameter of find or createQuery.
+ * Example:
+ * Customer projection contains relationships to ShoppingCart projection and Discount projection
+ * ShoppingCart projection contains relationship to LineItem projection
+ *
+ * Projection   #sectors sectors created
+ * ------------ -------- ------------------------------------
+ * Customer            4 Customer, ShoppingCart, LineItem, and Discount
+ * ShoppingCart        2 ShoppingCart and LineItem
+ * LintItem            1 LineItem
+ * Discount            1 Discount
+ *
+ * @param outerLoopProjections the array of projections that can be used for query and find operations.
+ *        The first element is the currently working projection for which to build the sectors
+ *        used to process results from the database. As related projections are encountered while
+ *        processing this projection, they are added to the end of the array.
+ *        The first time, this parameter is an array of exactly one projection, the parameter
+ *        for query and find operations.
+ * @param innerLoopProjections the related projections, each of which is used to process part of
+ *        the results from the database. The first element is the current projection for which the
+ *        sector is being built, to be added to the sectors owned by the outerLoopProjection.
+ *        This parameter is modified by this function as related projections are found.
+ *        The first time, this parameter is an array of exactly one projection, the parameter
+ *        for query and find operations.
+ * @param sectors the outer loop projection.sectors which will grow as createSector is called recursively
+ * @param index the index into sectors for the sector being constructed
+ * @param offset the number of fields in all sectors already processed
+ */
+function createSector(outerLoopProjections, innerLoopProjections, sectors, index, offset) {
+  if (udebug.is_debug()) udebug.log('createSector ' + outerLoopProjections[0].name
+      + ' for ' + outerLoopProjections[0].domainObject.name +
+      ' inner: ' + innerLoopProjections[0].name + ' for ' + innerLoopProjections[0].domainObject.name +
       ' index: ' + index + ' offset: ' + offset);
-  var projection = innerLoopProjection;
-  var innerNestedProjection, outerNestedProjection;
   var sector = new Sector();
+
+  var projection = innerLoopProjections.shift();
+  var outerNestedProjection;
   var tableHandler, relationships;
-  var keyFieldCount, nonKeyFieldCount;
-  var fieldNames, field;
+  var keyFieldCount;
+  var fieldNames, field, candidateField;
   var indexHandler;
   var relationshipName;
-  var relatedFieldMapping, relatedSector, relatedTableHandler, relatedTargetFieldName, relatedTargetField;
+  var parentFieldMapping, parentSectorIndex, parentTableHandler, parentSectorProjection;
+  var parentTargetFieldName, parentTargetField;
   var thisFieldMapping;
   var joinTable, joinTableHandler;
-  var foreignKeys, foreignKey, fkIndex, foreignKeyName;
-  var i, fkFound;
+  var foreignKey, foreignKeyName;
+  var i;
+  var projectionRelationshipName;
 
   sector.projection = projection;
   sector.offset = offset;
   tableHandler = projection.domainObject.prototype.jones.tableHandler;
-  udebug.log_detail('createSector for table handler', tableHandler.dbTable.name);
   sector.tableHandler = tableHandler;
 
-  // relatedFieldMapping is the field mapping for the sector to the "left" of this sector
-  // it contains the field in the "left" sector and mapping information including join columns
-  relatedFieldMapping = projection.relatedFieldMapping;
-  sector.relatedFieldMapping = relatedFieldMapping;
-  udebug.log_detail('createSector thisDBTable name', tableHandler.dbTable.name, index, sectors);
-  if (relatedFieldMapping && index !== 0) {
+  // parentFieldMapping is the field mapping for the parent sector
+  // it contains the field in the parent sector and mapping information including join columns
+  parentFieldMapping = projection.parentFieldMapping;
+  sector.parentFieldMapping = parentFieldMapping;
+  if (udebug.is_detail()) udebug.log_detail('createSector for table handler', tableHandler.dbTable.name,
+      'thisDBTable name', tableHandler.dbTable.name);
+  if (parentFieldMapping && index !== 0) {
     // only perform related field mapping for nested projections
-    relatedSector = sectors[index - 1];
-    relatedTableHandler = relatedSector.tableHandler;
-    sector.relatedTableHandler = relatedTableHandler;
-    // get this optional field mapping that corresponds to the related field mapping
-    // it may be needed to find the foreign key or join table
-    relatedTargetFieldName = relatedFieldMapping.targetField;
-    relatedTargetField = sector.tableHandler.getField(relatedTargetFieldName);
-    if (relatedFieldMapping.toMany && relatedFieldMapping.manyTo) {
-      // this is a many-to-many relationship using a join table
-      joinTable = relatedFieldMapping.joinTable;
-      // joinTableHandler is the DBTableHandler for the join table resolved during validateProjection
-      if (joinTable) {
-        // join table is defined on the related side
-        joinTableHandler = relatedFieldMapping.joinTableHandler;
-      } else {
-        // join table must be defined on this side
-        thisFieldMapping = tableHandler.getField(relatedFieldMapping.targetField);
-        joinTable = thisFieldMapping.joinTable;
-        if (!joinTable) {
-          // error; neither side defined the join table
-          projection.error += '\nMappingError: ' + relatedTableHandler.newObjectConstructor.name +
-            ' field ' + relatedFieldMapping.fieldName + ' neither side defined the join table.';
-        }
-        joinTableHandler = thisFieldMapping.joinTableHandler;
+    // find the parent sector which will be somewhere between 0 and immediately to the left
+    for (parentSectorIndex = 0; parentSectorIndex < index; ++parentSectorIndex) {
+      parentSectorProjection = sectors[parentSectorIndex].projection;
+      if (parentSectorProjection === projection.parentProjection) {
+        // found it
+        sector.parentSectorIndex = parentSectorIndex;
+        sectors[parentSectorIndex].childSectorIndexes.push(index);
+        break;
       }
-      sector.joinTableHandler = joinTableHandler;
-      // many to many relationship has a join table with at least two foreign keys; 
-      // one to each table mapped to the two domain objects
-      if (joinTable) {
-        joinTableHandler.getForeignKeyNames().forEach(function(foreignKeyName) {
-          foreignKey = joinTableHandler.getForeignKey(foreignKeyName);
-          // is this foreign key for this table?
-          if (foreignKey.targetDatabase === tableHandler.dbTable.database &&
-              foreignKey.targetTable === tableHandler.dbTable.name) {
-            // this foreign key is for the other table
-            relatedFieldMapping.otherForeignKey = foreignKey;
-          }
-          if (foreignKey.targetDatabase === relatedTableHandler.dbTable.database &&
-              foreignKey.targetTable === relatedTableHandler.dbTable.name) {
-            relatedFieldMapping.thisForeignKey = foreignKey;
-          }
-        });
-        if (!(relatedFieldMapping.thisForeignKey && relatedFieldMapping.otherForeignKey)) {
-          // error must have foreign keys to both this table and related table
-          projection.error += '\nMappingError: ' + relatedTableHandler.newObjectConstructor.name +
-          ' field ' + relatedFieldMapping.fieldName + ' join table must include foreign keys for both sides.';
-        }
-      }
+    }
+    if (parentSectorIndex == index) {
+      projection.error += 'did not find parent sector for ' + projection.parentProjection.name;
     } else {
-      // this is a relationship using a foreign key
-      // resolve the columns involved in the join to the related field
-      // there is either a foreign key or a target field that has a foreign key
-      // the related field mapping is the field mapping on the other side
-      // the field mapping on this side is not used in this projection
-      foreignKeyName = relatedFieldMapping.foreignKey;
-      if (foreignKeyName) {
-        // foreign key is defined on the other side
-        foreignKey = relatedTableHandler.getForeignKey(foreignKeyName);
-        sector.thisJoinColumns = foreignKey.targetColumnNames;
-        sector.otherJoinColumns = foreignKey.columnNames;
-      } else {
-        // foreign key is defined on this side
-        // get the fieldMapping for this relationship field
-        relatedTargetField = sector.tableHandler.getField(relatedTargetFieldName);
-        foreignKeyName = relatedTargetField.foreignKey;
-        if (foreignKeyName) {
-        foreignKey = tableHandler.getForeignKey(foreignKeyName);
-        sector.thisJoinColumns = foreignKey.columnNames;
-        sector.otherJoinColumns = foreignKey.targetColumnNames;
+      parentTableHandler = projection.parentTableHandler;
+      sector.parentTableHandler = parentTableHandler;
+      // get this optional field mapping that corresponds to the parent field mapping
+      // it may be needed to find the foreign key or join table
+      parentTargetFieldName = parentFieldMapping.targetField;
+      parentTargetField = sector.tableHandler.getField(parentTargetFieldName);
+      if (parentFieldMapping.toMany && parentFieldMapping.manyTo) {
+        // this is a many-to-many relationship using a join table
+        joinTable = parentFieldMapping.joinTable;
+        // joinTableHandler is the DBTableHandler for the join table resolved during validateProjection
+        if (joinTable) {
+          // join table is defined on the related side
+          joinTableHandler = parentFieldMapping.joinTableHandler;
         } else {
-          // error: neither side defined the foreign key
-          projection.error += 'MappingError: ' + relatedTableHandler.newObjectConstructor.name +
-            ' field ' + relatedFieldMapping.fieldName + ' neither side defined the foreign key.';
+          // join table must be defined on this side
+          thisFieldMapping = tableHandler.getField(parentFieldMapping.targetField);
+          joinTable = thisFieldMapping.joinTable;
+          if (!joinTable) {
+            // error; neither side defined the join table
+            projection.error += '\nMappingError: ' + parentTableHandler.newObjectConstructor.name +
+              ' field ' + parentFieldMapping.fieldName + ' neither side defined the join table.';
+          }
+          joinTableHandler = thisFieldMapping.joinTableHandler;
+        }
+        sector.joinTableHandler = joinTableHandler;
+        // many to many relationship has a join table with at least two foreign keys;
+        // one to each table mapped to the two domain objects
+        if (joinTable) {
+          joinTableHandler.getForeignKeyNames().forEach(function(foreignKeyName) {
+            foreignKey = joinTableHandler.getForeignKey(foreignKeyName);
+            // is this foreign key for this table?
+            if (foreignKey.targetDatabase === tableHandler.dbTable.database &&
+                foreignKey.targetTable === tableHandler.dbTable.name) {
+              // this foreign key is for the other table
+              parentFieldMapping.otherForeignKey = foreignKey;
+            }
+            if (foreignKey.targetDatabase === parentTableHandler.dbTable.database &&
+                foreignKey.targetTable === parentTableHandler.dbTable.name) {
+              parentFieldMapping.thisForeignKey = foreignKey;
+            }
+          });
+          if (!(parentFieldMapping.thisForeignKey && parentFieldMapping.otherForeignKey)) {
+            // error must have foreign keys to both this table and related table
+            projection.error += '\nMappingError: ' + parentTableHandler.newObjectConstructor.name +
+            ' field ' + parentFieldMapping.fieldName + ' join table must include foreign keys for both sides.';
+          }
+        }
+      } else {
+        // this is a relationship using a foreign key
+        // resolve the columns involved in the join to the related field
+        // there is either a foreign key or a target field that has a foreign key
+        // the related field mapping is the field mapping on the other side
+        // the field mapping on this side is not used in this projection
+        foreignKeyName = parentFieldMapping.foreignKey;
+        if (foreignKeyName) {
+          // foreign key is defined on the other side
+          foreignKey = parentTableHandler.getForeignKey(foreignKeyName);
+          sector.thisJoinColumns = foreignKey.targetColumnNames;
+          sector.otherJoinColumns = foreignKey.columnNames;
+        } else {
+          // foreign key is defined on this side
+          // get the fieldMapping for this relationship field
+          parentTargetField = sector.tableHandler.getField(parentTargetFieldName);
+          foreignKeyName = parentTargetField.foreignKey;
+          if (foreignKeyName) {
+          foreignKey = tableHandler.getForeignKey(foreignKeyName);
+          sector.thisJoinColumns = foreignKey.columnNames;
+          sector.otherJoinColumns = foreignKey.targetColumnNames;
+          } else {
+            // error: neither side defined the foreign key
+            projection.error += 'MappingError: ' + parentTableHandler.newObjectConstructor.name +
+              ' field ' + parentFieldMapping.fieldName + ' neither side defined the foreign key.';
+          }
         }
       }
     }
   }
+
+  // create relationship field list for object creation
+  if (projection.relationships) {
+    // for each relationship add to either sector.toOneRelationships or sector.toManyRelationships
+    for (projectionRelationshipName in projection.relationships) {
+      if (projection.relationships.hasOwnProperty(projectionRelationshipName)) {
+        var relationship = projection.relationships[projectionRelationshipName];
+        // add this relationship to the list of projections to create a sector for
+        innerLoopProjections.push(relationship);
+        if (outerLoopProjections.indexOf(relationship) == -1) {
+          outerLoopProjections.push(relationship);
+        }
+        // find field for relationship
+        for (i = 0; i < projection.mapping.fields.length; ++i) {
+          candidateField = projection.mapping.fields[i];
+          if (projectionRelationshipName === candidateField.fieldName) {
+            if (candidateField.toMany) {
+              sector.toManyRelationships.push(projectionRelationshipName);
+            } else {
+              sector.toOneRelationships.push(projectionRelationshipName);
+            }
+          }
+        }
+      }
+    }
+  }
+  if (udebug.is_detail()) {
+    udebug.log_detail('createSector for', projection.name, 'has toManyRelationships:', sector.toManyRelationships);
+    udebug.log_detail('createSector for', projection.name, 'has toOneRelationships:', sector.toOneRelationships);
+  }
+
   // create key fields from primary key index handler
   indexHandler = tableHandler.dbIndexHandlers[0];
   keyFieldCount = indexHandler.getNumberOfFields();
@@ -939,25 +1016,27 @@ function createSector(outerLoopProjection, innerLoopProjection, sectors, index, 
   });
   sector.nonKeyFieldCount = sector.nonKeyFields.length;
   udebug.log_detail('createSector created new sector for index', index, 'sector', sector);
-  sectors.push(sector);
   
-  innerNestedProjection = projection.firstNestedProjection;
-  if (innerNestedProjection) {
-    // recurse at the same outer loop, creating the next sector for the inner loop projection
-    createSector(outerLoopProjection, innerNestedProjection,
+  // the sector is now complete
+  sectors.push(sector);
+  // innerLoopProjections contains the array of sectors to create
+  if (innerLoopProjections.length > 0) {
+    createSector(outerLoopProjections, innerLoopProjections,
         sectors, index + 1, offset + keyFieldCount + sector.nonKeyFieldCount);
-  } else {
-    // we are done at this outer projection level; 
-    if (outerLoopProjection.name) {
-      udebug.log('createSector for ' + outerLoopProjection.name +
-          ' created ' + outerLoopProjection.sectors.length + ' sectors for ' + outerLoopProjection.domainObject.name);
-    }
-    // now go to the outer projection next level down and do it all over again
-    outerNestedProjection = outerLoopProjection.firstNestedProjection;
-    if (outerNestedProjection) {
-      outerNestedProjection.sectors = [];
-      createSector(outerNestedProjection, outerNestedProjection, outerNestedProjection.sectors, 0, 0);
-    }
+  }
+  // we are done at this outer projection level;
+  if (udebug.is_debug() && outerLoopProjections[0] && outerLoopProjections[0].name) {
+      udebug.log('createSector for ' + outerLoopProjections[0].name +
+          ' created ' + outerLoopProjections[0].sectors.length +
+          ' sectors for ' + outerLoopProjections[0].domainObject.name);
+  }
+
+  // now go to the outer projection next level down and do it all over again
+  outerLoopProjections.shift(); // get rid of the projection we just finished
+  if (outerLoopProjections.length > 0) {
+    outerNestedProjection = outerLoopProjections[0];
+    outerNestedProjection.sectors = [];
+    createSector(outerLoopProjections, [outerNestedProjection], outerNestedProjection.sectors, 0, 0);
   }
 }
 
@@ -1008,6 +1087,8 @@ function collectErrors(projections, errors) {
 }
 
 /** Validate the projection for find and query operations on the domain object.
+ * This function is the entry point from UserContext.find and UserContext.createQuery.
+ *
  * this.user_arguments[0] contains the projection for this operation
  * (first parameter of find or createQuery).
  * Validation occurs in two phases. The first phase individually validates 
@@ -1015,7 +1096,7 @@ function collectErrors(projections, errors) {
  * implemented as createSector, validates relationships among the domain objects.
  * 
  * In the first phase, get the table handler for the domain object and validate
- * that it is mapped. Then validate each field in the projection.
+ * that it is mapped. Then validate each field in the projection against mapped column.
  * For relationships, validate the name of the relationship. Validate that there
  * is no projected domain object that would cause an infinite recursion.
  * If there is a join table that implements the relationship, validate that the
@@ -1024,10 +1105,18 @@ function collectErrors(projections, errors) {
  * The related field mapping will be further processed in the second phase,
  * once the table metadata for both domain objects has been loaded.
  * Recursively validate the projection that is defined as the relationship.
+ * During recursion, the value of projections will grow as projections are added
+ * on the end. The value of index will change as projections are validated in
+ * the first phase. Recursion will end once no new projections (from relationships)
+ * are added.
  * 
- * In the second phase, validate that the relationship is mapped with valid
- * foreign keys and join tables in the database.
- * After all projections have been validated, call the callback with any errors.
+ * In the second phase, create the array of sectors for use when this projection
+ * is used in an api call. Each projection will have its own array of sectors.
+ * During the creation of each sector, validate that the relationship is mapped
+ * with valid foreign keys and join tables in the database.
+ *
+ * After all projections have been validated, mark all projections as validated
+ * and call the callback with any errors.
  */
 exports.UserContext.prototype.validateProjection = function(callback) {
   var userContext = this;
@@ -1036,9 +1125,9 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   var domainObject, domainObjectName;
   var projections, projection;
   var mappingIds, mappingId;
-  var relationships, relationshipProjection;
+  var relationships, childProjection;
   var fieldMapping;
-  var index, offset;
+  var index;
   var errors;
   var foreignKeyNames, foreignKeyName;
   var toBeChecked, toBeValidated, allValidated;
@@ -1075,6 +1164,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     projection = projections[index];
     // keep track of how many times this projection has been changed so adapters know when to re-validate
     projection.id = (projection.id + 1) % (2^24);
+    projection.childProjections = [];
     
     domainObject = projection.domainObject;
     domainObjectName = domainObject.prototype.constructor.name;
@@ -1085,10 +1175,11 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     }
     if (!err) {
       projection.dbTableHandler = dbTableHandler;
-      // validate using table handler
+      // validate projected fields against columns using table handler
       if (typeof(domainObject) === 'function' &&
           typeof(domainObject.prototype.jones) === 'object' &&
           typeof(domainObject.prototype.jones.mapping) === 'object') {
+        projection.mapping = domainObject.prototype.jones.mapping;
         // good domainObject; have we seen this one before?
         mappingId = domainObject.prototype.jones.mappingId;
         if (mappingIds.indexOf(mappingId) === -1) {
@@ -1128,19 +1219,24 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // add relationship domain objects to the list of domain objects
           relationships = projection.relationships;
           if (relationships) {
+//            console.log('relationships for', projection.domainObject.prototype.constructor.name, relationships);
             Object.keys(relationships).forEach(function(key) {
               // each key is the name of a relationship that must be a field in the table handler
               fieldMapping = dbTableHandler.getField(key);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
-                  relationshipProjection = relationships[key];
-                  relationshipProjection.relatedFieldMapping = fieldMapping;
-                  // add each relationship to list of projections
-                  projections.push(relationshipProjection);
-                  // record the first (currently the only) projection that is nested in this projection
-                  if (!projection.firstNestedProjection) {
-                    projection.firstNestedProjection = relationshipProjection;
-                  }
+//                  console.log('adding relationship for', key);
+                  childProjection = relationships[key];
+                  childProjection.parentTableHandler = dbTableHandler;
+                  childProjection.parentFieldMapping = fieldMapping;
+                  childProjection.parentProjection = projection;
+                  // add each relationship to the current list of projections to be validated
+                  projections.push(childProjection);
+                  projection.childProjections.push(childProjection);
+                  // record the first projection that is nested in this projection
+//                  if (!projection.firstNestedProjection) {
+//                    projection.firstNestedProjection = childProjection;
+//                  }
                 } else {
                   // error: field is not a relationship
                   errors += '\nBad relationship for ' +  domainObjectName + ': field ' + key + ' is not a relationship.';
@@ -1177,11 +1273,12 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   continueValidation = function() {
     // are there any more?
     if (projections.length > ++index) {
-      // do the next projection
+      // do the next projection; see if the domain object already has its table handler
       if (projections[index].domainObject.prototype.jones.dbTableHandler) {
         udebug.log('validateProjection with cached tableHandler for', projections[index].domainObject.name);
         validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.jones.dbTableHandler);
       } else {
+        // get the table handler the hard way (asynchronously)
         udebug.log('validateProjection with no cached tableHandler for', projections[index].domainObject.name);
         getTableHandler(projections[index].domainObject, session, validateProjectionOnTableHandler);
       }
@@ -1194,10 +1291,13 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // no errors yet
           // we are done getting all of the table handlers for the projection; now create the sectors
           projection.sectors = [];
-          index = 0;
-          offset = 0;
+//          index = 0;
+//          offset = 0;
           // create the first sector; additional sectors will be created recursively
-          createSector(projection, projection, projection.sectors, index, offset);
+          // the first sector describes the top level projection; each subsequent sector
+          // describes a nested projection in the top level projection
+
+          createSector([projection], [projection], projection.sectors, /*index*/ 0, /*offset*/ 0);
           // now look for errors found during createSector
           errors = collectErrors([userContext.user_arguments[0]], '');
           // mark all projections reachable from this projections as validated
@@ -1236,7 +1336,6 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     // set up to iteratively validate projection starting with the user parameter
     projections = [this.user_arguments[0]]; // projections will grow at the end as validation proceeds
     index = 0;                              // index into projections for the projection being validated
-    offset = 0;                             // the number of fields in previous projections
     errors = '';                            // errors in validation
     mappingIds = [];                        // mapping ids seen so far
 
