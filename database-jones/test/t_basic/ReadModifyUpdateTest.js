@@ -35,7 +35,8 @@ catch(e) {
 }
 
 function assertVO(testCase, object, expected) {
-  if(global.adapter == "ndb") {
+  if(global.adapter == "ndb"
+    && global.test_conn_properties.use_mapped_ndb_record) {
     testCase.errorIfNotEqual("Expected NDB Value Object", expected,
                              ndbImpl.isValueObject(object));
   }

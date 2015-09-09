@@ -35,7 +35,14 @@ var NdbDefaultConnectionProperties = {
                                         number of operations in transit will be
                                         limited to one per uv worker thread.
                                      */
-  
+
+  "use_mapped_ndb_record" : true,    /* If true, results fetched from the
+                                        database remain in NDBAPI buffers and
+                                        are accessed using V8 accessors.
+                                        If false, results fetched from the 
+                                        database are copied out of these buffers
+                                        into plain old JavaScript objects.
+                                     */
   "ndb_session_pool_min" : 4,
   "ndb_session_pool_max" : 100,      /* Each NdbConnectionPool maintains a
                                         pool of DBSessions (and their underlying
