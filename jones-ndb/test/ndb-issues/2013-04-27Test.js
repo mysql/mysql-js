@@ -40,11 +40,13 @@ var annotations = new jones.TableMapping('towns2').applyToClass(Town);
 
 //check results of find                                                                                                                  
 var onFind = function(err, result) {
-  try {
-    t1.errorIfNotEqual("Expected SQLState WCTOR", "WCTOR", err.sqlstate);
-  }
-  catch(e) {
-    t1.appendErrorMessage("Expected DBOperation Error with SQLState WCTOR");
+  if(global.test_conn_properties.use_mapped_ndb_record) {
+    try {
+      t1.errorIfNotEqual("Expected SQLState WCTOR", "WCTOR", err.sqlstate);
+    }
+    catch(e) {
+      t1.appendErrorMessage("Expected DBOperation Error with SQLState WCTOR");
+    }
   }
   t1.failOnError();
 };

@@ -547,10 +547,9 @@ DBOperation.prototype.isScanOperation = function() {
 };
 
 
-function buildResultRow(op) {
+function buildResultRow_nonVO(op, dbt, buffer, blobs) {
   udebug.log("buildResultRow");
   var i, value;
-  var dbt             = op.tableHandler;
   var record          = dbt.dbTable.record; // ??
   var nfields         = dbt.getMappedFieldCount();
   var col             = dbt.getColumnMetadata();
@@ -558,11 +557,11 @@ function buildResultRow(op) {
   
   for(i = 0 ; i < nfields ; i++) {
     if(col[i].isLob) {
-      value = col[i].isBinary ? op.blobs[i] : textFromBuffer(col[i], op.blobs[i]);
-    } else if(record.isNull(i, op.buffers.row)) {
+      value = col[i].isBinary ? blobs[i] : textFromBuffer(col[i], blobs[i]);
+    } else if(record.isNull(i, buffer)) {
       value = null;
     } else {
-      value = record.encoderRead(i, op.buffers.row);
+      value = record.encoderRead(i, buffer);
       if(col[i].typeConverter && col[i].typeConverter.ndb) {
         value = col[i].typeConverter.ndb.fromDB(value);
       }
@@ -573,9 +572,6 @@ function buildResultRow(op) {
   return resultRow;
 }
 
-function readResultRow(op) {
-  op.result.value = buildResultRow(op);
-}
 
 function buildValueObject(op, tableHandler, buffer, blobs) {
   udebug.log("buildValueObject");
@@ -603,11 +599,6 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
       }
     }
   }
-  else {
-    /* If there is a good reason to have no VOC, just call readResultRow()... */
-    console.log("NO VOC!");
-    process.exit();
-  }
 
   return value;
 }
@@ -615,7 +606,7 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
 function getResultValue(op, tableHandler, buffer, blobs) {
   return op.connProperties.use_mapped_ndb_record ?
          buildValueObject(op, tableHandler, buffer, blobs) :
-         buildResultRow(op);
+         buildResultRow_nonVO(op, tableHandler, buffer, blobs);
 }
 
 function getScanResults(scanop, userCallback) {
