@@ -642,7 +642,7 @@ function initializeProjection(projection) {
   projection.mysql = mysql;
   var i, j;
   var sector, sectorName;
-  var relatedSectorName;
+  var parentSectorName;
   var select, from, on, alias, order;
   var thisOn, otherOn, and;
 
@@ -673,29 +673,31 @@ function initializeProjection(projection) {
     // set up the table names
     sector.tableName = sector.tableHandler.dbTable.database + '.' + sector.tableHandler.dbTable.name;
     sectorName = 't' + i;
-    relatedSectorName = 't' + (i - 1);
+//    parentSectorName = 't' + (i - 1);
+    parentSectorName = 't' + sector.parentSectorIndex;
     joinType = '';
     on = '';
-    if (sector.relatedFieldMapping && i > 0) {
-      sector.relatedTableName = sector.relatedTableHandler.dbTable.database + '.' + sector.relatedTableHandler.dbTable.name;
-      if (sector.relatedFieldMapping.toMany && sector.relatedFieldMapping.manyTo) {
+    if (sector.parentFieldMapping && i > 0) {
+//      sector.relatedTableName = sector.parentTableHandler.dbTable.database + '.' + sector.parentTableHandler.dbTable.name;
+      if (sector.parentFieldMapping.toMany && sector.parentFieldMapping.manyTo) {
         // join table mapping
         // create a join table reference based on current table name
         // join tables are "between" tables that are joined for many-to-many relationships
         // ... t1 LEFT OUTER JOIN customerdiscount AS t15 on [t1.k = t15.k and...] 
         //     LEFT OUTER JOIN discount AS t2 on [t15.k = t2.k and ...]
         sector.joinTableName = sector.joinTableHandler.dbTable.database + '.' + sector.joinTableHandler.dbTable.name;
-        sector.joinTableAlias = relatedSectorName + 'J';
+//        sector.joinTableAlias = parentSectorName + 'J';
+        sector.joinTableAlias = sectorName + 'JOIN';
         udebug.log_detail('initializeProjection join table handling for', sector.joinTableName, 'AS', sector.joinTableAlias,
-            'thisForeignKey.columnNames', sector.relatedFieldMapping.thisForeignKey.columnNames,
-            'otherForeignKey.columnNames', sector.relatedFieldMapping.otherForeignKey.columnNames);
+            'thisForeignKey.columnNames', sector.parentFieldMapping.thisForeignKey.columnNames,
+            'otherForeignKey.columnNames', sector.parentFieldMapping.otherForeignKey.columnNames);
         // generate the join from the previous domain table to the join table
         joinType = ' LEFT OUTER JOIN ';
         thisOn = ' ON ';
         and = '';
-        for (joinIndex = 0; joinIndex < sector.relatedFieldMapping.thisForeignKey.columnNames.length; ++joinIndex) {
-          thisOn += and + relatedSectorName + '.' + sector.relatedFieldMapping.thisForeignKey.targetColumnNames[joinIndex] + ' = ' +
-              sector.joinTableAlias + '.' + sector.relatedFieldMapping.thisForeignKey.columnNames[joinIndex];
+        for (joinIndex = 0; joinIndex < sector.parentFieldMapping.thisForeignKey.columnNames.length; ++joinIndex) {
+          thisOn += and + parentSectorName + '.' + sector.parentFieldMapping.thisForeignKey.targetColumnNames[joinIndex] + ' = ' +
+              sector.joinTableAlias + '.' + sector.parentFieldMapping.thisForeignKey.columnNames[joinIndex];
           and = ' AND ';
         }
         from += fromDelimiter + joinType + sector.joinTableName + ' AS ' + sector.joinTableAlias + thisOn;
@@ -703,9 +705,9 @@ function initializeProjection(projection) {
         // generate the join from the join table to this domain table
         otherOn = ' ON ';
         and = '';
-        for (joinIndex = 0; joinIndex < sector.relatedFieldMapping.otherForeignKey.columnNames.length; ++joinIndex) {
-          otherOn += and + sector.joinTableAlias + '.' + sector.relatedFieldMapping.otherForeignKey.columnNames[joinIndex] + ' = ' +
-          sectorName + '.' + sector.relatedFieldMapping.otherForeignKey.targetColumnNames[joinIndex];
+        for (joinIndex = 0; joinIndex < sector.parentFieldMapping.otherForeignKey.columnNames.length; ++joinIndex) {
+          otherOn += and + sector.joinTableAlias + '.' + sector.parentFieldMapping.otherForeignKey.columnNames[joinIndex] + ' = ' +
+          sectorName + '.' + sector.parentFieldMapping.otherForeignKey.targetColumnNames[joinIndex];
           and = ' AND ';
         }
         from += fromDelimiter + joinType + sector.tableName + ' AS ' + sectorName + otherOn;
@@ -716,11 +718,11 @@ function initializeProjection(projection) {
         on = ' ON ';
         and = '';
         for (joinIndex = 0; joinIndex < sector.thisJoinColumns.length; ++joinIndex) {
-          on += and + relatedSectorName + '.' + sector.otherJoinColumns[joinIndex] + ' = ' + 
+          on += and + parentSectorName + '.' + sector.otherJoinColumns[joinIndex] + ' = ' +
                 sectorName + '.' + sector.thisJoinColumns[joinIndex];
           and = ' AND ';
         }
-        if (sector.relatedFieldMapping.toMany) {
+        if (sector.parentFieldMapping.toMany) {
           // order by key columns that can have multiple values (toMany relationships)
           for (j = 0; j < sector.keyFields.length; ++j) {
             keyField = sector.keyFields[j];
@@ -761,6 +763,7 @@ function initializeProjection(projection) {
   }
   // mark this as having been processed
   projection.mysql.id = projection.id;
+  if (udebug.is_debug()) udebug.log('initializeProjection', select, from);
 }
 
 
@@ -829,31 +832,42 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
       op.tuples[tupleIndex] = null;
     }
   }
-  
+
+  /** Process this sector (recursively) [experimental] */
+  function processSector(sector, row) {
+    // process this sector with data from the row
+    op.sectors[sector].childSectorIndexes.forEach(function(sectorIndex) {
+      processSector(sectorIndex, row);
+    });
+  }
+
   function onResult(row) {
     var i;
     var sector;
     var tuple = null;
+    var parentSectorIndex;
     var relationship;
     var nullValue;
     op.rows++;
     // process the row by sector, left to right
     udebug.log_detail('onResult processing row with', op.sectors.length, 'sectors:\n', row);
+    processSector(0, row); // experimental for now
     // do each sector in turn
     for (i = 0; i < op.sectors.length; ++i) {
       sector = op.sectors[i];
       tuple = op.tuples[i];
+      parentSectorIndex = sector.parentSectorIndex;
       // if the keys in the row for this sector are null set the related object if any
       if (isRowSectorKeyNull(row, sector)) {
         // if there is a relationship, set the value to the default for the relationship
-        if (i > 0 && sector.relatedFieldMapping) {
-          if (sector.relatedFieldMapping.toMany) {
+        if (i > 0 && sector.parentFieldMapping) {
+          if (sector.parentFieldMapping.toMany) {
             // null toMany relationships are represented by an empty array
             nullValue = [];
           } else {
             nullValue = null;
           }
-          op.tuples[i - 1][sector.relatedFieldMapping.fieldName] = nullValue;
+          op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = nullValue;
         }
         resetTuples(i);
         break;
@@ -862,22 +876,23 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
       if (!isRowSectorKeyEqual(row, sector, tuple)) {
         // keys do not match the current object; create a new one
         tuple = sector.tableHandler.newResultObjectFromRow(row, 'mysql',
-            sector.offset, sector.keyFields, sector.nonKeyFields);
+            sector.offset, sector.keyFields, sector.nonKeyFields,
+            sector.toManyRelationships, sector.toOneRelationships);
         op.tuples[i] = tuple;
         // the rest of the tuples belong to the previous object
         resetTuples(i + 1);
         // assign the new object to the relationship field of the previous object
         if (i > 0) {
-          if (sector.relatedFieldMapping.toMany) {
+          if (sector.parentFieldMapping.toMany) {
             // relationship is an array
-            relationship = op.tuples[i - 1][sector.relatedFieldMapping.fieldName];
+            relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName];
             if (!relationship) {
-              relationship = op.tuples[i - 1][sector.relatedFieldMapping.fieldName] = [];
+              relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = [];
             }
             relationship.push(tuple);
           } else {
             // relationship is a reference
-            op.tuples[i - 1][sector.relatedFieldMapping.fieldName] = tuple;
+            op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = tuple;
           }
         }
       }

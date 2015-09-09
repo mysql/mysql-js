@@ -170,7 +170,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
     this.tableHandler = tableHandler;
     this.index        = null;  
   }
-  
+
   /* NDB Impl-specific properties */
   this.encoderError = null;
   this.query        = null;
@@ -180,6 +180,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
   this.columnMask   = [];
   this.scan         = {};
   this.blobs        = null;
+  this.connProperties = tx.dbSession.parentPool.properties;
 
   op_stats[opcodes[opcode]]++;
 };
@@ -546,22 +547,21 @@ DBOperation.prototype.isScanOperation = function() {
 };
 
 
-function readResultRow(op) {
-  udebug.log("readResultRow");
+function buildResultRow_nonVO(op, dbt, buffer, blobs) {
+  udebug.log("buildResultRow");
   var i, value;
-  var dbt             = op.tableHandler;
-  var record          = dbt.dbTable.record;
+  var record          = dbt.dbTable.record; // ??
   var nfields         = dbt.getMappedFieldCount();
   var col             = dbt.getColumnMetadata();
   var resultRow       = dbt.newResultObject();
   
   for(i = 0 ; i < nfields ; i++) {
     if(col[i].isLob) {
-      value = col[i].isBinary ? op.blobs[i] : textFromBuffer(col[i], op.blobs[i]);
-    } else if(record.isNull(i, op.buffers.row)) {
+      value = col[i].isBinary ? blobs[i] : textFromBuffer(col[i], blobs[i]);
+    } else if(record.isNull(i, buffer)) {
       value = null;
     } else {
-      value = record.encoderRead(i, op.buffers.row);
+      value = record.encoderRead(i, buffer);
       if(col[i].typeConverter && col[i].typeConverter.ndb) {
         value = col[i].typeConverter.ndb.fromDB(value);
       }
@@ -569,7 +569,7 @@ function readResultRow(op) {
 
     dbt.set(resultRow, i, value);
   }
-  op.result.value = resultRow;
+  return resultRow;
 }
 
 
@@ -599,15 +599,15 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
       }
     }
   }
-  else {
-    /* If there is a good reason to have no VOC, just call readResultRow()... */
-    console.log("NO VOC!");
-    process.exit();
-  }
 
   return value;
 }
 
+function getResultValue(op, tableHandler, buffer, blobs) {
+  return op.connProperties.use_mapped_ndb_record ?
+         buildValueObject(op, tableHandler, buffer, blobs) :
+         buildResultRow_nonVO(op, tableHandler, buffer, blobs);
+}
 
 function getScanResults(scanop, userCallback) {
   var buffer,results,dbSession,postScanCallback,nSkip,maxRow,i,recordSize;
@@ -648,7 +648,7 @@ function getScanResults(scanop, userCallback) {
     var blobs, result;
     blobs = scanop.scanOp.readBlobResults();
     udebug.log("pushNewResult",i,blobs);
-    result = buildValueObject(scanop, scanop.tableHandler, buffer, blobs);
+    result = getResultValue(scanop, scanop.tableHandler, buffer, blobs);
     results.push(result);
   }
 
@@ -759,8 +759,8 @@ function getQueryResults(op, userCallback) {
         if(wrapper.tag) {
           assembleSpecial(wrapper.tag);
         } else {
-          resultObject = buildValueObject(op, sectors[level].tableHandler,
-                                          wrapper.data, null);
+          resultObject = getResultValue(op, sectors[level].tableHandler,
+                                        wrapper.data, null);
           assemble();
         }
       }
@@ -816,7 +816,7 @@ function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
     }
 
     if(op.result.success && op.opcode === opcodes.OP_READ) {
-      op.result.value = buildValueObject(op, op.tableHandler, op.buffers.row, op.blobs);
+      op.result.value = getResultValue(op, op.tableHandler, op.buffers.row, op.blobs);
     } 
   }
   if(udebug.is_detail()) udebug.log("buildOperationResult finished:", op.result);

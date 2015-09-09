@@ -15,7 +15,11 @@ var DatabaseError = {
 
 
 
-// Reference: Gulutzan & Pelzer, "SQL 99 Complete Really", chapter 47
+/* References:
+    Gulutzan & Pelzer, "SQL 99 Complete Really", chapter 47
+    Postgres Documentation, Appendix A: Error Codes
+      http://www.postgresql.org/docs/9.5/static/errcodes-appendix.html
+*/
 
 var Sqlstates = {
   /* Standard-defined classes, SQL-99 */
@@ -35,10 +39,6 @@ var Sqlstates = {
   // Constraint violations
   // 23000 includes both duplicate primary key and duplicate unique key
   "23000" : "Integrity Constraint Violation",
-
-  // 0Fxxx "Locator Exception" SQLStates relate to BLOB values
-  // (which must represented in JavaScript as Node Buffers)
-  "0F001" : "Invalid BLOB value",
 
   // misc. errors
   "25000" : "Invalid Transaction State",  

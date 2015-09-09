@@ -46,12 +46,16 @@ driver.statsDomain = null;
 
 driver.addCommandLineOption("", "--set <var>=<value>", "set a connection property",
   function(nextArg) {
+    var val;
     if(! cmdLineProperties) {
       cmdLineProperties = {};
     }
     var pair = nextArg.split('=');
     if(pair.length === 2) {
-      cmdLineProperties[pair[0]] = pair[1];
+      val = pair[1];
+      if(val === 'true') val = true;
+      else if(val === 'false') val = false;
+      cmdLineProperties[pair[0]] = val;
       return 1;
     }
     console.log("Invalid --set option " + nextArg);
