@@ -143,7 +143,7 @@ Test.prototype.run = function() {
 
 function getType(obj) {
   var type = typeof obj;
-  if (type === 'object') {
+  if (type === 'object' && obj !== null) {
     return obj.constructor.name;
   }
   return type;
