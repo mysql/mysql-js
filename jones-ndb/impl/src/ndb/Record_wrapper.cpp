@@ -30,23 +30,24 @@
 
 using namespace v8;
 
-Handle<Value> getColumnOffset_wrapper(const Arguments &);
-Handle<Value> getBufferSize_wrapper(const Arguments &);
-Handle<Value> setNull_wrapper(const Arguments &);
-Handle<Value> setNotNull_wrapper(const Arguments &);
-Handle<Value> isNull_wrapper(const Arguments &);
-Handle<Value> record_encoderRead(const Arguments &);
-Handle<Value> record_encoderWrite(const Arguments &);
+V8WrapperFn getColumnOffset_wrapper,
+            getBufferSize_wrapper,
+            setNull_wrapper,
+            setNotNull_wrapper,
+            isNull_wrapper,
+            record_encoderRead,
+            record_encoderWrite;
 
 class RecordEnvelopeClass : public Envelope {
 public:
   RecordEnvelopeClass() : Envelope("Record") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getColumnOffset", getColumnOffset_wrapper);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getBufferSize", getBufferSize_wrapper);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "setNull", setNull_wrapper);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "isNull", isNull_wrapper);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "encoderRead", record_encoderRead);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "encoderWrite", record_encoderWrite);
+    HandleScope scope;
+    addMethod("getColumnOffset", getColumnOffset_wrapper);
+    addMethod("getBufferSize", getBufferSize_wrapper);
+    addMethod("setNull", setNull_wrapper);
+    addMethod("isNull", isNull_wrapper);
+    addMethod("encoderRead", record_encoderRead);
+    addMethod("encoderWrite", record_encoderWrite);
   }
 };
 

@@ -134,7 +134,7 @@ t6.run = function() {
   });
 };
 
-// Attempt to insert a non-Buffer into a BLOB Column: 0F001
+// Attempt to insert a non-Buffer into a BLOB Column: 22000
 var t7 = new harness.ConcurrentTest("t7:InsertNonBufferAsBLOB");
 t7.run = function() { 
   var data = new TestData();

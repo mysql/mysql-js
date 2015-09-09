@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -28,7 +28,8 @@ var stats = {
   "ndb_session_prefetch"    : { "attempts" : 0, "errors" : 0, "success" : 0 },
   "group_callbacks_created" : 0,
   "list_tables"             : 0,
-  "get_table_metadata"      : 0
+  "get_table_metadata"      : 0,
+  "create_table"            : 0
 };
 
 var conf             = require("./path_config"),
@@ -36,6 +37,9 @@ var conf             = require("./path_config"),
     adapter          = require(conf.binary),
     ndbsession       = require("./NdbSession.js"),
     NdbConnection    = require("./NdbConnection.js"),
+    MetadataManager  = require("./NdbMetadataManager.js"),
+    SQLBuilder       = require(jones.common.SQLBuilder),
+    sqlBuilder       = new SQLBuilder(),
     dbtablehandler   = require(jones.common.DBTableHandler),
     autoincrement    = require("./NdbAutoIncrement.js"),
     udebug           = unified_debug.getLogger("NdbConnectionPool.js"),
@@ -217,6 +221,7 @@ function DBConnectionPool(props) {
   this.ndbSessionFreeList = [];
   this.typeConverters     = {};
   this.openTables         = [];
+  this.metadataManager    = new MetadataManager(props);
 }
 
 
@@ -495,6 +500,18 @@ DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter)
   }
 };
 
+
+DBConnectionPool.prototype.createTable = function(tableMapping,
+                                                  session,
+                                                  userCallback) {
+  if(! tableMapping.database) {
+    tableMapping.database = this.properties.database;
+  }
+  var sql = sqlBuilder.getSqlForTableCreation(tableMapping, "ndb");
+
+  stats.create_table++;
+  this.metadataManager.execDDL(sql, userCallback);
+};
 
 exports.DBConnectionPool = DBConnectionPool; 
 

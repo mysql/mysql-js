@@ -86,7 +86,7 @@ var sqlStateMessages = {
   "22007" : "Invalid datetime",
   "23000" : "Column cannot be null",
   "HY000" : "Incorrect numeric value",
-  "0F001" : "Invalid BLOB value",
+  "0F001" : "BLOB or BINARY value is not a Buffer",
   "WCTOR" : 
       "A Domain Object Constructor has overwritten persistent properties "+
       "that were read from the database.  The Domain Object Constructor "+
@@ -115,6 +115,12 @@ DBOperationError.prototype.fromNdbError = function(ndb_error) {
 DBOperationError.prototype.fromSqlState = function(sqlstate) {
   this.message = sqlStateMessages[sqlstate];
   this.sqlstate = sqlstate;
+
+  /* Some exceptional behavior: */
+  if(sqlstate == "0F001") {
+    this.sqlstate = "22000";
+  }
+
   return this;
 };
   
@@ -164,7 +170,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
     this.tableHandler = tableHandler;
     this.index        = null;  
   }
-  
+
   /* NDB Impl-specific properties */
   this.encoderError = null;
   this.query        = null;
@@ -174,6 +180,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
   this.columnMask   = [];
   this.scan         = {};
   this.blobs        = null;
+  this.connProperties = tx.dbSession.parentPool.properties;
 
   op_stats[opcodes[opcode]]++;
 };
@@ -540,11 +547,11 @@ DBOperation.prototype.isScanOperation = function() {
 };
 
 
-function readResultRow(op) {
-  udebug.log("readResultRow");
+function buildResultRow(op) {
+  udebug.log("buildResultRow");
   var i, value;
   var dbt             = op.tableHandler;
-  var record          = dbt.dbTable.record;
+  var record          = dbt.dbTable.record; // ??
   var nfields         = dbt.getMappedFieldCount();
   var col             = dbt.getColumnMetadata();
   var resultRow       = dbt.newResultObject();
@@ -563,9 +570,12 @@ function readResultRow(op) {
 
     dbt.set(resultRow, i, value);
   }
-  op.result.value = resultRow;
+  return resultRow;
 }
 
+function readResultRow(op) {
+  op.result.value = buildResultRow(op);
+}
 
 function buildValueObject(op, tableHandler, buffer, blobs) {
   udebug.log("buildValueObject");
@@ -602,6 +612,11 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
   return value;
 }
 
+function getResultValue(op, tableHandler, buffer, blobs) {
+  return op.connProperties.use_mapped_ndb_record ?
+         buildValueObject(op, tableHandler, buffer, blobs) :
+         buildResultRow(op);
+}
 
 function getScanResults(scanop, userCallback) {
   var buffer,results,dbSession,postScanCallback,nSkip,maxRow,i,recordSize;
@@ -642,7 +657,7 @@ function getScanResults(scanop, userCallback) {
     var blobs, result;
     blobs = scanop.scanOp.readBlobResults();
     udebug.log("pushNewResult",i,blobs);
-    result = buildValueObject(scanop, scanop.tableHandler, buffer, blobs);
+    result = getResultValue(scanop, scanop.tableHandler, buffer, blobs);
     results.push(result);
   }
 
@@ -725,7 +740,7 @@ function getQueryResults(op, userCallback) {
     function assembleSpecial(tag) {
       if(tag & 2) {   /* This row came from a many-to-many join table but
                          is not itself part of the user's result object.  */
-        current[level] = current[level - 1];
+        current[level] = current[level - 1];  // will be parent sector index
       }
       if(tag & 1) {   /* Row is null */
         current[level] = null;
@@ -753,8 +768,8 @@ function getQueryResults(op, userCallback) {
         if(wrapper.tag) {
           assembleSpecial(wrapper.tag);
         } else {
-          resultObject = buildValueObject(op, sectors[level].tableHandler,
-                                          wrapper.data, null);
+          resultObject = getResultValue(op, sectors[level].tableHandler,
+                                        wrapper.data, null);
           assemble();
         }
       }
@@ -810,7 +825,7 @@ function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
     }
 
     if(op.result.success && op.opcode === opcodes.OP_READ) {
-      op.result.value = buildValueObject(op, op.tableHandler, op.buffers.row, op.blobs);
+      op.result.value = getResultValue(op, op.tableHandler, op.buffers.row, op.blobs);
     } 
   }
   if(udebug.is_detail()) udebug.log("buildOperationResult finished:", op.result);

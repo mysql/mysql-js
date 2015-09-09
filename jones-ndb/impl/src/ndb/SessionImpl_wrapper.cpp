@@ -31,19 +31,20 @@
 
 using namespace v8;
 
-Handle<Value> newSessionImpl(const Arguments &);
-Handle<Value> seizeTransaction(const Arguments &);
-Handle<Value> releaseTransaction(const Arguments &);
-Handle<Value> freeTransactions(const Arguments &);
-Handle<Value> SessionImplDestructor(const Arguments &);
+V8WrapperFn newSessionImpl;
+V8WrapperFn seizeTransaction;
+V8WrapperFn releaseTransaction;
+V8WrapperFn freeTransactions;
+V8WrapperFn SessionImplDestructor;
 
 class SessionImplEnvelopeClass : public Envelope {
 public:
   SessionImplEnvelopeClass() : Envelope("SessionImpl") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, "seizeTransaction", seizeTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "releaseTransaction", releaseTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "freeTransactions", freeTransactions);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "destroy", SessionImplDestructor);
+    HandleScope scope;
+    addMethod("seizeTransaction", seizeTransaction);
+    addMethod("releaseTransaction", releaseTransaction);
+    addMethod("freeTransactions", freeTransactions);
+    addMethod("destroy", SessionImplDestructor);
   }
 };
 
@@ -58,12 +59,12 @@ Handle<Value> SessionImpl_Wrapper(SessionImpl *dbsi) {
     freeFromGC(dbsi, jsobj);
     return scope.Close(jsobj);
   }
-  return Null();
+  return scope.Close(Null());
 }
 
 SessionImpl * asyncNewSessionImpl(Ndb_cluster_connection *conn,
-                                      AsyncNdbContext *ctx,
-                                      const char *db, int maxTx) {
+                                  AsyncNdbContext *ctx,
+                                  const char *db, int maxTx) {
   return new SessionImpl(conn, ctx, db, maxTx);
 }
 

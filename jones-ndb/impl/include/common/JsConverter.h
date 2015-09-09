@@ -153,76 +153,49 @@ public:
 
 /* Pass through of JavaScript value */
 template <>
-class JsValueConverter <Persistent<Function> > {
+class JsValueConverter <Handle<Function> > {
 public:
-  Persistent<Function> jspf;
+  HandleScope scope;
+  Local<Function> jsval;
   JsValueConverter(Local<Value> v) {
-    jspf = Persistent<Function>::New(Local<Function>::Cast(v));
+    jsval = Local<Function>::New(Local<Function>::Cast(v));
   };
-  Persistent<Function> toC()  { return jspf;  };
+  Handle<Function> toC()  { return jsval;  };
 };
 
 /*****************************************************************
  toJs functions
  Value Conversion from C to JavaScript
-
- If we have a correct isWrappedPointer()<T> for every T, then toJS()
- should never be called with a pointer type at runtime.  
- See AsyncCall_Returning::jsReturnVal() at AsyncMethodCall.h line 130.
  
- The generic function should either be undefined or should throw a
- run-time assert.
+ These are called from the ReturnValueHandler for non-pointer types.
+ We do not expect them ever to be called with pointer types.
+
+ The generic function treats its argument as a JS Integer.
 
  SPECIALIZATIONS should be over C PRIMITIVE types only.
+
+ These functions do not declare a HandleScope
 ******************************************************************/
 
-// pointer types
-template <typename T> Local<Value> toJS(T cptr) {
-  /* This can't be done.  Use wrapPointerInObject() instead. */
-  HandleScope scope;
-  assert("WRONG TEMPLATE SPECIALIZATION" == 0);
-  return scope.Close(Null());
-}
-
-// int
-template <>
-inline Local<Value> toJS<int>(int cval) { 
-  HandleScope scope;
+template <typename T> Local<Value> toJS(T cval) {
   return v8::Integer::New(cval);
 }
 
 // unsigned int
 template <>
 inline Local<Value> toJS<unsigned int>(unsigned int cval) {
-  HandleScope scope;
   return v8::Integer::NewFromUnsigned(cval);
-}
-
-// short
-template <>
-inline Local<Value> toJS<short>(short cval) {
-  HandleScope scope;
-  return v8::Integer::New(cval);
 }
 
 // unsigned short
 template <>
 inline Local<Value> toJS<unsigned short>(unsigned short cval) {
-  HandleScope scope;
   return v8::Integer::NewFromUnsigned(cval);
-}
-
-// long 
-template <>
-inline Local<Value> toJS<long>(long cval) {
-  HandleScope scope;
-  return v8::Integer::New(cval);
 }
 
 // unsigned long
 template <>
-inline Local<Value> toJS<unsigned long >(unsigned long cval) {
-  HandleScope scope;
+inline Local<Value> toJS<unsigned long>(unsigned long cval) {
   return v8::Integer::NewFromUnsigned(cval);
 }
 
@@ -230,68 +203,31 @@ inline Local<Value> toJS<unsigned long >(unsigned long cval) {
 // (the value may actually be too large to represent in JS!?)
 template <>
 inline Local<Value> toJS<unsigned long long>(unsigned long long cval) {
-   HandleScope scope;
  return v8::Integer::NewFromUnsigned((uint32_t) cval);
 }
 
 // double
 template <>
 inline Local<Value> toJS<double>(double cval) {
-  HandleScope scope;
   return Number::New(cval);
 };
 
 // const char *
 template <> 
 inline Local<Value> toJS<const char *>(const char * cval) {
-  HandleScope scope;
   return v8::String::New(cval);
 }
 
 // const bool * 
 template <> 
 inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  HandleScope scope;
-  return scope.Close(Boolean::New(*cbp));
+  return Local<Value>::New((Boolean::New(*cbp)));
 }
 
 // bool 
 template <>
 inline Local<Value> toJS<bool>(bool b) {
-  HandleScope scope;
-  return scope.Close(Boolean::New(b));
+  return Local<Value>::New((Boolean::New(b)));
 }
-
-/*****************************************************************
- isWrappedPointer() functions
- Used in AsyncMethodCall.h: if(isWrappedPointer(return_val)) ...
-
- The top generic method (the one that returns true) 
- contains a compile-time safety check.
-******************************************************************/
-#ifdef __GNUC__
-#define UNUSED __attribute__((unused))
-#else
-#define UNUSED
-#endif
-template <typename T> bool isWrappedPointer(T typ)                {
-  UNUSED void * v;
-  v = static_cast<void *> (typ);
-  return true; 
-}
-
-template <> inline bool isWrappedPointer(int typ)              { return false; }
-template <> inline bool isWrappedPointer(unsigned int typ)     { return false; }
-template <> inline bool isWrappedPointer(short typ)            { return false; }
-template <> inline bool isWrappedPointer(unsigned short typ)   { return false; }
-template <> inline bool isWrappedPointer(long typ)             { return false; }
-template <> inline bool isWrappedPointer(unsigned long typ)    { return false; }
-template <> inline bool isWrappedPointer(unsigned long long t) { return false; }
-template <> inline bool isWrappedPointer(double typ)           { return false; }
-template <> inline bool isWrappedPointer(const char * typ)     { return false; }
-template <> inline bool isWrappedPointer(const bool * typ)     { return false; }
-template <> inline bool isWrappedPointer(bool typ)             { return false; }
-template <> inline bool isWrappedPointer(char * typ)           { return false; }
-template <> inline bool isWrappedPointer(Persistent<Function> typ) { return false; }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -728,16 +728,17 @@ ColumnBoundVisitor.prototype.visitQueryUnaryPredicate = function(node) {
 
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 ColumnBoundVisitor.prototype.visitQueryComparator = function(node) {
-  var segment = createSegmentForComparator(node.operationCode, 
-                                           this.params[node.parameter.name]);
+  var segment, value;
+  value = node.constants ? node.parameter : this.params[node.parameter.name];
+  segment = createSegmentForComparator(node.operationCode, value);
   this.store(node, segment);
 };
 
 /** Handle node QueryBetween */
 ColumnBoundVisitor.prototype.visitQueryBetweenOperator = function(node) {
   var ep1, ep2, segment;  
-  ep1 = this.params[node.parameter1.name];
-  ep2 = this.params[node.parameter2.name];
+  ep1 = node.constants & 1 ? node.parameter1 : this.params[node.parameter1.name];
+  ep2 = node.constants & 2 ? node.parameter2 : this.params[node.parameter2.name];
   segment = createSegmentBetween(ep1, ep2);
   this.store(node, segment);
 };

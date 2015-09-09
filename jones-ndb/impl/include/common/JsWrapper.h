@@ -34,7 +34,14 @@ using v8::Object;
 using v8::Value;
 using v8::Exception;
 using v8::String;
+using v8::Arguments;
+using v8::FunctionTemplate;
+using v8::AccessorInfo;
 
+/* Signature of a V8 function wrapper
+*/
+typedef Handle<Value> V8WrapperFn(const Arguments &);
+typedef Handle<Value> V8Accessor(Local<String>, const AccessorInfo &);
 
 /*****************************************************************
  Code to confirm that C++ types wrapped as JavaScript values
@@ -52,10 +59,12 @@ inline void check_class_id(const char *a, const char *b) {
 }
 #define TYPE_CHECK_T(x) const char * x
 #define SET_CLASS_ID(env, PTR) env.class_id = typeid(PTR).name()
-#define CHECK_CLASS_ID(env, PTR) check_class_id(env->class_id, typeid(PTR).name()) 
+#define SET_THIS_CLASS_ID(PTR) class_id = typeid(PTR).name()
+#define CHECK_CLASS_ID(env, PTR) check_class_id(env->class_id, typeid(PTR).name())
 #else
 #define TYPE_CHECK_T(x)
 #define SET_CLASS_ID(env, PTR)
+#define SET_THIS_CLASS_ID(PTR)
 #define CHECK_CLASS_ID(env, PTR)
 #endif
 
@@ -86,10 +95,35 @@ public:
     stencil = Persistent<ObjectTemplate>::New(proto);
   }
 
-  /* Instance Method */
+  /* Instance Methods */
   Local<Object> newWrapper() { 
     return stencil->NewInstance();
   }
+
+  void addMethod(const char *name, V8WrapperFn wrapper) {
+    stencil->Set(String::NewSymbol(name),
+                 FunctionTemplate::New(wrapper)->GetFunction());
+  }
+
+  void addAccessor(const char *name, V8Accessor accessor) {
+    stencil->SetAccessor(String::NewSymbol(name), accessor);
+  }
+
+  template<typename PTR>
+  Local<Value> wrap(PTR ptr) {
+    DEBUG_PRINT("Constructor wrapping %s: %p", classname, ptr);
+    SET_THIS_CLASS_ID(PTR);
+    Local<Object> wrapper = newWrapper();
+    wrapper->SetPointerInInternalField(0, (void *) this);
+    wrapper->SetPointerInInternalField(1, (void *) ptr);
+
+    return wrapper;
+  }
+
+  /* An overloaded wrap() method for the special case of converting a
+     const char * to a JS String.
+  */
+  Local<Value> wrap(const char * str) { return String::New(str); }
 };
 
 
@@ -123,6 +157,7 @@ void freeFromGC(PTR ptr, Handle<Object> obj) {
  arg1: an Envelope reference
  arg2: a reference to a v8 object, which must have already been 
        initialized from a proper ObjectTemplate.
+ THIS COULD BE DEPRECATED IN FAVOR OF ENVELOPE.WRAP()
 ******************************************************************/
 template <typename PTR>
 void wrapPointerInObject(PTR ptr,

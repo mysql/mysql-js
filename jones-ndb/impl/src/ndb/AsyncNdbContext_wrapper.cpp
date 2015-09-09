@@ -28,29 +28,39 @@
 
 using namespace v8;
 
-Handle<Value> createAsyncNdbContext(const Arguments &args);
-Handle<Value> startListenerThread(const Arguments &args);
-Handle<Value> shutdown(const Arguments &args);
-
+V8WrapperFn createAsyncNdbContext;
+V8WrapperFn shutdown;
+V8WrapperFn destroy;
 
 /* Envelope
 */
-Envelope AsyncNdbContextEnvelope("AsyncNdbContext");
+
+class AsyncNdbContextEnvelopeClass : public Envelope {
+public:
+  AsyncNdbContextEnvelopeClass() : Envelope("AsyncNdbContext") {
+    HandleScope scope;
+    addMethod("AsyncNdbContext", createAsyncNdbContext);
+    addMethod("shutdown", shutdown);
+    addMethod("delete", destroy);
+  }
+};
+
+AsyncNdbContextEnvelopeClass AsyncNdbContextEnvelope;
 
 /* Constructor 
 */
 Handle<Value> createAsyncNdbContext(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
-  
+
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
 
   JsValueConverter<Ndb_cluster_connection *> arg0(args[0]);
   AsyncNdbContext * ctx = new AsyncNdbContext(arg0.toC());
-  
-  wrapPointerInObject(ctx, AsyncNdbContextEnvelope, args.This());
-  return args.This();
+
+  Local<Object> wrapper = AsyncNdbContextEnvelope.newWrapper();
+  wrapPointerInObject(ctx, AsyncNdbContextEnvelope, wrapper);
+  return wrapper;
 }
 
 
@@ -80,13 +90,7 @@ Handle<Value> destroy(const Arguments &args) {
 
 
 void AsyncNdbContext_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-  Local<FunctionTemplate> JsAsyncNdbContext;
-  
-  DEFINE_JS_CLASS(JsAsyncNdbContext, "AsyncNdbContext", createAsyncNdbContext);
-  DEFINE_JS_METHOD(JsAsyncNdbContext, "shutdown", shutdown);
-  DEFINE_JS_METHOD(JsAsyncNdbContext, "delete", destroy);
-  DEFINE_JS_CONSTRUCTOR(target, "AsyncNdbContext", JsAsyncNdbContext);
+  DEFINE_JS_FUNCTION(target, "AsyncNdbContext", createAsyncNdbContext);
   DEFINE_JS_CONSTANT(target, MULTIWAIT_ENABLED);
 #ifdef USE_OLD_MULTIWAIT_API
   DEFINE_JS_CONSTANT(target, USE_OLD_MULTIWAIT_API);

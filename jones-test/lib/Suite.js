@@ -38,6 +38,7 @@ function Suite(driver, name, suiteDir) {
 
   this.tests = [];
   this.smokeTest = {};
+  this.smokeTestHasFailed = null;
   this.serialTests = [];
   this.clearSmokeTest = {};
   this.concurrentTests = [];
@@ -49,9 +50,7 @@ function Suite(driver, name, suiteDir) {
   this.currentTest = 0;
   this.numberOfConcurrentTests = 0;
   this.numberOfConcurrentTestsCompleted = 0;
-  this.numberOfConcurrentTestsStarted = 0;
   this.numberOfSerialTests = 0;
-  this.numberOfRunningConcurrentTests = 0;
 
   if(typeof suiteDir === 'string') {
     this.path = path.resolve(driver.baseDirectory, suiteDir);
@@ -182,8 +181,7 @@ Suite.prototype.runTests = function(result) {
       // smoke test
       // start the smoke test
       if(this.driver.skipSmokeTest) {
-        tc.result = result;
-        tc.skip("skipping SmokeTest");
+        tc.skip("skipping SmokeTest", result);
       }
       else {
         tc.test(result);
@@ -201,8 +199,7 @@ Suite.prototype.runTests = function(result) {
     case 3:
       // clear smoke test is the first test
       if(this.driver.skipClearSmokeTest) {
-       tc.result = result;
-       tc.skip("skipping ClearSmokeTest");
+       tc.skip("skipping ClearSmokeTest", result);
       }
       else {
         tc.test(result);
@@ -214,11 +211,13 @@ Suite.prototype.runTests = function(result) {
 
 
 Suite.prototype.startConcurrentTests = function(result) {
-  var self = this;
+  var skip = this.smokeTestHasFailed;
   if (this.firstConcurrentTestIndex !== -1) {
     this.concurrentTests.forEach(function(testCase) {
-      testCase.test(result);
-      self.numberOfConcurrentTestsStarted++;
+      if(skip)
+        testCase.skip("(failed SmokeTest)", result);
+      else
+        testCase.test(result);
     });
     return false;    
   } 
@@ -228,7 +227,6 @@ Suite.prototype.startConcurrentTests = function(result) {
 
 
 Suite.prototype.startSerialTests = function(result) {
-  assert(result);
   if (this.firstSerialTestIndex !== -1) {
     this.startNextSerialTest(this.firstSerialTestIndex, result);
     return false;
@@ -239,10 +237,8 @@ Suite.prototype.startSerialTests = function(result) {
 
 
 Suite.prototype.startClearSmokeTest = function(result) {
-  assert(result);
   if (this.driver.skipClearSmokeTest) {
-    this.clearSmokeTest.result = result;
-    this.clearSmokeTest.skip("skipping ClearSmokeTest");
+    this.clearSmokeTest.skip("skipping ClearSmokeTest", result);
   }
   else if (this.clearSmokeTest && this.clearSmokeTest.test) {
     this.clearSmokeTest.test(result);
@@ -253,9 +249,11 @@ Suite.prototype.startClearSmokeTest = function(result) {
 
 
 Suite.prototype.startNextSerialTest = function(index, result) {
-  assert(result);
   var testCase = this.tests[index];
-  testCase.test(result);
+  if(this.smokeTestHasFailed)
+    testCase.skip("(failed SmokeTest)", result);
+  else
+    testCase.test(result);
 };
 
 
@@ -268,8 +266,8 @@ Suite.prototype.testCompleted = function(testCase) {
   var result = testCase.result;
   switch (testCase.phase) {
     case 0:     // the smoke test completed
-      return testCase.failed ?
-        this.startClearSmokeTest(result) : this.startConcurrentTests(result);
+      this.smokeTestHasFailed = testCase.failed || testCase.skipped;
+      return this.startConcurrentTests(result);
 
     case 1:     // one of the concurrent tests completed
       if (++this.numberOfConcurrentTestsCompleted === this.numberOfConcurrentTests) {
@@ -281,10 +279,10 @@ Suite.prototype.testCompleted = function(testCase) {
       index = testCase.index + 1;
       if (index < this.tests.length) {
         tc = this.tests[index];
-        if (tc.phase === 2) {     // start another serial test
-          tc.test(result);
-        } 
-        else if (tc.phase === 3) {     // start the clear smoke test
+        if (tc.phase === 2) {
+          this.startNextSerialTest(index, result);
+        }
+        else if (tc.phase === 3) {
           this.startClearSmokeTest(result);
         }
         return false;

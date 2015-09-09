@@ -64,8 +64,6 @@ function runTest(name, buildPredicate, expectedBounds) {
   exports.tests.push(test);
 }
 
-// FAILURES: 12, 17
-
 /* t1 to t9: one column tests with a single condition */
 
 runTest("k1 isNull",
@@ -107,7 +105,7 @@ runTest("k1 between 2 and 3",
 
 /* t10: one column tests with multiple conditions */
 
-runTest("k1>2 and k2<5",
+runTest("k1>1 and k2<5",
   function(q) { return q.k1.gt(q.param("p1")).and(q.k1.lt(q.param("p5"))); },
   "(1 -- 5)");
 
@@ -146,9 +144,32 @@ runTest("k1=1 OR (k1=2 and K2=3)",
   function(q) { return q.k1.eq(q.param("p1")).or(q.k1.eq(q.param("p2")).and(q.k2.eq(q.param("p3")))); },
   "[1 -- 1], [2,3 -- 2,3]");
 
+
 /* t19 several BETWEEN conditions; returns a single range. */
 runTest("k1 between 1 and 2 AND k2 between 2 and 3",
   function(q) { return q.k1.between(q.param("p1"), q.param("p2")).and(
     q.k2.between(q.param("p2"), q.param("p3"))); },
   "[1,2 -- 2,3]");
 
+
+/* t20 through t24 repeat some tests using constants rather than params */
+
+runTest("{const} k1>1",
+  function(q) { return q.k1.gt(1); },
+  "(1 -- Infinity]");
+
+runTest("{const} k1 between 2 and 3",
+   function(q) { return q.k1.between(2, 3); },
+   "[2 -- 3]");
+
+runTest("{const} k1>2 and k2<p5",
+  function(q) { return q.k1.gt(2).and(q.k1.lt(q.param("p5"))); },
+  "(2 -- 5)");
+
+runTest("{const} k1=1 and k1 isNotNull",
+  function(q) { return q.k1.eq(1).and(q.k1.isNotNull()); },
+  "[1 -- 1]");
+
+runTest("{const} k1<2 or k1>p3",
+  function(q) { return q.k1.lt(2).or(q.k1.gt(q.param("p3"))); },
+  "(null -- 2), (3 -- Infinity]");

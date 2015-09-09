@@ -27,7 +27,29 @@
 
 using namespace v8;
 
-Envelope NdbccEnvelope("Ndb_cluster_connection");
+V8WrapperFn Ndb_cluster_connection_set_name;
+V8WrapperFn Ndb_cluster_connection_connect;
+V8WrapperFn Ndb_cluster_connection_wait_until_ready;
+V8WrapperFn Ndb_cluster_connection_node_id;
+V8WrapperFn get_latest_error_msg_wrapper;
+V8WrapperFn Ndb_cluster_connection_delete_wrapper;
+
+
+class NdbccEnvelopeClass : public Envelope {
+public:
+  NdbccEnvelopeClass() : Envelope("Ndb_cluster_connection") {
+    HandleScope scope;
+    addMethod("set_name", Ndb_cluster_connection_set_name);
+    addMethod("connect", Ndb_cluster_connection_connect);
+    addMethod("wait_until_ready", Ndb_cluster_connection_wait_until_ready);
+    addMethod("node_id", Ndb_cluster_connection_node_id);
+    addMethod("get_latest_error_msg", get_latest_error_msg_wrapper);
+    addMethod("delete", Ndb_cluster_connection_delete_wrapper);
+  }
+};
+
+NdbccEnvelopeClass NdbccEnvelope;
+Envelope ErrorMessageEnvelope("Error Message from const char *");
 
 /*  Ndb_cluster_connection(const char * connectstring = 0);
 */
@@ -46,10 +68,12 @@ Handle<Value> Ndb_cluster_connection_new_wrapper(const Arguments &args) {
      consider using the default value of 10 ms.
   */
   c->set_max_adaptive_send_time(1);
-  
-  wrapPointerInObject(c, NdbccEnvelope, args.This());
-  freeFromGC(c, args.This());
-  return args.This();
+
+  Local<Object> wrapper = NdbccEnvelope.newWrapper();
+  wrapPointerInObject(c, NdbccEnvelope, wrapper);
+  freeFromGC(c, wrapper);
+
+  return wrapper;
 }
 
 
@@ -158,6 +182,7 @@ Handle<Value> get_latest_error_msg_wrapper(const Arguments &args) {
   
   typedef NativeConstMethodCall_0_<const char *, Ndb_cluster_connection> MCALL;
   MCALL mcall(& Ndb_cluster_connection::get_latest_error_msg, args);
+  mcall.wrapReturnValueAs(& ErrorMessageEnvelope);
   mcall.run();
   
   return scope.Close(mcall.jsReturnVal());
@@ -165,23 +190,6 @@ Handle<Value> get_latest_error_msg_wrapper(const Arguments &args) {
 
 
 void Ndb_cluster_connection_initOnLoad(Handle<Object> target) {
-  DEBUG_MARKER(UDEB_DETAIL);
-  Local<FunctionTemplate> JSNdb_cluster_connection;
-
-  DEFINE_JS_CLASS(JSNdb_cluster_connection, "Ndb_cluster_connection", 
-                  Ndb_cluster_connection_new_wrapper);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "set_name",
-                   Ndb_cluster_connection_set_name);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "connect",
-                   Ndb_cluster_connection_connect);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "wait_until_ready",
-                   Ndb_cluster_connection_wait_until_ready);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "node_id",
-                   Ndb_cluster_connection_node_id);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "get_latest_error_msg",
-                   get_latest_error_msg_wrapper);
-  DEFINE_JS_METHOD(JSNdb_cluster_connection, "delete",
-                   Ndb_cluster_connection_delete_wrapper);
-  DEFINE_JS_CONSTRUCTOR(target, "Ndb_cluster_connection", JSNdb_cluster_connection);
+  DEFINE_JS_FUNCTION(target, "Ndb_cluster_connection", Ndb_cluster_connection_new_wrapper);
 }
   

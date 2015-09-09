@@ -46,7 +46,7 @@ void ioCompleted(uv_async_t *ndbWaitLoop, int) {
 */
 class AsyncExecCall : public AsyncAsyncCall<int, NdbTransaction> {
 public: 
-  AsyncExecCall(NdbTransaction *tx, v8::Persistent<v8::Function> jsCallback) :
+  AsyncExecCall(NdbTransaction *tx, v8::Handle<v8::Function> jsCallback) :
     AsyncAsyncCall<int, NdbTransaction>(tx, jsCallback, 
       getNdbErrorIfLessThanZero<int, NdbTransaction>)                        {};
   TransactionImpl * closeContext;
@@ -117,7 +117,7 @@ int AsyncNdbContext::executeAsynch(TransactionImpl *txc,
                                    int execType,
                                    int abortOption,
                                    int forceSend,
-                                   v8::Persistent<v8::Function> jsCallback) {
+                                   v8::Handle<v8::Function> jsCallback) {
   
   /* Create a container to help pass return values up the JS callback stack */
   AsyncExecCall * mcallptr = new AsyncExecCall(tx, jsCallback);

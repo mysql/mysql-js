@@ -57,12 +57,7 @@ function NdbMetadataManager(properties) {
   this.sqlConnectionProperties = new jones.ConnectionProperties(sqlProps);
 }
 
-
-NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
-  assert(sqlPath);
-  udebug.log("runSQL", sqlPath);
-  var statement = "set storage_engine=ndbcluster;\n";
-  statement += fs.readFileSync(sqlPath, "ASCII");
+NdbMetadataManager.prototype.execDDL = function(statement, callback) {
   jones.openSession(this.sqlConnectionProperties).then(function(session) {
     udebug.log("onSession");
     var driver = session.dbSession.pooledConnection;
@@ -73,6 +68,14 @@ NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
       callback(err);
     });
   });
+};
+
+NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
+  assert(sqlPath);
+  udebug.log("runSQL", sqlPath);
+  var statement = "set storage_engine=ndbcluster;\n";
+  statement += fs.readFileSync(sqlPath, "ASCII");
+  this.execDDL(statement, callback);
 };
 
 

@@ -40,19 +40,13 @@ Handle<Value> get_message(Local<String>, const AccessorInfo &);
 class NdbErrorEnvelopeClass : public Envelope {
 public:
   NdbErrorEnvelopeClass() : Envelope("NdbError") {
-    DEFINE_JS_ACCESSOR(Envelope::stencil, "status", get_status);
-    DEFINE_JS_ACCESSOR(Envelope::stencil, "classification", get_classification);
-    DEFINE_JS_ACCESSOR(Envelope::stencil, "code", get_code);
-    DEFINE_JS_ACCESSOR(Envelope::stencil, "handler_error_code", get_mysql_code);
-    DEFINE_JS_ACCESSOR(Envelope::stencil, "message", get_message);
+    addAccessor("status", get_status);
+    addAccessor("classification", get_classification);
+    addAccessor("code", get_code);
+    addAccessor("handler_error_code", get_mysql_code);
+    addAccessor("message", get_message);
 }
 
-  Local<Object> wrap(const NdbError * err) {
-    HandleScope scope;    
-    Local<Object> wrapper = Envelope::stencil->NewInstance();
-    wrapPointerInObject(err, *this, wrapper);
-    return scope.Close(wrapper);
-  }
 };
 
 NdbErrorEnvelopeClass NdbErrorEnvelope;

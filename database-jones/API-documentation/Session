@@ -499,7 +499,18 @@ listTables(databaseName, callback);
 getTableMetadata(databaseName, tableName, callback);
 }
 
-/* 
+/** allowCreateUnmappedTable
+ *  BOOLEAN PROPERTY
+ *  READ/WRITE
+ *  Defaults to false.
+ *
+ *  If session.allowCreateUnmappedTable is set to true, then Session calls,
+ *  rather than failing when a table does not exist, will create the table
+ *  using the TableMapping.
+*/
+
+
+/*
  * Users may find useful a "user" property of session and batch.
  * The jones implementation will not ever define a property called "user".
  */

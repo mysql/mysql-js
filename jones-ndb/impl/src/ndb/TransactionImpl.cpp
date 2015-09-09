@@ -143,7 +143,7 @@ int TransactionImpl::execute(BatchImpl *operations,
 
 int TransactionImpl::executeAsynch(BatchImpl *operations,  
                                    int execType, int abortOption, int forceSend,
-                                   v8::Persistent<v8::Function> callback) {
+                                   v8::Handle<v8::Function> callback) {
   assert(ndbTransaction);
   operations->prepare(ndbTransaction);
   int opListSize = operations->size;

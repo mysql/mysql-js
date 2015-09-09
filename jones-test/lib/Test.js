@@ -40,7 +40,7 @@ function Test() {
 Test.prototype.test = function(result) {
   var runReturnCode;
   this.result = result;
-  result.listener.startTest(this);
+  result.startTest(this);
 
   try {
     runReturnCode = this.run();
@@ -114,9 +114,14 @@ Test.prototype.failOnError = function() {
   }
 };
 
-Test.prototype.skip = function(message) {
+Test.prototype.skip = function(message,result) {
   this.skipped = true;
-  this.result.skip(this, message);
+  if(result) {
+    this.result = result;
+    this.result.skipNotStarted(this, message);
+  } else {
+    this.result.skipStarted(this, message);
+  }
   return true;
 };
 
@@ -138,16 +143,18 @@ Test.prototype.run = function() {
 
 function getType(obj) {
   var type = typeof obj;
-  if (type === 'object') {
+  if (type === 'object' && obj !== null) {
     return obj.constructor.name;
   }
   return type;
 }
 
 function compare(o1, o2) {
+  if (o1 === undefined && o2 === undefined)   { return true;  }
+  if (o1 === undefined || o2 === undefined)   { return false; }
   if (o1 == o2)                               { return true;  }
   if (o1 == null && o2 == null)               { return true;  }
-  if (o1 === undefined && o2 === undefined)   { return true;  }
+  if (o1 == null || o2 == null)               { return false; }
   if (typeof o1 !== typeof o2)                { return false; }
   if (o1.toString() === o2.toString())        { return true;  }
   return false;

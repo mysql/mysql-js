@@ -45,7 +45,6 @@ function Driver(baseDirectory) {
   this.skipSmokeTest         = false;
   this.skipClearSmokeTest    = false;
   this.onReportCallback      = null;    // callback at report 
-  this.closeResources        = null;    // callback at exit 
   this.abortAndExit          = false;   // --help option
   this.timeoutMillis         = 0;       // no timeout
   this.numberOfRunningSuites = 0;
@@ -172,23 +171,16 @@ Driver.prototype.onReportCallback = function() {
   return;
 };
 
+Driver.prototype.closeResources = function(callback) {
+  callback();
+};
+
 Driver.prototype.reportResultsAndExit = function() {
-  var driver = this;
-
-  console.log("Started: ", this.result.listener.started);
-  console.log("Passed:  ", this.result.passed.length);
-  console.log("Failed:  ", this.result.failed.length);
-  console.log("Skipped: ", this.result.skipped.length);
-
+  var exitStatus = this.result.report();
   this.onReportCallback();
-
-  if(this.closeResources) {
-    this.closeResources(function() {
-      process.exit(driver.result.failed.length > 0);     
-    });
-  } else {
-    process.exit(driver.result.failed.length > 0);    
-  }
+  this.closeResources(function exit() {
+    process.exit(exitStatus);
+  });
 };
 
 Driver.prototype.runAllTests = function() {
@@ -213,10 +205,7 @@ Driver.prototype.runAllTests = function() {
 
   /* Set Timeout */
   function onTimeout() { 
-    var nwait = driver.result.listener.started - driver.result.listener.ended;
-    var tests = (nwait === 1 ? " test:" : " tests:");
-    console.log('TIMEOUT: still waiting for', nwait, tests);
-    driver.result.listener.listRunningTests();
+    console.log("DRIVER TIMED OUT after", driver.timeoutMillis, "msec.");
     driver.reportResultsAndExit();
   }
 

@@ -31,23 +31,23 @@
 
 using namespace v8;
 
-Handle<Value> getOperationError(const Arguments &);
-Handle<Value> tryImmediateStartTransaction(const Arguments &);
-Handle<Value> execute(const Arguments &);
-Handle<Value> executeAsynch(const Arguments &);
-Handle<Value> readBlobResults(const Arguments &);
-Handle<Value> BatchImpl_freeImpl(const Arguments &);
+V8WrapperFn getOperationError,
+            tryImmediateStartTransaction,
+            execute,
+            executeAsynch,
+            readBlobResults,
+            BatchImpl_freeImpl;
 
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
-    DEFINE_JS_FUNCTION(Envelope::stencil, 
-      "tryImmediateStartTransaction", tryImmediateStartTransaction);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "getOperationError", getOperationError);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "execute", execute);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "executeAsynch", executeAsynch);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "readBlobResults", readBlobResults);
-    DEFINE_JS_FUNCTION(Envelope::stencil, "free", BatchImpl_freeImpl);
+    HandleScope scope;
+    addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
+    addMethod("getOperationError", getOperationError);
+    addMethod("execute", execute);
+    addMethod("executeAsynch", executeAsynch);
+    addMethod("readBlobResults", readBlobResults);
+    addMethod("free", BatchImpl_freeImpl);
   }
 };
 
@@ -98,7 +98,6 @@ Handle<Value> getOperationError(const Arguments & args) {
 }
 
 Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
   return ctx->tryImmediateStartTransaction() ? True() : False();
 }
@@ -145,12 +144,8 @@ Handle<Value> execute(const Arguments &args) {
 */
 Handle<Value> executeAsynch(const Arguments &args) {
   HandleScope scope;
-  /* TODO: The JsValueConverter constructor for arg3 creates a 
-     Persistent<Function> from a Local<Value>, but is there 
-     actually a chain of destructors that will call Dispose() on it? 
-  */  
-  typedef NativeMethodCall_4_<int, BatchImpl, 
-                              int, int, int, Persistent<Function> > MCALL;
+  typedef NativeMethodCall_4_<int, BatchImpl,
+                              int, int, int, Handle<Function> > MCALL;
   MCALL mcall(& BatchImpl::executeAsynch, args);
   mcall.run();
   return scope.Close(mcall.jsReturnVal());
@@ -158,7 +153,6 @@ Handle<Value> executeAsynch(const Arguments &args) {
 
 
 Handle<Value> readBlobResults(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
   return set->getKeyOperation(n)->readBlobResults();
@@ -166,7 +160,6 @@ Handle<Value> readBlobResults(const Arguments &args) {
 
 
 Handle<Value> BatchImpl_freeImpl(const Arguments &args) {
-  HandleScope scope;
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   delete set;
   set = 0;

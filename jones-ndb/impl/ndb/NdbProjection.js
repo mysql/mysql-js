@@ -71,6 +71,10 @@ function NdbProjection(tableHandler, indexHandler, parent) {
   if(parent) parent.next = this;
 }
 
+
+// Note: relatedFieldMapping is now called parentFieldMapping
+// parentSectorIndex : index into sectors array of parent sector
+// childSectorIndexes:  array of ...
 function ndbRootProjection(sector, indexHandler) {
   var p;
 
@@ -80,7 +84,7 @@ function ndbRootProjection(sector, indexHandler) {
   p = new NdbProjection(sector.tableHandler, indexHandler);
   p.keyFields    = sector.keyFieldNames;
   p.joinTo       = null;
-  p.relatedField = sector.relatedFieldMapping;
+  p.relatedField = sector.relatedFieldMapping;  // should be unused!
   p.hasScan      = ! (p.isPrimaryKey || p.isUniqueKey);
   return p;
 }

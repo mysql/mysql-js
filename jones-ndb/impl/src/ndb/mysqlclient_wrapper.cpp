@@ -27,6 +27,8 @@
 
 using namespace v8;
 
+Envelope StringEnvelope("String from const char *");
+
 Handle<Value> mysql_init_wrapper(const Arguments &args) {
   HandleScope scope;
   
@@ -72,6 +74,7 @@ Handle<Value> mysql_error_wrapper(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(1);
   
   NativeCFunctionCall_1_<const char *, MYSQL *> ncall(& mysql_error, args);
+  ncall.wrapReturnValueAs(& StringEnvelope);
   ncall.run();
   
   return scope.Close(ncall.jsReturnVal());
