@@ -75,6 +75,7 @@ function NdbProjection(tableHandler, indexHandler, parent) {
 // Note: relatedFieldMapping is now called parentFieldMapping
 // parentSectorIndex : index into sectors array of parent sector
 // childSectorIndexes:  array of ...
+// recommended: change relatedField to parentField
 function ndbRootProjection(sector, indexHandler) {
   var p;
 
@@ -84,7 +85,7 @@ function ndbRootProjection(sector, indexHandler) {
   p = new NdbProjection(sector.tableHandler, indexHandler);
   p.keyFields    = sector.keyFieldNames;
   p.joinTo       = null;
-  p.relatedField = sector.relatedFieldMapping;  // should be unused!
+  p.relatedField = sector.parentFieldMapping;  // should be unused!
   p.hasScan      = ! (p.isPrimaryKey || p.isUniqueKey);
   return p;
 }
@@ -93,14 +94,14 @@ function ndbProjectionToJoinTable(sector, parentProjection) {
   var mock_keys, indexHandler, p;
   udebug.log("ToJoinTable:", sector);
 
-  mock_keys = mockKeys(sector.relatedFieldMapping.thisForeignKey.columnNames);
+  mock_keys = mockKeys(sector.parentFieldMapping.thisForeignKey.columnNames);
   indexHandler = sector.joinTableHandler.getOrderedIndexHandler(mock_keys);
 
   buildJoinTableResultRecord(sector.joinTableHandler);
 
   p = new NdbProjection(sector.joinTableHandler, indexHandler, parentProjection);
-  p.keyFields    = sector.relatedFieldMapping.thisForeignKey.columnNames;
-  p.joinTo       = sector.relatedFieldMapping.thisForeignKey.targetColumnNames;
+  p.keyFields    = sector.parentFieldMapping.thisForeignKey.columnNames;
+  p.joinTo       = sector.parentFieldMapping.thisForeignKey.targetColumnNames;
   p.relatedField = null;   // No result fields come from the join table
   p.root.hasScan = true;
   return p;
@@ -110,13 +111,13 @@ function ndbProjectionFromJoinTable(sector, parentProjection) {
   var mock_keys, indexHandler, p;
   udebug.log("FromJoinTable:", sector);
 
-  mock_keys = mockKeys(sector.relatedFieldMapping.otherForeignKey.targetColumnNames);
+  mock_keys = mockKeys(sector.parentFieldMapping.otherForeignKey.targetColumnNames);
   indexHandler = sector.tableHandler.getIndexHandler(mock_keys);
 
   p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
-  p.keyFields    = sector.relatedFieldMapping.otherForeignKey.targetColumnNames;
-  p.joinTo       = sector.relatedFieldMapping.otherForeignKey.columnNames;
-  p.relatedField = sector.relatedFieldMapping;
+  p.keyFields    = sector.parentFieldMapping.otherForeignKey.targetColumnNames;
+  p.joinTo       = sector.parentFieldMapping.otherForeignKey.columnNames;
+  p.relatedField = sector.parentFieldMapping;
   return p;
 }
 
@@ -134,7 +135,7 @@ function createNdbProjection(sector, parentProjection) {
   p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
   p.keyFields    = sector.thisJoinColumns;
   p.joinTo       = sector.otherJoinColumns;
-  p.relatedField = sector.relatedFieldMapping;
+  p.relatedField = sector.parentFieldMapping;
 
   if(! (p.isPrimaryKey || p.isUniqueKey)) {
     p.root.hasScan = true;
