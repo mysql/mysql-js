@@ -62,7 +62,8 @@ typedef void V8WrapperFn(const Arguments &);
 */
 typedef PropertyCallbackInfo<Value> AccessorInfo;  // for getter
 typedef PropertyCallbackInfo<void>  SetterInfo;
-typedef void (*AccessorGetter) (Local<String>, const AccessorInfo &);
+typedef void (*Getter) (Local<String>, const AccessorInfo &);
+typedef void (*Setter) (Local<String>, Local<Value>, const SetterInfo &);
 
 /*****************************************************************
  Code to confirm that C++ types wrapped as JavaScript values
@@ -113,12 +114,14 @@ public:
   const char * classname;               // for debugging output
   Eternal<ObjectTemplate> stencil;      // for creating JavaScript objects
   Isolate * isolate;
+  bool isVO;
 
   /* Constructor */
   Envelope(const char *name) :
     magic(0xF00D), 
     classname(name),
-    isolate(Isolate::GetCurrent())
+    isolate(Isolate::GetCurrent()),
+    isVO(false)
   {
     EscapableHandleScope scope(isolate);
     Local<ObjectTemplate> proto = ObjectTemplate::New();
@@ -160,12 +163,22 @@ public:
     return String::NewFromUtf8(isolate, str);
   }
 
-  void addAccessor(const char *name, AccessorGetter accessor) {
+  void addAccessor(const char *name, Getter accessor) {
     stencil.Get(isolate)->SetAccessor(
       String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
       accessor
     );
   }
+
+  void addAccessor(Local<String> name, Getter getter,
+                   Setter setter = 0,
+                   Handle<Value> data = Handle<Value>()) {
+    stencil.Get(isolate)->SetNativeDataProperty(name, getter, setter, data,
+                                                v8::DontDelete,
+                                                Local<v8::AccessorSignature>(),
+                                                v8::DEFAULT);
+  }
+
 
   /*****************************************************************
    Create a weak handle for a wrapped object.

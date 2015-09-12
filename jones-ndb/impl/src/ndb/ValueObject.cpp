@@ -63,7 +63,8 @@
  Step 2: call getValueObjectConstructor(), implemented here.  This takes as 
   arguments the Record, the field names, and any needed typeConverters.  
   It returns a constructor that can be used to create VOs (a VOC).  The VOC 
-  itself takes one argument, the buffer containing data that has been read.
+  itself takes two arguments: the buffer containing in-row data that has been 
+  read, and an array of individual buffers for BLOB columns.
 
  Step 3: we want an instantiated VO both to have the properties defined in
   the mapping and to have the behaviors of the user's Domain Object (DO).  
@@ -85,7 +86,9 @@
 *************************************************************/
 
 Envelope columnHandlerSetEnvelope("ColumnHandlerSet");
-Envelope nroEnvelope("NdbRecordObject");
+
+// An Envelope that wraps Envelopes for passing them in mapData:
+Envelope envelopeEnvelope("Envelope");
 
 /* Generic getter for all NdbRecordObjects
 */
@@ -112,30 +115,34 @@ void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
 /* Generic constructor wrapper.
  * args[0]: row buffer
  * args[1]: array of blob & text column values
- * args.Data(): mapData holding the record and ColumnHandlers
- * args.This(): VO built from the mapping-specific InstanceTemplate
+ * args.Data(): mapData holding the record, ColumnHandlers, and Envelope
 */
 void nroConstructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
+  DEBUG_PRINT("Field count: %d", args.This()->InternalFieldCount());
   EscapableHandleScope scope(args.GetIsolate());
 
   if(args.IsConstructCall()) {
     /* Unwrap record from mapData */
     Local<Object> mapData = args.Data()->ToObject();
-    const Record * record = 
+    const Record * record =
       unwrapPointer<const Record *>(mapData->Get(0)->ToObject());
 
     /* Unwrap Column Handlers from mapData */
     ColumnHandlerSet * handlers = 
       unwrapPointer<ColumnHandlerSet *>(mapData->Get(1)->ToObject());
 
+    /* Unwrap the Envelope */
+    Envelope * nroEnvelope =
+      unwrapPointer<Envelope *>(mapData->Get(2)->ToObject());
+
     /* Build NdbRecordObject */
     NdbRecordObject * nro = new NdbRecordObject(record, handlers, args);
 
     /* Wrap for JavaScript */
-    Local<Value> recordObject = nroEnvelope.wrap(nro);
-    nroEnvelope.freeFromGC(nro, recordObject);
-    args.GetReturnValue().Set(scope.Escape(recordObject));
+    Local<Value> jsRecordObject = nroEnvelope->wrap(nro);
+    nroEnvelope->freeFromGC(nro, jsRecordObject);
+    args.GetReturnValue().Set(scope.Escape(jsRecordObject));
   }
   else {
     args.GetIsolate()->ThrowException(Exception::Error(
@@ -155,8 +162,7 @@ void getValueObjectConstructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
   EscapableHandleScope scope(args.GetIsolate());
   Local<FunctionTemplate> ft = FunctionTemplate::New(args.GetIsolate());
-  Local<ObjectTemplate> inst = ft->InstanceTemplate();
-  inst->SetInternalFieldCount(2);
+  ft->InstanceTemplate()->SetInternalFieldCount(2);
 
   /* Initialize the mapData */
   Local<Object> mapData = Object::New(args.GetIsolate());
@@ -177,35 +183,38 @@ void getValueObjectConstructor(const Arguments &args) {
   Local<Value> jsHandlerSet = columnHandlerSetEnvelope.wrap(columnHandlers);
   mapData->Set(1, jsHandlerSet);
 
+  /* Create an Envelope and wrap it */
+  Envelope * nroEnvelope = new Envelope("NdbRecordObject");
+  nroEnvelope->isVO = true;
+  mapData->Set(2, envelopeEnvelope.wrap(nroEnvelope));
+
   /* Create accessors for the mapped fields in the instance template.
      AccessorInfo.Data() for the accessor will hold the field number.
   */
   Local<Object> jsFields = args[1]->ToObject();
   for(unsigned int i = 0 ; i < ncol; i++) {
+    Local<Value> fieldNumber = Number::New(args.GetIsolate(), i);
     Handle<String> fieldName = jsFields->Get(i)->ToString();
-    inst->SetAccessor(fieldName, nroGetter, nroSetter, Number::New(args.GetIsolate(), i),
-                      DEFAULT, DontDelete);
+    nroEnvelope->addAccessor(fieldName, nroGetter, nroSetter, fieldNumber);
   }
 
   /* The generic constructor is the CallHandler */
   ft->SetCallHandler(nroConstructor, mapData);
+  DEBUG_PRINT("Template fields: %d", ft->InstanceTemplate()->InternalFieldCount());
 
   args.GetReturnValue().Set(scope.Escape(ft->GetFunction()));
 }
 
 
 void isValueObject(const Arguments &args) {
-  EscapableHandleScope scope(args.GetIsolate());
-  bool answer = false;  
+  bool answer = false;
   Handle<Value> v = args[0];
 
   if(v->IsObject()) {
-    Local<Object> o = v->ToObject();
+    Handle<Object> o = v->ToObject();
     if(o->InternalFieldCount() == 2) {
       Envelope * n = (Envelope *) o->GetAlignedPointerFromInternalField(0);
-      if(n == & nroEnvelope) {
-        answer = true;
-      }
+      answer = n->isVO;
     }
   }
 
