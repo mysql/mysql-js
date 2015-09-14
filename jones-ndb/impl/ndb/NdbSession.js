@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ NdbSession.prototype.seizeTransactionContext = function(callback) {
   if(this.openTxContexts < this.maxTxContexts) {
     this.openTxContexts++;
     stats.seizeTransactionContext.immediate++;
-    udebug.log("seizeTransactionContext immediate", this.openTxContexts);
+    udebug.log_detail("seizeTransactionContext: immediate");
     txContext = this.impl.seizeTransaction();
     assert(txContext);
     callback(txContext);
@@ -122,7 +122,7 @@ NdbSession.prototype.seizeTransactionContext = function(callback) {
     }
     this.seizeTxQueue.push(callback);
     stats.seizeTransactionContext.queued++;
-    udebug.log("seizeTransactionContext queued", this.seizeTxQueue.length);
+    udebug.log("seizeTransactionContext: queued; queue length:", this.seizeTxQueue.length);
   }
 };
 
@@ -151,7 +151,6 @@ NdbSession.prototype.releaseTransactionContext = function(txContext) {
     RETURNS the DBConnectionPool from which this DBSession was created.
 */
 NdbSession.prototype.getConnectionPool = function() {
-  udebug.log("getConnectionPool");
   return this.parentPool;
 };
 
@@ -160,6 +159,7 @@ NdbSession.prototype.getConnectionPool = function() {
    ASYNC. Optional callback.
 */
 NdbSession.prototype.close = function(callback) {
+  udebug.log("Close.");
   ndbconnpool.closeNdbSession(this, callback);
 };
 
@@ -175,7 +175,10 @@ NdbSession.prototype.close = function(callback) {
 */
 NdbSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
                                                    tx, callback) {
-  udebug.log("buildReadOperation");
+  if(udebug.is_debug())
+    udebug.log("Read",
+               dbIndexHandler.tableHandler.dbTable.name,
+               "using", dbIndexHandler.dbIndex.name);
   var lockMode = "SHARED";
   var op = ndboperation.newReadOperation(tx, dbIndexHandler, keys, lockMode);
   op.userCallback = callback;
@@ -195,7 +198,8 @@ NdbSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
 NdbSession.prototype.buildInsertOperation = function(tableHandler, row,
                                                     tx, callback) {
   assert.equal(typeof row, "object");
-  if(udebug.is_debug()) udebug.log("buildInsertOperation " + tableHandler.dbTable.name);
+  if(udebug.is_debug())
+    udebug.log("Insert into", tableHandler.dbTable.name);
   var op = ndboperation.newInsertOperation(tx, tableHandler, row);
   op.userCallback = callback;
   return op;
@@ -213,7 +217,10 @@ NdbSession.prototype.buildInsertOperation = function(tableHandler, row,
 */
 NdbSession.prototype.buildWriteOperation = function(dbIndexHandler, row, 
                                                     tx, callback) {
-  udebug.log("buildWriteOperation");
+  if(udebug.is_debug())
+    udebug.log("Write to",
+               dbIndexHandler.tableHandler.dbTable.name,
+               "using", dbIndexHandler.dbIndex.name);
   var op = ndboperation.newWriteOperation(tx, dbIndexHandler, row);
   op.userCallback = callback;
   return op;
@@ -233,7 +240,10 @@ NdbSession.prototype.buildWriteOperation = function(dbIndexHandler, row,
 */
 NdbSession.prototype.buildUpdateOperation = function(dbIndexHandler, 
                                                      keys, row, tx, userData) {
-  udebug.log("buildUpdateOperation");
+  if(udebug.is_debug())
+    udebug.log("Update",
+               dbIndexHandler.tableHandler.dbTable.name,
+               "using", dbIndexHandler.dbIndex.name);
   var op = ndboperation.newUpdateOperation(tx, dbIndexHandler, keys, row);
   op.userCallback = userData;
   return op;
@@ -251,7 +261,10 @@ NdbSession.prototype.buildUpdateOperation = function(dbIndexHandler,
 */  
 NdbSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys,
                                                      tx, callback) {
-  udebug.log("buildDeleteOperation");  
+  if(udebug.is_debug())
+    udebug.log("Delete from",
+               dbIndexHandler.tableHandler.dbTable.name,
+               "using", dbIndexHandler.dbIndex.name);
   var op = ndboperation.newDeleteOperation(tx, dbIndexHandler, keys);
   op.userCallback = callback;
   return op;
@@ -283,7 +296,10 @@ NdbSession.prototype.buildReadProjectionOperation = function(indexHandler,
     return this.buildReadOperation(indexHandler, keys, tx, callback);
   }
 
-  udebug.log("buildReadProjectionOperation");
+  if(udebug.is_debug())
+    udebug.log("Projection Read from",
+               dbIndexHandler.tableHandler.dbTable.name,
+               "using", dbIndexHandler.dbIndex.name);
   var op = ndboperation.newProjectionOperation(this.impl, tx, indexHandler,
                                                keys, projection);
   op.userCallback = callback;
