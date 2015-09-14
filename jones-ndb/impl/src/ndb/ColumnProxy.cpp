@@ -27,7 +27,7 @@ using namespace v8;
 
 // TODO: Assure that caller has a HandleScope
 Handle<Value> ColumnProxy::get(v8::Isolate *isolate, char *buffer) {
-  Handle<Value> val;
+  Handle<Value> val = ToLocal(& jsValue);
 
   if(! isLoaded) {
     val = handler->read(buffer, ToLocal(& blobBuffer));

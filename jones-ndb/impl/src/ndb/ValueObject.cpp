@@ -94,9 +94,13 @@ Envelope envelopeEnvelope("Envelope");
 */
 void nroGetter(Local<String>, const AccessorInfo & info)
 {
-  NdbRecordObject * nro = 
+  Envelope * env = static_cast<Envelope *>
+    (info.Holder()->GetAlignedPointerFromInternalField(0));
+  assert(env->isVO);
+  NdbRecordObject * nro =
     static_cast<NdbRecordObject *>(info.Holder()->GetAlignedPointerFromInternalField(1));
   int nField = info.Data()->Int32Value();
+  DEBUG_PRINT_DETAIL("_GET_ NdbRecordObject field %d", nField);
   info.GetReturnValue().Set(nro->getField(nField));
 }                    
 
@@ -105,9 +109,13 @@ void nroGetter(Local<String>, const AccessorInfo & info)
 */
 void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
 {
-  NdbRecordObject * nro = 
+  Envelope * env = static_cast<Envelope *>
+    (info.Holder()->GetAlignedPointerFromInternalField(0));
+  assert(env->isVO);
+  NdbRecordObject * nro =
     static_cast<NdbRecordObject *>(info.Holder()->GetAlignedPointerFromInternalField(1));
   int nField = info.Data()->Int32Value();
+  DEBUG_PRINT_DETAIL("+SET+ NdbRecordObject field %d", nField);
   nro->setField(nField, value);
 }
 
@@ -122,38 +130,39 @@ void nroConstructor(const Arguments &args) {
   DEBUG_PRINT("Field count: %d", args.This()->InternalFieldCount());
   EscapableHandleScope scope(args.GetIsolate());
 
-  if(args.IsConstructCall()) {
-    /* Unwrap record from mapData */
-    Local<Object> mapData = args.Data()->ToObject();
-    const Record * record =
-      unwrapPointer<const Record *>(mapData->Get(0)->ToObject());
+  /* Unwrap record from mapData */
+  Local<Object> mapData = args.Data()->ToObject();
+  const Record * record =
+    unwrapPointer<const Record *>(mapData->Get(0)->ToObject());
 
-    /* Unwrap Column Handlers from mapData */
-    ColumnHandlerSet * handlers = 
-      unwrapPointer<ColumnHandlerSet *>(mapData->Get(1)->ToObject());
+  /* Unwrap Column Handlers from mapData */
+  ColumnHandlerSet * handlers = 
+    unwrapPointer<ColumnHandlerSet *>(mapData->Get(1)->ToObject());
 
-    /* Unwrap the Envelope */
-    Envelope * nroEnvelope =
-      unwrapPointer<Envelope *>(mapData->Get(2)->ToObject());
+  /* Unwrap the Envelope */
+  Envelope * nroEnvelope =
+    unwrapPointer<Envelope *>(mapData->Get(2)->ToObject());
 
-    /* Build NdbRecordObject */
-    NdbRecordObject * nro = new NdbRecordObject(record, handlers, args);
+  /* Build NdbRecordObject */
+  NdbRecordObject * nro = new NdbRecordObject(record, handlers, args);
 
-    /* Wrap for JavaScript */
-    Local<Value> jsRecordObject = nroEnvelope->wrap(nro);
-    nroEnvelope->freeFromGC(nro, jsRecordObject);
-    args.GetReturnValue().Set(scope.Escape(jsRecordObject));
-  }
-  else {
-    args.GetIsolate()->ThrowException(Exception::Error(
-      String::NewFromUtf8(args.GetIsolate(), "must be a called as constructor")));
-  }
+  /* Wrap for JavaScript */
+  Local<Value> jsRecordObject = nroEnvelope->wrap(nro);
+  nroEnvelope->freeFromGC(nro, jsRecordObject);
+
+  /* Set Prototype */
+  Handle<Value> prototype = mapData->Get(3);
+  if(! prototype->IsNull())
+    jsRecordObject->ToObject()->SetPrototype(prototype);
+
+  args.GetReturnValue().Set(scope.Escape(jsRecordObject));
 }
 
 
 /* arg0: Record constructed over the appropriate column list
    arg1: Array of field names
    arg2: Array of typeConverters 
+   arg3: DOC Prototype
 
    Returns: a constructor function that can be used to create native-backed 
    objects
@@ -187,6 +196,9 @@ void getValueObjectConstructor(const Arguments &args) {
   Envelope * nroEnvelope = new Envelope("NdbRecordObject");
   nroEnvelope->isVO = true;
   mapData->Set(2, envelopeEnvelope.wrap(nroEnvelope));
+
+  /* Set the Prototype in the mapData */
+  mapData->Set(3, args[3]);
 
   /* Create accessors for the mapped fields in the instance template.
      AccessorInfo.Data() for the accessor will hold the field number.
