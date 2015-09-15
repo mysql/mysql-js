@@ -27,6 +27,7 @@ public:
   NdbNativeCodeError(const NdbError &err) : NativeCodeError(0), ndberr(err)  {}
     
   Local<Value> toJS() {
+    // TODO: Verify that all callers have a HandleScope
     Local<String> JSMsg = String::NewFromUtf8(v8::Isolate::GetCurrent(), ndberr.message);
     Local<Object> Obj = Exception::Error(JSMsg)->ToObject();
     
@@ -70,8 +71,9 @@ NativeCodeError * getNdbErrorAlways(R return_val, C * ndbApiObject) {
 
 template<typename C> 
 void getNdbError(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   C * ndbApiObject = unwrapPointer<C *>(args.Holder());
   const NdbError & ndberr = ndbApiObject->getNdbError();
-  args.GetReturnValue().Set(NdbError_Wrapper(ndberr));
+  args.GetReturnValue().Set(scope.Escape(NdbError_Wrapper(ndberr)));
 };
 

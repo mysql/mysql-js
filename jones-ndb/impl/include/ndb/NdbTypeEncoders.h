@@ -37,5 +37,5 @@ typedef struct {
 
 const NdbTypeEncoder * getEncoderForColumn(const NdbDictionary::Column *);
 
-Local<Value> getBufferForText(const NdbDictionary::Column *, Handle<String>);
+Local<Object> getBufferForText(const NdbDictionary::Column *, Handle<String>);
 Local<String> getTextFromBuffer(const NdbDictionary::Column *, Handle<Object>);

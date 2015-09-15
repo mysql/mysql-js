@@ -19,6 +19,7 @@
 */
 
 /***  This file includes public wrapper functions exported to C++ code 
+      Users of these wrappers must supply their HandleScopes
 ***/
 
 #include "Record.h"

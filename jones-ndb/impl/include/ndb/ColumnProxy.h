@@ -23,7 +23,8 @@
 using namespace v8;
 
 class ColumnProxy {
-public:
+  friend class NdbRecordObject;
+protected:
   ColumnProxy();
   ~ColumnProxy();
   void setHandler(const ColumnHandler *);
@@ -57,3 +58,6 @@ inline bool ColumnProxy::valueIsNull() {
   return isNull;
 }
 
+inline void ColumnProxy::setBlobBuffer(v8::Isolate *isolate, Handle<Object> buffer) {
+  blobBuffer.Reset(isolate, buffer);
+}

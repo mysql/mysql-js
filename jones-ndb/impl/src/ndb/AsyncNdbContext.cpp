@@ -61,6 +61,7 @@ public:
 
 /* ndbTxCompleted is the callback on tx->executeAsynch().
    Cast the void pointer back to AsyncExecCall and set its return value.
+   TODO: Is a HandleScope needed and if so who owns it??
 */
 void ndbTxCompleted(int status, NdbTransaction *tx, void *v) {
   DEBUG_PRINT("ndbTxCompleted: %d %p %p", status, tx, v);

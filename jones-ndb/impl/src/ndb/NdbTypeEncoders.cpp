@@ -976,11 +976,11 @@ void bufferForText(const Arguments & args) {
     scope.Escape(getBufferForText(col, args[1]->ToString())));
 }
 
-Local<Value> getBufferForText(const NdbDictionary::Column *col,
+Local<Object> getBufferForText(const NdbDictionary::Column *col,
                                Handle<String> str) {
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
   size_t length, utf8Length;
-  Local<Value> buffer;
+  Local<Object> buffer;
   char * data;
 
   /* Fully Externalized Value; no copying.

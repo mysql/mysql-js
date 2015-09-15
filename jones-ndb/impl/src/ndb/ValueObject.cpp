@@ -94,6 +94,7 @@ Envelope envelopeEnvelope("Envelope");
 */
 void nroGetter(Local<String>, const AccessorInfo & info)
 {
+  EscapableHandleScope scope(info.GetIsolate());
   Envelope * env = static_cast<Envelope *>
     (info.Holder()->GetAlignedPointerFromInternalField(0));
   assert(env->isVO);
@@ -109,6 +110,7 @@ void nroGetter(Local<String>, const AccessorInfo & info)
 */
 void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
 {
+  EscapableHandleScope scope(info.GetIsolate());
   Envelope * env = static_cast<Envelope *>
     (info.Holder()->GetAlignedPointerFromInternalField(0));
   assert(env->isVO);
@@ -127,7 +129,6 @@ void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
 */
 void nroConstructor(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  DEBUG_PRINT("Field count: %d", args.This()->InternalFieldCount());
   EscapableHandleScope scope(args.GetIsolate());
 
   /* Unwrap record from mapData */
@@ -235,6 +236,7 @@ void isValueObject(const Arguments &args) {
 
 
 void getValueObjectWriteCount(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   NdbRecordObject * nro = unwrapPointer<NdbRecordObject *>(args[0]->ToObject());
   args.GetReturnValue().Set(nro->getWriteCount());
 }

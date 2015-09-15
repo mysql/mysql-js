@@ -38,6 +38,7 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
   nWrites(0),
   isolate(args.GetIsolate())
 {
+  EscapableHandleScope scope(isolate);
   const Handle<Value> & jsBuffer = args[0];
   const Handle<Value> & blobBufferArray = args[1];
 

@@ -25,7 +25,6 @@
 
 using namespace v8;
 
-// TODO: Assure that caller has a HandleScope
 Handle<Value> ColumnProxy::get(v8::Isolate *isolate, char *buffer) {
   Handle<Value> val = ToLocal(& jsValue);
 
@@ -40,7 +39,6 @@ Handle<Value> ColumnProxy::get(v8::Isolate *isolate, char *buffer) {
 void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
   isNull = (newValue->IsNull());
   isLoaded = isDirty = true;
-  blobBuffer.Reset();
   jsValue.Reset(isolate, newValue);
   DEBUG_PRINT("set %s", handler->column->getName());
 }
@@ -48,26 +46,15 @@ void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
 Handle<Value> ColumnProxy::write(v8::Isolate *isolate, char *buffer) {
   Handle<Value> rval = Undefined(isolate);
 
-  /* Write dirty, non-blob values */
-  if(isDirty && blobBuffer.IsEmpty()) {
+  if(isDirty && ! (handler->isBlob())) {
     rval = handler->write(ToLocal(& jsValue), buffer);
-    DEBUG_PRINT("write %s", handler->column->getName());
-    isDirty = false;
   }
+  isDirty = false;
+
   return rval;
 }
 
 BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
-  BlobWriteHandler * b = 0;
-  if(isDirty && ! isNull) {
-    DEBUG_PRINT("createBlobWriteHandle %s", handler->column->getName());
-    b = handler->createBlobWriteHandle(ToLocal(& blobBuffer), i);
-  }
-  isDirty = false;
-  return b;
+  return isNull ? 0 : handler->createBlobWriteHandle(ToLocal(& jsValue), i);
 }
 
-void ColumnProxy::setBlobBuffer(v8::Isolate *isolate, Handle<Object> buffer) {
-  DEBUG_ENTER();
-  blobBuffer.Reset(isolate, buffer);
-}

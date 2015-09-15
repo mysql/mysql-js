@@ -95,9 +95,9 @@ void ColumnHandler::init(v8::Isolate * isolate,
   }
 }
 
-// TODO: verify that caller has HandleScope
+
 Handle<Value> ColumnHandler::read(char * rowBuffer, Handle<Object> blobBuffer) const {
-  Handle<Value> val;
+  Handle<Value> val;  // HandleScope is in ValueObject.cpp nroGetter
 
   if(isText) {
     DEBUG_PRINT("text read");
@@ -119,7 +119,7 @@ Handle<Value> ColumnHandler::read(char * rowBuffer, Handle<Object> blobBuffer) c
   return val;
 }
 
-
+// If column is a blob, val is the blob buffer
 Handle<Value> ColumnHandler::write(Handle<Value> val, char *buffer) const {
   Handle<Value> writeStatus;
 
@@ -137,17 +137,16 @@ Handle<Value> ColumnHandler::write(Handle<Value> val, char *buffer) const {
   return writeStatus;
 }
 
-
-BlobWriteHandler * ColumnHandler::createBlobWriteHandle(Handle<Value> val, 
+BlobWriteHandler * ColumnHandler::createBlobWriteHandle(Local<Value> val,
                                                         int fieldNo) const {
   DEBUG_MARKER(UDEB_DETAIL);
   BlobWriteHandler * b = 0;
-  Handle<Object> obj = val->ToObject();
+  Handle<Object> nodeBuffer;
   if(isLob) {
-    if(isText && val->IsString()) {
-      obj = getBufferForText(column, val->ToString())->ToObject();
-    }
-    b = new BlobWriteHandler(column->getColumnNo(), fieldNo, obj);
+    nodeBuffer = (isText && val->IsString()) ?
+       getBufferForText(column, val->ToString()) :  // TEXT
+       val->ToObject();                             // BLOB
+    b = new BlobWriteHandler(column->getColumnNo(), fieldNo, nodeBuffer);
   }
   return b;
 }
