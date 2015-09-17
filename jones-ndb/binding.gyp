@@ -30,7 +30,6 @@
       [
          "impl/src/common/async_common.cpp",
          "impl/src/common/unified_debug.cpp",
-         "impl/src/common/common_v8_values.cpp",
 
          "impl/src/ndb/AsyncNdbContext_wrapper.cpp",
          "impl/src/ndb/AsyncNdbContext.cpp",
@@ -93,7 +92,6 @@
           {
             'sources' : 
             [
-               "impl/src/ndb/mysqlclient_wrapper.cpp"
             ],
             'libraries':
             [

@@ -41,7 +41,6 @@ V8WrapperFn getOperationError,
 class BatchImplEnvelopeClass : public Envelope {
 public:
   BatchImplEnvelopeClass() : Envelope("BatchImpl") {
-    HandleScope scope;
     addMethod("tryImmediateStartTransaction", tryImmediateStartTransaction);
     addMethod("getOperationError", getOperationError);
     addMethod("execute", execute);
@@ -53,53 +52,49 @@ public:
 
 BatchImplEnvelopeClass BatchImplEnvelope;
 
-Handle<Value> BatchImpl_Wrapper(BatchImpl *set) {
-  DEBUG_PRINT("BatchImpl wrapper");
-  HandleScope scope;
-
-  if(set) {
-    Local<Object> jsobj = BatchImplEnvelope.newWrapper();
-    wrapPointerInObject(set, BatchImplEnvelope, jsobj);
-    freeFromGC(set, jsobj);
-    return scope.Close(jsobj);
-  }
-  return Null();
+// CALLER in DBOperationHelper has a HandleScope
+Local<Value> BatchImpl_Wrapper(BatchImpl *set) {
+  Local<Value> jsobj = BatchImplEnvelope.wrap(set);
+  BatchImplEnvelope.freeFromGC(set, jsobj);
+  return jsobj;
 }
 
-Handle<Value> BatchImpl_Recycle(Handle<Object> oldWrapper, 
-                                     BatchImpl * newSet) {
+// This version is *not* freed from GC
+Local<Object> getWrappedObject(BatchImpl *set) {
+  return BatchImplEnvelope.wrap(set)->ToObject();
+}
+
+Local<Value> BatchImpl_Recycle(Handle<Object> oldWrapper,
+                               BatchImpl * newSet) {
   DEBUG_PRINT("BatchImpl *Recycle*");
-  assert(newSet);
   BatchImpl * oldSet = unwrapPointer<BatchImpl *>(oldWrapper);
   assert(oldSet == 0);
+  assert(newSet != 0);
   wrapPointerInObject(newSet, BatchImplEnvelope, oldWrapper);
   return oldWrapper;
 }
 
-Persistent<Value> getWrappedObject(BatchImpl *set) {
-  HandleScope scope;
-  Local<Object> localObj = BatchImplEnvelope.newWrapper();
-  wrapPointerInObject(set, BatchImplEnvelope, localObj);
-  return Persistent<Value>::New(localObj);
-}
 
-Handle<Value> getOperationError(const Arguments & args) {
+void getOperationError(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
 
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
 
   const NdbError * err = set->getError(n);
 
-  if(err == 0) return True();
-  if(err->code == 0) return Null();
-  return scope.Close(NdbError_Wrapper(*err));
+  Local<Value> opErrHandle;
+  if(err == 0) opErrHandle = True(args.GetIsolate());
+  else if(err->code == 0) opErrHandle = Null(args.GetIsolate());
+  else opErrHandle = NdbError_Wrapper(*err);
+
+  args.GetReturnValue().Set(scope.Escape(opErrHandle));
 }
 
-Handle<Value> tryImmediateStartTransaction(const Arguments &args) {
+void tryImmediateStartTransaction(const Arguments &args) {
   BatchImpl * ctx = unwrapPointer<BatchImpl *>(args.Holder());
-  return ctx->tryImmediateStartTransaction() ? True() : False();
+  args.GetReturnValue().Set((bool) ctx->tryImmediateStartTransaction());
 }
 
 
@@ -131,40 +126,41 @@ void TxExecuteAndCloseCall::doAsyncCallback(Local<Object> context) {
   NativeMethodCall_3_<int, BatchImpl, int, int, int>::doAsyncCallback(context);
 }
 
-Handle<Value> execute(const Arguments &args) {
-  HandleScope scope;
+void execute(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   REQUIRE_ARGS_LENGTH(4);
   TxExecuteAndCloseCall * ncallptr = new TxExecuteAndCloseCall(args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
 /* IMMEDIATE.
 */
-Handle<Value> executeAsynch(const Arguments &args) {
-  HandleScope scope;
+void executeAsynch(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, BatchImpl,
                               int, int, int, Handle<Function> > MCALL;
   MCALL mcall(& BatchImpl::executeAsynch, args);
   mcall.run();
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(mcall.jsReturnVal());
 }
 
 
-Handle<Value> readBlobResults(const Arguments &args) {
+void readBlobResults(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   int n = args[0]->Int32Value();
-  return set->getKeyOperation(n)->readBlobResults();
+  set->getKeyOperation(n)->readBlobResults(args);
+//  args.GetReturnValue().Set(set->getKeyOperation(n)->readBlobResults());
 }
 
 
-Handle<Value> BatchImpl_freeImpl(const Arguments &args) {
+void BatchImpl_freeImpl(const Arguments &args) {
   BatchImpl * set = unwrapPointer<BatchImpl *>(args.Holder());
   delete set;
   set = 0;
   wrapPointerInObject(set, BatchImplEnvelope, args.Holder());
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

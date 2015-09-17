@@ -853,9 +853,9 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 
 
 storeNativeConstructorInMapping = function(dbTableHandler) {
-  var i, nfields, record, fieldNames, typeConverters;
+  var i, nfields, record, fieldNames, typeConverters, proto;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
-  if(dbTableHandler.ValueObject) { 
+  if(dbTableHandler.ValueObject && dbTableHandler.resultRecord) {
     return;
   }
   /* Step 1: Create Record
@@ -879,13 +879,12 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
     typeConverters[i] = dbTableHandler.getColumn(i).typeConverter.ndb;
   }
 
-  VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, typeConverters);
-
-  /* Apply the user's prototype */
+  /* The user's constructor and prototype */
   DOC = dbTableHandler.newObjectConstructor;
-  if(DOC && DOC.prototype) {
-    VOC.prototype = DOC.prototype;
-  }
+  proto = (DOC && DOC.prototype) ? DOC.prototype : null;
+
+  /* Get the Value Object Constructor */
+  VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, typeConverters, proto);
 
   /* Store both the VOC and the Record in the mapping */
   dbTableHandler.ValueObject = VOC;

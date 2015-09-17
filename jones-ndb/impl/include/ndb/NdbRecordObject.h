@@ -24,12 +24,12 @@
 
 class NdbRecordObject {
 public:
-  NdbRecordObject(const Record *, ColumnHandlerSet *, Handle<Value>, Handle<Value>);
+  NdbRecordObject(const Record *, ColumnHandlerSet *, const Arguments &);
   ~NdbRecordObject();
   
-  Handle<Value> getField(int);
+  Local<Value> getField(int);
   void setField(int nField, Handle<Value> value);
-  Handle<Value> prepare();
+  Local<Value> prepare();
   void resetMask();
 
   const Record * getRecord() const;
@@ -50,7 +50,8 @@ private:
     uint32_t maskvalue;
   } u;
   unsigned short nWrites;
-  
+  v8::Isolate * isolate;
+
   void maskIn(unsigned int nField);
   bool isMaskedIn(unsigned int nField);
 };
@@ -71,7 +72,7 @@ inline bool NdbRecordObject::isMaskedIn(unsigned int nField) {
 inline void NdbRecordObject::setField(int nField, Handle<Value> value) {
   nWrites++;
   maskIn(nField);
-  proxy[nField].set(value);
+  proxy[nField].set(isolate, value);
 }
 
 

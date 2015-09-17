@@ -19,6 +19,7 @@
 */
 
 /***  This file includes public wrapper functions exported to C++ code 
+      Users of these wrappers must supply their HandleScopes
 ***/
 
 #include "Record.h"
@@ -27,12 +28,12 @@
 class BatchImpl;
 class QueryOperation;
 
-Handle<Value> Record_Wrapper(const Record *);
-Handle<Value> Ndb_Wrapper(Ndb *);
-Handle<Value> NdbError_Wrapper(const NdbError &);
-Handle<Value> BatchImpl_Wrapper(BatchImpl *);
-Handle<Value> BatchImpl_Recycle(Handle<Object>, BatchImpl *);
-Handle<Value> QueryOperation_Wrapper(QueryOperation *);
+Local<Value> Record_Wrapper(const Record *);
+Local<Value> Ndb_Wrapper(Ndb *);
+Local<Value> NdbError_Wrapper(const NdbError &);
+Local<Value> BatchImpl_Wrapper(BatchImpl *);
+Local<Value> BatchImpl_Recycle(Handle<Object>, BatchImpl *);
+Local<Value> QueryOperation_Wrapper(QueryOperation *);
 
 /* Not actual wrapper functions, but functions that provide an envelope */
 

@@ -24,6 +24,7 @@
 #include <string.h>
 #include "Record.h"
 #include "node.h"
+#include "JsWrapper.h"
 #include "BlobHandler.h"
 
 class KeyOperation {
@@ -62,7 +63,7 @@ public:
   int createBlobWriteHandles(v8::Handle<v8::Object>, const Record *);
 
   // Get results
-  v8::Handle<v8::Value> readBlobResults();
+  void readBlobResults(const Arguments &);
 
   // Diagnostic 
   const char * getOperationName();

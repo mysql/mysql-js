@@ -21,63 +21,40 @@
 #include "adapter_global.h"
 #include "unified_debug.h"
 #include "ColumnProxy.h"
+#include "JsWrapper.h"
 
 using namespace v8;
 
-ColumnProxy::~ColumnProxy() {
-  Dispose();
-}
+Handle<Value> ColumnProxy::get(v8::Isolate *isolate, char *buffer) {
+  Handle<Value> val = ToLocal(& jsValue);
 
-/* Drop our claim on the old value */
-void ColumnProxy::Dispose() {
-  if(! jsValue.IsEmpty()) jsValue.Dispose();
-  if(! blobBuffer.IsEmpty()) blobBuffer.Dispose();
-}
-
-Handle<Value> ColumnProxy::get(char *buffer) {
-  HandleScope scope;
-  
   if(! isLoaded) {
-    Handle<Value> val = handler->read(buffer, blobBuffer);
-    jsValue = Persistent<Value>::New(val);
+    val = handler->read(buffer, ToLocal(& blobBuffer));
+    jsValue.Reset(isolate, val);
     isLoaded = true;
   }
-  return scope.Close(jsValue);
+  return val;
 }
 
-void ColumnProxy::set(Handle<Value> newValue) {
-  Dispose();
+void ColumnProxy::set(v8::Isolate *isolate, Handle<Value> newValue) {
   isNull = (newValue->IsNull());
   isLoaded = isDirty = true;
-  jsValue = Persistent<Value>::New(newValue);
+  jsValue.Reset(isolate, newValue);
   DEBUG_PRINT("set %s", handler->column->getName());
 }
 
+Handle<Value> ColumnProxy::write(v8::Isolate *isolate, char *buffer) {
+  Handle<Value> rval = Undefined(isolate);
 
-Handle<Value> ColumnProxy::write(char *buffer) {
-  HandleScope scope;
-  Handle<Value> rval = Undefined();
-
-  /* Write dirty, non-blob values */
-  if(isDirty && blobBuffer.IsEmpty()) {
-    rval = handler->write(jsValue, buffer);
-    DEBUG_PRINT("write %s", handler->column->getName());
-    isDirty = false;
-  }
-  return scope.Close(rval);
-}
-
-
-BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
-  BlobWriteHandler * b = 0;
-  if(isDirty && ! isNull) {
-    DEBUG_PRINT("createBlobWriteHandle %s", handler->column->getName());
-    b = handler->createBlobWriteHandle(blobBuffer, i);
+  if(isDirty && ! (handler->isBlob())) {
+    rval = handler->write(ToLocal(& jsValue), buffer);
   }
   isDirty = false;
-  return b;
+
+  return rval;
 }
 
-void ColumnProxy::setBlobBuffer(Handle<Object> buffer) {
-  blobBuffer = Persistent<Object>::New(buffer);
+BlobWriteHandler * ColumnProxy::createBlobWriteHandle(int i) {
+  return isNull ? 0 : handler->createBlobWriteHandle(ToLocal(& jsValue), i);
 }
+

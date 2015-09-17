@@ -21,12 +21,12 @@
 #include <string.h>
 
 #include <node.h>
+#include <node_buffer.h>
 
 #include "adapter_global.h"
 #include "KeyOperation.h"
 #include "BatchImpl.h"
 #include "NdbWrappers.h"
-#include "v8_binder.h"
 #include "js_wrapper_macros.h"
 #include "NdbRecordObject.h"
 #include "TransactionImpl.h"
@@ -60,8 +60,8 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op);
 
    Returns: BatchImpl
 */
-Handle<Value> DBOperationHelper(const Arguments &args) {
-  HandleScope scope;
+void DBOperationHelper(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
 
   int length = args[0]->Int32Value();
   const Local<Object> array = args[1]->ToObject();
@@ -87,23 +87,21 @@ Handle<Value> DBOperationHelper(const Arguments &args) {
   }
   
   if(oldWrapper->IsObject()) {
-    return BatchImpl_Recycle(oldWrapper->ToObject(), pendingOps);
+    args.GetReturnValue().Set(BatchImpl_Recycle(oldWrapper->ToObject(), pendingOps));
   } else {
-    return BatchImpl_Wrapper(pendingOps);
+    args.GetReturnValue().Set(BatchImpl_Wrapper(pendingOps));
   }
 }
 
 
 void setKeysInOp(Handle<Object> spec, KeyOperation & op) {
-  HandleScope scope;
-
   Local<Value> v;
   Local<Object> o;
 
   v = spec->Get(HELPER_KEY_BUFFER);
   if(! v->IsNull()) {
     o = v->ToObject();
-    op.key_buffer = V8BINDER_UNWRAP_BUFFER(o);
+    op.key_buffer = node::Buffer::Data(o);
   }
   
   v = spec->Get(HELPER_KEY_RECORD);
@@ -115,8 +113,6 @@ void setKeysInOp(Handle<Object> spec, KeyOperation & op) {
 
 
 void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
-  HandleScope scope;
-
   Local<Value> v;
   Local<Object> o;
 
@@ -125,7 +121,7 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
   v = spec->Get(HELPER_ROW_BUFFER);
   if(! v->IsNull()) {
     o = v->ToObject();
-    op.row_buffer = V8BINDER_UNWRAP_BUFFER(o);
+    op.row_buffer = node::Buffer::Data(o);
   }
   
   v = spec->Get(HELPER_ROW_RECORD);
@@ -166,7 +162,6 @@ void DBOperationHelper_NonVO(Handle<Object> spec, KeyOperation & op) {
 
 void DBOperationHelper_VO(Handle<Object> spec,  KeyOperation & op) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
   Local<Value> v;
   Local<Object> o;
   Local<Object> valueObj;
@@ -204,9 +199,10 @@ void DBOperationHelper_VO(Handle<Object> spec,  KeyOperation & op) {
 void DBOperationHelper_initOnLoad(Handle<Object> target) {
   DEBUG_MARKER(UDEB_DETAIL);
   DEFINE_JS_FUNCTION(target, "DBOperationHelper", DBOperationHelper);
+  Local<Object> OpHelper = Object::New(Isolate::GetCurrent());
+  Local<Object> LockModes = Object::New(Isolate::GetCurrent());
 
-  Persistent<Object> OpHelper = Persistent<Object>(Object::New());
-  target->Set(Persistent<String>(String::NewSymbol("OpHelper")), OpHelper);
+  target->Set(NEW_SYMBOL("OpHelper"), OpHelper);
   DEFINE_JS_INT(OpHelper, "row_buffer",   HELPER_ROW_BUFFER);
   DEFINE_JS_INT(OpHelper, "key_buffer",   HELPER_KEY_BUFFER);
   DEFINE_JS_INT(OpHelper, "row_record",   HELPER_ROW_RECORD);
@@ -219,8 +215,7 @@ void DBOperationHelper_initOnLoad(Handle<Object> target) {
   DEFINE_JS_INT(OpHelper, "blobs",        HELPER_BLOBS);
   DEFINE_JS_INT(OpHelper, "is_valid",     HELPER_IS_VALID);
 
-  Persistent<Object> LockModes = Persistent<Object>(Object::New());
-  target->Set(Persistent<String>(String::NewSymbol("LockModes")), LockModes);
+  target->Set(NEW_SYMBOL("LockModes"), LockModes);
   DEFINE_JS_INT(LockModes, "EXCLUSIVE", NdbOperation::LM_Exclusive);
   DEFINE_JS_INT(LockModes, "SHARED", NdbOperation::LM_Read);
   DEFINE_JS_INT(LockModes, "COMMITTED", NdbOperation::LM_CommittedRead);

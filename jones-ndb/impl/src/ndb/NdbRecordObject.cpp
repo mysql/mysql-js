@@ -30,17 +30,22 @@
 
 NdbRecordObject::NdbRecordObject(const Record *_record, 
                                  ColumnHandlerSet * _handlers,
-                                 Handle<Value> jsBuffer,
-                                 Handle<Value> blobBufferArray) : 
-  record(_record), 
+                                 const Arguments & args) :
+  record(_record),
   handlers(_handlers),
   ncol(record->getNoOfColumns()),
   proxy(new ColumnProxy[record->getNoOfColumns()]),
-  nWrites(0)
+  nWrites(0),
+  isolate(args.GetIsolate())
 {
+  EscapableHandleScope scope(isolate);
+  const Handle<Value> & jsBuffer = args[0];
+  const Handle<Value> & blobBufferArray = args[1];
+
   unsigned int nblobs = 0;
-  /* Retain a handler on the buffer for our whole lifetime */
-  persistentBufferHandle = Persistent<Value>::New(jsBuffer);
+
+  /* Retain a handle on the buffer for our whole lifetime */
+  persistentBufferHandle.Reset(isolate, jsBuffer);
   buffer = node::Buffer::Data(jsBuffer);
 
   /* Initialize the list of masked-in columns */
@@ -58,7 +63,7 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
         nblobs++;
         Handle<Object> buf = b->ToObject();
         assert(node::Buffer::HasInstance(buf));
-        proxy[i].setBlobBuffer(buf);
+        proxy[i].setBlobBuffer(isolate, buf);
         record->setNotNull(i, buffer);
       } else if(b->IsNull()) {
        nblobs++;
@@ -75,24 +80,24 @@ NdbRecordObject::NdbRecordObject(const Record *_record,
 
 NdbRecordObject::~NdbRecordObject() {
   DEBUG_PRINT(" << Destructor");
-  persistentBufferHandle.Dispose();
+  persistentBufferHandle.Reset();
   delete[] proxy;
 }
 
 
-Handle<Value> NdbRecordObject::getField(int nField) {
+Local<Value> NdbRecordObject::getField(int nField) {
   if(record->isNull(nField, buffer))
-    return Null();
+    return Null(isolate);
   else
-    return proxy[nField].get(buffer);
+    return proxy[nField].get(isolate, buffer);
 }
 
 
-Handle<Value> NdbRecordObject::prepare() {
-  HandleScope scope;
+Local<Value> NdbRecordObject::prepare() {
+  EscapableHandleScope scope(isolate);
   int n = 0;
-  Handle<Value> writeStatus;
-  Handle<Value> savedError = Undefined();
+  Local<Value> writeStatus;
+  Local<Value> savedError = Undefined(isolate);
   for(unsigned int i = 0 ; i < ncol ; i++) {
     if(isMaskedIn(i)) {
       n++;
@@ -100,13 +105,13 @@ Handle<Value> NdbRecordObject::prepare() {
         record->setNull(i, buffer);
       }
       else {
-        writeStatus = proxy[i].write(buffer);
+        writeStatus = proxy[i].write(isolate, buffer);
         if(! writeStatus->IsUndefined()) savedError = writeStatus;
       }
     }
   }
   DEBUG_PRINT("Prepared %d column%s. Mask %u.", n, (n == 1 ? "" : "s"), u.maskvalue);
-  return scope.Close(savedError);
+  return scope.Escape(savedError);
 }
 
 

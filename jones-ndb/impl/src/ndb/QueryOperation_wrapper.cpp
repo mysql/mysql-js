@@ -20,6 +20,7 @@
 
 #include "ndb_util/NdbQueryOperation.hpp"
 
+#include "adapter_global.h"
 #include "TransactionImpl.h"
 #include "QueryOperation.h"
 
@@ -32,8 +33,10 @@
 
 using namespace v8;
 
+#define SET_KEY(X,Y) X.Set(isolate, String::NewFromUtf8(isolate, Y))
+#define GET_KEY(X) X.Get(isolate)
 
-Handle<String>    /* keys of NdbProjection */
+Eternal<String>    /* keys of NdbProjection */
   K_next,
   K_root,
   K_hasScan,
@@ -63,7 +66,6 @@ V8WrapperFn queryPrepareAndExecute,
 class QueryOperationEnvelopeClass : public Envelope {
 public:
   QueryOperationEnvelopeClass() : Envelope("QueryOperation") {
-    HandleScope scope;
     addMethod("prepareAndExecute", queryPrepareAndExecute);
     addMethod("setTransactionImpl", querySetTransactionImpl);
     addMethod("fetchAllResults", queryFetchAllResults);
@@ -74,28 +76,25 @@ public:
 
 QueryOperationEnvelopeClass QueryOperationEnvelope;
 
-Handle<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
-  HandleScope scope;
-
-  if(queryOp) {
-    Local<Object> jsobj = QueryOperationEnvelope.newWrapper();
-    wrapPointerInObject(queryOp, QueryOperationEnvelope, jsobj);
-    freeFromGC(queryOp, jsobj);
-    return scope.Close(jsobj);
-  }
-  return Null();
+Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
+  Local<Value> jsobj = QueryOperationEnvelope.wrap(queryOp);
+  QueryOperationEnvelope.freeFromGC(queryOp, jsobj);
+  return jsobj;
 }
 
 
 void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
+  DEBUG_ENTER();
+  Isolate * isolate = Isolate::GetCurrent();
   Record * record = 0;
-  int level = spec->Get(K_depth)->Int32Value();
-  if(spec->Get(K_rowRecord)->IsObject()) {
-    record = unwrapPointer<Record *>(spec->Get(K_rowRecord)->ToObject());
+  int level = spec->Get(GET_KEY(K_depth))->Int32Value();
+  if(spec->Get(GET_KEY(K_rowRecord))->IsObject()) {
+    record = unwrapPointer<Record *>(spec->Get(GET_KEY(K_rowRecord))->ToObject());
   }
+  assert(record);
   queryOp->createRowBuffer(level, record);
 
-  if(spec->Get(K_relatedField)->IsNull()) {
+  if(spec->Get(GET_KEY(K_relatedField))->IsNull()) {
     queryOp->levelIsJoinTable(level);
   }
 }
@@ -105,6 +104,7 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
   DEBUG_ENTER();
+  Isolate * isolate = Isolate::GetCurrent();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
   /* Pull values out of the JavaScript object */
@@ -113,23 +113,23 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
 
-  v = spec->Get(K_keyRecord);
+  v = spec->Get(GET_KEY(K_keyRecord));
   if(v->IsObject()) {
     keyRecord = unwrapPointer<const Record *>(v->ToObject());
   };
-  v = spec->Get(K_tableHandler);
+  v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
-    v = v->ToObject()->Get(K_dbTable);
+    v = v->ToObject()->Get(GET_KEY(K_dbTable));
     if(v->IsObject()) {
       table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
     }
   }
-  bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
+  bool isPrimaryKey = spec->Get(GET_KEY(K_isPrimaryKey))->BooleanValue();
   const char * key_buffer = node::Buffer::Data(keyBuffer);
   if(! isPrimaryKey) {
-    v = spec->Get(K_indexHandler);
+    v = spec->Get(GET_KEY(K_indexHandler));
     if(v->IsObject()) {
-      v = v->ToObject()->Get(K_dbIndex);
+      v = v->ToObject()->Get(GET_KEY(K_dbIndex));
       if(v->IsObject()) {
         index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
       }
@@ -156,27 +156,28 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
                                              Handle<Object> spec,
                                              const NdbQueryOperationDef * parent) {
   NdbQueryBuilder *builder = queryOp->getBuilder();
+  Isolate * isolate = Isolate::GetCurrent();
 
   /* Pull values out of the JavaScript object */
   Local<Value> v;
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
-  int depth = spec->Get(K_depth)->Int32Value();
+  int depth = spec->Get(GET_KEY(K_depth))->Int32Value();
   DEBUG_PRINT("Creating QueryOperationDef at level %d",depth);
 
-  v = spec->Get(K_tableHandler);
+  v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
-    v = v->ToObject()->Get(K_dbTable);
+    v = v->ToObject()->Get(GET_KEY(K_dbTable));
     if(v->IsObject()) {
       table = unwrapPointer<const NdbDictionary::Table *>(v->ToObject());
     }
   }
-  bool isPrimaryKey = spec->Get(K_isPrimaryKey)->BooleanValue();
+  bool isPrimaryKey = spec->Get(GET_KEY(K_isPrimaryKey))->BooleanValue();
 
   if(! isPrimaryKey) {
-    v = spec->Get(K_indexHandler);
+    v = spec->Get(GET_KEY(K_indexHandler));
     if(v->IsObject()) {
-      v = v->ToObject()->Get(K_dbIndex);
+      v = v->ToObject()->Get(GET_KEY(K_dbIndex));
       if(v->IsObject()) {
         index = unwrapPointer<const NdbDictionary::Index *> (v->ToObject());
       }
@@ -184,15 +185,15 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
     assert(index);
   }
 
-  v = spec->Get(K_joinTo);
-  Local<Array> joinColumns = Array::Cast(*v);
+  v = spec->Get(GET_KEY(K_joinTo));
+  Array * joinColumns = Array::Cast(*v);
 
   /* Build the key */
   int nKeyParts = joinColumns->Length();
   const NdbQueryOperand * key_parts[nKeyParts+1];
 
   for(int i = 0 ; i < nKeyParts ; i++) {
-    String::AsciiValue column_name(joinColumns->Get(i));
+    String::Utf8Value column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
   }
   key_parts[nKeyParts] = 0;
@@ -200,10 +201,12 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   return queryOp->defineOperation(index, table, key_parts);
 }
 
-
-Handle<Value> createQueryOperation(const Arguments & args) {
+/* JS QueryOperation.create(ndbRootProjection, keyBuffer, depth)
+*/
+void createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(3);
+  Isolate * isolate = Isolate::GetCurrent();
 
   int size = args[2]->Int32Value();
   QueryOperation * queryOperation = new QueryOperation(size);
@@ -216,49 +219,49 @@ Handle<Value> createQueryOperation(const Arguments & args) {
   current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
 
-  while(! (v = spec->Get(K_next))->IsNull()) {
+  while(! (v = spec->Get(GET_KEY(K_next)))->IsNull()) {
     spec = v->ToObject();
     current = createNextLevel(queryOperation, spec, current);
-    assert(current->getOpNo() == spec->Get(K_depth)->Uint32Value());
+    assert(current->getOpNo() == spec->Get(GET_KEY(K_depth))->Uint32Value());
     setRowBuffers(queryOperation, spec);
   }
   queryOperation->prepare(root);
-  return QueryOperation_Wrapper(queryOperation);
+  args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
 }
 
-Handle<Value> querySetTransactionImpl(const Arguments &args) {
+void querySetTransactionImpl(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(1);
 
   typedef NativeVoidMethodCall_1_<QueryOperation, TransactionImpl *> MCALL;
   MCALL mcall(& QueryOperation::setTransactionImpl, args);
   mcall.run();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // void prepareAndExecute() 
 // ASYNC
-Handle<Value> queryPrepareAndExecute(const Arguments &args) {
-  HandleScope scope;
+void queryPrepareAndExecute(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
   MCALL * mcallptr = new MCALL(& QueryOperation::prepareAndExecute, args);
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // fetchAllResults()
 // ASYNC
-Handle<Value> queryFetchAllResults(const Arguments &args) {
-  HandleScope scope;
+void queryFetchAllResults(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, QueryOperation> MCALL;
   MCALL * mcallptr = new MCALL(& QueryOperation::fetchAllResults, args);
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 void freeQueryResultAtGC(char *data, void *hint) {
@@ -272,8 +275,9 @@ void doNotFreeQueryResultAtGC(char *data, void *hint) {
 }
 
 // getResult(id, objectWrapper):  IMMEDIATE
-Handle<Value> queryGetResult(const Arguments & args) {
+void queryGetResult(const Arguments & args) {
   REQUIRE_ARGS_LENGTH(2);
+  v8::Isolate * isolate = args.GetIsolate();
 
   QueryOperation * op = unwrapPointer<QueryOperation *>(args.Holder());
   size_t id = args[0]->Uint32Value();
@@ -283,58 +287,56 @@ Handle<Value> queryGetResult(const Arguments & args) {
 
   if(header) {
     if(header->data) {
-      node::Buffer *buff = node::Buffer::New(header->data,
-                                            op->getResultRowSize(header->depth),
-                                            doNotFreeQueryResultAtGC, 0);
-      wrapper->Set(K_data, Persistent<Object>(buff->handle_));
+      wrapper->Set(GET_KEY(K_data),
+        node::Buffer::New(header->data,
+                          op->getResultRowSize(header->depth),
+                          doNotFreeQueryResultAtGC, 0));
     } else {
-      wrapper->Set(K_data, Null());
+      wrapper->Set(GET_KEY(K_data), Null(isolate));
     }
-    wrapper->Set(K_level, Persistent<Value>(v8::Uint32::New(header->depth)));
-    wrapper->Set(K_tag,   Persistent<Value>(v8::Uint32::New(header->tag)));
-    return True();
+    wrapper->Set(GET_KEY(K_level), v8::Uint32::New(isolate, header->depth));
+    wrapper->Set(GET_KEY(K_tag),   v8::Uint32::New(isolate, header->tag));
+    args.GetReturnValue().Set(true);
+  } else {
+    args.GetReturnValue().Set(false);
   }
-  return False();
 }
 
 // void close()
 // ASYNC
-Handle<Value> queryClose(const Arguments & args) {
+void queryClose(const Arguments & args) {
   typedef NativeVoidMethodCall_0_<QueryOperation> NCALL;
   NCALL * ncallptr = new NCALL(& QueryOperation::close, args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
-#define JSSTRING(a) Persistent<String>::New(String::NewSymbol(a))
-
 void QueryOperation_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-
-  Persistent<Object> ibObj = Persistent<Object>(Object::New());
-  Persistent<String> ibKey = Persistent<String>(String::NewSymbol("QueryOperation"));
+  Isolate * isolate = Isolate::GetCurrent();
+  Local<Object> ibObj = Object::New(Isolate::GetCurrent());
+  Local<String> ibKey = NEW_SYMBOL("QueryOperation");
   target->Set(ibKey, ibObj);
 
   DEFINE_JS_FUNCTION(ibObj, "create", createQueryOperation);
 
-  K_next          = JSSTRING("next");
-  K_root          = JSSTRING("root");
-  K_hasScan       = JSSTRING("hasScan");
-  K_keyFields     = JSSTRING("keyFields");
-  K_joinTo        = JSSTRING("joinTo");
-  K_depth         = JSSTRING("depth");
-  K_tableHandler  = JSSTRING("tableHandler");
-  K_rowRecord     = JSSTRING("rowRecord"),
-  K_indexHandler  = JSSTRING("indexHandler");
-  K_keyRecord     = JSSTRING("keyRecord");
-  K_isPrimaryKey  = JSSTRING("isPrimaryKey");
-  K_relatedField  = JSSTRING("relatedField");
+  SET_KEY(K_next, "next");
+  SET_KEY(K_root, "root");
+  SET_KEY(K_hasScan, "hasScan");
+  SET_KEY(K_keyFields, "keyFields");
+  SET_KEY(K_joinTo, "joinTo");
+  SET_KEY(K_depth, "depth");
+  SET_KEY(K_tableHandler, "tableHandler");
+  SET_KEY(K_rowRecord, "rowRecord"),
+  SET_KEY(K_indexHandler, "indexHandler");
+  SET_KEY(K_keyRecord, "keyRecord");
+  SET_KEY(K_isPrimaryKey, "isPrimaryKey");
+  SET_KEY(K_relatedField, "relatedField");
 
-  K_dbTable       = JSSTRING("dbTable");
-  K_dbIndex       = JSSTRING("dbIndex");
+  SET_KEY(K_dbTable, "dbTable");
+  SET_KEY(K_dbIndex, "dbIndex");
 
-  K_level         = JSSTRING("level");
-  K_data          = JSSTRING("data");
-  K_tag           = JSSTRING("tag");
+  SET_KEY(K_level, "level");
+  SET_KEY(K_data, "data");
+  SET_KEY(K_tag, "tag");
 }
 

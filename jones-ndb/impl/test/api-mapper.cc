@@ -1,35 +1,24 @@
-#include "v8_binder.h"
-
 #include "c-api.h"
 #include "cxx-api.hpp"
 
 #include "JsConverter.h"
 #include "js_wrapper_macros.h"
+#include "NativeMethodCall.h"
 
 using namespace v8;
 
-Envelope PointEnvelope("Point");
-Envelope CircleEnvelope("Circle");
 
 /*  C function wrapper 
 */
-Handle<Value> whatnumber_wrapper(const Arguments& args) {
-  HandleScope scope;
-  
+void whatnumber_wrapper(const Arguments & args) {
   REQUIRE_ARGS_LENGTH(2);
   
   JsValueConverter<int>           arg0(args[0]);
   JsValueConverter<const char *>  arg1(args[1]);
     
-  return scope.Close(toJS<int>(whatnumber(arg0.toC(), arg1.toC())));
+  args.GetReturnValue().Set(whatnumber(arg0.toC(), arg1.toC()));
 }
 
-
-/* Introduce C function in JavaScript namespace
-*/
-void whatnumber_initOnLoad(Handle<Object> target) {
-  DEFINE_JS_FUNCTION(target, "whatnumber", whatnumber_wrapper);
-}
 
 
 //   c++ class wrapper...
@@ -37,9 +26,19 @@ void whatnumber_initOnLoad(Handle<Object> target) {
 
 /* Implementation of JS "new Point"
 */
-Handle<Value> Point_new_wrapper(const Arguments &args) {
-  HandleScope scope;
 
+V8WrapperFn Point_quadrant_wrapper;
+
+class PointEnvelopeClass : public Envelope {
+public:
+  PointEnvelopeClass(): Envelope("Point") {
+    addMethod("quadrant", Point_quadrant_wrapper);
+  }
+};
+
+PointEnvelopeClass PointEnvelope;
+
+void Point_new_wrapper(const Arguments &args) {
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(2);
 
@@ -48,84 +47,78 @@ Handle<Value> Point_new_wrapper(const Arguments &args) {
 
   Point * p = new Point(arg0.toC(), arg1.toC());
 
-  wrapPointerInObject(p, PointEnvelope, args.This());
-  return args.This();
+  Local<Object> jsObject = PointEnvelope.wrap(p);
+
+  args.GetReturnValue().Set(jsObject);
 }
 
 
 /* Point::quadrant() 
 */
-Handle<Value> Point_quadrant_wrapper(const Arguments &args) {
-  HandleScope scope;
-
+void Point_quadrant_wrapper(const Arguments &args) {
   REQUIRE_ARGS_LENGTH(0);
 
   Point *p = unwrapPointer<Point *>(args.Holder());
   
-  return scope.Close(toJS<int>(p->quadrant()));
-}
-
-
-/* Introduce Point in JavaScript namespace
-*/
-void Point_initOnLoad(Handle<Object> target) {
-  Local<FunctionTemplate> JSPoint;
-
-  DEFINE_JS_CLASS(JSPoint, "Point", Point_new_wrapper);
-  DEFINE_JS_METHOD(JSPoint, "quadrant", Point_quadrant_wrapper);
-  DEFINE_JS_CONSTRUCTOR(target, "Point", JSPoint);
+  args.GetReturnValue().Set(p->quadrant());
 }
 
 
 
 /* Circle */
 
-Handle<Value> Circle_new_wrapper(const Arguments &args) {
-  HandleScope scope;
-  
+V8WrapperFn Circle_area_wrapper;
+V8WrapperFn Circle_area_async_wrapper;
+
+class CircleEnvelopeClass : public Envelope {
+public:
+  CircleEnvelopeClass() : Envelope("Circle") {
+    addMethod("area", Circle_area_wrapper);
+    addMethod("areaAsync", Circle_area_async_wrapper);
+  }
+};
+
+CircleEnvelopeClass CircleEnvelope;
+
+void Circle_new_wrapper(const Arguments &args) {
+  REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(2);
-  
+
   JsValueConverter<Point *> arg0(args[0]);
   JsValueConverter<double>  arg1(args[1]);
 
   Circle * c = new Circle(* arg0.toC(), arg1.toC());
 
-  wrapPointerInObject(c, CircleEnvelope, args.This());
-  return args.This();
+  Local<Object> jsObject = CircleEnvelope.wrap(c);
+
+  args.GetReturnValue().Set(jsObject);
  }
 
 
-Handle<Value> Circle_area_wrapper(const Arguments &args) {
-  HandleScope scope;
-  
+void Circle_area_wrapper(const Arguments  &args) {
   REQUIRE_ARGS_LENGTH(0);
-  
   Circle *c = unwrapPointer<Circle *>(args.Holder());
-  
-  return scope.Close(toJS<double>(c->area()));
+  args.GetReturnValue().Set(c->area());
 }
 
-
-void Circle_initOnLoad(Handle<Object> target) {
-  Local<FunctionTemplate> JSCircle;
-  
-  DEFINE_JS_CLASS(JSCircle, "Circle", Circle_new_wrapper);
-  DEFINE_JS_METHOD(JSCircle, "area", Circle_area_wrapper);
-  DEFINE_JS_CONSTRUCTOR(target, "Circle", JSCircle);
+void Circle_area_async_wrapper(const Arguments &args) {
+  REQUIRE_ARGS_LENGTH(1);
+  typedef NativeMethodCall_0_<double, Circle> MCALL;
+  MCALL * mcallptr = new MCALL(& Circle::area, args);
+  mcallptr->runAsync();
+  args.GetReturnValue().SetUndefined();
 }
-
-
 
 /* Initializer for the whole module
 */
 void initAllOnLoad(Handle<Object> target) {
-  Point_initOnLoad(target);
-  Circle_initOnLoad(target);
-  whatnumber_initOnLoad(target);
+  DEFINE_JS_FUNCTION(target, "Circle", Circle_new_wrapper);
+  DEFINE_JS_FUNCTION(target, "Point", Point_new_wrapper);
+  DEFINE_JS_FUNCTION(target, "whatnumber", whatnumber_wrapper);
 }
 
 
 /*  FINAL STEP.
     This macro associates the module name with its initializer function 
 */
-V8BINDER_LOADABLE_MODULE(mapper, initAllOnLoad)
+NODE_MODULE(mapper, initAllOnLoad)

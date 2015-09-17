@@ -30,32 +30,28 @@ using namespace v8;
 
 /* int ndb_init(void) 
 */
-Handle<Value> Ndb_init_wrapper(const Arguments &args) {
+void Ndb_init_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
-  
   REQUIRE_ARGS_LENGTH(0);
 
   NativeCFunctionCall_0_<int> ncall(& ndb_init, args);
   ncall.run();
   DEBUG_TRACE();
   
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(ncall.jsReturnVal());
 }
 
 
 /* void ndb_end(int) 
 */
-Handle<Value> Ndb_end_wrapper(const Arguments &args) {
+void Ndb_end_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
-  
   REQUIRE_ARGS_LENGTH(1);  
   
   NativeCVoidFunctionCall_1_<int> ncall(& ndb_end, args);
   ncall.run();
   
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(ncall.jsReturnVal());
 }
 
 

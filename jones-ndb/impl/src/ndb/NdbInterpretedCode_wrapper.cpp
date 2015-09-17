@@ -80,7 +80,7 @@ V8WrapperFn getWordsUsed;
 class NdbInterpretedCodeEnvelopeClass : public Envelope {
 public:
   NdbInterpretedCodeEnvelopeClass() : Envelope("NdbInterpretedCode") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     WRAPPER_FUNCTION( load_const_null);
     WRAPPER_FUNCTION( load_const_u16);
     WRAPPER_FUNCTION( load_const_u32);
@@ -138,189 +138,186 @@ Envelope * getConstNdbInterpretedCodeEnvelope() {
   return & ConstNdbInterpretedCodeEnvelope;
 }
 
-Handle<Value> newNdbInterpretedCode(const Arguments & args) {
+void newNdbInterpretedCode(const Arguments & args) {
+  EscapableHandleScope scope(args.GetIsolate());
+
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
-  
   PROHIBIT_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
 
   JsValueConverter<const NdbDictionary::Table *> arg0(args[0]);
-  
   NdbInterpretedCode * c = new NdbInterpretedCode(arg0.toC());
-  
-  Local<Object> jsObject = NdbInterpretedCodeEnvelope.newWrapper();
-  wrapPointerInObject(c, NdbInterpretedCodeEnvelope, jsObject);
-  freeFromGC(c, jsObject);
-  return scope.Close(jsObject);
+  Local<Value> jsObject = NdbInterpretedCodeEnvelope.wrap(c);
+  NdbInterpretedCodeEnvelope.freeFromGC(c, jsObject);
+  args.GetReturnValue().Set(scope.Escape(jsObject));
 }
 
-Handle<Value> load_const_null(const Arguments &args) {
+void load_const_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_null, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> load_const_u16(const Arguments &args) {
+void load_const_u16(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_u16, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> load_const_u32(const Arguments &args) {
+void load_const_u32(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::load_const_u32, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
 /* TODO: read_attr and write_attr have two forms */
-Handle<Value> read_attr(const Arguments &args) {
+void read_attr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode, uint32_t, 
                               const NdbDictionary::Column *> NCALL;
   NCALL ncall(& NdbInterpretedCode::read_attr, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> write_attr(const Arguments &args) {
+void write_attr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               const NdbDictionary::Column *,
                               uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::write_attr, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> add_reg(const Arguments &args) {
+void add_reg(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::add_reg, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> sub_reg(const Arguments &args) {
+void sub_reg(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::sub_reg, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> def_label(const Arguments &args) {
+void def_label(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, int> NCALL;
   NCALL ncall(& NdbInterpretedCode::def_label, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_label(const Arguments &args) {
+void branch_label(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_label, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_ge(const Arguments &args) {
+void branch_ge(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ge, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_gt(const Arguments &args) {
+void branch_gt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_gt, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_le(const Arguments &args) {
+void branch_le(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_le, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_lt(const Arguments &args) {
+void branch_lt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_lt, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_eq(const Arguments &args) {
+void branch_eq(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_eq, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_ne(const Arguments &args) {
+void branch_ne(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_3_<int, NdbInterpretedCode, 
                               uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ne, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_ne_null(const Arguments &args) {
+void branch_ne_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_ne_null, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_eq_null(const Arguments &args) {
+void branch_eq_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_eq_null, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
@@ -336,150 +333,150 @@ Handle<Value> branch_eq_null(const Arguments &args) {
 /* Utility function */
 const void * getValueAddr(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   Local<Object> buffer = args[0]->ToObject();
   size_t offset = args[1]->Uint32Value();
   return node::Buffer::Data(buffer) + offset;
 }
 
-Handle<Value> branch_col_eq(const Arguments &args) {
+void branch_col_eq(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_eq(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_ne(const Arguments &args) {
+void branch_col_ne(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_ne(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_lt(const Arguments &args) {
+void branch_col_lt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_lt(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_le(const Arguments &args) {
+void branch_col_le(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_le(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_gt(const Arguments &args) {
+void branch_col_gt(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_gt(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_ge(const Arguments &args) {
+void branch_col_ge(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_ge(val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_and_mask_eq_mask(const Arguments &args) {
+void branch_col_and_mask_eq_mask(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_eq_mask(
     val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_and_mask_ne_mask(const Arguments &args) {
+void branch_col_and_mask_ne_mask(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_ne_mask(
     val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_and_mask_eq_zero(const Arguments &args) {
+void branch_col_and_mask_eq_zero(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_eq_zero(
     val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
-Handle<Value> branch_col_and_mask_ne_zero(const Arguments &args) {
+void branch_col_and_mask_ne_zero(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   const void * val = getValueAddr(args);
   NdbInterpretedCode * code = unwrapPointer<NdbInterpretedCode *>(args.Holder());
   int rval = code->branch_col_and_mask_ne_zero(
     val, 0, args[2]->Uint32Value(), args[3]->Uint32Value());
-  return scope.Close(toJS<int>(rval));
+  args.GetReturnValue().Set(rval);
 }
 
 
 /****************************************************************
  *    Back to generic wrappers
  ****************************************************************/
-Handle<Value> branch_col_eq_null(const Arguments &args) {
+void branch_col_eq_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_eq_null, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> branch_col_ne_null(const Arguments &args) {
+void branch_col_ne_null(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_ne_null, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 // FIXME: arg[0] needs to be converted from String
-Handle<Value> branch_col_like(const Arguments &args) {
+void branch_col_like(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, NdbInterpretedCode,  
                               const void *, uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_like, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 // FIXME: arg[0] needs to be converted from String
-Handle<Value> branch_col_notlike(const Arguments &args) {
+void branch_col_notlike(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_4_<int, NdbInterpretedCode,  
                               const void *, uint32_t, uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::branch_col_notlike, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
@@ -487,119 +484,113 @@ Handle<Value> branch_col_notlike(const Arguments &args) {
  *   End of column/value branch instructions
  ****************************************************************/
 
-
-Handle<Value> interpret_exit_ok(const Arguments &args) {
+void interpret_exit_ok(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_ok, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> interpret_exit_nok(const Arguments &args) {
+void interpret_exit_nok(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_nok, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> interpret_exit_last_row(const Arguments &args) {
+void interpret_exit_last_row(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::interpret_exit_last_row, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> add_val(const Arguments &args) {
+void add_val(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::add_val, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> sub_val(const Arguments &args) {
+void sub_val(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_2_<int, NdbInterpretedCode,  
                               uint32_t, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::sub_val, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> def_sub(const Arguments &args) {
+void def_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::def_sub, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> call_sub(const Arguments &args) {
+void call_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, NdbInterpretedCode, uint32_t> NCALL;
   NCALL ncall(& NdbInterpretedCode::call_sub, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> ret_sub(const Arguments &args) {
+void ret_sub(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::ret_sub, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> finalise(const Arguments &args) {
+void finalise(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_0_<int, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::finalise, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> NdbInterpretedCode_getTable_wrapper(const Arguments &args) {
+void NdbInterpretedCode_getTable_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<const NdbDictionary::Table*, 
                                    NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::getTable, args);
   ncall.wrapReturnValueAs(getNdbDictTableEnvelope());
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> getWordsUsed(const Arguments &args) {
+void getWordsUsed(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeConstMethodCall_0_<uint32_t, NdbInterpretedCode> NCALL;
   NCALL ncall(& NdbInterpretedCode::getWordsUsed, args);
   ncall.run();
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-
 void NdbInterpretedCode_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
-
-  Persistent<String> ic_key = Persistent<String>(String::NewSymbol("NdbInterpretedCode"));
-  Persistent<Object> ic_obj = Persistent<Object>(Object::New());
-
+  Local<String> ic_key = NEW_SYMBOL("NdbInterpretedCode");
+  Local<Object> ic_obj = Object::New(v8::Isolate::GetCurrent());
   target->Set(ic_key, ic_obj);
-
   DEFINE_JS_FUNCTION(ic_obj, "create", newNdbInterpretedCode);
 }
 

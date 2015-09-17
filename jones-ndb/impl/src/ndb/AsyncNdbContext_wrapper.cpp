@@ -38,7 +38,7 @@ V8WrapperFn destroy;
 class AsyncNdbContextEnvelopeClass : public Envelope {
 public:
   AsyncNdbContextEnvelopeClass() : Envelope("AsyncNdbContext") {
-    HandleScope scope;
+    EscapableHandleScope scope(Isolate::GetCurrent());
     addMethod("AsyncNdbContext", createAsyncNdbContext);
     addMethod("shutdown", shutdown);
     addMethod("delete", destroy);
@@ -49,7 +49,7 @@ AsyncNdbContextEnvelopeClass AsyncNdbContextEnvelope;
 
 /* Constructor 
 */
-Handle<Value> createAsyncNdbContext(const Arguments &args) {
+void createAsyncNdbContext(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
 
   REQUIRE_CONSTRUCTOR_CALL();
@@ -57,35 +57,33 @@ Handle<Value> createAsyncNdbContext(const Arguments &args) {
 
   JsValueConverter<Ndb_cluster_connection *> arg0(args[0]);
   AsyncNdbContext * ctx = new AsyncNdbContext(arg0.toC());
-
-  Local<Object> wrapper = AsyncNdbContextEnvelope.newWrapper();
-  wrapPointerInObject(ctx, AsyncNdbContextEnvelope, wrapper);
-  return wrapper;
+  Local<Value> wrapper = AsyncNdbContextEnvelope.wrap(ctx);
+  args.GetReturnValue().Set(wrapper);
 }
 
 
 /* shutdown() 
    IMMEDIATE
 */
-Handle<Value> shutdown(const Arguments &args) {
+void shutdown(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);  
   REQUIRE_ARGS_LENGTH(0);
   
   typedef NativeVoidMethodCall_0_<AsyncNdbContext> NCALL;
   NCALL ncall(& AsyncNdbContext::shutdown, args);
   ncall.run();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 /* Call destructor 
 */
-Handle<Value> destroy(const Arguments &args) {
+void destroy(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);  
   REQUIRE_ARGS_LENGTH(0);
 
   AsyncNdbContext *c = unwrapPointer<AsyncNdbContext *>(args.Holder());
   delete c;
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 

@@ -18,9 +18,8 @@
  02110-1301  USA
 */
 
+#include "js_wrapper_macros.h"
 #include "NdbWrappers.h"
-
-using v8::Arguments;
 
 class NdbNativeCodeError : public NativeCodeError {
 public:
@@ -28,12 +27,13 @@ public:
   NdbNativeCodeError(const NdbError &err) : NativeCodeError(0), ndberr(err)  {}
     
   Local<Value> toJS() {
-    HandleScope scope;
-    Local<String> JSMsg = String::New(ndberr.message);
+    // TODO: Verify that all callers have a HandleScope
+    Local<String> JSMsg = String::NewFromUtf8(v8::Isolate::GetCurrent(), ndberr.message);
     Local<Object> Obj = Exception::Error(JSMsg)->ToObject();
-    Obj->Set(String::NewSymbol("ndb_error"), NdbError_Wrapper(ndberr));
+    
+    Obj->Set(NEW_SYMBOL("ndb_error"), NdbError_Wrapper(ndberr));
 
-    return scope.Close(Obj);
+    return Obj;
   }
 };
 
@@ -70,9 +70,10 @@ NativeCodeError * getNdbErrorAlways(R return_val, C * ndbApiObject) {
 
 
 template<typename C> 
-Handle<Value> getNdbError(const Arguments &args) {
+void getNdbError(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   C * ndbApiObject = unwrapPointer<C *>(args.Holder());
   const NdbError & ndberr = ndbApiObject->getNdbError();
-  return NdbError_Wrapper(ndberr);
+  args.GetReturnValue().Set(scope.Escape(NdbError_Wrapper(ndberr)));
 };
 

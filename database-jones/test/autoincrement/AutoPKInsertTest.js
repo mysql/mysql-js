@@ -24,7 +24,7 @@
 var t1 = new harness.SerialTest("testPersistDomainObject");
 t1.run = function() {
   var testCase = this;
-  // create the domain object 4070 with auto-generated pk
+  // create the domain object 4010 with auto-generated pk
   var object = new global.autopk('Employee 4010', 4010, 4010);
   fail_openSession(testCase, function(session) {
     session.persist(object, function(err) {

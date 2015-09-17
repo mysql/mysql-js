@@ -32,11 +32,12 @@ class ColumnHandler {
 public:
   ColumnHandler();
   ~ColumnHandler();
-  void init(const NdbDictionary::Column *, size_t, Handle<Value>);
+  void init(v8::Isolate *, const NdbDictionary::Column *, size_t, Handle<Value>);
   Handle<Value> read(char *, Handle<Object>) const;
   Handle<Value> write(Handle<Value>, char *) const;
-  BlobWriteHandler * createBlobWriteHandle(Handle<Value>, int fieldNo) const;
-    
+  BlobWriteHandler * createBlobWriteHandle(Local<Value>, int fieldNo) const;
+  bool isBlob() const;
+
 public:
   const NdbDictionary::Column *column;
 private: 
@@ -49,7 +50,9 @@ private:
   bool isLob, isText;
 };
 
-
+inline bool ColumnHandler::isBlob() const {
+  return isLob;
+}
 
 class ColumnHandlerSet {
 public:

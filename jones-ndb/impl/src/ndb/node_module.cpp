@@ -69,12 +69,12 @@ void init_impl(Handle<Object> target) {
 
 
 void initModule(Handle<Object> target) {
-  HandleScope scope;
-  Persistent<Object> ndb_obj    = Persistent<Object>(Object::New());
-  Persistent<Object> ndbapi_obj = Persistent<Object>(Object::New());
-  Persistent<Object> impl_obj   = Persistent<Object>(Object::New());
-  Persistent<Object> util_obj   = Persistent<Object>(Object::New());
-  Persistent<Object> debug_obj  = Persistent<Object>(Object::New());
+  EscapableHandleScope scope(v8::Isolate::GetCurrent());      // Keep this
+  Local<Object> ndb_obj    = Object::New(v8::Isolate::GetCurrent());
+  Local<Object> ndbapi_obj = Object::New(v8::Isolate::GetCurrent());
+  Local<Object> impl_obj   = Object::New(v8::Isolate::GetCurrent());
+  Local<Object> util_obj   = Object::New(v8::Isolate::GetCurrent());
+  Local<Object> debug_obj  = Object::New(v8::Isolate::GetCurrent());
   
   init_ndbapi(ndbapi_obj);
   init_impl(impl_obj);
@@ -82,13 +82,13 @@ void initModule(Handle<Object> target) {
   NdbTypeEncoders_initOnLoad(impl_obj);
   udebug_initOnLoad(debug_obj);
   
-  target->Set(Persistent<String>(String::NewSymbol("debug")), debug_obj);
-  target->Set(Persistent<String>(String::NewSymbol("ndb")), ndb_obj);
+  target->Set(NEW_SYMBOL("debug"), debug_obj);
+  target->Set(NEW_SYMBOL("ndb"), ndb_obj);
 
-  ndb_obj->Set(Persistent<String>(String::NewSymbol("ndbapi")), ndbapi_obj);
-  ndb_obj->Set(Persistent<String>(String::NewSymbol("impl")), impl_obj);
-  ndb_obj->Set(Persistent<String>(String::NewSymbol("util")), util_obj);
+  ndb_obj->Set(NEW_SYMBOL("ndbapi"), ndbapi_obj);
+  ndb_obj->Set(NEW_SYMBOL("impl"), impl_obj);
+  ndb_obj->Set(NEW_SYMBOL("util"), util_obj);
 }
 
-V8BINDER_LOADABLE_MODULE(ndb_adapter, initModule)
+NODE_MODULE(ndb_adapter, initModule)
 

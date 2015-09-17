@@ -38,7 +38,6 @@ V8WrapperFn Ndb_cluster_connection_delete_wrapper;
 class NdbccEnvelopeClass : public Envelope {
 public:
   NdbccEnvelopeClass() : Envelope("Ndb_cluster_connection") {
-    HandleScope scope;
     addMethod("set_name", Ndb_cluster_connection_set_name);
     addMethod("connect", Ndb_cluster_connection_connect);
     addMethod("wait_until_ready", Ndb_cluster_connection_wait_until_ready);
@@ -53,9 +52,9 @@ Envelope ErrorMessageEnvelope("Error Message from const char *");
 
 /*  Ndb_cluster_connection(const char * connectstring = 0);
 */
-Handle<Value> Ndb_cluster_connection_new_wrapper(const Arguments &args) {
+void Ndb_cluster_connection_new_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_CONSTRUCTOR_CALL();
   REQUIRE_ARGS_LENGTH(1);
@@ -69,17 +68,16 @@ Handle<Value> Ndb_cluster_connection_new_wrapper(const Arguments &args) {
   */
   c->set_max_adaptive_send_time(1);
 
-  Local<Object> wrapper = NdbccEnvelope.newWrapper();
-  wrapPointerInObject(c, NdbccEnvelope, wrapper);
-  freeFromGC(c, wrapper);
+  Local<Value> wrapper = NdbccEnvelope.wrap(c);
+  NdbccEnvelope.freeFromGC(c, wrapper);
 
-  return wrapper;
+  args.GetReturnValue().Set(wrapper);
 }
 
 
 /*   void set_name(const char *name);
 */
-Handle<Value> Ndb_cluster_connection_set_name(const Arguments &args) {
+void Ndb_cluster_connection_set_name(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   
   REQUIRE_ARGS_LENGTH(1);
@@ -87,35 +85,33 @@ Handle<Value> Ndb_cluster_connection_set_name(const Arguments &args) {
   MCALL mcall(& Ndb_cluster_connection::set_name, args);
   mcall.run();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 /* int connect(int no_retries=30, int retry_delay_in_seconds=1, int verbose=0);
    3 args SYNC / 4 args ASYNC
 */
-Handle<Value> Ndb_cluster_connection_connect(const Arguments &args) {
+void Ndb_cluster_connection_connect(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
-  Local<Value> ret = Local<Value>(*Undefined());
-  
+  EscapableHandleScope scope(args.GetIsolate());
+
+  args.GetReturnValue().SetUndefined();
   REQUIRE_MIN_ARGS(3);
   REQUIRE_MAX_ARGS(4);
 
   typedef NativeMethodCall_3_ <int, Ndb_cluster_connection, int, int, int> MCALL;
-  MCALL * mcallptr = new MCALL(& Ndb_cluster_connection::connect, args);
 
   if(args.Length() == 4) {
     DEBUG_PRINT_DETAIL("async");
+    MCALL * mcallptr = new MCALL(& Ndb_cluster_connection::connect, args);
     mcallptr->runAsync();
   }
   else {
     DEBUG_PRINT_DETAIL("sync");
-    mcallptr->run();
-    ret = mcallptr->jsReturnVal();
-    delete mcallptr;
+    MCALL mcall(& Ndb_cluster_connection::connect, args);
+    mcall.run();
+    args.GetReturnValue().Set(mcall.jsReturnVal());
   }
-
-  return scope.Close(ret);
 }
 
 
@@ -124,59 +120,57 @@ Handle<Value> Ndb_cluster_connection_connect(const Arguments &args) {
                           callback);
      2 args SYNC / 3 args ASYNC
 */
-Handle<Value> Ndb_cluster_connection_wait_until_ready(const Arguments &args) {
+void Ndb_cluster_connection_wait_until_ready(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
-  Local<Value> ret = Local<Value>(*Undefined());
-  
+  EscapableHandleScope scope(args.GetIsolate());
+
+  args.GetReturnValue().SetUndefined();
   REQUIRE_MIN_ARGS(2);
   REQUIRE_MAX_ARGS(3);
   
   typedef NativeMethodCall_2_<int, Ndb_cluster_connection, int, int> MCALL;
-  MCALL * mcallptr = new MCALL(& Ndb_cluster_connection::wait_until_ready, args);
 
   if(args.Length() == 3) {
+    MCALL * mcallptr = new MCALL(& Ndb_cluster_connection::wait_until_ready, args);
     mcallptr->runAsync();
   }
   else {
-    mcallptr->run();
-    ret = mcallptr->jsReturnVal();
-    delete mcallptr;
+    MCALL mcall(& Ndb_cluster_connection::wait_until_ready, args);
+    mcall.run();
+    args.GetReturnValue().Set(mcall.jsReturnVal());
   };
-  
-  return scope.Close(ret);
 }
 
 
 /*  unsigned node_id();
     IMMEDIATE
 */
-Handle<Value> Ndb_cluster_connection_node_id(const Arguments &args) {
+void Ndb_cluster_connection_node_id(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);  
   
   typedef NativeMethodCall_0_<unsigned int, Ndb_cluster_connection> MCALL;
   MCALL mcall(& Ndb_cluster_connection::node_id, args);
   mcall.run();
-
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(mcall.jsReturnVal());
  }
 
 
-Handle<Value> Ndb_cluster_connection_delete_wrapper(const Arguments &args) {
+void Ndb_cluster_connection_delete_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeDestructorCall<Ndb_cluster_connection> MCALL;
   MCALL * mcallptr = new MCALL(args);
   mcallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 
-Handle<Value> get_latest_error_msg_wrapper(const Arguments &args) {
+void get_latest_error_msg_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
   
@@ -185,7 +179,7 @@ Handle<Value> get_latest_error_msg_wrapper(const Arguments &args) {
   mcall.wrapReturnValueAs(& ErrorMessageEnvelope);
   mcall.run();
   
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(mcall.jsReturnVal());
 }
 
 

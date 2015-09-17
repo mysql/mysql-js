@@ -32,22 +32,21 @@
 using namespace v8;
 
 
-Handle<Value> CharsetMap_init_wrapper(const Arguments &args) {
+void CharsetMap_init_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   CharsetMap::init();
-  return Null();
+  args.GetReturnValue().SetNull();
 }
 
 
-Handle<Value> CharsetMap_unload_wrapper(const Arguments &args) {
+void CharsetMap_unload_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
   CharsetMap::unload();
-  return Null();
+  args.GetReturnValue().SetNull();
 }
 
 
 void Ndb_util_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
   Local<FunctionTemplate> JSCharsetMap;
 
   DEFINE_JS_FUNCTION(target, "CharsetMap_init", CharsetMap_init_wrapper);

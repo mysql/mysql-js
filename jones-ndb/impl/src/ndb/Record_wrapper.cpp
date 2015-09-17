@@ -41,7 +41,6 @@ V8WrapperFn getColumnOffset_wrapper,
 class RecordEnvelopeClass : public Envelope {
 public:
   RecordEnvelopeClass() : Envelope("Record") {
-    HandleScope scope;
     addMethod("getColumnOffset", getColumnOffset_wrapper);
     addMethod("getBufferSize", getBufferSize_wrapper);
     addMethod("setNull", setNull_wrapper);
@@ -56,19 +55,16 @@ RecordEnvelopeClass RecordEnvelope;
 
 /****  CALL THIS FROM C++ CODE TO CREATE A WRAPPED RECORD OBJECT. 
 *****/
-Handle<Value> Record_Wrapper(const Record *rec) {
-  HandleScope scope;
-  
-  Local<Object> js_record = RecordEnvelope.newWrapper();
-  wrapPointerInObject(rec, RecordEnvelope, js_record);
-  freeFromGC(rec, js_record);
-  return scope.Close(js_record);
+Local<Value> Record_Wrapper(const Record *rec) {
+  Local<Value> js_record = RecordEnvelope.wrap(rec);
+  RecordEnvelope.freeFromGC(rec, js_record);
+  return js_record;
 }
 
 
-Handle<Value> getColumnOffset_wrapper(const Arguments &args) {
+void getColumnOffset_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(1);
 
@@ -76,14 +72,14 @@ Handle<Value> getColumnOffset_wrapper(const Arguments &args) {
 
   NCALL ncall(& Record::getColumnOffset, args);
   ncall.run();
-  
-  return scope.Close(ncall.jsReturnVal());
+
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
-Handle<Value> getBufferSize_wrapper(const Arguments &args) {
+void getBufferSize_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(0);
 
@@ -92,12 +88,12 @@ Handle<Value> getBufferSize_wrapper(const Arguments &args) {
   NCALL ncall(& Record::getBufferSize, args);
   ncall.run();
   
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> setNull_wrapper(const Arguments &args) {
+void setNull_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(2);
 
@@ -106,12 +102,12 @@ Handle<Value> setNull_wrapper(const Arguments &args) {
   NCALL ncall(& Record::setNull, args);
   ncall.run();
   
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
-Handle<Value> isNull_wrapper(const Arguments &args) {
+void isNull_wrapper(const Arguments &args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   
   REQUIRE_ARGS_LENGTH(2);
 
@@ -120,14 +116,14 @@ Handle<Value> isNull_wrapper(const Arguments &args) {
   NCALL ncall(& Record::isNull, args);
   ncall.run();
   
-  return scope.Close(ncall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(ncall.jsReturnVal()));
 }
 
 
 /* read(columnNumber, buffer)
 */
-Handle<Value> record_encoderRead(const Arguments & args) {
-  HandleScope scope;
+void record_encoderRead(const Arguments & args) {
+  EscapableHandleScope scope(args.GetIsolate());
   const Record * record = unwrapPointer<Record *>(args.Holder());
   int columnNumber = args[0]->Uint32Value();
   char * buffer = node::Buffer::Data(args[1]->ToObject());
@@ -136,15 +132,16 @@ Handle<Value> record_encoderRead(const Arguments & args) {
   size_t offset = record->getColumnOffset(columnNumber);
 
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
-  
-  return encoder->read(col, buffer, offset);
+  Local<Value> read = encoder->read(col, buffer, offset);
+
+  args.GetReturnValue().Set(scope.Escape(read));
 }
 
 
 /* write(columnNumber, buffer, value)
 */
-Handle<Value> record_encoderWrite(const Arguments & args) {
-  HandleScope scope;
+void record_encoderWrite(const Arguments & args) {
+  EscapableHandleScope scope(args.GetIsolate());
 
   const Record * record = unwrapPointer<const Record *>(args.Holder());
   int columnNumber = args[0]->Uint32Value();
@@ -156,8 +153,8 @@ Handle<Value> record_encoderWrite(const Arguments & args) {
   size_t offset = record->getColumnOffset(columnNumber);
 
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
-  Handle<Value> error = encoder->write(col, args[2], buffer, offset);
+  Local<Value> error = encoder->write(col, args[2], buffer, offset);
 
-  return scope.Close(error);
+  args.GetReturnValue().Set(scope.Escape(error));
 }
 

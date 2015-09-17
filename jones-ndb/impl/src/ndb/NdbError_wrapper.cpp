@@ -29,12 +29,11 @@
 
 using namespace v8;
 
-
-Handle<Value> get_status(Local<String>, const AccessorInfo &);
-Handle<Value> get_classification(Local<String>, const AccessorInfo &);
-Handle<Value> get_code(Local<String>, const AccessorInfo &);
-Handle<Value> get_mysql_code(Local<String>, const AccessorInfo &);
-Handle<Value> get_message(Local<String>, const AccessorInfo &);
+void get_status(Local<String>, const AccessorInfo &);
+void get_classification(Local<String>, const AccessorInfo &);
+void get_code(Local<String>, const AccessorInfo &);
+void get_mysql_code(Local<String>, const AccessorInfo &);
+void get_message(Local<String>, const AccessorInfo &);
 
 
 class NdbErrorEnvelopeClass : public Envelope {
@@ -45,23 +44,28 @@ public:
     addAccessor("code", get_code);
     addAccessor("handler_error_code", get_mysql_code);
     addAccessor("message", get_message);
-}
-
+  }
 };
 
 NdbErrorEnvelopeClass NdbErrorEnvelope;
 
-
-Handle<Value> NdbError_Wrapper(const NdbError &err) {
+// TODO: Verify that all callers have a HandleScope
+Local<Value> NdbError_Wrapper(const NdbError &err) {
   return NdbErrorEnvelope.wrap(& err);
 }
 
+#define V8STRING(MSG) scope.Escape(String::NewFromUtf8(info.GetIsolate(), MSG))
+
+#define V8INTEGER(V) scope.Escape(Integer::New(info.GetIsolate(), V))
+
 #define MAP_CODE(CODE) \
   case NdbError::CODE: \
-    return String::New(#CODE)
+    info.GetReturnValue().Set(V8STRING(#CODE)); \
+    return;
 
 
-Handle<Value> get_status(Local<String> property, const AccessorInfo &info) {
+void get_status(Local<String> property, const AccessorInfo &info) {
+  EscapableHandleScope scope(info.GetIsolate());
   const NdbError *err = unwrapPointer<const NdbError *>(info.Holder());
   
   switch(err->status) {
@@ -70,11 +74,12 @@ Handle<Value> get_status(Local<String> property, const AccessorInfo &info) {
     MAP_CODE(PermanentError);
     MAP_CODE(UnknownResult);  
   }
-  return String::New("-unknown-");
+  info.GetReturnValue().Set(V8STRING("-unknown-"));
 }
 
 
-Handle<Value> get_classification(Local<String> property, const AccessorInfo &info) {
+void get_classification(Local<String> property, const AccessorInfo &info) {
+  EscapableHandleScope scope(info.GetIsolate());
   const NdbError *err = unwrapPointer<const NdbError *>(info.Holder());
 
   switch(err->classification) {
@@ -97,28 +102,27 @@ Handle<Value> get_classification(Local<String> property, const AccessorInfo &inf
     MAP_CODE(SchemaObjectExists);
     MAP_CODE(InternalTemporary);
   }
-  return String::New("-unknown-");
+  info.GetReturnValue().Set(V8STRING("-unknown-"));
 }
 
-
-
-Handle<Value> get_code(Local<String> property, const AccessorInfo &info) {
+void get_code(Local<String> property, const AccessorInfo &info) {
+  EscapableHandleScope scope(info.GetIsolate());
   const NdbError *err = unwrapPointer<const NdbError *>(info.Holder());
-  
-  return Integer::New(err->code);  
+
+  info.GetReturnValue().Set(V8INTEGER(err->code));
 }
 
-
-Handle<Value> get_mysql_code(Local<String> property, const AccessorInfo &info) {
+void get_mysql_code(Local<String> property, const AccessorInfo &info) {
+  EscapableHandleScope scope(info.GetIsolate());
   const NdbError *err = unwrapPointer<const NdbError *>(info.Holder());
   
-  return Integer::New(err->mysql_code);
+  info.GetReturnValue().Set(V8INTEGER(err->mysql_code));
 }
 
-
-Handle<Value> get_message(Local<String> property, const AccessorInfo &info) {
+void get_message(Local<String> property, const AccessorInfo &info) {
+  EscapableHandleScope scope(info.GetIsolate());
   const NdbError *err = unwrapPointer<const NdbError *>(info.Holder());
-  
-  return String::New(err->message);
+
+  info.GetReturnValue().Set(V8STRING(err->message));
 }
 

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -23,20 +23,18 @@
 using namespace v8;
 
 class ColumnProxy {
-public:
+  friend class NdbRecordObject;
+protected:
   ColumnProxy();
   ~ColumnProxy();
   void setHandler(const ColumnHandler *);
-  void setBlobBuffer(Handle<Object>);
+  void setBlobBuffer(v8::Isolate *, Handle<Object>);
   bool valueIsNull();
   BlobWriteHandler * createBlobWriteHandle(int);
 
-  Handle<Value> get(char *);
-  void          set(Handle<Value>);
-  Handle<Value> write(char *);
-
-protected:
-  void Dispose();
+  Handle<Value> get(v8::Isolate *, char *);
+  void          set(v8::Isolate *, Handle<Value>);
+  Handle<Value> write(v8::Isolate *, char *);
 
 private:
   const ColumnHandler *handler;
@@ -60,3 +58,6 @@ inline bool ColumnProxy::valueIsNull() {
   return isNull;
 }
 
+inline void ColumnProxy::setBlobBuffer(v8::Isolate *isolate, Handle<Object> buffer) {
+  blobBuffer.Reset(isolate, buffer);
+}

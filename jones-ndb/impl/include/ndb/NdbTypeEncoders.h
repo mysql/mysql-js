@@ -23,11 +23,11 @@
 
 using namespace v8;
 
-typedef Handle<Value> EncoderReader(const NdbDictionary::Column *, 
-                                    char *, size_t);
+typedef Local<Value> EncoderReader(const NdbDictionary::Column *,
+                                   char *, size_t);
 
-typedef Handle<Value> EncoderWriter(const NdbDictionary::Column *, 
-                                    Handle<Value>, char *, size_t);
+typedef Local<Value> EncoderWriter(const NdbDictionary::Column *,
+                                   Handle<Value>, char *, size_t);
 
 typedef struct {
   EncoderReader * read;
@@ -37,5 +37,5 @@ typedef struct {
 
 const NdbTypeEncoder * getEncoderForColumn(const NdbDictionary::Column *);
 
-Handle<Object> getBufferForText(const NdbDictionary::Column *, Handle<String>);
-Handle<String> getTextFromBuffer(const NdbDictionary::Column *, Handle<Object>);
+Local<Object> getBufferForText(const NdbDictionary::Column *, Handle<String>);
+Local<String> getTextFromBuffer(const NdbDictionary::Column *, Handle<Object>);

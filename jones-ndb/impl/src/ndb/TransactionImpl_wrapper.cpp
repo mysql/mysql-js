@@ -33,7 +33,7 @@ V8WrapperFn getEmptyOperationSet;
 class TransactionImplEnvelopeClass : public Envelope {
 public:
   TransactionImplEnvelopeClass() : Envelope("TransactionImpl") {
-    HandleScope scope;
+    EscapableHandleScope scope(v8::Isolate::GetCurrent());
     addMethod("getEmptyOperationSet", getEmptyOperationSet);
     addMethod("getNdbError", getNdbError<TransactionImpl>);
   }
@@ -42,18 +42,15 @@ public:
 TransactionImplEnvelopeClass TransactionImplEnvelope;
 
 void setJsWrapper(TransactionImpl *ctx) {
-  HandleScope scope;
-  Local<Object> localObj = TransactionImplEnvelope.newWrapper();
-  wrapPointerInObject(ctx, TransactionImplEnvelope, localObj);
-  ctx->jsWrapper = Persistent<Value>::New(localObj);
+  Local<Object> localObj = TransactionImplEnvelope.wrap(ctx)->ToObject();
+  ctx->jsWrapper.Reset(v8::Isolate::GetCurrent(), localObj);
 }
 
 
-Handle<Value> getEmptyOperationSet(const Arguments &args) {
-  HandleScope scope;
+void getEmptyOperationSet(const Arguments &args) {
   DEBUG_MARKER(UDEB_DEBUG);
   TransactionImpl * ctx = unwrapPointer<TransactionImpl *>(args.Holder());
-  return ctx->getWrappedEmptyOperationSet();
+  args.GetReturnValue().Set(ctx->getWrappedEmptyOperationSet());
 }
 
 

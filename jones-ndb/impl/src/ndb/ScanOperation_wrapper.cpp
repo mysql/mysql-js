@@ -41,7 +41,6 @@ V8WrapperFn ScanOp_readBlobResults;
 class ScanOperationEnvelopeClass : public Envelope {
 public: 
   ScanOperationEnvelopeClass() : Envelope("ScanOperation") {
-    HandleScope scope;
     addMethod("getNdbError", getNdbError<ScanOperation>);
     addMethod("prepareAndExecute", prepareAndExecute);
     addMethod("fetchResults", scanFetchResults);
@@ -59,20 +58,19 @@ Envelope * getScanOperationEnvelope() {
 
 
 // Constructor wrapper
-Handle<Value> newScanOperation(const Arguments &args) {
-  HandleScope scope;
+void newScanOperation(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   ScanOperation * s = new ScanOperation(args);
-  Local<Object> wrapper = ScanOperationEnvelope.newWrapper();
-  wrapPointerInObject(s, ScanOperationEnvelope, wrapper);
+  Local<Value> wrapper = ScanOperationEnvelope.wrap(s);
   // freeFromGC: Disabled as it leads to segfaults during garbage collection
-  // freeFromGC(helper, wrapper);
-  return scope.Close(wrapper);
+  // ScanOperationEnvelope.freeFromGC(helper, wrapper);
+  args.GetReturnValue().Set(scope.Escape(wrapper));
 }
 
 // void prepareAndExecute() 
 // ASYNC
-Handle<Value> prepareAndExecute(const Arguments &args) {
-  HandleScope scope;
+void prepareAndExecute(const Arguments &args) {
+  EscapableHandleScope scope(args.GetIsolate());
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(1);
   typedef NativeMethodCall_0_<int, ScanOperation> MCALL;
@@ -80,61 +78,61 @@ Handle<Value> prepareAndExecute(const Arguments &args) {
   mcallptr->errorHandler = getNdbErrorIfLessThanZero;
   mcallptr->runAsync();
   
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // void close()
 // ASYNC
-Handle<Value> ScanOperation_close(const Arguments & args) {
+void ScanOperation_close(const Arguments & args) {
   typedef NativeVoidMethodCall_0_<ScanOperation> NCALL;
   NCALL * ncallptr = new NCALL(& ScanOperation::close, args);
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
 // int nextResult(buffer) 
 // IMMEDIATE
-Handle<Value> scanNextResult(const Arguments & args) {
+void scanNextResult(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
-  HandleScope scope;
+  EscapableHandleScope scope(args.GetIsolate());
   typedef NativeMethodCall_1_<int, ScanOperation, char *> MCALL;
   MCALL mcall(& ScanOperation::nextResult, args);
   mcall.run();
-  return scope.Close(mcall.jsReturnVal());
+  args.GetReturnValue().Set(scope.Escape(mcall.jsReturnVal()));
 }
 
 
 // int fetchResults(buffer, forceSend, callback) 
 // ASYNC; CALLBACK GETS (Null-Or-Error, Int) 
-Handle<Value> scanFetchResults(const Arguments & args) { 
+void scanFetchResults(const Arguments & args) {
   DEBUG_MARKER(UDEB_DETAIL);
   REQUIRE_ARGS_LENGTH(3);
   typedef NativeMethodCall_2_<int, ScanOperation, char *, bool> MCALL;
   MCALL * ncallptr = new MCALL(& ScanOperation::fetchResults, args);
   ncallptr->errorHandler = getNdbErrorIfLessThanZero;
   ncallptr->runAsync();
-  return Undefined();
+  args.GetReturnValue().SetUndefined();
 }
 
-Handle<Value> ScanOp_readBlobResults(const Arguments & args) {
+void ScanOp_readBlobResults(const Arguments & args) {
   ScanOperation * op = unwrapPointer<ScanOperation *>(args.Holder());
-  return op->readBlobResults();
+  op->readBlobResults(args);
 }
 
 #define WRAP_CONSTANT(TARGET, X) DEFINE_JS_INT(TARGET, #X, NdbScanOperation::X)
 
 void ScanHelper_initOnLoad(Handle<Object> target) {
-  Persistent<Object> scanObj = Persistent<Object>(Object::New());
-  Persistent<String> scanKey = Persistent<String>(String::NewSymbol("Scan"));
+  Local<Object> scanObj = Object::New(Isolate::GetCurrent());
+  Local<String> scanKey = NEW_SYMBOL("Scan");
   target->Set(scanKey, scanObj);
 
   DEFINE_JS_FUNCTION(scanObj, "create", newScanOperation);
 
-  Persistent<Object> ScanHelper = Persistent<Object>(Object::New());
-  Persistent<Object> ScanFlags = Persistent<Object>(Object::New());
-  
-  scanObj->Set(Persistent<String>(String::NewSymbol("helper")), ScanHelper);
-  scanObj->Set(Persistent<String>(String::NewSymbol("flags")), ScanFlags);
+  Local<Object> ScanHelper = Object::New(Isolate::GetCurrent());
+  Local<Object> ScanFlags =  Object::New(Isolate::GetCurrent());
+
+  scanObj->Set(NEW_SYMBOL("helper"), ScanHelper);
+  scanObj->Set(NEW_SYMBOL("flags"), ScanFlags);
 
   WRAP_CONSTANT(ScanFlags, SF_TupScan);
   WRAP_CONSTANT(ScanFlags, SF_DiskScan);

@@ -22,7 +22,7 @@
 #define NODEJS_ADAPTER_INCLUDE_JSCONVERTER_H
 
 #include "JsWrapper.h"
-#include "v8_binder.h"
+#include "node_buffer.h"
 
 using namespace v8;
 typedef Local<Value> jsvalue;
@@ -131,7 +131,7 @@ public:
 template <>
 class JsValueConverter <const char *> {
 private:
-  v8::String::AsciiValue av;
+  v8::String::Utf8Value av;
 
 public: 
   JsValueConverter(jsvalue v) : av(v)   {};
@@ -147,7 +147,7 @@ public:
   JsValueConverter(jsvalue v) : jsval(v)   {};
   char * toC()  { 
     DEBUG_PRINT_DETAIL("Unwrapping Node buffer");
-    return V8BINDER_UNWRAP_BUFFER(jsval);  
+    return node::Buffer::Data(jsval->ToObject());
   };
 };
 
@@ -155,10 +155,9 @@ public:
 template <>
 class JsValueConverter <Handle<Function> > {
 public:
-  HandleScope scope;
   Local<Function> jsval;
   JsValueConverter(Local<Value> v) {
-    jsval = Local<Function>::New(Local<Function>::Cast(v));
+    jsval = Local<Function>::New(v8::Isolate::GetCurrent(), Local<Function>::Cast(v));
   };
   Handle<Function> toC()  { return jsval;  };
 };
@@ -177,57 +176,59 @@ public:
  These functions do not declare a HandleScope
 ******************************************************************/
 
-template <typename T> Local<Value> toJS(T cval) {
-  return v8::Integer::New(cval);
+template <typename T> Local<Value> toJS(Isolate * isolate, T cval) {
+  return v8::Integer::New(isolate, cval);
 }
 
 // unsigned int
 template <>
-inline Local<Value> toJS<unsigned int>(unsigned int cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+inline Local<Value> toJS<unsigned int>(Isolate * isolate, unsigned int cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned short
 template <>
-inline Local<Value> toJS<unsigned short>(unsigned short cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+inline Local<Value> toJS<unsigned short>(Isolate * isolate, unsigned short cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned long
 template <>
-inline Local<Value> toJS<unsigned long>(unsigned long cval) {
-  return v8::Integer::NewFromUnsigned(cval);
+inline Local<Value> toJS<unsigned long >(Isolate * isolate, unsigned long cval) {
+  return v8::Integer::NewFromUnsigned(isolate, cval);
 }
 
 // unsigned long long 
 // (the value may actually be too large to represent in JS!?)
 template <>
-inline Local<Value> toJS<unsigned long long>(unsigned long long cval) {
- return v8::Integer::NewFromUnsigned((uint32_t) cval);
+inline Local<Value> toJS<unsigned long long>(Isolate * isolate, unsigned long long cval) {
+  return v8::Integer::NewFromUnsigned(isolate, (uint32_t) cval);
 }
 
 // double
 template <>
-inline Local<Value> toJS<double>(double cval) {
-  return Number::New(cval);
+inline Local<Value> toJS<double>(Isolate * isolate, double cval) {
+  return Number::New(isolate, cval);
 };
 
 // const char *
 template <> 
-inline Local<Value> toJS<const char *>(const char * cval) {
-  return v8::String::New(cval);
+inline Local<Value> toJS<const char *>(Isolate * isolate, const char * cval) {
+  return v8::String::NewFromUtf8(isolate, cval);
 }
 
 // const bool * 
 template <> 
-inline Local<Value> toJS<const bool *>(const bool * cbp) {
-  return Local<Value>::New((Boolean::New(*cbp)));
+inline Local<Value> toJS<const bool *>(Isolate * isolate, const bool * cbp) {
+  // return Local<Value>::New(Boolean::New(isolate, *cbp));
+  return *cbp ? True(isolate) : False(isolate);
 }
 
 // bool 
 template <>
-inline Local<Value> toJS<bool>(bool b) {
-  return Local<Value>::New((Boolean::New(b)));
+inline Local<Value> toJS<bool>(Isolate * isolate, bool b) {
+  // return Local<Value>::New(Boolean::New(isolate, b));
+  return b ? True(isolate) : False(isolate);
 }
 
 #endif

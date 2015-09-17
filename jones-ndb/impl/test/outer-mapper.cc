@@ -1,5 +1,3 @@
-#include "v8_binder.h"
-
 #include "c-api.h"
 
 #include "JsConverter.h"

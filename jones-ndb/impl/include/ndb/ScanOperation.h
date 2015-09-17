@@ -21,6 +21,8 @@
 #ifndef NODEJS_ADAPTER_NDB_INCLUDE_SCANOPERATION_H
 #define NODEJS_ADAPTER_NDB_INCLUDE_SCANOPERATION_H
 
+#include "JsWrapper.h"
+
 // Members of ScanHelper
 enum {
   SCAN_TABLE_RECORD = 0,
@@ -46,7 +48,7 @@ class  TransactionImpl;
 
 class ScanOperation : public KeyOperation {
 public:
-  ScanOperation(const v8::Arguments &);
+  ScanOperation(const Arguments &);
   ~ScanOperation();
   const NdbError & getNdbError();
 

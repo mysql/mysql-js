@@ -22,26 +22,48 @@
 #define NODEJS_ADAPTER_INCLUDE_JSWRAPPER_H
 
 #include <node.h>
-#include "adapter_global.h"
 #include "unified_debug.h"
 
+using v8::Isolate;
 using v8::Persistent;
+using v8::Eternal;
 using v8::ObjectTemplate;
-using v8::HandleScope;
+using v8::EscapableHandleScope;
 using v8::Handle;
 using v8::Local;
 using v8::Object;
 using v8::Value;
 using v8::Exception;
 using v8::String;
-using v8::Arguments;
+using v8::FunctionCallbackInfo;
 using v8::FunctionTemplate;
-using v8::AccessorInfo;
+using v8::PropertyCallbackInfo;
+using v8::WeakCallbackData;
+
+/* A Persistent<T> can be cast to a Local<T>.  See:
+   https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ
+*/
+template<class T>
+inline Local<T> ToLocal(Persistent<T>* p_) {
+  return *reinterpret_cast<Local<T>*>(p_);
+}
+
+template<class T>
+inline Local<T> ToLocal(const Persistent<T>* p_) {
+  return *reinterpret_cast<const Local<T>*>(p_);
+}
 
 /* Signature of a V8 function wrapper
 */
-typedef Handle<Value> V8WrapperFn(const Arguments &);
-typedef Handle<Value> V8Accessor(Local<String>, const AccessorInfo &);
+typedef FunctionCallbackInfo<Value> Arguments;
+typedef void V8WrapperFn(const Arguments &);
+
+/* Signatures for property setters & getters
+*/
+typedef PropertyCallbackInfo<Value> AccessorInfo;  // for getter
+typedef PropertyCallbackInfo<void>  SetterInfo;
+typedef void (*Getter) (Local<String>, const AccessorInfo &);
+typedef void (*Setter) (Local<String>, Local<Value>, const SetterInfo &);
 
 /*****************************************************************
  Code to confirm that C++ types wrapped as JavaScript values
@@ -68,6 +90,14 @@ inline void check_class_id(const char *a, const char *b) {
 #define CHECK_CLASS_ID(env, PTR)
 #endif
 
+///*  Delete a native C++ object when the Garbage Collector reclaims its
+//    JavaScript handle.
+//*/
+//template<typename PTR>
+//void onGcReclaim(const WeakCallbackData<Object, PTR> data) {
+//  PTR ptr = data.GetParameter();
+//  if(ptr) delete ptr;
+//}
 
 /*****************************************************************
  An Envelope is a simple structure providing some safety 
@@ -82,74 +112,95 @@ public:
   int magic;                            // for safety when unwrapping 
   TYPE_CHECK_T(class_id);               // for checking type of wrapped object
   const char * classname;               // for debugging output
-  Persistent<ObjectTemplate> stencil;   // for creating JavaScript objects
-  
+  Eternal<ObjectTemplate> stencil;      // for creating JavaScript objects
+  Isolate * isolate;
+  bool isVO;
+
   /* Constructor */
-  Envelope(const char *name) : 
+  Envelope(const char *name) :
     magic(0xF00D), 
-    classname(name)
+    classname(name),
+    isolate(Isolate::GetCurrent()),
+    isVO(false)
   {
-    HandleScope scope; 
-    Handle<ObjectTemplate> proto = ObjectTemplate::New();
+    EscapableHandleScope scope(isolate);
+    Local<ObjectTemplate> proto = ObjectTemplate::New();
     proto->SetInternalFieldCount(2);
-    stencil = Persistent<ObjectTemplate>::New(proto);
+    stencil.Set(isolate, proto);
   }
 
   /* Instance Methods */
   Local<Object> newWrapper() { 
-    return stencil->NewInstance();
+    return stencil.Get(isolate)->NewInstance();
   }
 
   void addMethod(const char *name, V8WrapperFn wrapper) {
-    stencil->Set(String::NewSymbol(name),
-                 FunctionTemplate::New(wrapper)->GetFunction());
-  }
-
-  void addAccessor(const char *name, V8Accessor accessor) {
-    stencil->SetAccessor(String::NewSymbol(name), accessor);
+    stencil.Get(isolate)->Set(
+      String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
+      FunctionTemplate::New(isolate, wrapper)->GetFunction()
+    );
   }
 
   template<typename PTR>
   Local<Value> wrap(PTR ptr) {
-    DEBUG_PRINT("Constructor wrapping %s: %p", classname, ptr);
-    SET_THIS_CLASS_ID(PTR);
-    Local<Object> wrapper = newWrapper();
-    wrapper->SetPointerInInternalField(0, (void *) this);
-    wrapper->SetPointerInInternalField(1, (void *) ptr);
+    if(ptr) {
+      DEBUG_PRINT("Envelope wrapping %s: %p", classname, ptr);
+      SET_THIS_CLASS_ID(PTR);
+      Local<Object> wrapper = newWrapper();
+      wrapper->SetAlignedPointerInInternalField(0, (void *) this);
+      wrapper->SetAlignedPointerInInternalField(1, (void *) ptr);
+      return wrapper;
+    }
 
-    return wrapper;
+    /* But if ptr was null, return a JavaScript null: */
+    return Null(isolate);
   }
 
   /* An overloaded wrap() method for the special case of converting a
      const char * to a JS String.
   */
-  Local<Value> wrap(const char * str) { return String::New(str); }
+  Local<Value> wrap(const char * str) {
+    return String::NewFromUtf8(isolate, str);
+  }
+
+  void addAccessor(const char *name, Getter accessor) {
+    stencil.Get(isolate)->SetAccessor(
+      String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
+      accessor
+    );
+  }
+
+  void addAccessor(Local<String> name, Getter getter,
+                   Setter setter = 0,
+                   Handle<Value> data = Handle<Value>()) {
+    stencil.Get(isolate)->SetNativeDataProperty(name, getter, setter, data,
+                                                v8::DontDelete,
+                                                Local<v8::AccessorSignature>(),
+                                                v8::DEFAULT);
+  }
+
+
+  /*****************************************************************
+   Create a weak handle for a wrapped object.
+   Use it to delete the wrapped object when the GC wants to reclaim the handle.
+
+   Don't do this if ptr is null (and wrapper object is therefore JS Null).
+
+   For safety, the compiler will not let you use this on any "const PTR" type;
+   (if you hold a const pointer to something, you probably don't own its
+   memory allocation).
+   ******************************************************************/
+  template<typename PTR> 
+  void freeFromGC(PTR ptr, Handle<Value> obj) {
+    if(ptr) {
+      Persistent<Object> notifier;
+      notifier.Reset(isolate, obj->ToObject());
+      notifier.MarkIndependent();
+//      TODO: Figure this out
+//      notifier.SetWeak((void *) ptr, onGcReclaim<PTR>);
+    }
+  }
 };
-
-
-/*****************************************************************
- Create a weak handle for a wrapped object.
- Use it to delete the wrapped object when the GC wants to reclaim the handle.
- For safety, the compiler will not let you use this on any "const PTR" type;
- (if you hold a const pointer to something, you probably don't own its
- memory allocation).
- If the underlying pointer has already been freed and zeroed, just dispose
- of the JavaScript reference.
-******************************************************************/
-template<typename PTR> 
-void onGcReclaim(Persistent<Value> notifier, void * param) {
-  PTR ptr = static_cast<PTR>(param);
-  if(ptr) delete ptr;
-  notifier.Dispose();
-}
-
-template<typename PTR> 
-void freeFromGC(PTR ptr, Handle<Object> obj) {
-  Persistent<Object> notifier = Persistent<Object>::New(obj);
-  notifier.MarkIndependent();
-  notifier.MakeWeak((void *) ptr, onGcReclaim<PTR>);
-}
-
 
 /*****************************************************************
  Construct a wrapped object. 
@@ -157,19 +208,17 @@ void freeFromGC(PTR ptr, Handle<Object> obj) {
  arg1: an Envelope reference
  arg2: a reference to a v8 object, which must have already been 
        initialized from a proper ObjectTemplate.
- THIS COULD BE DEPRECATED IN FAVOR OF ENVELOPE.WRAP()
+ The *usual* case is to use Envelope.wrap() instead of this.
 ******************************************************************/
 template <typename PTR>
 void wrapPointerInObject(PTR ptr,
                          Envelope & env,
                          Handle<Object> obj) {
-  DEBUG_PRINT("Constructor wrapping %s: %p", env.classname, ptr);
+  DEBUG_PRINT("wrapPointerInObject for %s: %p", env.classname, ptr);
   DEBUG_ASSERT(obj->InternalFieldCount() == 2);
   SET_CLASS_ID(env, PTR);
-  obj->SetPointerInInternalField(0, (void *) & env);
-  obj->SetPointerInInternalField(1, (void *) ptr);
-  // obj->SetInternalField(0, v8::External::Wrap((void *) & env));
-  // obj->SetInternalField(1, v8::External::Wrap((void *) ptr));
+  obj->SetAlignedPointerInInternalField(0, (void *) & env);
+  obj->SetAlignedPointerInInternalField(1, (void *) ptr);
 }
 
 /* Specializations for non-pointers reduce gcc warnings.
@@ -181,6 +230,9 @@ template <> inline void wrapPointerInObject(unsigned long long int, Envelope &, 
   assert(0);
 }
 template <> inline void wrapPointerInObject(unsigned int, Envelope &, Handle<Object>) {
+  assert(0);
+}
+template <> inline void wrapPointerInObject(double, Envelope &, Handle<Object>) {
   assert(0);
 }
 
@@ -195,9 +247,9 @@ template <typename PTR>
 PTR unwrapPointer(Handle<Object> obj) {
   PTR ptr;
   DEBUG_ASSERT(obj->InternalFieldCount() == 2);
-  ptr = static_cast<PTR>(obj->GetPointerFromInternalField(1));
+  ptr = static_cast<PTR>(obj->GetAlignedPointerFromInternalField(1));
 #ifdef UNIFIED_DEBUG
-  Envelope * env = static_cast<Envelope *>(obj->GetPointerFromInternalField(0));
+  Envelope * env = static_cast<Envelope *>(obj->GetAlignedPointerFromInternalField(0));
   assert(env->magic == 0xF00D);
   CHECK_CLASS_ID(env, PTR);
   DEBUG_PRINT_DETAIL("Unwrapping %s: %p", env->classname, ptr);
@@ -219,8 +271,9 @@ public:
   virtual ~NativeCodeError() {}
   
   virtual Local<Value> toJS() {
-    HandleScope scope;
-    return scope.Close(Exception::Error(String::New(message)));
+    EscapableHandleScope scope(Isolate::GetCurrent());
+    return scope.Escape(Exception::Error(
+      String::NewFromUtf8(Isolate::GetCurrent(), message)));
   }
 };
 

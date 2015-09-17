@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ using namespace v8;
 
 extern void freeBufferContentsFromJs(char *, void *);  // in BlobHandler.cpp
 
-Handle<String>    /* keys of MySQLTime (Adapter/impl/common/MySQLTime.js) */
+Eternal<String>    /* keys of MySQLTime (Adapter/impl/common/MySQLTime.js) */
   K_sign, 
   K_year, 
   K_month, 
@@ -56,13 +56,17 @@ Handle<String>    /* keys of MySQLTime (Adapter/impl/common/MySQLTime.js) */
   K_fsp,
   K_valid;
 
-Handle<Value>   /* SQLState Error Codes */
+Eternal<Value>   /* SQLState Error Codes */
   K_22000_DataError,
   K_22001_StringTooLong,
   K_22003_OutOfRange,
   K_22007_InvalidDatetime,
   K_0F001_Bad_BLOB,
   K_HY000;
+
+#define writerOK Local<Value>::New(isolate, Undefined(isolate))
+
+Isolate * isolate;
 
 #define ENCODER(A, B, C) NdbTypeEncoder A = { & B, & C, 0 }
 
@@ -72,9 +76,9 @@ Handle<Value>   /* SQLState Error Codes */
   ENCODER(TYPE##Encoder, TYPE##Reader, TYPE##Writer)
 
 #define DECLARE_ENCODER_TEMPLATES(TYPE) \
-  template <typename T> Handle<Value> TYPE##Reader(const NdbDictionary::Column *,\
+  template <typename T> Local<Value> TYPE##Reader(const NdbDictionary::Column *,\
     char *, size_t); \
-  template <typename T> Handle<Value> TYPE##Writer(const NdbDictionary::Column *, \
+  template <typename T> Local<Value> TYPE##Writer(const NdbDictionary::Column *, \
     Handle<Value>, char *, size_t);
 
 DECLARE_ENCODER(UnsupportedType);
@@ -168,21 +172,25 @@ const NdbTypeEncoder * getEncoderForColumn(const NdbDictionary::Column *col) {
 
 /* read(col, buffer, offset)
 */
-Handle<Value> encoderRead(const Arguments & args) {
-  HandleScope scope;
+void encoderRead(const Arguments & args) {
+  isolate = args.GetIsolate();
+  EscapableHandleScope scope(isolate);
+
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
   char * buffer = node::Buffer::Data(args[1]->ToObject());
-  
-  return encoder->read(col, buffer, args[2]->Uint32Value());
+
+  args.GetReturnValue().Set(
+    scope.Escape(encoder->read(col, buffer, args[2]->Uint32Value())));
 }
 
 
 /* write(col, value, buffer, offset) 
 */
-Handle<Value> encoderWrite(const Arguments & args) {
-  HandleScope scope;
+void encoderWrite(const Arguments & args) {
+  isolate = args.GetIsolate();
+  EscapableHandleScope scope(isolate);
 
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
@@ -190,9 +198,8 @@ Handle<Value> encoderWrite(const Arguments & args) {
   char * buffer = node::Buffer::Data(args[2]->ToObject());
   size_t offset = args[3]->Uint32Value();
 
-  Handle<Value> error = encoder->write(col, args[1], buffer, offset);
-
-  return scope.Close(error);
+  args.GetReturnValue().Set(
+    scope.Escape(encoder->write(col, args[1], buffer, offset)));
 }
 
 
@@ -209,64 +216,61 @@ struct encoder_stats_t {
 
 /* Exports to JavaScript 
 */
-Handle<Value> GET_read_strings_externalized(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
-  return scope.Close(Number::New(stats.read_strings_externalized));
+void GET_read_strings_externalized(Local<String>, const AccessorInfo & info) {
+  info.GetReturnValue().Set(stats.read_strings_externalized);
 }
 
-Handle<Value> GET_read_strings_created(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
-  return scope.Close(Number::New(stats.read_strings_created));
+void GET_read_strings_created(Local<String>, const AccessorInfo & info) {
+  info.GetReturnValue().Set(stats.read_strings_created);
 }
 
-Handle<Value> GET_read_strings_recoded(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
-  return scope.Close(Number::New(stats.read_strings_recoded));
+void GET_read_strings_recoded(Local<String>, const AccessorInfo & info) {
+  info.GetReturnValue().Set(stats.read_strings_recoded);
 }
 
-Handle<Value> GET_externalized_text_writes(Local<String>, const AccessorInfo &){
-  HandleScope scope;
-  return scope.Close(Number::New(stats.externalized_text_writes));
+void GET_externalized_text_writes(Local<String>, const AccessorInfo & info){
+  info.GetReturnValue().Set(stats.externalized_text_writes);
 }
 
-Handle<Value> GET_direct_writes(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
-  return scope.Close(Number::New(stats.direct_writes));
+void GET_direct_writes(Local<String>, const AccessorInfo & info) {
+  info.GetReturnValue().Set(stats.direct_writes);
 }
 
-Handle<Value> GET_recode_writes(Local<String>, const AccessorInfo &) {
-  HandleScope scope;
-  return scope.Close(Number::New(stats.recode_writes));
+void GET_recode_writes(Local<String>, const AccessorInfo & info) {
+  info.GetReturnValue().Set(stats.recode_writes);
 }
 
-Handle<Value> bufferForText(const Arguments &);
-Handle<Value> textFromBuffer(const Arguments &);
+void bufferForText(const Arguments &);
+void textFromBuffer(const Arguments &);
+
+#define SET_KEY(X,Y) X.Set(isolate, String::NewFromUtf8(isolate, Y))
 
 void NdbTypeEncoders_initOnLoad(Handle<Object> target) {
-  HandleScope scope;
+  isolate = Isolate::GetCurrent();
+
   DEFINE_JS_FUNCTION(target, "encoderRead", encoderRead);
   DEFINE_JS_FUNCTION(target, "encoderWrite", encoderWrite);
   DEFINE_JS_FUNCTION(target, "bufferForText", bufferForText);
   DEFINE_JS_FUNCTION(target, "textFromBuffer", textFromBuffer);
-  K_sign = Persistent<String>::New(String::NewSymbol("sign"));
-  K_year = Persistent<String>::New(String::NewSymbol("year"));
-  K_month = Persistent<String>::New(String::NewSymbol("month"));
-  K_day = Persistent<String>::New(String::NewSymbol("day"));
-  K_hour = Persistent<String>::New(String::NewSymbol("hour"));
-  K_minute = Persistent<String>::New(String::NewSymbol("minute"));
-  K_second = Persistent<String>::New(String::NewSymbol("second"));
-  K_microsec = Persistent<String>::New(String::NewSymbol("microsec"));
-  K_fsp = Persistent<String>::New(String::NewSymbol("fsp"));
-  K_valid = Persistent<String>::New(String::NewSymbol("valid"));
-  K_22000_DataError = Persistent<String>::New(String::NewSymbol("22000"));
-  K_22001_StringTooLong = Persistent<String>::New(String::NewSymbol("22001"));
-  K_22003_OutOfRange = Persistent<String>::New(String::NewSymbol("22003"));
-  K_22007_InvalidDatetime = Persistent<String>::New(String::NewSymbol("22007"));
-  K_0F001_Bad_BLOB = Persistent<String>::New(String::NewSymbol("0F001"));
-  K_HY000 = Persistent<String>::New(String::NewSymbol("HY000"));
+  SET_KEY(K_sign, "sign");
+  SET_KEY(K_year, "year");
+  SET_KEY(K_month, "month");
+  SET_KEY(K_day, "day");
+  SET_KEY(K_hour, "hour");
+  SET_KEY(K_minute, "minute");
+  SET_KEY(K_second, "second");
+  SET_KEY(K_microsec, "microsec");
+  SET_KEY(K_fsp, "fsp");
+  SET_KEY(K_valid, "valid");
+  SET_KEY(K_22000_DataError, "22000");
+  SET_KEY(K_22001_StringTooLong, "22001");
+  SET_KEY(K_22003_OutOfRange, "22003");
+  SET_KEY(K_22007_InvalidDatetime, "22007");
+  SET_KEY(K_0F001_Bad_BLOB, "0F001");
+  SET_KEY(K_HY000, "HY000");
 
-  Persistent<Object> s = Persistent<Object>(Object::New());
-  target->Set(Persistent<String>(String::NewSymbol("encoder_stats")), s);
+  Local<Object> s = Object::New(isolate);
+  target->Set(NEW_SYMBOL("encoder_stats"), s);
   DEFINE_JS_ACCESSOR(s, "read_strings_externalized", 
                      GET_read_strings_externalized);
   DEFINE_JS_ACCESSOR(s, "read_strings_created", GET_read_strings_created);
@@ -330,31 +334,29 @@ memcpy(buf, &tmp_value, sizeof(tmp_value));
 
 /* File-scope global return from succesful write encoders: 
 */
-Handle<Value> writerOK = Undefined();
+template <typename INTSZ> Local<Value> checkNumber(double);
 
-template <typename INTSZ> Handle<Value> checkNumber(double);
-
-template<> inline Handle<Value> checkNumber<int>(double d) {
+template<> inline Local<Value> checkNumber<int>(double d) {
   if(isfinite(d)) {
-    return (d >= -2147483648.0 && d <= 2147483648.0) ? writerOK : K_22003_OutOfRange;
+    return (d >= -2147483648.0 && d <= 2147483648.0) ? writerOK : K_22003_OutOfRange.Get(isolate);
   }
-  return K_HY000;
+  return K_HY000.Get(isolate);
 }
 
-template<> inline Handle<Value> checkNumber<uint32_t>(double d) {
+template<> inline Local<Value> checkNumber<uint32_t>(double d) {
   if(isfinite(d)) {
-    return (d >= 0 && d < 4294967296.0) ? writerOK : K_22003_OutOfRange;
+    return (d >= 0 && d < 4294967296.0) ? writerOK : K_22003_OutOfRange.Get(isolate);
   }
-  return K_HY000;
+  return K_HY000.Get(isolate);
 }
 
 template <typename INTSZ> bool checkIntValue(int);
 
-template <typename INTSZ> inline Handle<Value> getStatusForValue(double d) {
+template <typename INTSZ> inline Local<Value> getStatusForValue(double d) {
   if(isfinite(d)) {
-    return checkIntValue<INTSZ>(d) ? writerOK : K_22003_OutOfRange;
+    return checkIntValue<INTSZ>(d) ? writerOK : K_22003_OutOfRange.Get(isolate);
   }
-  return K_HY000;
+  return K_HY000.Get(isolate);
 }
 
 template<> inline bool checkIntValue<int8_t>(int r) {
@@ -373,26 +375,26 @@ template<> inline bool checkIntValue<uint16_t>(int r) {
   return (r >= 0 && r < 65536);
 }
 
-inline Handle<Value> checkMedium(int r) {
-  return (r >= -8338608 && r < 8338608) ? writerOK :  K_22003_OutOfRange;
+inline Local<Value> checkMedium(int r) {
+  return (r >= -8338608 && r < 8338608) ? writerOK :  K_22003_OutOfRange.Get(isolate);
 }
 
-inline Handle<Value> getStatusForMedium(double dval) {
+inline Local<Value> getStatusForMedium(double dval) {
   if(isfinite(dval)) {
     return checkMedium(static_cast<int>(dval));
   }
-  return K_HY000;
+  return K_HY000.Get(isolate);
 }
 
-inline Handle<Value> checkUnsignedMedium(int r) {
-  return (r >= 0 && r < 16277216) ? writerOK :  K_22003_OutOfRange;
+inline Local<Value> checkUnsignedMedium(int r) {
+  return (r >= 0 && r < 16277216) ? writerOK :  K_22003_OutOfRange.Get(isolate);
 }
 
-inline Handle<Value> getStatusForUnsignedMedium(double dval) {
+inline Local<Value> getStatusForUnsignedMedium(double dval) {
   if(isfinite(dval)) {
     return checkUnsignedMedium(static_cast<int>(dval));
   }
-  return K_HY000;
+  return K_HY000.Get(isolate);
 }
 
 inline void writeSignedMedium(int8_t * cbuf, int mval) {
@@ -445,32 +447,31 @@ void pack_bigendian(uint64_t val, char * buf, unsigned int len) {
 
 
 // UnsupportedType
-Handle<Value> UnsupportedTypeReader(const NdbDictionary::Column *col, 
+Local<Value> UnsupportedTypeReader(const NdbDictionary::Column *col, 
                                     char *buffer, size_t offset) {
   //TODO EXCEPTION
-  return Undefined();
+  return writerOK;
 }
 
-Handle<Value> UnsupportedTypeWriter(const NdbDictionary::Column * col,
+Local<Value> UnsupportedTypeWriter(const NdbDictionary::Column * col,
                                     Handle<Value> value, 
                                     char *buffer, size_t offset) {
   //TODO EXCEPTION
-  return Undefined();
+  return writerOK;
 }
 
 // Int
-Handle<Value> IntReader(const NdbDictionary::Column *col, 
+Local<Value> IntReader(const NdbDictionary::Column *col, 
                         char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(int, i, buffer+offset);
-  return scope.Close(Integer::New(i));                        
+  return Integer::New(isolate, i);
 }                        
 
-Handle<Value> IntWriter(const NdbDictionary::Column * col,
+Local<Value> IntWriter(const NdbDictionary::Column * col,
                         Handle<Value> value, 
                         char *buffer, size_t offset) {
   int *ipos = (int *) (buffer+offset);
-  Handle<Value> status;
+  Local<Value> status;
 
   if(value->IsInt32()) {
     *ipos = value->Int32Value();
@@ -486,17 +487,16 @@ Handle<Value> IntWriter(const NdbDictionary::Column * col,
 
 
 // Unsigned Int
-Handle<Value> UnsignedIntReader(const NdbDictionary::Column *col, 
+Local<Value> UnsignedIntReader(const NdbDictionary::Column *col, 
                                 char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(uint32_t, i, buffer+offset);
-  return scope.Close(Integer::NewFromUnsigned(i));
+  return Integer::NewFromUnsigned(isolate, i);
 }                        
 
-Handle<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
+Local<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
                                 Handle<Value> value, 
                                 char *buffer, size_t offset) {
-  Handle<Value> status;
+  Local<Value> status;
   uint32_t *ipos = (uint32_t *) (buffer+offset);
   if(value->IsUint32()) {
     *ipos = value->Uint32Value();
@@ -512,22 +512,21 @@ Handle<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
 
 // Templated encoder for TINY and SMALL int types
 template <typename INTSZ>
-Handle<Value> smallintReader(const NdbDictionary::Column *col, 
+Local<Value> smallintReader(const NdbDictionary::Column *col, 
                              char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(INTSZ, i, buffer+offset);
-  return scope.Close(Integer::New(i));
+  return Integer::New(isolate, i);
 }
 
 
 template <typename INTSZ> 
-Handle<Value> smallintWriter(const NdbDictionary::Column * col,
+Local<Value> smallintWriter(const NdbDictionary::Column * col,
                              Handle<Value> value, char *buffer, size_t offset) {
   INTSZ *ipos = (INTSZ *) (buffer+offset);
   Handle<Value> status;
   if(value->IsInt32()) {
     *ipos = value->Int32Value();
-    status = checkIntValue<INTSZ>(*ipos) ? writerOK : K_22003_OutOfRange;
+    status = checkIntValue<INTSZ>(*ipos) ? writerOK : K_22003_OutOfRange.Get(isolate);
   } else {
     double dval = value->ToNumber()->Value();
     *ipos = static_cast<INTSZ>(dval);
@@ -538,18 +537,17 @@ Handle<Value> smallintWriter(const NdbDictionary::Column * col,
 
 
 // Medium signed & unsigned int types
-Handle<Value> MediumReader(const NdbDictionary::Column *col, 
+Local<Value> MediumReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  HandleScope scope;
   char * cbuf = buffer+offset;
   int i = sint3korr(cbuf);
-  return scope.Close(Integer::New(i));
+  return Integer::New(isolate, i);
 }
 
-Handle<Value> MediumWriter(const NdbDictionary::Column * col,
+Local<Value> MediumWriter(const NdbDictionary::Column * col,
                            Handle<Value> value, char *buffer, size_t offset) {  
   int8_t *cbuf = (int8_t *) (buffer+offset);
-  Handle<Value> status;
+  Local<Value> status;
   double dval;
   int chkv;
   if(value->IsInt32()) {
@@ -565,19 +563,18 @@ Handle<Value> MediumWriter(const NdbDictionary::Column * col,
   return status;
 }                        
 
-Handle<Value> MediumUnsignedReader(const NdbDictionary::Column *col, 
+Local<Value> MediumUnsignedReader(const NdbDictionary::Column *col, 
                                    char *buffer, size_t offset) {
-  HandleScope scope;
   char * cbuf = buffer+offset;
   int i = uint3korr(cbuf);
-  return scope.Close(Integer::New(i));
+  return Integer::New(isolate, i);
 }
 
-Handle<Value> MediumUnsignedWriter(const NdbDictionary::Column * col,
+Local<Value> MediumUnsignedWriter(const NdbDictionary::Column * col,
                                    Handle<Value> value, 
                                    char *buffer, size_t offset) {
   uint8_t *cbuf = (uint8_t *) (buffer+offset);
-  Handle<Value> status;
+  Local<Value> status;
   double dval;
   int chkv;
   if(value->IsInt32()) {
@@ -653,78 +650,73 @@ template<> inline void bigintToString<uint64_t>(char * strbuf, uint64_t bigint) 
 }
 
 template <typename BIGT>
-Handle<Value> bigintReader(const NdbDictionary::Column *col, 
+Local<Value> bigintReader(const NdbDictionary::Column *col, 
                             char *buffer, size_t offset) {
   char strbuf[32];
-  HandleScope scope;
   LOAD_ALIGNED_DATA(BIGT, bigint, buffer+offset);
   bigintToString(strbuf, bigint);
-  return scope.Close(String::New(strbuf));
+  return String::NewFromUtf8(isolate, strbuf);
 }
 
 template <typename BIGT>
-Handle<Value> bigintWriter(const NdbDictionary::Column *col, 
+Local<Value> bigintWriter(const NdbDictionary::Column *col, 
                            Handle<Value> value, char *buffer, size_t offset) {
-  char strbuf[32];
+  unsigned char strbuf[32];
   BIGT *ipos = (BIGT *) (buffer+offset);
   bool valid = writeBigint(value, ipos);  // try fast track
   if(! valid) {  // slow track
-    value->ToString()->WriteAscii(strbuf, 0, 32);
-    valid = stringToBigint(strbuf, ipos);
+    value->ToString()->WriteOneByte(strbuf, 0, 32);
+    valid = stringToBigint((char *)strbuf, ipos);
   } 
-  return valid ? writerOK : K_22003_OutOfRange;
+  return valid ? writerOK : K_22003_OutOfRange.Get(isolate);
 }
 
 // Decimal.  JS Value to and from decimal types is treated as a string.
-Handle<Value> DecimalReader(const NdbDictionary::Column *col,
+Local<Value> DecimalReader(const NdbDictionary::Column *col,
                             char *buffer, size_t offset) {
-  HandleScope scope;
   char strbuf[96];
   int scale = col->getScale();
   int prec  = col->getPrecision();
   int len = scale + prec + 3;
   decimal_bin2str(buffer + offset, col->getSizeInBytes(),
                   prec, scale, strbuf, len);
-  return scope.Close(String::New(strbuf));
+  return String::NewFromUtf8(isolate, strbuf);
 }
 
-Handle<Value> DecimalWriter(const NdbDictionary::Column *col,
+Local<Value> DecimalWriter(const NdbDictionary::Column *col,
                             Handle<Value> value, char *buffer, size_t offset) {
-  HandleScope scope;
-  char strbuf[96];
+  unsigned char strbuf[96];
   if(! (isfinite(value->NumberValue()))) {
-    return K_HY000;
+    return K_HY000.Get(isolate);
   } 
-  int length = value->ToString()->WriteAscii(strbuf, 0, 96);
-  int status = decimal_str2bin(strbuf, length, 
+  int length = value->ToString()->WriteOneByte(strbuf, 0, 96);
+  int status = decimal_str2bin((const char *) strbuf, length,
                                col->getPrecision(), col->getScale(), 
                                buffer + offset, col->getSizeInBytes());
-  return status ? K_22003_OutOfRange : writerOK;
+  return status ? K_22003_OutOfRange.Get(isolate) : writerOK;
 }
 
 
 // Unsigned Decimal.  Writer adds boundary checking.
-Handle<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
+Local<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
                                     Handle<Value> value, char *buffer, 
                                     size_t offset) {
-  HandleScope scope;
   return value->NumberValue() >= 0 ?
     DecimalWriter(col, value, buffer, offset) :
-    K_22003_OutOfRange;
+    K_22003_OutOfRange.Get(isolate);
 }
 
 
 // Templated encoder for float and double
 template<typename FPT> 
-Handle<Value> fpReader(const NdbDictionary::Column *col, 
+Local<Value> fpReader(const NdbDictionary::Column *col, 
                        char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(FPT, value, buffer+offset);
-  return scope.Close(Number::New(value)); 
+  return Number::New(isolate, value);
 }
 
 template<typename FPT>
-Handle<Value> fpWriter(const NdbDictionary::Column * col,
+Local<Value> fpWriter(const NdbDictionary::Column * col,
                        Handle<Value> value, 
                        char *buffer, size_t offset) {
   double dval = value->ToNumber()->NumberValue();
@@ -732,19 +724,17 @@ Handle<Value> fpWriter(const NdbDictionary::Column * col,
   if(valid) {
     STORE_ALIGNED_DATA(FPT, dval, buffer+offset);
   }
-  return valid ? writerOK : K_22003_OutOfRange;
+  return valid ? writerOK : K_22003_OutOfRange.Get(isolate);
 }
 
 /****** Binary & Varbinary *******/
 
-Handle<Value> BinaryReader(const NdbDictionary::Column *col, 
+Local<Value> BinaryReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  HandleScope scope;
-  node::Buffer * b = node::Buffer::New(buffer + offset, col->getLength());
-  return scope.Close(b->handle_);
+  return node::Buffer::New(isolate, buffer + offset, col->getLength());
 }
 
-Handle<Value> BinaryWriter(const NdbDictionary::Column * col,
+Local<Value> BinaryWriter(const NdbDictionary::Column * col,
                            Handle<Value> value, char *buffer, size_t offset) {
   bool valid = node::Buffer::HasInstance(value);
   if(valid) {
@@ -757,21 +747,19 @@ Handle<Value> BinaryWriter(const NdbDictionary::Column * col,
       memset(buffer+offset+ncopied, 0, col_len - ncopied); // padding
     }
   }
-  return valid ? writerOK : K_0F001_Bad_BLOB;
+  return valid ? writerOK : K_0F001_Bad_BLOB.Get(isolate);
 }
 
 template<typename LENGTHTYPE>
-Handle<Value> varbinaryReader(const NdbDictionary::Column *col, 
+Local<Value> varbinaryReader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * data = buffer+offset+sizeof(length);
-  node::Buffer *b = node::Buffer::New(data, length);
-  return scope.Close(b->handle_);
-}                            
+  return node::Buffer::New(isolate, data, length);
+}
 
 template<typename LENGTHTYPE>
-Handle<Value> varbinaryWriter(const NdbDictionary::Column * col,
+Local<Value> varbinaryWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
                               char *buffer, size_t offset) {
   bool valid = node::Buffer::HasInstance(value);
@@ -784,7 +772,7 @@ Handle<Value> varbinaryWriter(const NdbDictionary::Column * col,
     char * data = buffer+offset+sizeof(data_len);
     memmove(data, node::Buffer::Data(obj), data_len);
   }
-  return valid ? writerOK : K_22000_DataError;
+  return valid ? writerOK : K_22000_DataError.Get(isolate);
 }
 
 /****** String types ********/
@@ -825,12 +813,8 @@ public:
   ExternalizedAsciiString(char *_buffer, size_t _len) : 
     buffer(_buffer), len(_len), isAscii(true)
   {
-    ref.Clear();
+    ref.Reset();
   };
-  ~ExternalizedAsciiString() 
-  {
-    if(! ref.IsEmpty()) ref.Dispose();
-  }
   const char* data() const       { return buffer; }
   size_t length() const          { return len; }
 };
@@ -844,12 +828,8 @@ public:
   ExternalizedUnicodeString(uint16_t *_buffer, size_t _len) : 
     buffer(_buffer), len(_len), isAscii(false)
   {
-    ref.Clear();
+    ref.Reset();
   };
-  ~ExternalizedUnicodeString() 
-  {
-    if(! ref.IsEmpty()) ref.Dispose();
-  }
   const uint16_t * data() const  { return buffer; }
   size_t length() const          { return len; }
 };
@@ -917,7 +897,7 @@ int writeAscii(const NdbDictionary::Column * column,
                Handle<String> strval, char * buffer, bool pad) {
   stats.direct_writes++;
   const size_t & bufsz = column->getLength();
-  size_t sz = strval->WriteAscii(buffer, 0, bufsz, String::NO_NULL_TERMINATION);
+  size_t sz = strval->WriteOneByte((uint8_t*) buffer, 0, bufsz, String::NO_NULL_TERMINATION);
   if(pad)
     while(sz < bufsz) buffer[sz++] = ' ';
   return sz;
@@ -983,20 +963,24 @@ int writeRecode(const NdbDictionary::Column *col,
    writer assumes the string will fit into the column and lets Ndb truncate 
    the value if needed.  
 */
-Handle<Value> bufferForText(const Arguments & args) {
-  if(! args[1]->IsString()) return Null();
-
+void bufferForText(const Arguments & args) {
+  isolate = args.GetIsolate();
+  EscapableHandleScope scope(isolate);
+  if(! args[1]->IsString()) {
+    args.GetReturnValue().SetNull();
+    return;
+  }
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
-  return getBufferForText(col, args[1]->ToString());
+  args.GetReturnValue().Set(
+    scope.Escape(getBufferForText(col, args[1]->ToString())));
 }
 
-Handle<Object> getBufferForText(const NdbDictionary::Column *col, 
-                                Handle<String> str) {
-  HandleScope scope;
+Local<Object> getBufferForText(const NdbDictionary::Column *col,
+                               Handle<String> str) {
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
   size_t length, utf8Length;
-  node::Buffer * buffer;
+  Local<Object> buffer;
   char * data;
 
   /* Fully Externalized Value; no copying.
@@ -1006,7 +990,7 @@ Handle<Object> getBufferForText(const NdbDictionary::Column *col,
   {
     DEBUG_PRINT("getBufferForText: fully externalized");
     stats.externalized_text_writes++;
-    return scope.Close(node::Buffer::New(str));
+    return node::Buffer::New(isolate, str);
   }
 
   length = str->Length();
@@ -1016,17 +1000,17 @@ Handle<Object> getBufferForText(const NdbDictionary::Column *col,
      
   if(csinfo->isAscii || (valueIsAscii && ! csinfo->isMultibyte)) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(length);
+    buffer = node::Buffer::New(isolate, length);
     data = node::Buffer::Data(buffer);
-    str->WriteAscii(data, 0, length);
+    str->WriteOneByte((uint8_t*) data, 0, length);
   } else if(csinfo->isUtf16le) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(length * 2);
+    buffer = node::Buffer::New(isolate, length * 2);
     uint16_t * mbdata = (uint16_t*) node::Buffer::Data(buffer);
     str->Write(mbdata, 0, length);
   } else if(csinfo->isUtf8) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(utf8Length);
+    buffer = node::Buffer::New(isolate, utf8Length);
     data = node::Buffer::Data(buffer);
     str->WriteUtf8(data, utf8Length);
   } else {
@@ -1038,27 +1022,31 @@ Handle<Object> getBufferForText(const NdbDictionary::Column *col,
     data = (char *) malloc(buflen);
     size_t result_len = recodeFromUtf8(recode_buffer, utf8Length,
                                        data, buflen, col->getCharsetNumber());
-    buffer = node::Buffer::New(data, result_len, freeBufferContentsFromJs, 0);
+    buffer = node::Buffer::New(isolate, data, result_len, freeBufferContentsFromJs, 0);
     delete[] recode_buffer;
   }
   
-  return scope.Close(buffer->handle_);
+  return buffer;
 }
 
 
 // TEXT column reader textFromBuffer(column, buffer) 
-Handle<Value> textFromBuffer(const Arguments & args) {  
-  if(! args[1]->IsObject()) return Null();
+void textFromBuffer(const Arguments & args) {
+  isolate = args.GetIsolate();
+  EscapableHandleScope scope(isolate);
+  if(! args[1]->IsObject()) {
+    args.GetReturnValue().SetNull();
+    return;
+  }
   const NdbDictionary::Column * col =
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
-  return getTextFromBuffer(col, args[1]->ToObject());
+  args.GetReturnValue().Set(
+    scope.Escape(getTextFromBuffer(col, args[1]->ToObject())));
 }
 
 
-Handle<String> getTextFromBuffer(const NdbDictionary::Column *col, 
+Local<String> getTextFromBuffer(const NdbDictionary::Column *col,
                                  Handle<Object> bufferObj) {
-  HandleScope scope;
-
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
   size_t len = node::Buffer::Length(bufferObj);
   char * str = node::Buffer::Data(bufferObj);
@@ -1069,19 +1057,19 @@ Handle<String> getTextFromBuffer(const NdbDictionary::Column *col,
   if(csinfo->isAscii) {
     stats.read_strings_externalized++;
     ExternalizedAsciiString *ext = new ExternalizedAsciiString(str, len);
-    ext->ref = Persistent<Value>::New(bufferObj);
-    string = String::NewExternal(ext);
+    ext->ref.Reset(isolate, bufferObj);
+    string = String::NewExternal(isolate, ext);
   } else if (csinfo->isUtf16le) {
     stats.read_strings_externalized++;
     uint16_t * buf = (uint16_t *) str;
     ExternalizedUnicodeString * ext = new ExternalizedUnicodeString(buf, len/2);
-    ext->ref = Persistent<Value>::New(bufferObj);
-    string = String::NewExternal(ext);        
+    ext->ref.Reset(isolate, bufferObj);
+    string = String::NewExternal(isolate, ext);
   } else {
     stats.read_strings_created++;
     if (csinfo->isUtf8) {
       DEBUG_PRINT("New from UTF8 [%d] %s", len, str);
-      string = String::New(str, len);
+      string = String::NewFromUtf8(isolate, str, String::kNormalString, len);
     } else { // Recode
       stats.read_strings_recoded++;
       CharsetMap csmap;
@@ -1095,18 +1083,17 @@ Handle<String> getTextFromBuffer(const NdbDictionary::Column *col,
                    csmap.getUTF8CharsetNumber(),
                    str, recode_buffer);
       DEBUG_PRINT("New from Recode [%d] %s", lengths[1], recode_buffer);
-      string = String::New(recode_buffer, lengths[1]);
+      string = String::NewFromUtf8(isolate, recode_buffer, String::kNormalString, lengths[1]);
       delete[] recode_buffer;
     }
   }
-  return scope.Close(string);
+  return string;
 }  
 
 // CHAR
 
-Handle<Value> CharReader(const NdbDictionary::Column *col, 
+Local<Value> CharReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
   char * str = buffer+offset;
   Local<String> string;
   size_t len = col->getLength();
@@ -1118,7 +1105,7 @@ Handle<Value> CharReader(const NdbDictionary::Column *col,
     while(str[--len] == ' ') ;  // skip past space padding
     len++;  // undo 1 place
     ExternalizedAsciiString *ext = new ExternalizedAsciiString(str, len);
-    string = String::NewExternal(ext);   
+    string = String::NewExternal(isolate, ext);
     //DEBUG_PRINT("(A): External ASCII");
   }
   else if(csinfo->isUtf16le) {
@@ -1127,13 +1114,13 @@ Handle<Value> CharReader(const NdbDictionary::Column *col,
     uint16_t * buf = (uint16_t *) str;
     while(buf[--len] == ' ') {}; len++;  // skip padding, then undo 1
     ExternalizedUnicodeString * ext = new ExternalizedUnicodeString(buf, len);
-    string = String::NewExternal(ext);
+    string = String::NewExternal(isolate, ext);
     //DEBUG_PRINT("(B): External UTF-16-LE");
   }
   else if(csinfo->isUtf8) {
     stats.read_strings_created++;
     while(str[--len] == ' ') {}; len++; // skip padding, then undo 1
-    string = String::New(str, len);
+    string = String::NewFromUtf8(isolate, str, String::kNormalString, len);
     //DEBUG_PRINT("(C): New From UTF-8");
   }
   else {
@@ -1159,7 +1146,7 @@ Handle<Value> CharReader(const NdbDictionary::Column *col,
     while(recode_buffer[--len] == ' ') {}; len++; // skip padding, then undo 1
 
     /* Create a new JS String from the UTF-8 recode buffer */
-    string = String::New(recode_buffer, len);
+    string = String::NewFromUtf8(isolate, recode_buffer, String::kNormalString, len);
 
 #ifdef WIN32
     delete[] recode_buffer;
@@ -1168,13 +1155,12 @@ Handle<Value> CharReader(const NdbDictionary::Column *col,
     //DEBUG_PRINT("(D.2): Recode to UTF-8 and create new");
   }
 
-  return scope.Close(string);
+  return string;
 }
 
-Handle<Value> CharWriter(const NdbDictionary::Column * col,
+Local<Value> CharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
                             char *buffer, size_t offset) {
-  HandleScope scope;  
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
   writer(col, strval, buffer+offset, true);
@@ -1183,9 +1169,8 @@ Handle<Value> CharWriter(const NdbDictionary::Column * col,
 
 // Templated encoder for Varchar and LongVarchar
 template<typename LENGTHTYPE>
-Handle<Value> varcharReader(const NdbDictionary::Column *col, 
+Local<Value> varcharReader(const NdbDictionary::Column *col, 
                             char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * str = buffer+offset+sizeof(length);
   Local<String> string;
@@ -1195,19 +1180,19 @@ Handle<Value> varcharReader(const NdbDictionary::Column *col,
      (! csinfo->isMultibyte && stringIsAscii((const unsigned char *) str, length))) {
     stats.read_strings_externalized++;
     ExternalizedAsciiString *ext = new ExternalizedAsciiString(str, length);
-    string = String::NewExternal(ext);   
+    string = String::NewExternal(isolate, ext);
     //DEBUG_PRINT("(A): External ASCII [size %d]", length);
   }
   else if(csinfo->isUtf16le) {
     stats.read_strings_externalized++;
     uint16_t * buf = (uint16_t *) str;
     ExternalizedUnicodeString * ext = new ExternalizedUnicodeString(buf, length/2);
-    string = String::NewExternal(ext);
+    string = String::NewExternal(isolate, ext);
     //DEBUG_PRINT("(B): External UTF-16-LE [size %d]", length);
   }
   else if(csinfo->isUtf8) {
     stats.read_strings_created++;
-    string = String::New(str, length);
+    string = String::NewFromUtf8(isolate, str, String::kNormalString, length);
     //DEBUG_PRINT("(C): New From UTF-8 [size %d]", length);
   }
   else {
@@ -1226,27 +1211,26 @@ Handle<Value> varcharReader(const NdbDictionary::Column *col,
     csmap.recode(lengths, 
                  col->getCharsetNumber(), csmap.getUTF8CharsetNumber(),
                  str, recode_buffer);
-    string = String::New(recode_buffer, lengths[1]);
+    string = String::NewFromUtf8(isolate, recode_buffer, String::kNormalString, lengths[1]);
 #ifdef WIN32
     delete[] recode_buffer;
 #endif
     //DEBUG_PRINT("(D.2): Recode to UTF-8 and create new [size %d]", length);
   }
-  return scope.Close(string);
+  return string;
 }
 
 template<typename LENGTHTYPE>
-Handle<Value> varcharWriter(const NdbDictionary::Column * col,
+Local<Value> varcharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
                             char *buffer, size_t offset) {  
-  HandleScope scope;
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
 
   LENGTHTYPE len = writer(col, strval, buffer+offset+sizeof(len), false);
   STORE_ALIGNED_DATA(LENGTHTYPE, len, buffer+offset);
 
-  return (strval->Length() > col->getLength()) ? K_22001_StringTooLong : writerOK;
+  return (strval->Length() > col->getLength()) ? K_22001_StringTooLong.Get(isolate) : writerOK;
 }
 
 
@@ -1265,7 +1249,7 @@ public:
   TimeHelper(Handle<Value>);
 
   /* methods */
-  Handle<Value> toJs();
+  Local<Value> toJs();
   void factor_HHMMSS(int int_time) {
     if(int_time < 0) { sign = -1; int_time = - int_time; }
     hour   = int_time/10000;
@@ -1284,41 +1268,51 @@ public:
   unsigned int fsp, year, month, day, hour, minute, second, microsec;
 };
  
-Handle<Value> TimeHelper::toJs() {
-  HandleScope scope;  
-  Local<Object> obj = Object::New();
-  obj->Set(K_sign,     Integer::New(sign));
-  obj->Set(K_year,     Integer::New(year));
-  obj->Set(K_month,    Integer::New(month));
-  obj->Set(K_day,      Integer::New(day));
-  obj->Set(K_hour,     Integer::New(hour));
-  obj->Set(K_minute,   Integer::New(minute));
-  obj->Set(K_second,   Integer::New(second));
-  obj->Set(K_microsec, Integer::New(microsec));
-  obj->Set(K_fsp,      Integer::New(fsp));
-  return scope.Close(obj);
+Local<Value> TimeHelper::toJs() {
+  Local<Object> obj = Object::New(isolate);
+  obj->Set(K_sign.Get(isolate),     Integer::New(isolate, sign));
+  obj->Set(K_year.Get(isolate),     Integer::New(isolate, year));
+  obj->Set(K_month.Get(isolate),    Integer::New(isolate, month));
+  obj->Set(K_day.Get(isolate),      Integer::New(isolate, day));
+  obj->Set(K_hour.Get(isolate),     Integer::New(isolate, hour));
+  obj->Set(K_minute.Get(isolate),   Integer::New(isolate, minute));
+  obj->Set(K_second.Get(isolate),   Integer::New(isolate, second));
+  obj->Set(K_microsec.Get(isolate), Integer::New(isolate, microsec));
+  obj->Set(K_fsp.Get(isolate),      Integer::New(isolate, fsp));
+  return obj;
 }
 
 TimeHelper::TimeHelper(Handle<Value> mysqlTime) :
   sign(+1), valid(false), 
   year(0), month(0), day(0), hour(0), minute(0), second(0), microsec(0)
 {
-  HandleScope scope;
   int nkeys = 0;
 
+
   if(mysqlTime->IsObject()) {
+
+    Local<Value> _sign = K_sign.Get(isolate),
+                 _year = K_year.Get(isolate),
+                 _month = K_month.Get(isolate),
+                 _day = K_day.Get(isolate),
+                 _hour = K_hour.Get(isolate),
+                 _minute = K_minute.Get(isolate),
+                 _second = K_second.Get(isolate),
+                 _microsec = K_microsec.Get(isolate),
+                 _valid = K_valid.Get(isolate);
+
     Local<Object> obj = mysqlTime->ToObject();
-    if(obj->Has(K_valid) && ! (obj->Get(K_valid)->BooleanValue())) {
+    if(obj->Has(_valid) && ! (obj->Get(_valid)->BooleanValue())) {
       return; // return with this.valid still set to false.
     }
-    if(obj->Has(K_sign))  { sign  = obj->Get(K_sign)->Int32Value(); nkeys++; }
-    if(obj->Has(K_year))  { year  = obj->Get(K_year)->Int32Value(); nkeys++; }
-    if(obj->Has(K_month)) { month = obj->Get(K_month)->Int32Value(); nkeys++; }
-    if(obj->Has(K_day))   { day   = obj->Get(K_day)->Int32Value(); nkeys++; }
-    if(obj->Has(K_hour))  { hour  = obj->Get(K_hour)->Int32Value(); nkeys++; }
-    if(obj->Has(K_minute)){ minute= obj->Get(K_minute)->Int32Value(); nkeys++; }
-    if(obj->Has(K_second)){ second= obj->Get(K_second)->Int32Value(); nkeys++; }
-    if(obj->Has(K_microsec)){ microsec = obj->Get(K_microsec)->Int32Value(); nkeys++; }
+    if(obj->Has(_sign))    { sign  = obj->Get(_sign)->Int32Value();   nkeys++; }
+    if(obj->Has(_year))    { year  = obj->Get(_year)->Int32Value();   nkeys++; }
+    if(obj->Has(_month))   { month = obj->Get(_month)->Int32Value();  nkeys++; }
+    if(obj->Has(_day))     { day   = obj->Get(_day)->Int32Value();    nkeys++; }
+    if(obj->Has(_hour))    { hour  = obj->Get(_hour)->Int32Value();   nkeys++; }
+    if(obj->Has(_minute))  { minute= obj->Get(_minute)->Int32Value(); nkeys++; }
+    if(obj->Has(_second))  { second= obj->Get(_second)->Int32Value(); nkeys++; }
+    if(obj->Has(_microsec)){ microsec = obj->Get(_microsec)->Int32Value(); nkeys++; }
   }
   valid = (nkeys > 0);
 }
@@ -1349,15 +1343,14 @@ void writeFraction(const NdbDictionary::Column *col, int usec, char *buf) {
 
 
 // Timstamp
-Handle<Value> TimestampReader(const NdbDictionary::Column *col, 
+Local<Value> TimestampReader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(uint32_t, timestamp, buffer+offset);
   double jsdate = timestamp * 1000;  // unix seconds-> js milliseconds
-  return scope.Close(Date::New(jsdate));
+  return Date::New(isolate, jsdate);
 }                        
 
-Handle<Value> TimestampWriter(const NdbDictionary::Column * col,
+Local<Value> TimestampWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
                               char *buffer, size_t offset) {
   uint32_t *tpos = (uint32_t *) (buffer+offset);
@@ -1368,7 +1361,7 @@ Handle<Value> TimestampWriter(const NdbDictionary::Column * col,
     valid = (dval >= 0);   // MySQL does not accept dates before 1970
     *tpos = static_cast<uint32_t>(dval);
   }
-  return valid ? writerOK : K_22007_InvalidDatetime;
+  return valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
@@ -1376,16 +1369,15 @@ Handle<Value> TimestampWriter(const NdbDictionary::Column * col,
 /* Timestamp2 is implemented to directly read and write Javascript Date.
    If col->getPrecision() > 3, some precision is lost.
 */
-Handle<Value> Timestamp2Reader(const NdbDictionary::Column *col, 
+Local<Value> Timestamp2Reader(const NdbDictionary::Column *col, 
                                char *buffer, size_t offset) {
-  HandleScope scope;
   uint32_t timeSeconds = unpack_bigendian(buffer+offset, 4);
   int timeMilliseconds = readFraction(col, buffer+offset+4) / 1000;
   double jsdate = ((double) timeSeconds * 1000) + timeMilliseconds;
-  return scope.Close(Date::New(jsdate));
+  return Date::New(isolate, jsdate);
 }
  
-Handle<Value> Timestamp2Writer(const NdbDictionary::Column * col,
+Local<Value> Timestamp2Writer(const NdbDictionary::Column * col,
                                Handle<Value> value, 
                                char *buffer, size_t offset) {
   bool valid = value->IsDate();
@@ -1398,24 +1390,23 @@ Handle<Value> Timestamp2Writer(const NdbDictionary::Column * col,
     writeFraction(col, timeMilliseconds * 1000, buffer+offset+4);
     valid = (timeSeconds >= 0);   // MySQL does not accept dates before 1970
   }
-  return valid ? writerOK : K_22007_InvalidDatetime;
+  return valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 /* Datetime 
    Interfaces with JavaScript via TimeHelper
 */
-Handle<Value> DatetimeReader(const NdbDictionary::Column *col, 
+Local<Value> DatetimeReader(const NdbDictionary::Column *col, 
                              char *buffer, size_t offset) {
-  HandleScope scope;
   TimeHelper tm;
   LOAD_ALIGNED_DATA(uint64_t, int_datetime, buffer+offset);
   int int_date = int_datetime / 1000000;
   tm.factor_YYYYMMDD(int_date);
   tm.factor_HHMMSS(int_datetime - (uint64_t) int_date * 1000000);
-  return scope.Close(tm.toJs());
+  return tm.toJs();
 }
 
-Handle<Value> DatetimeWriter(const NdbDictionary::Column * col,
+Local<Value> DatetimeWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
                               char *buffer, size_t offset) {
   TimeHelper tm(value);
@@ -1429,7 +1420,7 @@ Handle<Value> DatetimeWriter(const NdbDictionary::Column * col,
     dtval += tm.second;
     STORE_ALIGNED_DATA(uint64_t, dtval, buffer+offset);
   }
-  return tm.valid ? writerOK : K_22007_InvalidDatetime;  
+  return tm.valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }    
 
 
@@ -1447,9 +1438,8 @@ Handle<Value> DatetimeWriter(const NdbDictionary::Column * col,
   ---------------------------
   40 bits = 5 bytes
 */
-Handle<Value> Datetime2Reader(const NdbDictionary::Column *col, 
+Local<Value> Datetime2Reader(const NdbDictionary::Column *col, 
                               char *buffer, size_t offset) {
-  HandleScope scope;
   TimeHelper tm;
   uint64_t packedValue = unpack_bigendian(buffer+offset, 5);
   tm.microsec = readFraction(col, buffer+offset+5);
@@ -1461,10 +1451,10 @@ Handle<Value> Datetime2Reader(const NdbDictionary::Column *col,
   int yrMo  = (packedValue & 0x01FFFF);  
   tm.year = yrMo / 13;
   tm.month = yrMo % 13;
-  return scope.Close(tm.toJs());
+  return tm.toJs();
 }
 
-Handle<Value> Datetime2Writer(const NdbDictionary::Column * col,
+Local<Value> Datetime2Writer(const NdbDictionary::Column * col,
                               Handle<Value> value, 
                               char *buffer, size_t offset) {
   TimeHelper tm(value);
@@ -1479,20 +1469,19 @@ Handle<Value> Datetime2Writer(const NdbDictionary::Column * col,
     pack_bigendian(packedValue, buffer+offset, 5);
     writeFraction(col, tm.microsec, buffer+offset+5);
   }
-  return tm.valid ? writerOK : K_22007_InvalidDatetime;  
+  return tm.valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
 // Year
-Handle<Value> YearReader(const NdbDictionary::Column *col, 
+Local<Value> YearReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
   LOAD_ALIGNED_DATA(uint8_t, myr, buffer+offset);
   int year = 1900 + myr;
-  return scope.Close(Number::New(year));
+  return Number::New(isolate, year);
 }
 
-Handle<Value> YearWriter(const NdbDictionary::Column * col,
+Local<Value> YearWriter(const NdbDictionary::Column * col,
                          Handle<Value> value, char *buffer, size_t offset) {
   bool valid = value->IsInt32();
   if(valid) {
@@ -1500,22 +1489,21 @@ Handle<Value> YearWriter(const NdbDictionary::Column * col,
     valid = checkIntValue<uint8_t>(chkv);
     if(valid) STORE_ALIGNED_DATA(uint8_t, chkv, buffer+offset);
   }
-  return valid ? writerOK : K_22007_InvalidDatetime;
+  return valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
 // Time.  Uses TimeHelper.
-Handle<Value> TimeReader(const NdbDictionary::Column *col, 
+Local<Value> TimeReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
-  TimeHelper tm; 
+  TimeHelper tm;
   char * cbuf = buffer+offset;
   int sqlTime = sint3korr(cbuf);
   tm.factor_HHMMSS(sqlTime);
-  return scope.Close(tm.toJs());
+  return tm.toJs();
 }
 
-Handle<Value> TimeWriter(const NdbDictionary::Column * col,
+Local<Value> TimeWriter(const NdbDictionary::Column * col,
                          Handle<Value> value, char *buffer, size_t offset) {
   TimeHelper tm(value);
   int dtval = 0;
@@ -1527,7 +1515,7 @@ Handle<Value> TimeWriter(const NdbDictionary::Column * col,
     writeSignedMedium((int8_t *) buffer+offset, dtval);
   }  
   
-  return tm.valid ? writerOK : K_22007_InvalidDatetime;  
+  return tm.valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
@@ -1543,9 +1531,8 @@ Handle<Value> TimeWriter(const NdbDictionary::Column * col,
   is converted to its two's complement.  readFraction() and writeFraction()
   cannot be used.
 */
-Handle<Value> Time2Reader(const NdbDictionary::Column *col, 
+Local<Value> Time2Reader(const NdbDictionary::Column *col, 
                           char *buffer, size_t offset) {
-  HandleScope scope;
   TimeHelper tm;
   int prec = col->getPrecision();
   int fsp_size = (1 + prec) / 2;
@@ -1571,10 +1558,10 @@ Handle<Value> Time2Reader(const NdbDictionary::Column *col,
 
   while(prec < 5) tm.microsec *= 100, prec += 2;
 
-  return scope.Close(tm.toJs());
+  return tm.toJs();
 }
 
-Handle<Value> Time2Writer(const NdbDictionary::Column * col,
+Local<Value> Time2Writer(const NdbDictionary::Column * col,
                           Handle<Value> value, char *buffer, size_t offset) {
   TimeHelper tm(value);
   int prec = col->getPrecision();
@@ -1603,24 +1590,23 @@ Handle<Value> Time2Writer(const NdbDictionary::Column * col,
     pack_bigendian(packedValue, buffer+offset, buf_size);
   }
   
-  return tm.valid ? writerOK : K_22007_InvalidDatetime;  
+  return tm.valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
 // Date
-Handle<Value> DateReader(const NdbDictionary::Column *col, 
+Local<Value> DateReader(const NdbDictionary::Column *col, 
                          char *buffer, size_t offset) {
-  HandleScope scope;
-  TimeHelper tm; 
+  TimeHelper tm;
   char * cbuf = buffer+offset;
   int encodedDate = uint3korr(cbuf);
   tm.day   = (encodedDate & 31);  // five bits
   tm.month = (encodedDate >> 5 & 15); // four bits
   tm.year  = (encodedDate >> 9);
-  return scope.Close(tm.toJs());
+  return tm.toJs();
 }
 
-Handle<Value> DateWriter(const NdbDictionary::Column * col,
+Local<Value> DateWriter(const NdbDictionary::Column * col,
                          Handle<Value> value, char *buffer, size_t offset) {
   TimeHelper tm(value);
   int encodedDate = 0;
@@ -1629,20 +1615,19 @@ Handle<Value> DateWriter(const NdbDictionary::Column * col,
     writeUnsignedMedium((uint8_t *) buffer+offset, encodedDate);
   }  
   
-  return tm.valid ? writerOK : K_22007_InvalidDatetime;  
+  return tm.valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
 }
 
 
 // BLOB
 // BlobReader is a no-op
-Handle<Value> BlobReader(const NdbDictionary::Column *, char *, size_t) {
-  HandleScope scope;
-  return Undefined();
+Local<Value> BlobReader(const NdbDictionary::Column *, char *, size_t) {
+  return writerOK;
 }
 
 // The BlobWriter does write anything, but it does verify that the 
 // intended value is a Node Buffer.
-Handle<Value> BlobWriter(const NdbDictionary::Column *, Handle<Value> value,
+Local<Value> BlobWriter(const NdbDictionary::Column *, Handle<Value> value,
                         char *, size_t) {
-  return node::Buffer::HasInstance(value) ? writerOK : K_0F001_Bad_BLOB;  
+  return node::Buffer::HasInstance(value) ? writerOK : K_0F001_Bad_BLOB.Get(isolate);
 }
