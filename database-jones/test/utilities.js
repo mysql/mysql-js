@@ -29,29 +29,35 @@ var path    = require("path"),
     assert  = require("assert"),
     jones   = require("database-jones"),
     test_conn_properties,
+    test_adapter,
     dbServiceProvider,
     metadataManager;
 
 
 function getConnectionProperties(adapter, deployment, base_properties) {
   var testEnvProperties = base_properties || {};
+
+  test_adapter = adapter;
   testEnvProperties.implementation = adapter;
-
   test_conn_properties = new jones.ConnectionProperties(testEnvProperties, deployment);
-  dbServiceProvider = jones.getDBServiceProvider(adapter);
-  metadataManager = dbServiceProvider.getDBMetadataManager(test_conn_properties);
-
   return test_conn_properties;
 }
 
+function getMetadataManager() {
+  if(! dbServiceProvider) {
+    dbServiceProvider = jones.getDBServiceProvider(test_adapter);
+    metadataManager = dbServiceProvider.getDBMetadataManager(test_conn_properties);
+  }
+  return metadataManager;
+}
 
 /** Metadata management */
 global.sqlCreate = function(suite, callback) {
-  metadataManager.createTestTables(suite.name, suite.path, callback);
+  getMetadataManager().createTestTables(suite.name, suite.path, callback);
 };
 
 global.sqlDrop = function(suite, callback) {
-  metadataManager.dropTestTables(suite.name, suite.path, callback);
+  getMetadataManager().dropTestTables(suite.name, suite.path, callback);
 };
 
 
