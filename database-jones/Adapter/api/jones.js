@@ -76,7 +76,7 @@ exports.TableMapping = require("./TableMapping").TableMapping;
 
 exports.Projection   = require("./Projection").Projection;
 
-function getDBServiceProvider(impl_name) {
+function getDBServiceProviderModule(impl_name) {
   var externalModule = "jones-" + impl_name;
   var service;
   
@@ -88,10 +88,15 @@ function getDBServiceProvider(impl_name) {
     throw e;
   }
 
-  /* Now verify that the module can load its dependencies.  
+  return service;
+}
+
+function getDBServiceProvider(impl_name) {
+  var service = getDBServiceProviderModule(impl_name);
+  /* Now verify that the module can load its dependencies.
      This will throw an exception if it fails.
   */
-  service.loadRequiredModules();  
+  service.loadRequiredModules();
   
   return service;
 }
@@ -164,8 +169,7 @@ exports.ConnectionProperties = function(nameOrProperties, deployment) {
   udebug.log("ConnectionProperties", impl);
 
   /* Fetch the Service Provider */
-  serviceProvider = getDBServiceProvider(impl);
-  assert(serviceProvider, "Could not fetch service provider " + impl);
+  serviceProvider = getDBServiceProviderModule(impl);
 
   /* Fetch the default connection properties for the service provider */
   defaultProps = serviceProvider.getDefaultConnectionProperties();
