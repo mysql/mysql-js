@@ -287,20 +287,20 @@ NdbSession.prototype.buildScanOperation = function(queryHandler, properties,
 /* buildReadProjectionOperation
    IMMEDIATE
 */
-NdbSession.prototype.buildReadProjectionOperation = function(indexHandler, 
+NdbSession.prototype.buildReadProjectionOperation = function(dbIndexHandler,
                                             keys, projection, tx, callback) {
   /* If the "join" involves only one table, it is more efficient to run
      it as a ReadOperation */
   if(projection.sectors.length == 1) {
     stats.oneTableProjections++;
-    return this.buildReadOperation(indexHandler, keys, tx, callback);
+    return this.buildReadOperation(dbIndexHandler, keys, tx, callback);
   }
 
   if(udebug.is_debug())
     udebug.log("Projection Read from",
                dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
-  var op = ndboperation.newProjectionOperation(this.impl, tx, indexHandler,
+  var op = ndboperation.newProjectionOperation(this.impl, tx, dbIndexHandler,
                                                keys, projection);
   op.userCallback = callback;
   return op;
