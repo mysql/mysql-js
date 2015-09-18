@@ -40,7 +40,7 @@ V8WrapperFn getColumnOffset_wrapper,
 
 class RecordEnvelopeClass : public Envelope {
 public:
-  RecordEnvelopeClass() : Envelope("Record") {
+  RecordEnvelopeClass() : Envelope("const Record") {
     addMethod("getColumnOffset", getColumnOffset_wrapper);
     addMethod("getBufferSize", getBufferSize_wrapper);
     addMethod("setNull", setNull_wrapper);
@@ -57,7 +57,6 @@ RecordEnvelopeClass RecordEnvelope;
 *****/
 Local<Value> Record_Wrapper(const Record *rec) {
   Local<Value> js_record = RecordEnvelope.wrap(rec);
-  RecordEnvelope.freeFromGC(rec, js_record);
   return js_record;
 }
 

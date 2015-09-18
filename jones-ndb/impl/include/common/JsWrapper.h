@@ -90,14 +90,42 @@ inline void check_class_id(const char *a, const char *b) {
 #define CHECK_CLASS_ID(env, PTR)
 #endif
 
-///*  Delete a native C++ object when the Garbage Collector reclaims its
-//    JavaScript handle.
-//*/
-//template<typename PTR>
-//void onGcReclaim(const WeakCallbackData<Object, PTR> data) {
-//  PTR ptr = data.GetParameter();
-//  if(ptr) delete ptr;
-//}
+/*  Delete a native C++ object when the Garbage Collector reclaims its
+    JavaScript handle.
+    The GcReclaimer holds the pointer to be deleted, its classname for
+    debugging output, and the weak JS reference (which should be Reset).
+*/
+template<typename CPP_OBJECT> class GcReclaimer;  // forward declaration
+
+template<typename CPP_OBJECT>
+void onGcReclaim(const WeakCallbackData<Value, GcReclaimer<CPP_OBJECT> > & data) {
+  GcReclaimer<CPP_OBJECT> * reclaimer = data.GetParameter();
+  reclaimer->reclaim();
+  delete reclaimer;
+}
+
+template<typename CPP_OBJECT> class GcReclaimer {
+public:
+  GcReclaimer(const char * cls, CPP_OBJECT * p) : classname(cls), ptr(p)   { }
+
+  void SetWeakReference(Isolate *isolate, Handle<Value> obj) {
+    notifier.Reset(isolate, obj);
+    notifier.MarkIndependent();
+    notifier.SetWeak(this, onGcReclaim<CPP_OBJECT>);
+  }
+
+  void reclaim() {
+    delete ptr;
+    DEBUG_PRINT_DETAIL("GC Reclaim %s %p", classname, ptr);
+    notifier.Reset();
+  }
+
+private:
+  const char * classname;
+  CPP_OBJECT * ptr;
+  Persistent<Value> notifier;
+};
+
 
 /*****************************************************************
  An Envelope is a simple structure providing some safety 
@@ -190,14 +218,11 @@ public:
    (if you hold a const pointer to something, you probably don't own its
    memory allocation).
    ******************************************************************/
-  template<typename PTR> 
-  void freeFromGC(PTR ptr, Handle<Value> obj) {
+  template<typename P>
+  void freeFromGC(P * ptr, Handle<Value> obj) {
     if(ptr) {
-      Persistent<Object> notifier;
-      notifier.Reset(isolate, obj->ToObject());
-      notifier.MarkIndependent();
-//      TODO: Figure this out
-//      notifier.SetWeak((void *) ptr, onGcReclaim<PTR>);
+      GcReclaimer<P> * reclaimer = new GcReclaimer<P>(classname, ptr);
+      reclaimer->SetWeakReference(isolate, obj);
     }
   }
 };

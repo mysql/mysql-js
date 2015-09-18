@@ -50,6 +50,11 @@ inline ColumnProxy::ColumnProxy() :
   jsValue(), blobBuffer(), isNull(false), isLoaded(false), isDirty(false)
 {}
 
+inline ColumnProxy::~ColumnProxy() {
+  jsValue.Reset();
+  blobBuffer.Reset();
+}
+
 inline void ColumnProxy::setHandler(const ColumnHandler *h) {
   handler = h;
 }
