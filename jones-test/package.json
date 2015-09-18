@@ -12,7 +12,7 @@
   ,
   "bugs"        : { "url" : "http://github.com/jdduncan/jones-test/issues"}
   ,
-  "license"     : "GPL2"
+  "license"     : "GPL-2.0"
   ,
   "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
                     "Craig Russell <craig.russell@oracle.com>" ]
