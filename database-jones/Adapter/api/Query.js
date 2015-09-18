@@ -468,7 +468,11 @@ var AbstractQueryComparator = function() {
 AbstractQueryComparator.prototype = new AbstractQueryPredicate();
 
 AbstractQueryComparator.prototype.inspect = function() {
-  return this.queryField.field.fieldName + this.comparator + this.parameter.inspect();
+  var parameterValue = this.parameter;
+  if (typeof this.parameter === 'object' && this.parameter.constructor.name == 'QueryParameter') {
+    parameterValue = this.parameter.inspect();
+  }
+  return this.queryField.field.fieldName + this.comparator + parameterValue;
 };
 
 AbstractQueryComparator.prototype.visit = function(visitor) {
@@ -553,8 +557,16 @@ QueryBetween = function(queryField, parameter1, parameter2) {
 QueryBetween.prototype = new AbstractQueryComparator();
 
 QueryBetween.prototype.inspect = function() {
-  return this.queryField.inspect() + ' BETWEEN ' + this.parameter1.inspect() + 
-    ' AND ' + this.parameter2.inspect();
+  var parameterValue1 = this.parameter1;
+  var parameterValue2 = this.parameter2;
+  if (typeof this.parameter1 === 'object' && this.parameter1.constructor.name == 'QueryParameter') {
+    parameterValue1 = this.parameter1.inspect();
+  }
+  if (typeof this.parameter2 === 'object' && this.parameter1.constructor.name == 'QueryParameter') {
+    parameterValue1 = this.parameter1.inspect();
+  }
+
+  return this.queryField.inspect() + ' BETWEEN ' + parameterValue1 + ' AND ' + parameterValue2;
 };
 
 QueryBetween.prototype.visit = function(visitor) {
