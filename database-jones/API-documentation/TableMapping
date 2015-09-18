@@ -127,7 +127,10 @@ function TableMapping(tableName_or_tableMapping) {};
    Similarly, Session.find() can take the mapped constructor, retrieve an object
    based on keys, and then use the constructor to create a fully-fledged domain
    object.
-   
+
+   Also, the class can be used in Projections to select a subset of columns to
+   retrieve when finding objects in the database.
+
    @param constructor {Function} Constructor of mapped class
    @return constructor
 */
