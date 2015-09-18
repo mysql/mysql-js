@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -61,16 +61,29 @@ function Discount(id, description, percent) {
   }  
 }
 
+function Shipment(id, customerid, value) {
+  if (typeof id != undefined) {
+    this.id = id;
+    this.customerid = customerid;
+    this.value = value;
+  }
+}
+
 function mapCustomer() {
   // map customer
   var customerMapping = new mynode.TableMapping('customer');
   customerMapping.mapField('id');
   customerMapping.mapField('firstName', 'firstname');
   customerMapping.mapField('lastName', 'lastname');
-  customerMapping.mapOneToOne( { 
-    fieldName:  'shoppingCart', 
-    target:      ShoppingCart, 
-    targetField: 'customer' 
+  customerMapping.mapOneToOne( {
+    fieldName:  'shoppingCart',
+    target:      ShoppingCart,
+    targetField: 'customer'
+  } );
+  customerMapping.mapOneToMany( {
+    fieldName:  'shipments',
+    target:      Shipment,
+    targetField: 'customer'
   } ); 
   customerMapping.mapManyToMany( {
     fieldName:   'discounts',
@@ -79,6 +92,19 @@ function mapCustomer() {
   } );
 
   customerMapping.applyToClass(Customer);
+}
+
+function mapShipment() {
+  var shipmentMapping = new mynode.TableMapping('shipment');
+  shipmentMapping.mapField('id');
+  shipmentMapping.mapField('value');
+  shipmentMapping.mapManyToOne( {
+    fieldName:  'customer',
+    foreignKey: 'fkcustomerid',
+    target:     Customer
+  });
+
+  shipmentMapping.applyToClass(Shipment);
 }
 
 function mapShoppingCart() {
@@ -234,9 +260,10 @@ function mapShop() {
   mapItem();
   mapDiscount();
   mapCustomerDiscount();
+  mapShipment();
 }
 
-var shopDomainObjects = [Customer, ShoppingCart, LineItem, Item, Discount, CustomerDiscount];
+var shopDomainObjects = [Customer, ShoppingCart, LineItem, Item, Discount, CustomerDiscount, Shipment];
 
 function createLineItem(line, quantity, itemid) {
   var result = new LineItem();
@@ -378,3 +405,4 @@ exports.verifyFK = verifyFK;
 exports.verifyProjection = verifyProjection;
 exports.shopDomainObjects = shopDomainObjects;
 exports.createLineItem = createLineItem;
+exports.Shipment = Shipment;

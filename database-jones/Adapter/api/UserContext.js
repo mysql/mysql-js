@@ -1303,13 +1303,21 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   continueValidation = function() {
     // are there any more?
     if (projections.length > ++index) {
+      projection = projections[index];
+      if (projection.error != '') {
+        udebug.log('continueValidation projection.error:', projection.error);
+        // this projection is in error so don't process it any more
+        errors += projection.error;
+        // go on to the next projection
+        continueValidation();
+      }
       // do the next projection; see if the domain object already has its table handler
       if (projections[index].domainObject.prototype.jones.dbTableHandler) {
-        udebug.log('validateProjection with cached tableHandler for', projections[index].domainObject.name);
+        udebug.log('continueValidation with cached tableHandler for', projections[index].domainObject.name);
         validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.jones.dbTableHandler);
       } else {
         // get the table handler the hard way (asynchronously)
-        udebug.log('validateProjection with no cached tableHandler for', projections[index].domainObject.name);
+        udebug.log('continueValidation with no cached tableHandler for', projections[index].domainObject.name);
         getTableHandler(projections[index].domainObject, session, validateProjectionOnTableHandler);
       }
     } else {
@@ -1321,8 +1329,6 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // no errors yet
           // we are done getting all of the table handlers for the projection; now create the sectors
           projection.sectors = [];
-//          index = 0;
-//          offset = 0;
           // create the first sector; additional sectors will be created recursively
           // the first sector describes the top level projection; each subsequent sector
           // describes a nested projection in the top level projection
@@ -1354,7 +1360,14 @@ exports.UserContext.prototype.validateProjection = function(callback) {
 
 
   // validateProjection starts here
-  // projection: {domainObject:<constructor>, fields: [field, field], relationships: {field: {projection}, field: {projection}}
+  // projection: {
+  //   domainObject:<constructor>,
+  //   fields: [field, field],
+  //   relationships: {
+  //     field: {projection},
+  //     field: {projection
+  //   }
+  // }
   // first check to see if the projection is already validated. If so, we are done.
   // the entire projection including all referenced relationships must be checked because a relationship
   // might have changed since it was last validated.
@@ -1365,8 +1378,11 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   } else {
     // set up to iteratively validate projection starting with the user parameter
     projections = [this.user_arguments[0]]; // projections will grow at the end as validation proceeds
+    if (udebug.is_debug()) udebug.log('validateProjection for', projections[0].name,
+        'for domain object:', projections[0].domainObject.prototype.constructor.name,
+        'with projection error:', projections[0].error);
     index = 0;                              // index into projections for the projection being validated
-    errors = '';                            // errors in validation
+    errors = projections[0].error;          // initialize errors in validation
     mappingIds = [];                        // mapping ids seen so far
 
     // the projection is not already validated; check to see if the domain object already has its dbTableHandler
