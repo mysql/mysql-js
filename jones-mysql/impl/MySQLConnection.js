@@ -673,7 +673,6 @@ function initializeProjection(projection) {
     // set up the table names
     sector.tableName = sector.tableHandler.dbTable.database + '.' + sector.tableHandler.dbTable.name;
     sectorName = 't' + i;
-//    parentSectorName = 't' + (i - 1);
     parentSectorName = 't' + sector.parentSectorIndex;
     joinType = '';
     on = '';
@@ -686,7 +685,6 @@ function initializeProjection(projection) {
         // ... t1 LEFT OUTER JOIN customerdiscount AS t15 on [t1.k = t15.k and...] 
         //     LEFT OUTER JOIN discount AS t2 on [t15.k = t2.k and ...]
         sector.joinTableName = sector.joinTableHandler.dbTable.database + '.' + sector.joinTableHandler.dbTable.name;
-//        sector.joinTableAlias = parentSectorName + 'J';
         sector.joinTableAlias = sectorName + 'JOIN';
         udebug.log_detail('initializeProjection join table handling for', sector.joinTableName, 'AS', sector.joinTableAlias,
             'thisForeignKey.columnNames', sector.parentFieldMapping.thisForeignKey.columnNames,
@@ -825,12 +823,12 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     return false;
   }
   
-  /** Set to null those tuples starting at tupleStart to the end of the tuples array */
-  function resetTuples(tupleStart) {
-    var tupleIndex;
-    for (tupleIndex = tupleStart; tupleIndex < op.tuples.length; ++tupleIndex) {
-      op.tuples[tupleIndex] = null;
-    }
+  /** Set to null the children of this sector recursively */
+  function resetTuples(sectorIndex) {
+    op.sectors[sectorIndex].childSectorIndexes.forEach(function(childSectorIndex) {
+      op.tuples[childSectorIndex] = null;
+      resetTuples(childSectorIndex);
+    });
   }
 
   /** Process this sector (recursively) [experimental] */
@@ -839,6 +837,28 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     op.sectors[sector].childSectorIndexes.forEach(function(sectorIndex) {
       processSector(sectorIndex, row);
     });
+  }
+
+  /** Find the tuple corresponding to this row in the parent field. For each candidate
+   * object in the parent field, compare keys in the row with key fields in the object.
+   * Return null if none of the parent field elements matches this row.
+   */
+  function findResultTupleInParent(row, sector) {
+    var result = null;
+    var parent = op.sectors[sector.parentSectorIndex];
+    if (udebug.is_detail()) udebug.log_detail('onResult.findResultTupleInParent parent', parent);
+    var candidates = op.tuples[sector.parentSectorIndex][sector.parentFieldMapping.fieldName];
+    var i;
+    if (candidates) {
+      for (i = 0; i < candidates.length; ++i) {
+        var candidate = candidates[i];
+        if (isRowSectorKeyEqual(row, sector, candidate)) {
+          result = candidate;
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   function onResult(row) {
@@ -852,15 +872,29 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     // process the row by sector, left to right
     udebug.log_detail('onResult processing row with', op.sectors.length, 'sectors:\n', row);
     processSector(0, row); // experimental for now
-    // do each sector in turn
+    // do each sector in turn; the parent sector will always be processed before any of its children
     for (i = 0; i < op.sectors.length; ++i) {
       sector = op.sectors[i];
+      udebug.log_detail('onResult sector:', i, sector.projection.name);
       tuple = op.tuples[i];
+      if (i == 0) {
+        // root object handling; root will never be null
+        if (!isRowSectorKeyEqual(row, sector, tuple)) {
+          // create a new domain object from this row
+          op.tuples[0] = sector.tableHandler.newResultObjectFromRow(row, 'mysql',
+              sector.offset, sector.keyFields, sector.nonKeyFields,
+              sector.toManyRelationships, sector.toOneRelationships);
+          // the child tuples belong to the previous tuple
+          resetTuples(0);
+        }
+        // we are done with this (root) sector
+        continue;
+      }
       parentSectorIndex = sector.parentSectorIndex;
-      // if the keys in the row for this sector are null set the related object if any
+      // if the keys in the row for this sector are null set the parent field to default
       if (isRowSectorKeyNull(row, sector)) {
-        // if there is a relationship, set the value to the default for the relationship
-        if (i > 0 && sector.parentFieldMapping) {
+        if (op.tuples[parentSectorIndex] != null) {
+        // if there is a parent, set the parent relationship value to the default
           if (sector.parentFieldMapping.toMany) {
             // null toMany relationships are represented by an empty array
             nullValue = [];
@@ -869,33 +903,44 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
           }
           op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = nullValue;
         }
+        // reset the children of this tuple since they belong to the previous value
+        op.tuples[i] = null;
         resetTuples(i);
-        break;
+        // and we are done with this sector
+        continue;
       }
       // compare the keys of the row with the keys of the current object
-      if (!isRowSectorKeyEqual(row, sector, tuple)) {
-        // keys do not match the current object; create a new one
+      if (isRowSectorKeyEqual(row, sector, tuple)) {
+        // we have already processed this object
+        continue;
+      }
+      // keys do not match the current object; see if it matches one of the parent objects
+      if (sector.parentFieldMapping.toMany) {
+        tuple = findResultTupleInParent(row, sector);
+      } else {
+        tuple = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName];
+      }
+      if (tuple == null) {
+        // haven't seen this before; create a new tuple from the row
         tuple = sector.tableHandler.newResultObjectFromRow(row, 'mysql',
             sector.offset, sector.keyFields, sector.nonKeyFields,
             sector.toManyRelationships, sector.toOneRelationships);
-        op.tuples[i] = tuple;
         // the rest of the tuples belong to the previous object
-        resetTuples(i + 1);
         // assign the new object to the relationship field of the previous object
-        if (i > 0) {
-          if (sector.parentFieldMapping.toMany) {
-            // relationship is an array
-            relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName];
-            if (!relationship) {
-              relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = [];
-            }
-            relationship.push(tuple);
-          } else {
-            // relationship is a reference
-            op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = tuple;
+        if (sector.parentFieldMapping.toMany) {
+          // relationship is an array
+          relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName];
+          if (!relationship) {
+            relationship = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = [];
           }
+          relationship.push(tuple);
+        } else {
+          // relationship is a reference
+          op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName] = tuple;
         }
       }
+      op.tuples[i] = tuple;
+      resetTuples(i);
     }
   }
 

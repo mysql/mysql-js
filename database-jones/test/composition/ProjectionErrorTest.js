@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -170,25 +170,20 @@ t5.run = function() {
 
 t6.run = function() {
   var testCase = this;
-  var session;
-  var expectedErrorMessage = 'constructor for Unmapped';
+  var expectedErrorMessage = 'mapped domain object';
+  var unmapped;
   function Unmapped() {}
-  var unmappedProjection = new mynode.Projection(Unmapped);
-  lib.mapShop();
-
-  fail_openSession(testCase, function(s) {
-    session = s;
-    session.find(unmappedProjection, '100').
-    then(function(actualCustomer) {
-      testCase.fail('t6 Unexpected success of find with error projection.');
-    }, function(err) {
-      if (err.message.indexOf(expectedErrorMessage) === -1) {
-        testCase.fail('t6 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
-      } else {
-        testCase.pass();
-      }
-    });
-  });
+  try {
+    unmapped = new mynode.Projection(Unmapped);
+    testCase.fail('unexpected success for unmapped domain object: ' + unmapped);
+  } catch(err) {
+    // good catch; make sure error message is right
+    if (err.message.indexOf(expectedErrorMessage) === -1) {
+      testCase.fail('t6 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
+    } else {
+      testCase.pass();
+    }
+  }
 };
 
 t7.run = function() {
@@ -313,10 +308,10 @@ t10.run = function() {
     session = s;
     session.find(badCustomerProjection, '100').
     then(function(actualCustomer) {
-      testCase.fail('t9 Unexpected success of find with error projection.' + util.inspect(actualCustomer));
+      testCase.fail('t10 Unexpected success of find with error projection.' + util.inspect(actualCustomer));
     }, function(err) {
       if (err.message.indexOf(expectedErrorMessage) === -1) {
-        testCase.fail('t9 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
+        testCase.fail('t10 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
       } else {
         testCase.pass();
       }
@@ -355,10 +350,10 @@ t11.run = function() {
     session = s;
     session.find(badCustomerProjection, '100').
     then(function(actualCustomer) {
-      testCase.fail('t9 Unexpected success of find with error projection.' + util.inspect(actualCustomer));
+      testCase.fail('t11 Unexpected success of find with error projection.' + util.inspect(actualCustomer));
     }, function(err) {
       if (err.message.indexOf(expectedErrorMessage) === -1) {
-        testCase.fail('t9 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
+        testCase.fail('t11 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
       } else {
         testCase.pass();
       }

@@ -25,9 +25,9 @@ var udebug       = unified_debug.getLogger("Projection.js"),
     doc          = require(path.join(jones.fs.api_doc_dir, "Projection"));
 
 function Projection(domainObject) {
-  if (typeof domainObject === 'function') {
+  if (typeof domainObject === 'function' && domainObject.prototype.jones && domainObject.prototype.jones.mapping) {
     this.domainObject = domainObject;
-    this.name = domainObject.name;
+    this.name = domainObject.name + 'Projection';
     this.validated = false; // this projection has not been validated or has changed since validation
     this.id = 0;            // initial value for projection id; when validated it will be 1
     this.fields = [];
@@ -35,7 +35,10 @@ function Projection(domainObject) {
     this.usedBy = [];
     this.error = '';
   } else {
-    this.error = 'The parameter of Projection constructor must be a domain object (constructor function).';
+    // there is nothing that we can do with a Projection with an invalid domain object
+    throw new Error(
+        'The parameter of Projection constructor must be a mapped domain object (constructor function). ' +
+        '@See TableMapping.applyToClass');
   }
 }
 
@@ -45,10 +48,15 @@ function Projection(domainObject) {
  * @param toBeInvalidated an array of projections to be invalidated.
  */
 function invalidateAll(toBeInvalidated) {
+  var ps = '';
+  toBeInvalidated.forEach(function(p) {
+    ps += ' ' + p.name;
+  });
   if (toBeInvalidated.length === 0) {
     return;
   }
   var projection = toBeInvalidated.shift();
+  if (projection.error != '') return;
   projection.validated = false;
   projection.usedBy.forEach(function(used) {
     toBeInvalidated.push(used);
@@ -58,6 +66,8 @@ function invalidateAll(toBeInvalidated) {
 
 Projection.prototype.addFields = function() {
   var projection = this;
+  // if this projection is in error just return
+  if (projection.error != '') return;
   var toBeInvalidated = [this];
   invalidateAll(toBeInvalidated);
   var i, j;
@@ -92,9 +102,10 @@ Projection.prototype.addField = Projection.prototype.addFields;
 
 Projection.prototype.addRelationship = function(fieldName, relationshipProjection) {
   var projection = this;
+  // if this projection is in error just return
+  if (projection.error != '') return;
   var toBeInvalidated = [this];
   invalidateAll(toBeInvalidated);
-  var errors = '';
   if (typeof fieldName !== 'string') {
     projection.error += '\nError in addRelationship for ' + projection.domainObject.prototype.constructor.name +
         'fieldName must be a string ' + fieldName;
@@ -104,7 +115,7 @@ Projection.prototype.addRelationship = function(fieldName, relationshipProjectio
     projection.error += '\nError in addRelationship for ' + projection.domainObject.prototype.constructor.name +
         ' parameter relationshipProjection must be a projection for field ' + fieldName;
   }
-  if (!projection.error) {
+  if (projection.error == '') {
     projection.relationships[fieldName] = relationshipProjection;
     // establish the used-by relationship
     relationshipProjection.usedBy.push(this);

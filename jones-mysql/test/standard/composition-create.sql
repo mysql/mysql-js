@@ -3,6 +3,7 @@ drop table if exists testfk.fkdifferentdb;
 
 use test;
 # drop tables in proper order to avoid foreign key constraint violations
+drop table if exists shipment;
 drop table if exists lineitem;
 drop table if exists shoppingcart;
 drop table if exists customerdiscount;
@@ -12,6 +13,7 @@ drop table if exists discount;
 
 # Customer has a oneToZeroOrOne relationship to ShoppingCart
 # Customer has a manyToMany relationship to Discount via table customerdiscount
+# Customer has a oneToZeroOrOne relationship to Shipment
 create table customer (
   id int not null,
   firstname varchar(32),
@@ -65,10 +67,27 @@ create table customerdiscount(
   primary key (customerid, discountid)
 );
 
+# Shipment has a many to one relationship to Customer
+create table shipment(
+  id int not null primary key,
+  customerid int not null,
+  foreign key fkcustomerid(customerid) references customer(id),
+  value decimal(30, 2)
+);
+
 insert into customer(id, firstname, lastname) values (100, 'Craig', 'Walton');
 insert into customer(id, firstname, lastname) values (101, 'Sam', 'Burton');
 insert into customer(id, firstname, lastname) values (102, 'Wal', 'Greeton');
 insert into customer(id, firstname, lastname) values (103, 'Burn', 'Sexton');
+
+insert into shipment(id, customerid, value) values (10000, 100, 120.99);
+insert into shipment(id, customerid, value) values (10001, 100, 130);
+insert into shipment(id, customerid, value) values (10100, 101, 1320.87);
+insert into shipment(id, customerid, value) values (10102, 101, 144.44);
+insert into shipment(id, customerid, value) values (10200, 102, 45.87);
+insert into shipment(id, customerid, value) values (10201, 102, 67.44);
+insert into shipment(id, customerid, value) values (10202, 102, 80.89);
+insert into shipment(id, customerid, value) values (10203, 102, 1045.87);
 
 insert into shoppingcart(id, customerid) values(1000, 100);
 insert into shoppingcart(id, customerid) values(1002, 102);

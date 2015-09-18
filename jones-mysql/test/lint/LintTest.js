@@ -34,6 +34,11 @@ more(harness.getLintTestsForDirectory(config.impl_dir));
 more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
 more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
 
+//mysql
+harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");
+harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");
+harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");
+
 // impl
 harness.ignoreLint("MySQLDictionary.js",7,"Missing 'break' after 'case'.");
 harness.ignoreLint("MysqlErrToSQLStateMap.js", 60, "Unexpected ','");
