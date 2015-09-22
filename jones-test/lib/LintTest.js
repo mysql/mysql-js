@@ -55,7 +55,7 @@ try {
 catch(e1) {
   try {
     lintModule = require("jslint");
-    linter = lintModule.load("2012-02-03");
+    linter = lintModule.load("es5");
     assert(typeof linter === 'function');
     haveJsLint = true;  // newer node-jslint
   }
