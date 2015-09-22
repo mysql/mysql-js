@@ -117,10 +117,10 @@ t4.run = function() {
 var t5 = new harness.ConcurrentTest("t5_datetime_odd");
 t5.run = function() {
   this.skip("Test requires API changes");
-  var data = new TestData(5);
-  //data.Datetime5 = new Date("
+  // var data = new TestData(5);
+  // data.Datetime5 = new Date("
   // this.verifier = new ValueVerifier(this, "Datetime5", ... );
-  //fail_openSession(this, getInsertFunction(data));
+  // fail_openSession(this, getInsertFunction(data));
 };
 
 // Timestamp6.  Precision will be lost.

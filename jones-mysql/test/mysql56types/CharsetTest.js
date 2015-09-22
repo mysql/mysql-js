@@ -32,7 +32,7 @@ function TestData() {
 }
 
 function ErrorVerifier(testCase, sqlState) {
-  this.run = function onRead(err, rowRead) {
+  this.run = function onRead(err) {
     var message = "Expected SQLState " + sqlState;
     if(testCase.errorIfUnset(message, err && err.cause && err.cause.sqlstate)) 
     {

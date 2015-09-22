@@ -43,7 +43,8 @@ var lintOptions = {
   "bitwise"   : true,     // allow bitwise operators
   "ass"       : true,     // allow assignment expressions
   "todo"      : true,     // allow TODO comments
-  "regexp"    : true      // allow . and [^ ...] in regular expressions
+  "regexp"    : true,     // allow . and [^ ...] in regular expressions
+  "unparam"   : true      // allow unused parameters
 };
 
 var jslintLoaderError;

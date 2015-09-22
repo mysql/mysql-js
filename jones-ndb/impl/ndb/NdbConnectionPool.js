@@ -346,7 +346,7 @@ DBConnectionPool.prototype.getDBSession = function(index, user_callback) {
 function makeGroupCallback(dbSession, container, key) {
   stats.group_callbacks_created++;
   var groupCallback = function(param1, param2) {
-    var callbackList, i, nextCall;
+    var callbackList, i;
 
     /* Run the user callbacks on our list */
     callbackList = container[key];

@@ -108,7 +108,7 @@ t4.run = function() {
 
 var t5 = new harness.ConcurrentTest("t5:Utf16Text");
 t5.run = function() {
-  var i, data, verifier;
+  var data, verifier;
   data = new TextCharsetData();
   data.utf16_text = "  Send a ☃ to college!  ";
   verifier = new ValueVerifier(this, "utf16_text", data.utf16_text);
@@ -122,7 +122,7 @@ t5.run = function() {
 
 var t6 = new harness.ConcurrentTest("t6:Latin1Text");
 t6.run = function() {
-  var i, data, verifier;
+  var data, verifier;
   data = new TextCharsetData();
   data.latin1_text = "gøød b¥te-stream éncØding of multi-byte Çhâracter sets.";
   verifier = new ValueVerifier(this, "latin1_text", data.latin1_text);
