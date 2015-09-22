@@ -27,6 +27,7 @@
 #include "adapter_global.h"
 #include "unified_debug.h"
 #include "BlobHandler.h"
+#include "JsWrapper.h"
 
 
 // BlobHandler constructor
@@ -81,10 +82,10 @@ int BlobReadHandler::runActiveHook(NdbBlob *b) {
   return 0;
 }
 
-v8::Local<v8::Object> BlobReadHandler::getResultBuffer() {
+v8::Local<v8::Object> BlobReadHandler::getResultBuffer(v8::Isolate * iso) {
   v8::Local<v8::Object> buffer;
   if(content) {
-    buffer = node::Buffer::New(content, length, freeBufferContentsFromJs, 0);
+    buffer = LOCAL_BUFFER(node::Buffer::New(iso, content, length, freeBufferContentsFromJs, 0));
     /* Content belongs to someone else now; clear it for the next user */
     content = 0;
     length = 0;

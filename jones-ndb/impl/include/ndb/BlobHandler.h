@@ -49,7 +49,7 @@ public:
   BlobReadHandler(int columnId, int fieldNumber);
   void prepare(const NdbOperation *);
   int runActiveHook(NdbBlob *);
-  v8::Local<v8::Object> getResultBuffer();
+  v8::Local<v8::Object> getResultBuffer(v8::Isolate *);
 };  
 
 
