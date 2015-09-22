@@ -405,13 +405,13 @@ DBTransactionHandler.prototype.execute = function(dbOperationList, userCallback)
   }
   
   if(this.autocommit) {
-    if(udebug.is_debug()) udebug.log("Execute -- AutoCommit", this.moniker);
+    if(udebug.is_debug()) { udebug.log("Execute -- AutoCommit", this.moniker); }
     stats.execute.commit++;
     this.dbSession.retireTransactionHandler();
     execute(this, COMMIT, AO_IGNORE, dbOperationList, userCallback);
   }
   else {
-    if(udebug.is_debug()) udebug.log("Execute -- NoCommit", this.moniker);
+    if(udebug.is_debug()) { udebug.log("Execute -- NoCommit", this.moniker); }
     stats.execute.no_commit++;
     execute(this, NOCOMMIT, AO_IGNORE, dbOperationList, userCallback);
   }
@@ -427,7 +427,6 @@ DBTransactionHandler.prototype.commit = function commit(userCallback) {
   assert(this.autocommit === false);
   udebug.log("commit");
   stats.commit++;
-  var execId;
 
   this.dbSession.retireTransactionHandler();
   if(this.impl) {
@@ -448,7 +447,6 @@ DBTransactionHandler.prototype.rollback = function rollback(userCallback) {
   assert(this.autocommit === false);
   udebug.log("rollback");
   stats.rollback++;
-  var execId;
 
   this.dbSession.retireTransactionHandler();
   if(this.impl) {

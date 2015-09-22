@@ -20,10 +20,6 @@
 
 "use strict";
 
-try {
-  require("./suite_config.js");
-} catch(e) {} 
-
 var assert = require("assert");
 var util = require("util");
 var spi_lib = require("./lib.js");

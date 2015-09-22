@@ -44,7 +44,8 @@ var lintOptions = {
   "ass"       : true,     // allow assignment expressions
   "todo"      : true,     // allow TODO comments
   "regexp"    : true,     // allow . and [^ ...] in regular expressions
-  "unparam"   : true      // allow unused parameters
+  "unparam"   : true,     // allow unused parameters,
+  "debug"     : true      // allows empty blocks
 };
 
 var jslintLoaderError;

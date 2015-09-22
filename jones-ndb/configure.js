@@ -46,7 +46,7 @@ switch(process.arch) {
     throw "Architecture " + process.arch + " unsupported.";
 }
 
-var path_sep = ( typeof path.sep == 'undefined' ? '/' : path.sep);
+var path_sep = ( path.sep === undefined ? '/' : path.sep);
  
 archname = String(archbits) + '-bit';
 
@@ -178,7 +178,7 @@ function completion(line) {
     try {
       files = fs.readdirSync(dir);
     }
-    catch(e) {}
+    catch(ignore) {}
   }
  
  if(line.slice(-1) == path_sep) {
@@ -201,9 +201,9 @@ function completion(line) {
   if(matches.length == 1) {
     try {
       stat = fs.statSync(matches[0]);
-      if(stat.isDirectory()) matches[0] += path_sep;
+      if(stat.isDirectory()) { matches[0] += path_sep; }
     }
-    catch(e) {}
+    catch(ignore) {}
   }
   
   return [matches, line];
@@ -213,10 +213,11 @@ function completion(line) {
 ///// ****** MAIN ROUTINE STARTS HERE ****** /////
 function main() {
   var candidates;
-  if(process.platform == 'win32')
+  if(process.platform == 'win32') {
     candidates = get_candidates_windows();
-  else
+  } else {
     candidates = get_candidates();
+  }
   var text = build_prompt(candidates);
   var rl = readline.createInterface(process.stdin, process.stdout, completion);
 

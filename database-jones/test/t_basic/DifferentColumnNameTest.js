@@ -23,11 +23,11 @@ var udebug = unified_debug.getLogger("t_basic/DifferentColumnName.js");
 
 // Map a domain class with field names different from column names
 var Different = function(id, name, age, magic) {
-  this.getId = function() {return this.fid;};
-  if (typeof(id) !== 'undefined') this.fid = id;
-  if (typeof(name) !== 'undefined') this.fname = name;
-  if (typeof(age) !== 'undefined') this.fage = age;
-  if (typeof(magic) !== 'undefined') this.fmagic = magic;
+  this.getId = function() { return this.fid; };
+  if (id !== undefined)    { this.fid = id;       }
+  if (name !== undefined)  { this.fname = name;   }
+  if (age !== undefined)   { this.fage = age;     }
+  if (magic !== undefined) { this.fmagic = magic; }
 };
 
 /** Verify the instance or fail the test case */
@@ -36,8 +36,8 @@ var fail_verify_Different = function(err, instance, id, testCase, domainObject) 
     testCase.fail(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.fail(new Error('Result for id ' + id + ' is not an object: ' + typeof(instance)));
+  if (typeof instance !== 'object') {
+    testCase.fail(new Error('Result for id ' + id + ' is not an object: ' + typeof instance));
   }
   if (instance === null) {
     testCase.fail(new Error('Result for id ' + id + ' is null.'));

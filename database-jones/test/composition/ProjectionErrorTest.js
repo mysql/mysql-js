@@ -100,7 +100,6 @@ t3.run = function() {
   var session;
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
   var customerProjection = new mynode.Projection(lib.Customer);
-  var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
   customerProjection.addField('shoppingCart');
   lib.mapShop();
 
@@ -124,7 +123,6 @@ t4.run = function() {
   var session;
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
   var customerProjection = new mynode.Projection(lib.Customer);
-  var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
   customerProjection.addField('shoppingCart');
   lib.mapShop();
 

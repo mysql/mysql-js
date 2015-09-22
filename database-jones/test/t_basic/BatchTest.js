@@ -67,38 +67,40 @@ verifyInsert = function(err, session, start_value, number, testCase) {
   // after the batch insert, verify that the insert occurred
   var j, found_j;
   var completed = 0;
-  for (j = start_value; j < start_value + number; ++j) {
-    session.find(global.t_basic, j, function(err, found, testCase, callback_j, session) {
-      var tx = session.currentTransaction();
-      if (err && !testCase.expectError) {
-        testCase.appendErrorMessage(
-            'BatchTest.verifyInsert find callback for ', j,' failed: ', JSON.stringify(err));
-        return;
+  function onFound(err, found, testCase, callback_j, session) {
+    var tx = session.currentTransaction();
+    if (err && !testCase.expectError) {
+      testCase.appendErrorMessage(
+          'BatchTest.verifyInsert find callback for ', j,' failed: ', JSON.stringify(err));
+      return;
+    }
+    found_j = 'undefined';
+    if (found !== null) {
+      found_j = found.id;
+      if (found_j !== callback_j) {
+        testCase.errorIfNotEqual(
+            'BatchTest.verifyInsert find callback failed', found_j, found.id);
       }
-      found_j = 'undefined';
-      if (found !== null) {
-        found_j = found.id;
-        if (found_j !== callback_j) {
-          testCase.errorIfNotEqual(
-              'BatchTest.verifyInsert find callback failed', found_j, found.id);
-        }
-      }
-      udebug.log('BatchTest.verifyInsert find callback for ', found_j);
-      if (++completed === number) {
-        // end of test case; all callbacks completed
-        if (tx.isActive()) {
-          tx.commit(function(err, session, testCase) {
-            if (err) {
-              testCase.fail(err);
-              return;
-            }
-            testCase.failOnError();
-          }, session, testCase);
-        } else {
+    }
+    udebug.log('BatchTest.verifyInsert find callback for ', found_j);
+    if (++completed === number) {
+      // end of test case; all callbacks completed
+      if (tx.isActive()) {
+        tx.commit(function(err, session, testCase) {
+          if (err) {
+            testCase.fail(err);
+            return;
+          }
           testCase.failOnError();
-        }
+        }, session, testCase);
+      } else {
+        testCase.failOnError();
       }
-    }, testCase, j, session);
+    }
+  }
+
+  for (j = start_value; j < start_value + number; ++j) {
+    session.find(global.t_basic, j, onFound, testCase, j, session);
   }
 };
 

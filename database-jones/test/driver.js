@@ -61,7 +61,7 @@ switch(adapter) {
     driver.addSuitesFromDirectory(a_module.config.suites_dir);
     break;
   case "mysql":         /* MySQL uses the extra argument to set engine */
-    if(extra) properties.mysql_storage_engine = extra;
+    if(extra) { properties.mysql_storage_engine = extra; }
     break;
   default:
     break;

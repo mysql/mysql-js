@@ -31,7 +31,7 @@ try {
   jonesNdb = require("jones-ndb");
   ndbImpl  = require(jonesNdb.config.binary).ndb.impl;
 }
-catch(e) {
+catch(ignore) {
 }
 
 function assertVO(testCase, object, expected) {

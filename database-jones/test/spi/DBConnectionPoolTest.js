@@ -21,11 +21,6 @@
 "use strict";
 
 var fs   = require("fs");
-
-try {
-  require("./suite_config.js");
-} catch(e) {} 
-
 var spi_lib    = require("./lib.js");
     
 /***** 

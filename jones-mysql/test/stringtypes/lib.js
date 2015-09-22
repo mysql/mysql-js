@@ -63,9 +63,10 @@ function BufferVerifier(testCase, field, expectedValue) {
       testCase.errorIfNotEqual("length", len, buffer.length);
       if(len == buffer.length) {
         for(i = 0; i < len ; i++) {
-          testCase.errorIfNotEqual("mismatch at position " + i, 
-                                  expectedValue[i], buffer[i]);
-          if(expectedValue[i] !== buffer[i]) break;
+          if(expectedValue[i] !== buffer[i]) {
+            testCase.error("mismatch at position " + i);
+            break;
+          }
         }
       }
     }

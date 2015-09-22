@@ -53,8 +53,8 @@ driver.addCommandLineOption("", "--set <var>=<value>", "set a connection propert
     var pair = nextArg.split('=');
     if(pair.length === 2) {
       val = pair[1];
-      if(val === 'true') val = true;
-      else if(val === 'false') val = false;
+      if(val === 'true')       { val = true;  }
+      else if(val === 'false') { val = false; }
       cmdLineProperties[pair[0]] = val;
       return 1;
     }

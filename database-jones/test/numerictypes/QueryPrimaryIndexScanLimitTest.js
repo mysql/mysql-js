@@ -83,7 +83,7 @@ testQueries.run = function() {
   testCase.mappings = from;
 
   function onOpenSession(session) {
-    var i = 0, j = 0, completedTestCount = 0, testCount = queryTests.length;
+    var j = 0, completedTestCount = 0, testCount = queryTests.length;
 
     function onExecute(err, results, queryTest) {
       if (queryTest.expectedError) {

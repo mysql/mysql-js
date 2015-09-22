@@ -21,10 +21,10 @@
 
 /** The t_basic domain object */
 global.converter = function(id, name, status, magic) {
-  if (typeof id !== 'undefined') this.id = id;
-  if (typeof name !== 'undefined') this.name = name;
-  if (typeof status !== 'undefined') this.status = status;
-  if (typeof magic !== 'undefined') this.magic = magic;
+  if (id !== undefined)     { this.id = id; }
+  if (name !== undefined)   { this.name = name; }
+  if (status !== undefined) { this.status = status; }
+  if (magic !== undefined)  {this.magic = magic; }
 };
 global.converter.prototype.getStatus = function() {
     return this.status;

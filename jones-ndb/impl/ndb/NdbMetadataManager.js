@@ -36,9 +36,9 @@ function findMetadataScript(suiteName, suitePath, file) {
   path2 = path.join(jonesMysql.config.suites_dir, "standard", suiteName + "-" + file);
   path3 = path.join(suitePath, file);  // MySQL
 
-  if(existsSync(path1)) return path1;
-  if(existsSync(path2)) return path2;
-  if(existsSync(path3)) return path3;
+  if(existsSync(path1)) { return path1; }
+  if(existsSync(path2)) { return path2; }
+  if(existsSync(path3)) { return path3; }
 
   console.log("No path to:", suiteName, file);
 }

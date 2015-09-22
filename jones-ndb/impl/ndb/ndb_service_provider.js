@@ -36,11 +36,11 @@ var udebug  = unified_debug.getLogger("ndb_service_provider.js");
 var NdbMetadataManager, DBConnectionPool;
 try {
   NdbMetadataManager = require("./NdbMetadataManager.js");
-} catch(e1) {}
+} catch(ignore) {}
 
 try {
   DBConnectionPool   = require("./NdbConnectionPool.js").DBConnectionPool;
-} catch(e2) {}
+} catch(ignore) {}
 
 
 exports.loadRequiredModules = function() {

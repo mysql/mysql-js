@@ -23,7 +23,7 @@ var util    = require("util");
 var udebug  = unified_debug.getLogger("ExcludeFieldsTest.js");
 
 function Semistruct(id, name, number, a, c) {
-  if (typeof id !== 'undefined') {
+  if (id !== undefined) {
     this.id = id;
     this.name = name;
     this.number = number;

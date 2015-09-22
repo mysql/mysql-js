@@ -325,7 +325,6 @@ DeleteUserOperation.signature = [ "delete", "user", "<user_name>" ];
 function InsertTweetOperation(params, data) {
   Operation.call(this);    /* inherit */
 
-  var session;
   var message = data;
   var authorName = params[0];
   var tweet = new Tweet(authorName, message);
@@ -487,7 +486,9 @@ function fetchTweetsInBatch(operation, scanResults) {
   var resultData = [];
 
   function addTweetToResults(e, tweet) {
-    if(tweet && ! e) resultData.push(tweet);
+    if(tweet && ! e) {
+      resultData.push(tweet);
+    }
   }
   
   batch = operation.session.createBatch();
@@ -520,7 +521,6 @@ function fetchTweets(operation) {
 */
 function TweetsAtUserOperation(params, data) {
   Operation.call(this);
-  var self = this;
   var tag = params[0];
   if(tag.charAt(0) == "@") {    tag = tag.substring(1);   }
   this.queryClass = Mention;
@@ -535,7 +535,6 @@ TweetsAtUserOperation.signature = [ "get" , "tweets-at" , "<user_name>" ];
 */
 function TweetsByHashtagOperation(params, data) {
   Operation.call(this);
-  var self = this;
   var tag = params[0];
   if(tag.charAt(0) == "#") {    tag = tag.substring(1);   }
   this.queryClass = HashtagEntry;
@@ -569,8 +568,9 @@ function RunWebServerOperation(cli_params, cli_data) {
         operation.responder = new HttpOperationResponder(operation, response);
         sessionFactory.openSession(null).then(function(session) {
           onOpenSession(session, operation); });
-      } 
-      else hangup(400);
+      } else {
+        hangup(400);
+      }
     }
 
     data = "";
@@ -623,7 +623,7 @@ function parse_command(method, params, data) {
 
 
 function get_cmdline_args() { 
-  var i, k, spaces, val, verb, operation;
+  var i, val, verb, operation;
   var cmdList = [];
   var usageMessage = 
     "Usage: node tweet {options} {command} {command arguments}\n" +

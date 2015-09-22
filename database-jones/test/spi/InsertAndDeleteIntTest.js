@@ -20,10 +20,6 @@
 
 "use strict";
 
-try {
-  require("./suite_config.js");
-} catch(e) {} 
-
 var path = require("path"),
     spi_lib = require("./lib.js"),
     dbt     = require(mynode.common.DBTableHandler),

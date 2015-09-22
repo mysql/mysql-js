@@ -65,7 +65,7 @@ function BufferSchema() {
    return the buffer.
 */
 BufferSchema.prototype.encode = function(params) {
-  var i, spec, buffer;
+  var i, buffer;
   buffer = null;
 
   if(this.size > 0) {

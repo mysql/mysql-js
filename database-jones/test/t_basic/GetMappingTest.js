@@ -96,9 +96,8 @@ t4.run = function() {
 };
 
 t4.testGetMapping = function(session, testCase) {
-  var unmappedDomainClass = function() {
-  };
-  session.getMapping(unmappedDomainClass, function(err, result) {
+  function UnmappedDomainClass() { return; }
+  session.getMapping(UnmappedDomainClass, function(err, result) {
     if (err) {
       testCase.pass();
       return;
@@ -113,8 +112,6 @@ t5.run = function() {
 };
 
 t5.testGetMapping = function(session, testCase) {
-  var unmappedDomainClass = function() {
-  };
   try {
     session.getMapping(1, function(err, result) {
       if (!err) {
@@ -134,8 +131,6 @@ t6.run = function() {
 };
 
 t6.testGetMapping = function(session, testCase) {
-  var unmappedDomainClass = function() {
-  };
   try {
     session.getMapping(true, function(err, result) {
       if (!err) {

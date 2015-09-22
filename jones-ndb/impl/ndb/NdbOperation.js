@@ -136,7 +136,7 @@ DBOperationError.prototype.cascading = function(cause) {
 function keepIndexStatistics(dbTable, index) {
   var i, idxStats, keyName;
     
-	if(typeof index_stats[dbTable.name] === 'undefined') {
+	if(index_stats[dbTable.name] === undefined) {
     idxStats = { "PrimaryKey" : 0 };
     for(i = 1 ; i < dbTable.indexes.length ; i++) {
       idxStats[dbTable.indexes[i].name] = 0;
@@ -219,7 +219,7 @@ function encodeFieldsInBuffer(fields, nfields, metadata,
   for(i = 0 ; i < nfields ; i++) {
     column = metadata[i];
     value = fields[i];
-    if(typeof value !== 'undefined') {
+    if(value !== undefined) {
       definedColumnList.push(column.columnNumber);
       if(value === null) {
         if(column.isNullable) {  record.setNull(i, buffer);        } 
@@ -491,8 +491,7 @@ function prepareOperations(dbTransactionContext, dbOperationList, recycleWrapper
 */
 DBOperation.prototype.prepareScan = function(dbTransactionContext) {
   var indexBounds = null;
-  var execQueue = this.transaction.dbSession.execQueue;
-  var scanHelper, boundsHelpers, dbIndex, skipFilterForTesting;
+  var boundsHelpers, dbIndex, skipFilterForTesting;
  
   /* There is one global ScanHelperSpec */
   scanSpec.clear();
@@ -577,7 +576,7 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
   udebug.log("buildValueObject");
   var VOC = tableHandler.ValueObject; // NDB Value Object Constructor
   var DOC = tableHandler.newObjectConstructor;  // User's Domain Object Ctor
-  var nWritesPre, nWritesPost, err, value;
+  var nWritesPre, nWritesPost, value;
   
   if(VOC) {
     /* Turn the buffer into a Value Object */
@@ -610,7 +609,7 @@ function getResultValue(op, tableHandler, buffer, blobs) {
 }
 
 function getScanResults(scanop, userCallback) {
-  var buffer,results,dbSession,postScanCallback,nSkip,maxRow,i,recordSize;
+  var buffer,results,dbSession,postScanCallback,nSkip,maxRow,i,recordSize,gather;
   dbSession = scanop.transaction.dbSession;
   postScanCallback = {
     fn  : userCallback,
@@ -659,11 +658,11 @@ function getScanResults(scanop, userCallback) {
 
   /* <0: ERROR, 0: RESULTS_READY, 1: SCAN_FINISHED, 2: CACHE_EMPTY */
   /* gather runs as a preCallback */
-  function gather(error, status) {    
+  gather = function(error, status) {
     udebug.log("gather() status", status);
 
     if(status < 0) { // error
-      if(udebug.is_debug()) udebug.log("gather() error", error);
+      if(udebug.is_debug()) { udebug.log("gather() error", error); }
       postScanCallback.arg0 = error;
       return postScanCallback;
     }
@@ -681,7 +680,7 @@ function getScanResults(scanop, userCallback) {
     else {  // end of scan.
       /* Now remove the rows that should have been skipped 
          (fixme: do something more efficient) */
-      for(i = 0 ; i < nSkip ; i++) results.shift();
+      for(i = 0 ; i < nSkip ; i++) { results.shift(); }
 
       udebug.log("gather() 1 End_Of_Scan.  Final length:", results.length);
       scanop.result.success = true;
@@ -689,7 +688,7 @@ function getScanResults(scanop, userCallback) {
       postScanCallback.arg1 = results;
       return postScanCallback;
     }    
-  }
+  };
 
   /* start here */
   results = [];
@@ -707,7 +706,7 @@ function getQueryResults(op, userCallback) {
   }
 
   op.scanOp.fetchAllResults(function(err, nresults) {
-    var i, wrapper, level, current, resultObject, related;
+    var wrapper, level, current, resultObject, related;
     current = [];   // current values for each sector
     current[0] = null;
     wrapper = {};
@@ -819,7 +818,7 @@ function buildOperationResult(transactionHandler, op, op_ndb_error, execMode) {
       op.result.value = getResultValue(op, op.tableHandler, op.buffers.row, op.blobs);
     } 
   }
-  if(udebug.is_detail()) udebug.log("buildOperationResult finished:", op.result);
+  if(udebug.is_detail()) { udebug.log("buildOperationResult finished:", op.result); }
 }
 
 function completeExecutedOps(dbTxHandler, execMode, operations) {
@@ -829,8 +828,8 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
         "pendingOperationSet" : pendingOpsSet
       };
   */
-  if(udebug.is_debug()) udebug.log("completeExecutedOps mode:", execMode,
-                        "operations: ", operations.operationList.length);
+  if(udebug.is_debug()) { udebug.log("completeExecutedOps mode:", execMode,
+                          "operations: ", operations.operationList.length); }
   var n, op, op_err;
   for(n = 0 ; n < operations.operationList.length ; n++) {
     op = operations.operationList[n];
@@ -943,7 +942,7 @@ function newInsertOperation(tx, tableHandler, row) {
 // Test row for VO?
   op.values = row;
   if((op.tableHandler.autoIncFieldName) &&
-     (typeof row[op.tableHandler.autoIncFieldName] === 'undefined')) {
+     (row[op.tableHandler.autoIncFieldName] === undefined)) {
     // we need autoincrement services because the user did not supply the value for the autoincrement column
     op.needAutoInc = true;
   }

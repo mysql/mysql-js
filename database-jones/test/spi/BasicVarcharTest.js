@@ -20,10 +20,6 @@
 
 "use strict";
 
-try {
-  require("./suite_config.js");
-} catch(e) {} 
-
 var spi_lib = require("./lib.js");
 var assert = require("assert");
 var dbtablehandler = require(mynode.common.DBTableHandler);

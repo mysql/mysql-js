@@ -25,12 +25,12 @@ var udebug = unified_debug.getLogger("integraltypes/lib.js");
 
 /** The integraltypes domain object */
 global.integraltypes = function(id, ttinyint, tsmallint, tmediumint, tint, tbigint) {
-  if (typeof(id) !== 'undefined') this.id = id;
-  if (typeof(ttinyint) !== 'undefined') this.ttinyint = ttinyint;
-  if (typeof(tsmallint) !== 'undefined') this.tsmallint = tsmallint;
-  if (typeof(tmediumint) !== 'undefined') this.tmediumint = tmediumint;
-  if (typeof(tint) !== 'undefined') this.tint = tint;
-  if (typeof(tbigint) !== 'undefined') this.tbigint = tbigint;
+  if (id !== undefined) { this.id = id; }
+  if (ttinyint !== undefined) { this.ttinyint = ttinyint; }
+  if (tsmallint !== undefined) { this.tsmallint = tsmallint; }
+  if (tmediumint !== undefined) { this.tmediumint = tmediumint; }
+  if (tint !== undefined) { this.tint = tint; }
+  if (tbigint !== undefined) { this.tbigint = tbigint; }
 };
 
 /** The integraltypes key */
@@ -56,8 +56,8 @@ global.verify_integraltypes = function(err, instance, id, testCase, domainObject
     testCase.appendErrorMessage(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance));
+  if (typeof instance !== 'object') {
+    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof instance);
   }
   if (instance === null) {
     testCase.appendErrorMessage('Result for id ' + id + ' is null.');
@@ -75,7 +75,7 @@ global.verify_integraltypes = function(err, instance, id, testCase, domainObject
   testCase.errorIfNotEqual('fail to verify tsmallint', id, instance.tsmallint);
   testCase.errorIfNotEqual('fail to verify tmediumint', id, instance.tmediumint);
   testCase.errorIfNotEqual('fail to verify tint', id, instance.tint);
-  testCase.errorIfNotEqual('fail to verify tbigint of type ' + typeof(instance.tbigint), id + '', instance.tbigint);
+  testCase.errorIfNotEqual('fail to verify tbigint of type ' + typeof instance.tbigint, id, instance.tbigint);
 };
 
 global.fail_verify_integraltypes_array = function(err, instances, ids, testCase, domainObject) {
@@ -101,8 +101,8 @@ global.fail_verify_integraltypes = function(err, instance, id, testCase, domainO
     testCase.fail(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance)));
+  if (typeof instance !== 'object') {
+    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof instance));
     return;
   }
   if (instance === null) {

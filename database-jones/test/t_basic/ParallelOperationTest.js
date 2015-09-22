@@ -29,35 +29,37 @@ t0.run = function() {
 
 function findParallel(start_value, number, session, testCase) {
   var i, found_i;
-  for (i = start_value; i < start_value + number; ++i) {
-    session.find(global.t_basic, i, function(err, found, callback_i, session, testCase) {
-      udebug.log('ParallelOperationTest.testParallelFind find callback for ', i);
-      var tx = session.currentTransaction();
-      if (err) {
-        testCase.appendErrorMessage(
-            'ParallelOperationTest.testParallelFind find callback for ', i,' failed: ', JSON.stringify(err));
-      }
-      found_i = 'undefined';
-      if (found !== null) {
-        found_i = found.id;
-        testCase.errorIfNotEqual(
-            'ParallelOperationTest.testParallelFind find callback mismatch id value:', found_i, found.id);
-      }
-      if (++testCase.completed === number) {
-        // end of test case; all callbacks completed
-        if (tx.isActive()) {
-          tx.commit(function(err, session, testCase) {
-            if (err) {
-              testCase.fail(err);
-              return;
-            }
-            testCase.failOnError();
-          }, session, testCase);
-        } else {
+  function onFind(err, found, callback_i, session, testCase) {
+    udebug.log('ParallelOperationTest.testParallelFind find callback for ', i);
+    var tx = session.currentTransaction();
+    if (err) {
+      testCase.appendErrorMessage(
+          'ParallelOperationTest.testParallelFind find callback for ', i,' failed: ', JSON.stringify(err));
+    }
+    found_i = 'undefined';
+    if (found !== null) {
+      found_i = found.id;
+      testCase.errorIfNotEqual(
+          'ParallelOperationTest.testParallelFind find callback mismatch id value:', found_i, found.id);
+    }
+    if (++testCase.completed === number) {
+      // end of test case; all callbacks completed
+      if (tx.isActive()) {
+        tx.commit(function(err, session, testCase) {
+          if (err) {
+            testCase.fail(err);
+            return;
+          }
           testCase.failOnError();
-        }
+        }, session, testCase);
+      } else {
+        testCase.failOnError();
       }
-    }, i, session, testCase);
+    }
+  }
+
+  for (i = start_value; i < start_value + number; ++i) {
+    session.find(global.t_basic, i, onFind, i, session, testCase);
   }
 }
 

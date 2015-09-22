@@ -22,10 +22,6 @@
 
 var spi_lib = require("./lib.js");
 
-try {
-  require("./suite_config.js");
-} catch(e) {} 
-
 var t1 = new harness.ConcurrentTest("listTables");
 var t2 = new harness.ConcurrentTest("getTable");
 

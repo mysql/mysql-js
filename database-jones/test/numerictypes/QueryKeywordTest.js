@@ -51,8 +51,8 @@ global.verify_integraltypes_keyword = function(err, instance, id, testCase, doma
     testCase.appendErrorMessage(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance));
+  if (typeof instance !== 'object') {
+    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof instance );
   }
   if (instance === null) {
     testCase.appendErrorMessage('Result for id ' + id + ' is null.');

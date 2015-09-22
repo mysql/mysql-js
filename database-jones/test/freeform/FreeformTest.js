@@ -23,7 +23,7 @@ var util    = require("util");
 var udebug  = unified_debug.getLogger("FreeformTest.js");
 
 function Freeform(id, name, number, a) {
-  if (typeof id !== 'undefined') {
+  if (id !== undefined) {
     this.id = id;
     this.name = name;
     this.number = number;

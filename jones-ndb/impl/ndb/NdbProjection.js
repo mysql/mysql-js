@@ -68,7 +68,7 @@ function NdbProjection(tableHandler, indexHandler, parent) {
   this.isPrimaryKey   = indexHandler.dbIndex.isPrimaryKey || false;
   this.isUniqueKey    = indexHandler.dbIndex.isUnique;
 
-  if(parent) parent.next = this;
+  if(parent) { parent.next = this; } 
 }
 
 
@@ -151,9 +151,7 @@ function createNdbProjection(sector, parentProjection) {
    the last consecutive lookup then runs all lookups.
 */
 NdbProjection.prototype.rewriteAsScan = function(sector) {
-  var new_index, mock_keys;
-
-  mock_keys = mockKeys(sector.keyFieldNames);
+  var mock_keys = mockKeys(sector.keyFieldNames);
   this.indexHandler = this.tableHandler.getOrderedIndexHandler(mock_keys);
   if(this.indexHandler) {
     this.isPrimaryKey = false;
