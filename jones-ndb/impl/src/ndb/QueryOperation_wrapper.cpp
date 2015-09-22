@@ -288,9 +288,9 @@ void queryGetResult(const Arguments & args) {
   if(header) {
     if(header->data) {
       wrapper->Set(GET_KEY(K_data),
-        node::Buffer::New(header->data,
-                          op->getResultRowSize(header->depth),
-                          doNotFreeQueryResultAtGC, 0));
+        LOCAL_BUFFER(node::Buffer::New(isolate, header->data,
+                                       op->getResultRowSize(header->depth),
+                                       doNotFreeQueryResultAtGC, 0)));
     } else {
       wrapper->Set(GET_KEY(K_data), Null(isolate));
     }

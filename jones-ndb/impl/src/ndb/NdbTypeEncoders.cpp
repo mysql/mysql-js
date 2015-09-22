@@ -731,7 +731,7 @@ Local<Value> fpWriter(const NdbDictionary::Column * col,
 
 Local<Value> BinaryReader(const NdbDictionary::Column *col, 
                            char *buffer, size_t offset) {
-  return node::Buffer::New(isolate, buffer + offset, col->getLength());
+  return LOCAL_BUFFER(node::Buffer::New(isolate, buffer + offset, col->getLength()));
 }
 
 Local<Value> BinaryWriter(const NdbDictionary::Column * col,
@@ -755,7 +755,7 @@ Local<Value> varbinaryReader(const NdbDictionary::Column *col,
                               char *buffer, size_t offset) {
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * data = buffer+offset+sizeof(length);
-  return node::Buffer::New(isolate, data, length);
+  return LOCAL_BUFFER(node::Buffer::New(isolate, data, length));
 }
 
 template<typename LENGTHTYPE>
@@ -804,7 +804,7 @@ inline bool stringIsAscii(const unsigned char *str, size_t len) {
   return true;
 }
 
-class ExternalizedAsciiString : public String::ExternalAsciiStringResource {
+class ExternalizedAsciiString : public String::ExternalOneByteStringResource {
 public:
   char * buffer;
   size_t len; 
@@ -990,7 +990,7 @@ Local<Object> getBufferForText(const NdbDictionary::Column *col,
   {
     DEBUG_PRINT("getBufferForText: fully externalized");
     stats.externalized_text_writes++;
-    return node::Buffer::New(isolate, str);
+    return LOCAL_BUFFER(node::Buffer::New(isolate, str));
   }
 
   length = str->Length();
@@ -1000,17 +1000,17 @@ Local<Object> getBufferForText(const NdbDictionary::Column *col,
      
   if(csinfo->isAscii || (valueIsAscii && ! csinfo->isMultibyte)) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(isolate, length);
+    buffer = LOCAL_BUFFER(node::Buffer::New(isolate, length));
     data = node::Buffer::Data(buffer);
     str->WriteOneByte((uint8_t*) data, 0, length);
   } else if(csinfo->isUtf16le) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(isolate, length * 2);
+    buffer = LOCAL_BUFFER(node::Buffer::New(isolate, length * 2));
     uint16_t * mbdata = (uint16_t*) node::Buffer::Data(buffer);
     str->Write(mbdata, 0, length);
   } else if(csinfo->isUtf8) {
     stats.direct_writes++;
-    buffer = node::Buffer::New(isolate, utf8Length);
+    buffer = LOCAL_BUFFER(node::Buffer::New(isolate, utf8Length));
     data = node::Buffer::Data(buffer);
     str->WriteUtf8(data, utf8Length);
   } else {
@@ -1022,7 +1022,7 @@ Local<Object> getBufferForText(const NdbDictionary::Column *col,
     data = (char *) malloc(buflen);
     size_t result_len = recodeFromUtf8(recode_buffer, utf8Length,
                                        data, buflen, col->getCharsetNumber());
-    buffer = node::Buffer::New(isolate, data, result_len, freeBufferContentsFromJs, 0);
+    buffer = LOCAL_BUFFER(node::Buffer::New(isolate, data, result_len, freeBufferContentsFromJs, 0));
     delete[] recode_buffer;
   }
   

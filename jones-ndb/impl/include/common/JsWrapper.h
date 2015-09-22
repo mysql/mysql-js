@@ -41,7 +41,8 @@ using v8::PropertyCallbackInfo;
 using v8::WeakCallbackData;
 
 /* A Persistent<T> can be cast to a Local<T>.  See:
-   https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ
+   https://groups.google.com/forum/#!msg/v8-users/6kSAbnUb-rQ/9G5RmCpsDIMJ.
+   At some point this can be replaced by persisent.Get(isolate)
 */
 template<class T>
 inline Local<T> ToLocal(Persistent<T>* p_) {
@@ -52,6 +53,16 @@ template<class T>
 inline Local<T> ToLocal(const Persistent<T>* p_) {
   return *reinterpret_cast<const Local<T>*>(p_);
 }
+
+/* Some compatibility */
+#if NODE_MAJOR_VERSION > 3
+#define BUFFER_HANDLE v8::MaybeLocal
+#define LOCAL_BUFFER(B) B.ToLocalChecked()
+#define IsExternalAscii IsExternalOneByte
+#else
+#define BUFFER_HANDLE v8::Local
+#define LOCAL_BUFFER(B) B
+#endif
 
 /* Signature of a V8 function wrapper
 */
