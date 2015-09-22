@@ -46,6 +46,8 @@ var lintOptions = {
   "regexp"    : true      // allow . and [^ ...] in regular expressions
 };
 
+var jslintLoaderError;
+
 try { 
   lintModule = require("jslint/lib/linter");
   linter = lintModule.lint;
@@ -53,6 +55,7 @@ try {
   haveJsLint = true;  // older node-jslint
 }
 catch(e1) {
+  jslintLoaderError = e1.message;
   try {
     lintModule = require("jslint");
     linter = lintModule.load("es5");
@@ -60,6 +63,7 @@ catch(e1) {
     haveJsLint = true;  // newer node-jslint
   }
   catch(e2) {
+    jslintLoaderError = e2.message;
   }
 }
 if(! haveJsLint) { 
@@ -92,11 +96,8 @@ LintSmokeTest.prototype = new Test.Test();
 
 LintSmokeTest.prototype.run = function() {
   if(skipTests) {
-    this.fail("linter is not available");
-  } else if (typeof linter !== 'function') {
-    this.fail("incompatible linter");
-  }
-  else {
+    this.fail("linter is not available: " + jslintLoaderError);
+  } else {
     this.pass();
   }
 };
