@@ -220,6 +220,7 @@ SqlVisitor.prototype.visitDestination = function(node, job) {
     case 5:                                        // INTO TABLE a . b
       job.destination.database = collector[2];
       job.destination.table = collector[4];
+      break;
   }
 };
 
@@ -335,7 +336,7 @@ exports.parse = function ParseLoaderString(tokens) {
 
   if(tokens.length) {
     P.begin(tokens);
-    tree = P.eval(LoadDataStatement);
+    tree = P.evaluate(LoadDataStatement);
     P.done();
   }
   return tree;

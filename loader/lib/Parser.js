@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
  02110-1301  USA
  */
 
+/*jslint sloppy: true */
 
 /*
    This is a simple top-down recursive descent parser.
@@ -50,7 +51,7 @@ NonTerminal.prototype = {
   innerEval     : null,
   isRepeat      : null,
   visitorFunc   : null,
-  eval          : function unset() { throw { message : "UNDEF EVAL" }; }
+  evaluate      : function unset() { throw new Error("UNDEF EVAL"); }
 };
 
 NonTerminal.prototype.set = function(that) {
@@ -59,7 +60,7 @@ NonTerminal.prototype.set = function(that) {
   this.members   = that.members;
   this.innerEval = that.innerEval;
   this.isRepeat  = that.isRepeat;
-  this.eval      = that.eval;
+  this.evaluate  = that.evaluate;
 };
 
 NonTerminal.prototype.describe = function() {
@@ -93,7 +94,6 @@ Node.prototype.isNode = true;
    otherwise call the generic visitor.
 */
 Node.prototype.visit = function(visitor, transform) {
-  var i;
   if(typeof visitor[this.nonTerminal.visitorFunc] === 'function') {
     visitor[this.nonTerminal.visitorFunc](this, transform);
   } else {
@@ -187,9 +187,9 @@ Parser.prototype.fail = function(msg) {
     start_line = (token.line > 2 ? token.line-1 : 1);
     lines = this.text.split('\n');    
     ctx += lines[start_line-1] + "\n";
-    if(token.line > start_line) ctx += lines[token.line-1] + "\n";
+    if(token.line > start_line) { ctx += lines[token.line-1] + "\n"; }
     /* Now indent up to a caret at the errant token */
-    while(++i < token.column) ctx += ' ';
+    while(++i < token.column) { ctx += ' '; }
     ctx += "^^^\n";
   }
   var err = new Error("\n" + ctx + msg);
@@ -219,14 +219,14 @@ Parser.prototype.defineProductions = function() {
   for(i = 0 ; i < arguments.length ; i += 2) {
     this.def(arguments[i], arguments[ i+1 ]);
   }
-}
+};
 
 
 /* Describe Terminals, and let NonTerminals describe themselves
 */
 Parser.prototype.describe = function(sym) {
   if(typeof sym === 'string')       { return sym;            }
-  if(typeof sym === 'undefined')    { return "undefined";    } 
+  if(sym === undefined)             { return "undefined";    }
   if(sym === null)                  { return "null";         }
   if(sym.isNonTerminal)             { return sym.describe(); } 
 };
@@ -250,7 +250,7 @@ function evalSeries() {
     sym = this.members[i];
     strict_sym = sym.isNonTerminal ? sym.strict : true;
     node.children[i] = r =
-      this.parser.eval(sym, (this.strict && strict_sym && (s > 0) ));
+      this.parser.evaluate(sym, (this.strict && strict_sym && (s > 0) ));
     if(r !== null) { s += 1; } // Enable strictness
     i += 1;
   } while(i < this.members.length && (! (r === null && strict_sym)));
@@ -266,7 +266,7 @@ function evalAlternates() {
   var r, i, node ;
   node = new Node(this);
   for(i = 0 ; i < this.members.length ; i++) {
-    r = this.parser.eval(this.members[i]);
+    r = this.parser.evaluate(this.members[i]);
     if(r !== null) {
       node.children[0] = r;
       return node;
@@ -290,7 +290,7 @@ function evalSeveral() {
     }
   }
   return a;
-};
+}
 
 
 ///////    NonTerminal Factories: Series, Several, Alts, Option      ///////
@@ -301,7 +301,7 @@ Parser.prototype.Series = function() {
   var nt  = new NonTerminal(this, arguments);
   nt.strict = true;
   nt.ebnf  = [ '','','' ];
-  nt.eval = evalSeries;
+  nt.evaluate = evalSeries;
   return nt;
 };
 
@@ -311,7 +311,7 @@ Parser.prototype.Alts = function() {
   var nt = new NonTerminal(this, arguments);
   nt.strict = true;
   nt.ebnf = [ '(' , '| ' , ')' ];
-  nt.eval = evalAlternates;
+  nt.evaluate = evalAlternates;
   return nt;
 };
 
@@ -321,7 +321,7 @@ Parser.prototype.Alts = function() {
 Parser.prototype.Option = function() {
   var nt  = new NonTerminal(this, arguments);
   nt.ebnf = [ '[' , '', ']' ];
-  nt.eval = evalSeries;
+  nt.evaluate = evalSeries;
   return nt;
 };
 
@@ -332,21 +332,21 @@ Parser.prototype.Several = function() {
   nt.ebnf = [ '{', '', '}' ];
   nt.isRepeat = true;
   nt.innerEval = evalSeries;
-  nt.eval = evalSeveral;
+  nt.evaluate = evalSeveral;
   return nt;
 };
 
 
-/* Parser.eval()
+/* Parser.evaluate()
    Evaluate the current token against a parser symbol.
    If the token matches and is a Terminal, advance the token stream,
    and return the matching token.
-   If the symbol is a NonTerminal, delegate to its own eval() method.
+   If the symbol is a NonTerminal, delegate to its own evaluate() method.
    Return null if no match.
    If strict mode is set, and no match, fail the parser. 
 */
-Parser.prototype.eval = function(sym, strict) {
-  if(debug) console.log("Parser eval", this.describe(sym));
+Parser.prototype.evaluate = function(sym, strict) {
+  if(debug) { console.log("Parser evaluate", this.describe(sym)); }
   var r = null;
   var t = this.tokens[this.index];
   if(t) {
@@ -357,12 +357,12 @@ Parser.prototype.eval = function(sym, strict) {
               (t.value.toUpperCase() === sym.toUpperCase())))         { r = t; }
 
       if(r !== null) {
-        if(debug) console.log("Parser Advance", t.value);
+        if(debug) { console.log("Parser Advance", t.value); }
         this.index += 1;   // advance to the next token
       }
     }
     else if(sym.isNonTerminal) {
-      r = sym.eval();
+      r = sym.evaluate();
     }
    if(strict === true && r === null) {
       this.fail("Expected " + this.describe(sym));

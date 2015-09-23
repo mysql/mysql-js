@@ -63,12 +63,12 @@ function RandomVarcharGenerator(length) {
   var lengthGenerator = new RandomIntGenerator(0, length),
       characterGenerator = new RandomCharacterGenerator();
   this.next = function() {
-    var i = 0,
+    var i,
         str = "",
         len = lengthGenerator.next();
-    for(; i < len ; i++) str += characterGenerator.next(); 
+    for(i = 0; i < len ; i++) { str += characterGenerator.next(); }
     return str;
-  }
+  };
 }
 
 
@@ -76,21 +76,21 @@ function RandomVarbinaryGenerator(length) {
   var lengthGenerator = new RandomIntGenerator(0, length),
       byteGenerator = new RandomIntGenerator(0, 255);
   this.next = function() {
-    var i = 0,
+    var i,
         sz = lengthGenerator.next(),
         buffer = new Buffer(sz);
-    for(; i < sz ; i++) buffer[i] = byteGenerator.next();
+    for(i = 0; i < sz ; i++) { buffer[i] = byteGenerator.next(); }
     return buffer;
-  }
+  };
 }
 
 
 function RandomCharGenerator(length) {
   var characterGenerator = new RandomCharacterGenerator();
   this.next = function() {
-    var i = 0,
+    var i,
         str = "";
-    for(; i < length ; i++) str += characterGenerator.next();
+    for(i = 0; i < length ; i++) { str += characterGenerator.next(); }
     return str;
   };
 }
@@ -99,9 +99,9 @@ function RandomCharGenerator(length) {
 function RandomBinaryGenerator(length) {
   var byteGenerator = new RandomIntGenerator(0, 255);
   this.next = function() {
-    var i = 0,
+    var i,
         buffer = new Buffer(length);
-    for(; i < length ; i++) buffer[i] = byteGenerator.next();
+    for(i = 0; i < length ; i++) { buffer[i] = byteGenerator.next(); }
     return buffer;
   };
 }
@@ -115,7 +115,7 @@ function RandomDateGenerator() {
 }
 
 
-function RandomGeneratorForColumn(column) {
+function getRandomGeneratorForColumn(column) {
   var g = {},
       min, max, bits;
 
@@ -142,6 +142,7 @@ function RandomGeneratorForColumn(column) {
       break;
     case "BINARY":
       g = new RandomBinaryGenerator(column.length);
+      break;
     case "CHAR":
       g = new RandomCharGenerator(column.length);
       break;
@@ -162,34 +163,33 @@ function RandomGeneratorForColumn(column) {
     case "DATETIME":
       g = new RandomDateGenerator();
       break;
-    case "BLOB":
-    case "TEXT":
-    case "BIT":
+    // case "BLOB":
+    // case "TEXT":
+    // case "BIT":
     default:
       throw("UNSUPPORTED COLUMN TYPE " + column.columnType);
-      break;
   }
 
   return g;
 }
 
-function DummyConstructor() { };
+function DummyConstructor() { }
 
 function RandomRowGenerator(tableHandler) {
-  var i, column, names, generators, ctor;
+  var i, column, names, generators, Ctor;
   generators = [];
   names = [];
-  ctor = tableHandler.newObjectConstructor || DummyConstructor;
+  Ctor = tableHandler.newObjectConstructor || DummyConstructor;
 
   for(i = 0; i < tableHandler.getNumberOfColumns() ; i++) {
-    column        = tableHandler.getColumnMap(i);
+    column        = tableHandler.getColumn(i);
     names[i]      = tableHandler.getField(i).fieldName;
-    generators[i] = RandomGeneratorForColumn(column);
+    generators[i] = getRandomGeneratorForColumn(column);
   }
 
   this.newRow = function() {
     var n, row;
-    row = new ctor();
+    row = new Ctor();
     for(n = 0; n < names.length ; n++) {
       row[names[n]] = generators[n].next();
     }
@@ -198,4 +198,4 @@ function RandomRowGenerator(tableHandler) {
 }
 
 exports.RandomRowGenerator = RandomRowGenerator;
-exports.RandomGeneratorForColumn = RandomGeneratorForColumn;
+exports.RandomGeneratorForColumn = getRandomGeneratorForColumn;

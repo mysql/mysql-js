@@ -125,7 +125,7 @@ DbWriter.prototype._store = function(record) {
           theWriter.abort(error);
           return;
         }
-        else if(error.ndb_error.status === "TemporaryError") {
+        if(error.ndb_error.status === "TemporaryError") {
           this.batchManager.batchSizeDown();
           theWriter.loadItem(record);  // retry
           return;  // Do not set record.error or register as complete
@@ -148,7 +148,7 @@ DbWriter.prototype._store = function(record) {
   } else {
     this.batch.persist(record.class, record.row, rowCallback);
   }
-}
+};
 
 DbWriter.prototype.executeBatch = function() {
   this.batch.execute(function(err) {

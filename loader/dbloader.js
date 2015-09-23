@@ -151,7 +151,8 @@ function main() {
   }
 
   // Set connection properties
-  var connectionProperties = new jones.ConnectionProperties(cmdOptions.adapter, cmdOptions.deployment);
+  var connectionProperties =
+    new jones.ConnectionProperties(cmdOptions.adapter, cmdOptions.deployment);
 
   if(cmdOptions.connect_string) {
     connectionProperties.ndb_connectstring = cmdOptions.connect_string;

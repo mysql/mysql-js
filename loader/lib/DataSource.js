@@ -232,7 +232,7 @@ FileDataSource.prototype.onFileOpen = function(err, fd) {
     this.fd = fd;
     this.read();
   }
-}
+};
 
 // TODO: Handle the case of a single record that is larger than the buffer
 //       OR document this limitation and let the user select the buffer size
@@ -242,7 +242,7 @@ FileDataSource.prototype.read = function() {
   buffer = new Buffer(this.bufferSize);
 
   /* Rewrite partial last record into new buffer */
-  if(this.bufferDesc && ! this.bufferDesc.lineEnd < this.bufferDesc.lineStart) {
+  if(this.bufferDesc && ! (this.bufferDesc.lineEnd < this.bufferDesc.lineStart)) {
     this.recopied = buffer.write(this.bufferDesc.source.substring(this.bufferDesc.lineStart));
   } else {
     this.recopied = 0;
@@ -299,6 +299,7 @@ FileDataSource.prototype.run = function() {
     extraLines = this.lineScanner.scan(desc);  // Scan the line
     this.physLineNo += (extraLines + 1);
     if(this.options.columnsInHeader) {
+      udebug.log("Setting columns from header");
       if(desc.lineHasFields) {
         this.options.columnsInHeader = null;  // reset from true to null
         fields = this.fieldScanner.scan(desc);  // Extract the data fields

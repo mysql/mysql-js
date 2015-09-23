@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -17,6 +17,15 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  02110-1301  USA
  */
+
+"use strict";
+
+// This file contains:
+// SQL Tokenizer for parsing control statement
+// Data File Scanner
+// Line Scanner
+// Text Field Scanner
+
 
 /* SQL Tokenizer
    tokenize(source, operators)
@@ -92,7 +101,7 @@ function tokenize (source) {
 
   function isInitialNumeric() {
     var p = peek();
-    return (isNumeric() || (c == '-' && p >= '0' && p <= '9'))
+    return (isNumeric() || (c == '-' && p >= '0' && p <= '9'));
   }
 
   function isNonInitialNumeric() {
@@ -166,7 +175,7 @@ function tokenize (source) {
       }
       v = + tok.str;  // numeric value
       if(isFinite(v))  { tok.deliver(v); }
-      else             { tok.error("bad number") };
+      else             { tok.error("bad number"); }
     }
         
     else if (c === '\'' || c === '"' || c === '`') {         /* QUOTED STRING */
@@ -228,7 +237,7 @@ function tokenize (source) {
         advance();
       }
       advance(2);
-      if(c === '') { throw Error("Unterminated comment"); }
+      if(c === '') { throw new Error("Unterminated comment"); }
     }
   
     else if(operators.indexOf(c) >= 0) {         /* SINGLE-CHARACTER OPERATOR */
@@ -246,7 +255,7 @@ function tokenize (source) {
   }  /* end of while loop */
 
   return result;
-};
+}
 
 
 
@@ -339,7 +348,7 @@ Scanner.prototype.handleQuotedString = function(doEval) {
   if(doEval)  {
     scanner = this;
     value = "";
-    consume = function() { value += scanner.c };
+    consume = function() { value += scanner.c; };
   } else {
     consume = function() {};
   }
@@ -381,7 +390,7 @@ Scanner.prototype.skip_C_comment = function() {
     }
     this.advance(2);
     if(this.c === '') {
-      throw Error("Unterminated comment");
+      throw new Error("Unterminated comment");
     }
   }
 };
@@ -401,9 +410,8 @@ Scanner.prototype.skipToEndOfLine = function() {
     if(this.isEndOfLine()) {
       this.advance(this.EOL.length);
       return;
-    } else {
-      this.advance(1);
     }
+    this.advance(1);
   }
 };
 
@@ -463,7 +471,7 @@ Scanner.prototype.getValueForFixedWidthField = function(column) {
 
 function LineScanner(options) {
   this.options = options;
-};
+}
 
 /* 
   Skip a fixed number of physical lines
@@ -519,26 +527,29 @@ LineScanner.prototype.scan = function(spec) {
   if(isEOL) {
     spec.lineEnd = scanner.i;
   }
+  udebug.log("LineScanner.scan returning", scanner.lineCount);
   return scanner.lineCount;
-}
+};
 
 
 // Text Field Scanner
 
 function TextFieldScanner(options) {
   this.options = options;
-};
+}
 
 TextFieldScanner.prototype.scan = function(spec) {
   var scanner, result;
   scanner = new Scanner(spec.source, spec.lineStart, this.options);
   result = [];
   while(! scanner.isEndOfLine()) {
-    if(! scanner.isFieldSeparator()) {
+    if(scanner.isFieldSeparator()) {
+      scanner.advance(1);
+    } else {
       result.push(scanner.getValueForDelimitedField());
     }
-    scanner.advance(1);
   }
+  udebug.log("TextFieldScanner.scan:", result.length, "fields");
   return result;
 };
 
@@ -555,17 +566,17 @@ function testFileType(source) {
 
   do {
     x = i;
-    i = skipWhitespace(source, i);
-    i = skipJavascriptComment(source, i); //fixme
+    // i = skipWhitespace(source, i);  fixme
+    // i = skipJavascriptComment(source, i); fixme
     c = source[i];
     if(c === '[' || c === '{') {
-      tokens.push(c); i++
+      tokens.push(c); i++;
     }
-  } while(i > x && tokens.length < 2)
+  } while(i > x && tokens.length < 2);
 
-  if(tokens[0] === "[" && tokens.length === 2) return 2;
-  else if(tokens.length > 0) return 1;
-  else return 0;
+  if(tokens[0] === "[" && tokens.length === 2) { return 2; }  // JSON Array
+  if(tokens.length > 0) { return 1; }  // JSON
+  return 0;  // Not JSON
 }
 
 
