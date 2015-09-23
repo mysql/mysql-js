@@ -118,8 +118,8 @@ function compareValues(a, b) {
 
   /* Then compare to null */
   if(a == null || b === null) {
-    if(a === b) return 0;
-    if(a === null) return -1;
+    if(a === b)    {return 0;}
+    if(a === null) {return -1;}
     return 1;
   }
 
@@ -128,9 +128,9 @@ function compareValues(a, b) {
   }
   else {
     /* Compare JavaScript values */
-    if(a == b) cmp = 0;
-    else if (a < b) cmp = -1;
-    else cmp = 1;
+    if(a == b)      {cmp = 0;}
+    else if(a < b)  {cmp = -1;}
+    else            {cmp = 1;}
   }
 
   return cmp;
@@ -189,9 +189,9 @@ IndexValue.prototype.compare = function(that) {
 
 IndexValue.prototype.isFinite = function() {
   var v;
-  if(this.size == 0) return false;
+  if(this.size == 0) {return false;}
   v = this.parts[this.size - 1];
-  if(v === null) return false;
+  if(v === null) {return false;}
   return (typeof v === 'number') ?  isFinite(v) : true;
 };
 
@@ -199,7 +199,7 @@ IndexValue.prototype.inspect = function() {
   var i, result;
   result = "idx" + this.size + "pt:";
   for(i = 0 ; i < this.size ; i++) {
-    if(i) result += ",";
+    if(i) {result += ",";}
     result += this.parts[i];
   }
   return result;
@@ -448,7 +448,7 @@ NumberLine.prototype.inspect = function() {
   it = this.getIterator();
   str = "{ ";
   while((segment = it.next()) !== null) {
-    if(it.n > 2) str += ",";
+    if(it.n > 2) {str += ",";}
     str += segment.inspect();
   }
   str += " }";
@@ -468,12 +468,12 @@ NumberLine.prototype.setEqualTo = function(that) {
 };
 
 NumberLine.prototype.upperBound = function() {
-  if(this.isEmpty()) return negInf().high();
+  if(this.isEmpty()) {return negInf().high();}
   return this.transitions[this.transitions.length - 1];
 };
 
 NumberLine.prototype.lowerBound = function() {
-  if(this.isEmpty()) return posInf.low();
+  if(this.isEmpty()) {return posInf.low();}
   return this.transitions[0];
 };
 
@@ -603,9 +603,9 @@ NumberLineStack.prototype.sweep = function(targetDepth) {
     point = this.list[i];
     assert.strictEqual(typeof point.isLow, 'boolean');
     if(point.isLow) {
-      if(++depth == targetDepth) result.push(point);
+      if(++depth == targetDepth) {result.push(point);}
     } else {
-      if(depth-- == targetDepth) result.push(point);
+      if(depth-- == targetDepth) {result.push(point);}
     }
   }
   udebug.log("sweep", result);
@@ -903,7 +903,7 @@ function IndexBoundEndpoint(endpoint) {
 IndexBoundEndpoint.prototype.inspect = function() {
   var i, str = "";
   for(i = 0 ; i < this.key.length ; i++) {
-    if(i) str += ",";
+    if(i) {str += ",";}
     str += this.key[i];
   }
   return str;

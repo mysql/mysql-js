@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -35,13 +35,13 @@ function FieldValueDefinedListener() {
 }
 
 FieldValueDefinedListener.prototype.setDefined = function(fieldNumber) {
-  if (typeof(this.key) !== 'undefined') {
+  if (this.key !== undefined) {
     this.key += 'D';
   }
 };
 
 FieldValueDefinedListener.prototype.setUndefined = function(fieldNumber) {
-  if (typeof(this.key) === 'undefined') {
+  if (this.key === undefined) {
     // first undefined value; create the key for all previous defined values e.g. 'DDDDDDDDD'
     this.key = '';
     var i; 

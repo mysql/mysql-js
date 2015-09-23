@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -177,13 +177,13 @@ MySQLTime.prototype.toTimeString = function() {
   var strTime = "";
   var fsec = this.microsec;
   var fsp = this.fsp;
-  if(this.sign === -1) strTime="-";
+  if(this.sign === -1) {strTime="-";}
 
-  if(this.hour < 10) strTime += "0";
+  if(this.hour < 10) {strTime += "0";}
   strTime += this.hour + ":";
-  if(this.minute < 10) strTime += "0";
+  if(this.minute < 10) {strTime += "0";}
   strTime += this.minute + ":";
-  if(this.second < 10) strTime += "0";
+  if(this.second < 10) {strTime += "0";}
   strTime += this.second;
   if(fsp) {
     strTime += ".";
@@ -209,8 +209,8 @@ MySQLTime.prototype.toTimeString = function() {
 MySQLTime.prototype.toDateString = function() {
   var month = this.month;
   var day = this.day;
-  if(month < 10) month = "0" + month;
-  if(day < 10) day = "0" + day;
+  if(month < 10) {month = "0" + month;}
+  if(day < 10) {day = "0" + day;}
   return this.year + "-" + month + "-" + day;
 };
 

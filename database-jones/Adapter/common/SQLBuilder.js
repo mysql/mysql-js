@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ SQLBuilder.prototype.createInsertSQL = function (dbTableHandler, fieldValueDefin
   }
   valuesSQL += ')';
   insertSQL += ')' + valuesSQL;
-  if (typeof(fieldValueDefinedKey) === 'undefined') {
+  if (fieldValueDefinedKey === undefined) {
     dbTableHandler[this.name].insertSQL = insertSQL;
     dbTableHandler[this.name].duplicateSQL = insertSQL + duplicateSQL;
     udebug.log_detail('insertSQL:', insertSQL);
@@ -161,10 +161,11 @@ SQLBuilder.prototype.createSelectSQL = function (dbTableHandler, index) {
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
     var indexMetadatas = dbTableHandler.dbTable.indexes;
+    var indexMetadata;
     separator = '';
     for (i = 0; i < indexMetadatas.length; ++i) {
       if (indexMetadatas[i].name === index) {
-        var indexMetadata = indexMetadatas[i];
+        indexMetadata = indexMetadatas[i];
         for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
           whereSQL += separator + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
           separator = ' AND ';
@@ -180,7 +181,7 @@ SQLBuilder.prototype.createSelectSQL = function (dbTableHandler, index) {
 };
 
 SQLBuilder.prototype.createWhereSQL = function(dbTableHandler, index) {
-  var whereSQL;
+  var whereSQL = '';
   var separator = '';
   var i, j, columns;
   columns = dbTableHandler.getColumnMetadata();
@@ -192,10 +193,11 @@ SQLBuilder.prototype.createWhereSQL = function(dbTableHandler, index) {
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
     var indexMetadatas = dbTableHandler.dbTable.indexes;
+    var indexMetadata;
     separator = '';
     for (i = 0; i < indexMetadatas.length; ++i) {
       if (indexMetadatas[i].name === index) {
-        var indexMetadata = indexMetadatas[i];
+        indexMetadata = indexMetadatas[i];
         for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
           whereSQL += separator + 't0.' + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
           separator = ' AND ';
@@ -258,7 +260,6 @@ SQLBuilder.prototype.initializeProjection = function(projection) {
   var joinType, joinIndex;
   var offset;
   var keyField, nonKeyField;
-  var errors = '';
   var mysql = {};
 
   projection[this.name] = mysql;
@@ -396,12 +397,12 @@ translateMeta.float = function(nullable) {return 'FLOAT' +  pn(nullable);};
 translateMeta.integer = function(bits, unsigned, nullable) {
   var u = pu(unsigned);
   var n = pn(nullable);
-  if (bits < 8) return 'BIT' + u + n;
-  if (bits == 8) return 'TINYINT' + u + n;
-  if (bits <= 16) return 'SMALLINT' + u + n;
-  if (bits <= 24) return 'MEDIUMINT' + u + n;
-  if (bits <= 32) return 'INT' + u + n;
-  return 'BIGINT' + u + n;
+  if (bits < 8)   {return 'BIT' + u + n;}
+  if (bits == 8)  {return 'TINYINT' + u + n;}
+  if (bits <= 16) {return 'SMALLINT' + u + n;}
+  if (bits <= 24) {return 'MEDIUMINT' + u + n;}
+  if (bits <= 32) {return 'INT' + u + n;}
+  /* else */       return 'BIGINT' + u + n;
 };
 translateMeta.interval = function(fsp, nullable) {return 'TIME' + pn(nullable);};
 translateMeta.time = function(fsp, nullable) {return 'TIME' + pn(nullable);};

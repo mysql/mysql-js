@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     return null;
   }
 
-	if(typeof stats.created[dbtable.name] === 'undefined') {
+	if(stats.created[dbtable.name] === undefined) {
 		stats.created[dbtable.name] = 1;
 	} else { 
 		stats.created[dbtable.name]++;
@@ -168,7 +168,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
-  if (typeof(this.mapping.fields) === 'undefined') {
+  if (this.mapping.fields === undefined) {
     this.mapping.fields = [];
   }
   for(i = 0 ; i < this.mapping.fields.length ; i++) {
@@ -284,7 +284,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     // a little fix-up for primary key unique index:
     index = this.dbTable.indexes[i];
     udebug.log_detail('DbTableHandler<ctor> creating DBIndexHandler for', index);
-    if (typeof(index.name) === 'undefined') {
+    if (index.name === undefined) {
       index.name = 'PRIMARY';
     }
     // make sure all index columns are mapped
@@ -386,7 +386,7 @@ DBTableHandler.prototype.newResultObject = function(values, adapter) {
     this.newObjectConstructor.call(newDomainObj);
   }
 
-  if (typeof(values) === 'object') {
+  if (typeof values === 'object') {
     // copy values into the new domain object
     this.setFields(newDomainObj, values, adapter);
   }
@@ -473,10 +473,10 @@ DBTableHandler.prototype.applyMappingToResult = function(obj, adapter) {
  */ 
 DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
   var i, f, value, convertedValue;
-
+  var databaseTypeConverter;
   for (i = 0; i < this.getNumberOfFields(); i++) {
     f = this.getField(i);
-    var databaseTypeConverter = f.databaseTypeConverter && f.databaseTypeConverter[adapter];
+    databaseTypeConverter = f.databaseTypeConverter && f.databaseTypeConverter[adapter];
     if (databaseTypeConverter) {
       value = obj[f.fieldName];
       convertedValue = databaseTypeConverter.fromDB(value);
@@ -530,10 +530,9 @@ DBTableHandler.prototype.allColumnsMapped = function() {
 DBTableHandler.prototype.allFieldsIncluded = function(values) {
   // return a list of fields indexes that are found
   // the caller can easily construct the appropriate database statement
-  var i, f, result = [];
+  var i, result = [];
   for (i = 0; i < this.getNumberOfFields(); ++i) {
-    f = this.getField(i);
-    if (typeof(values[i]) !== 'undefined') {
+    if (values[i] !== undefined) {
       result.push(i);
     }
   }
@@ -617,8 +616,9 @@ DBTableHandler.prototype.chooseUniqueIndexForPredicate = function(predicate) {
   for(i = 0 ; i < idxs.length ; i++) {
     if(idxs[i].isUnique) {
       indexHandler = this.getHandlerForIndex(i);
-      if(columnMask.and(indexHandler.columnMask).isEqualTo(indexHandler.columnMask))
+      if(columnMask.and(indexHandler.columnMask).isEqualTo(indexHandler.columnMask)) {
         return indexHandler;
+      }
     }
   }
   return null;
@@ -652,7 +652,7 @@ DBTableHandler.prototype.chooseOrderedIndexForPredicate = function(predicate) {
  */
 DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDefinedListener) { 
   udebug.log_detail("get", fieldNumber);
-  if (typeof(obj) === 'string' || typeof(obj) === 'number') {
+  if (typeof obj === 'string' || typeof obj === 'number') {
     if (fieldValueDefinedListener) {
       fieldValueDefinedListener.setDefined(fieldNumber);
     }
@@ -674,7 +674,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
     result = databaseTypeConverter.toDB(result);
   }
   if (fieldValueDefinedListener) {
-    if (typeof(result) === 'undefined') {
+    if (result === undefined) {
       fieldValueDefinedListener.setUndefined(fieldNumber);
     } else {
       if (this._private.fieldNumberToColumnMap[fieldNumber].isBinary && result.constructor && result.constructor.name !== 'Buffer') {
@@ -742,7 +742,7 @@ DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
       userValue = f.domainTypeConverter.fromDB(userValue, obj, f);
     }
     udebug.log_detail('DBTableHandler.set', f.fieldName, 'value', userValue);
-    if (typeof userValue === 'undefined') {
+    if (userValue === undefined) {
       delete obj[f.fieldName];
     } else {
       obj[f.fieldName] = userValue;
@@ -758,10 +758,9 @@ DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
  * User-defined column conversion is handled in the set method.
 */
 DBTableHandler.prototype.setFields = function(obj, values, adapter) {
-  var i, f, value, columnName, fieldName;
+  var i, f, value, fieldName;
   for (i = 0; i < this.getNumberOfFields(); ++i) {
     f = this.getField(i);
-    columnName = f.columnName;
     fieldName = f.fieldName;
     value = values[fieldName];
     if (value !== undefined) {
@@ -834,7 +833,7 @@ DBIndexHandler = function(parent, dbIndex) {
     this._private.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
   }
   
-  if(i === 1) this.singleColumn = this.getColumn(0);   // One-column index
+  if(i === 1) {this.singleColumn = this.getColumn(0);}   // One-column index
 };
 
 /* DBIndexHandler inherits some methods from DBTableHandler 
