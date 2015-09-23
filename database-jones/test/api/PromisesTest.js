@@ -20,6 +20,7 @@
 
 "use strict";
 /*global fail_openSession */
+/*jslint unparam: true */
 
 var assert = require("assert");
 
@@ -83,8 +84,8 @@ t_223.run = function() {
   test = this;
   
   function onSession(s) {
-    assert("PromisesTest.t_223 openSession should fail" === 0);
     s.close();
+    throw new Error("PromisesTest.t_223 openSession should fail");
   }
   
   function onError(e) {
@@ -198,7 +199,7 @@ tests.push(t_227);
  */
 var t_2271fv = new harness.ConcurrentTest("2.2.7.1 onFulfilled returns a value"); 
 t_2271fv.run = function() {
-  var p1, p2 ,p3, test, session;
+  var p1, p2, test;
   test = this;
   
   function onSession(s) {
@@ -220,7 +221,7 @@ t_2271fv.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_2271 p2 not thenable");
     }
-    p3 = p2.then(onP2Fulfilled);
+    p2.then(onP2Fulfilled);
   }
 };
 tests.push(t_2271fv);
@@ -229,9 +230,11 @@ tests.push(t_2271fv);
  */
 var t_2271rv = new harness.ConcurrentTest("2.2.7.1 onRejected returns a value"); 
 t_2271rv.run = function() {
-  var p1, p2 ,p3, test, session, onSession;
+  var p1, p2 ,p3, test;
   test = this;
   
+  function onSession() { }
+
   function onError(err) {
     // onError returns a value; should fulfill p3 as well
     return 49;
@@ -264,13 +267,16 @@ t_2271rv.run = function() {
 tests.push(t_2271rv);
 
 
-/* 2.2.7.2 If onFulfilled throws an exception e, promise2 must be rejected with e as the reason. 
+/* 2.2.7.2 If onFulfilled throws an exception e,
+ *         promise2 must be rejected with e as the reason.
  */
 var t_2272fe = new harness.ConcurrentTest("2.2.7.2 onFulfilled throws an error"); 
 t_2272fe.run = function() {
-  var p1, p2, p3, test, p2OnFulfilled;
+  var p1, p2, test;
   test = this;
-  
+
+  function p2OnFulfilled() { }
+
   function onSession(s) {
     // onSession throws an exception; should reject p2
     s.close();
@@ -290,22 +296,27 @@ t_2272fe.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_2271fe p2 not thenable");
     }
-    p3 = p2.then(p2OnFulfilled, p2OnRejected);
+    p2.then(p2OnFulfilled, p2OnRejected);
   }
 };
 tests.push(t_2272fe);
 
-/* 2.2.7.2 If onRejected throws an exception e, promise2 must be rejected with e as the reason. 
+/* 2.2.7.2 If onRejected throws an exception e, 
+ *         promise2 must be rejected with e as the reason.
  */
 var t_2272re = new harness.ConcurrentTest("2.2.7.2 onRejected throws an error"); 
 t_2272re.run = function() {
-  var p1, p2, p3, test, onSession, p2OnFulfilled;
+  var p1, p2, test;
   test = this;
   
+  function onSession() { }
+
   function onError(err) {
     // onError throws an exception; should reject p2
     throw new Error("PromisesTest.t_2272re");
   }
+
+  function p2OnFulfilled() { }
 
   function p2OnRejected(e) {
     test.errorIfNotEqual('t_2272re error value', 'PromisesTest.t_2272re', e.message);
@@ -320,16 +331,17 @@ t_2272re.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_227 p2 not thenable");
     }
-    p3 = p2.then(p2OnFulfilled, p2OnRejected);
+    p2.then(p2OnFulfilled, p2OnRejected);
   }
 };
 tests.push(t_2272re);
 
-/* 2.2.7.3 If onFulfilled is not a function and promise1 is fulfilled, promise2 must be fulfilled with the same value.
+/* 2.2.7.3 If onFulfilled is not a function and promise1 is fulfilled, 
+ *         promise2 must be fulfilled with the same value.
  */
 var t_2273 = new harness.ConcurrentTest("2.2.7.3 missing onFulfilled"); 
 t_2273.run = function() {
-  var p1, p2, p3, test;
+  var p1, p2, test;
   test = this;
   
   function p2OnFulfilled(v) {
@@ -344,17 +356,23 @@ t_2273.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_2273 p2 not thenable");
     }
-    p3 = p2.then(p2OnFulfilled);
+    p2.then(p2OnFulfilled);
   }
 };
 tests.push(t_2273);
 
-/* 2.2.7.4 If onRejected is not a function and promise1 is rejected, promise2 must be rejected with the same reason.
+/* 2.2.7.4 If onRejected is not a function and promise1 is rejected, 
+           promise2 must be rejected with the same reason.
  */
 var t_2274 = new harness.ConcurrentTest("2.2.7.4 missing onRejected"); 
 t_2274.run = function() {
-  var p1, p2, p3, test, p2OnFulfilled;
+  var p1, p2, test;
   test = this;
+
+  function p2OnFulfilled() {
+    test.appendErrorMessage("p2 not rejected");
+    test.failOnError();
+  }
 
   function p2OnRejected(err) {
     test.failOnError();
@@ -368,30 +386,27 @@ t_2274.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_227 p2 not thenable");
     }
-    p3 = p2.then(p2OnFulfilled, p2OnRejected);
+    p2.then(p2OnFulfilled, p2OnRejected);
   }
 };
 tests.push(t_2274);
 
-/* 2.3 If x is a thenable, it attempts to make promise adopt the state of x, under the assumption that 
- * x behaves at least somewhat like a promise. 
- * Otherwise, it fulfills promise with the value x.
+/* 2.3 If x is a thenable, it attempts to make promise adopt the state of x, 
+ *     under the assumption that x behaves at least somewhat like a promise.
+ *     Otherwise, it fulfills promise with the value x.
  */
 var t_23f = new harness.ConcurrentTest("2.3 The Promise Resolution Procedure: fulfilled");
 t_23f.run = function() {
   var test = this;
-  var session;
-  var p1, p2, p3, p4;
+  var p1, p2;
   
   function onSession(s) {
-    session = s;
-    p4 = s.close();
-    return p4;
+    return s.close();
   }
   
   function reportSuccess(result) {
-    if (result) {
-    test.appendErrorMessage('t_23f result of session.close should be null or undefined but is ' + result, result);
+    if (result !== null && result !== undefined) {
+      test.appendErrorMessage('t_23f result of session.close should be null or undefined but is ' + result, result);
     }
     test.failOnError();
   }
@@ -403,29 +418,27 @@ t_23f.run = function() {
   // t_23 begins here
   p1 = mynode.openSession(good_properties);
   p2 = p1.then(onSession);
-  p3 = p2.then(reportSuccess, reportFailure);
+  p2.then(reportSuccess, reportFailure);
 };
 tests.push(t_23f);
 
-/* 2.3 If x is a thenable, it attempts to make promise adopt the state of x, under the assumption that 
- * x behaves at least somewhat like a promise. 
- * Otherwise, it fulfills promise with the value x.
+/* 2.3 If x is a thenable, it attempts to make promise adopt the state of x, 
+ *     under the assumption that x behaves at least somewhat like a promise.
+ *     Otherwise, it fulfills promise with the value x.
  */
 var t_23r = new harness.ConcurrentTest("2.3 The Promise Resolution Procedure: rejected");
 t_23r.run = function() {
   var test = this;
-  var session;
-  var p1, p2, p3, p4;
+  var p1, p2;
   
   function onSession(s) {
-    session = s;
-    p4 = s.close();
-    return p4;
+    return s.close();
   }
   
   function reportSuccess(result) {
+    test.appendErrorMessage('t_23r should fail.');
     test.errorIfNotNull('t_23r result of session.close should be null', result);
-    test.fail('t_23r should fail.');
+    test.failOnError();
   }
   
   function reportFailure(err) {
@@ -444,7 +457,7 @@ t_23r.run = function() {
   // t_23 begins here
   p1 = mynode.openSession(bad_properties);
   p2 = p1.then(onSession);
-  p3 = p2.then(reportSuccess, reportFailure);
+  p2.then(reportSuccess, reportFailure);
 };
 tests.push(t_23r);
 
@@ -514,7 +527,7 @@ testIdleCommit.run = function() {
   var testCase = this;
   mynode.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
-    if (err) throw err;
+    if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'Idle cannot commit');
     helpers.commit().
       then(helpers.errorReportSuccess, helpers.checkReportFailure);
@@ -527,7 +540,7 @@ testIdleRollback.run = function() {
   var testCase = this;
   mynode.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
-    if (err) throw err;
+    if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'Idle cannot rollback');
     helpers.rollback().
       then(helpers.errorReportSuccess, helpers.checkReportFailure);
@@ -539,7 +552,7 @@ var testActiveBegin = new harness.ConcurrentTest('Active begin must fail');
 testActiveBegin.run = function() {
   var testCase = this;
   mynode.openSession(good_properties, null, function(err, session) {
-    if (err) throw err;
+    if (err) { throw err; }
     testCase.session = session;
     var helpers = createHelpers(testCase, session, '2500', 'Active cannot begin');
     var p1 = helpers.begin();
@@ -556,7 +569,7 @@ testRollbackOnlyBegin.run = function() {
   var testCase = this;
   mynode.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
-    if (err) throw err;
+    if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'RollbackOnly cannot begin');
     helpers.begin().
       then(helpers.setRollbackOnly).
@@ -571,7 +584,7 @@ testRollbackOnlyCommit.run = function() {
   var testCase = this;
   mynode.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
-    if (err) throw err;
+    if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'RollbackOnly cannot commit');
     helpers.begin().
       then(helpers.setRollbackOnly).

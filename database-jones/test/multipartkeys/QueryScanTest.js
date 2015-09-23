@@ -189,7 +189,7 @@ var queryTests = [ q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15 ];
 //var queryTests = [ q15 ];
 
 /** Set up domain type */
-function mpk1() {};
+function mpk1() {}
 new mynode.TableMapping('mpk1').applyToClass(mpk1);
 
 /** Define test */

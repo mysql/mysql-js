@@ -78,8 +78,11 @@ function prepare(testCase, testObj) {
   function onConnect(err, conn) {
     udebug.log("prepare onConnect");
     connection = conn;
-    if(dbSession) onSession(null, dbSession);
-    else connection.getDBSession(spi_lib.allocateSessionSlot(), onSession);
+    if(dbSession) {
+      onSession(null, dbSession);
+    } else {
+      connection.getDBSession(spi_lib.allocateSessionSlot(), onSession);
+    }
   }
   
   spi_lib.getConnectionPool(onConnect);
@@ -135,8 +138,7 @@ t1.checkResult = function(err, tx) {
   var op;
   if(err) { 
     t1.appendErrorMessage("t1 ExecuteCommit failed: " + err);
-  }
-  else {
+  } else {
     op = tx.executedOperations.pop();
     t1.errorIfNotEqual("t1 operation failed", true, op.result.success);
   }
@@ -157,8 +159,7 @@ t2.checkResult = function(err, tx) {
   var op;
   if(err) { 
     t2.appendErrorMessage("t2 ExecuteCommit failed: " + err); 
-  }
-  else { 
+  } else {
     op = tx.executedOperations.pop();
     t2.errorIfNull("Null op", op);
     t2.errorIfNull("Null op.result", op.result);
@@ -181,8 +182,7 @@ t3.checkResult = function(err, tx) {
   udebug.log("checkResult t3");
   if(err) { 
     t3.appendErrorMessage("t3 ExecuteCommit failed: " + err);  
-  }
-  else { 
+  } else {
     var op = tx.executedOperations.pop();
     if(op) {
       t3.errorIfNotEqual("Operation failed", true, op.result.success);
@@ -205,8 +205,7 @@ t4.checkResult = function(err, tx) {
   var op;
   if(err) { 
     t4.appendErrorMessage("t4 ExecuteCommit failed: " + err);  
-  }
-  else { 
+  } else {
     op = tx.executedOperations.pop();
     if (op.result.value !== null) {
       t4.errorIfNotEqual("Expected Henrietta", 'Henrietta', op.result.value.name);
@@ -305,6 +304,7 @@ t8.checkResult = function(err, tx) {
     t8.appendErrorMessage("t8 ExecuteCommit failed: " + err); 
   } else {
     op = tx.executedOperations.pop();
+    t8.errorIfUnset("Unset operation", op);
   }
   t8.failOnError();
 };
@@ -319,8 +319,8 @@ t8.run = function() {
 t9.runTestMethod = do_delete_op;
 
 t9.checkResult = function(err, tx) {
-  var op;
   udebug.log("checkResult t9");
+  var op;
   if(err) {
     if (err.cause) {
       t9.errorIfNotEqual("t9 cause.sqlstate", '02000', err.cause.sqlstate);

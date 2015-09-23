@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -18,6 +18,9 @@
  02110-1301  USA
  */
 
+"use strict";
+
+var fs = require("fs");
 var udebug = unified_debug.getLogger("BadRecordLogger.js");
 
 var theController, theBadRecordLogger;
@@ -93,7 +96,7 @@ BadRecordLogger.prototype.logRecord = function(record) {
       runQueue();
     });
   }
-}
+};
 
 BadRecordLogger.prototype.end = function() {
   udebug.log("end", this.fd);
@@ -105,7 +108,7 @@ BadRecordLogger.prototype.end = function() {
     /* You can't close STDERR, so just tell the controller we're done */
     theController.loggerFinished();
   }
-}
+};
 
 exports.BadRecordLogger = BadRecordLogger;
 

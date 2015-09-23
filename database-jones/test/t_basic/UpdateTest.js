@@ -60,18 +60,20 @@ t2.run = function() {
   var testCase = this;
   var start_number = 5030;
   var number_of_objects = 10;
+
+  function t2OnError(err) {
+    if (err) { testCase.appendErrorMessage(err); }
+  }
+
   // create objects
-  
   fail_openSession(testCase, function(session) {
     var i;
     var batch = session.createBatch();
+
     for (i = start_number; i < start_number + number_of_objects; ++i) {
-      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), t2OnError);
     }
+
     batch.execute(function(err, session2) {
       if (err) {
         testCase.appendErrorMessage(err);
@@ -79,12 +81,9 @@ t2.run = function() {
       var batch2 = session2.createBatch();
       // update all fields in the objects
       for (i = start_number; i < start_number + number_of_objects; ++i) {
-        batch2.update(new global.t_basic(i, 'Employee ' + i, i, i), function(err) {
-          if (err) {
-            testCase.appendErrorMessage(err);
-          }
-        });
+        batch2.update(new global.t_basic(i, 'Employee ' + i, i, i), t2OnError);
       }
+
       batch2.execute(function(err, session3) {
         if (err) {
          testCase.appendErrorMessage(err); 
@@ -145,17 +144,17 @@ t4.run = function() {
   var testCase = this;
   var start_number = 5050;
   var number_of_objects = 10;
+
+  function t4OnError(err) {
+    if (err) { testCase.appendErrorMessage(err); }
+  }
+
   // create objects
-  
   fail_openSession(testCase, function(session) {
     var i;
     var batch = session.createBatch();
     for (i = start_number; i < start_number + number_of_objects; ++i) {
-      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i, i), function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i, i), t4OnError);
     }
     batch.execute(function(err, session2) {
       if (err) {
@@ -164,11 +163,7 @@ t4.run = function() {
       var batch2 = session2.createBatch();
       // update only the name
       for (i = start_number; i < start_number + number_of_objects; ++i) {
-        batch2.update(new global.t_basic(i, 'Employee ' + i), function(err) {
-          if (err) {
-            testCase.appendErrorMessage(err);
-          }
-        });
+        batch2.update(new global.t_basic(i, 'Employee ' + i), t4OnError);
       }
       batch2.execute(function(err, session3) {
         if (err) {
@@ -231,17 +226,17 @@ t6.run = function() {
   var testCase = this;
   var start_number = 5230;
   var number_of_objects = 10;
+
+  function t6OnError(err) {
+    if (err) { testCase.appendErrorMessage(err); }
+  }
   // create objects
   
   fail_openSession(testCase, function(session) {
     var i;
     var batch = session.createBatch();
     for (i = start_number; i < start_number + number_of_objects; ++i) {
-      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), t6OnError);
     }
     batch.execute(function(err, session2) {
       if (err) {
@@ -249,13 +244,10 @@ t6.run = function() {
       }
       var batch2 = session2.createBatch();
       // update all fields in the objects
+      var object;
       for (i = start_number; i < start_number + number_of_objects; ++i) {
-        var object = new global.t_basic(i, 'Employee ' + i, i, i);
-        batch2.update('t_basic', object, object, function(err) {
-          if (err) {
-            testCase.appendErrorMessage(err);
-          }
-        });
+        object = new global.t_basic(i, 'Employee ' + i, i, i);
+        batch2.update('t_basic', object, object, t6OnError);
       }
       batch2.execute(function(err, session3) {
         if (err) {
@@ -315,16 +307,15 @@ t8.run = function() {
   var start_number = 5250;
   var number_of_objects = 10;
   var i;
+  function t8OnError(err) {
+    if (err) { testCase.appendErrorMessage(err); }
+  }
   // create objects
   
   fail_openSession(testCase, function(session) {
     var batch = session.createBatch();
     for (i = start_number; i < start_number + number_of_objects; ++i) {
-      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i, i), function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.persist(new global.t_basic(i, 'Employee ' + (i + 100), i, i), t8OnError);
     }
     batch.execute(function(err, session2) {
       if (err) {
@@ -332,16 +323,13 @@ t8.run = function() {
       }
       var batch2 = session2.createBatch();
       // update only the name
+      var key, value;
       for (i = start_number; i < start_number + number_of_objects; ++i) {
         // update(constructor, key, value, callback)
-        var key = new global.t_basic(i);
-        var value = new global.t_basic(i, 'Employee ' + i);
+        key = new global.t_basic(i);
+        value = new global.t_basic(i, 'Employee ' + i);
         delete value.id;
-        batch2.update(global.t_basic, key, value, function(err) {
-          if (err) {
-            testCase.appendErrorMessage(err);
-          }
-        });
+        batch2.update(global.t_basic, key, value, t8OnError);
       }
       batch2.execute(function(err, session3) {
         if (err) {

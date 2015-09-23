@@ -21,6 +21,7 @@
 "use strict";
 
 var assert     = require("assert"),
+    fs         = require("fs"),
     jones      = require("database-jones"),
     udebug     = require("unified_debug").getLogger("LoaderJob.js"),
     machine    = require("./control_file.js"),
@@ -35,7 +36,7 @@ function ColumnDefinition(columnName) {
   this.name              = columnName;
   this.startPos          = null;  // For fixed-width input
   this.endPos            = null;
-};
+}
 
 // Define a destination:  Database, Table, columns, and mapped class
 function LoaderJobDestination() {
@@ -43,7 +44,7 @@ function LoaderJobDestination() {
   this.table             = "";
   this.columnDefinitions = [];
   this.rowConstructor    = null;
-};
+}
 
 LoaderJobDestination.prototype.addColumnDefinition = function(name) {
   assert(typeof name === 'string');
@@ -66,7 +67,7 @@ LoaderJobDestination.prototype.createTableMapping = function() {
   mapping = new jones.TableMapping(literalMapping);
 
   /* A ``function() {}'' for constructing mapped objects */
-  this.rowConstructor = new Function();
+  this.rowConstructor = function() {};
 
   this.columnDefinitions.forEach(function(column) {
     mapping.mapField(column.name);
@@ -226,7 +227,7 @@ LoaderJob.prototype.dataSourceIsCSV = function() {
    
    APPEND allows the table to have existing data.  This is the default behavior.
 
-   INSERT requires the table to empty before loading.
+   INSERT requires the table to be empty before loading.
 
    TRUNCATE instructs the loader to delete all rows before loading data.
 

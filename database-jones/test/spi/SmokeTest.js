@@ -25,10 +25,6 @@
 
 "use strict";
 
-try {
-  require("./suite_config.js");
-} catch (e) {}
-
 var test = new harness.SmokeTest("LoadModule");
 
 test.run = function() {
@@ -36,8 +32,11 @@ test.run = function() {
       test = this;  
 
   function onCreate(err) {
-    if(err) test.fail("create.sql failed");
-    else test.pass();
+    if(err) {
+      test.fail("create.sql failed");
+    } else {
+      test.pass();
+    }
   }
 
   function onConnected(err, connection) {

@@ -26,7 +26,7 @@ var service = mynode.getDBServiceProvider(global.adapter);
 
 var t1 = new harness.ConcurrentTest("getDefaultConnectionProperties");
 t1.run = function() {
-  var properties = service.getDefaultConnectionProperties();
+  service.getDefaultConnectionProperties();
   return true; // test is complete
 };
 
@@ -34,7 +34,7 @@ t1.run = function() {
 var t2 = new harness.ConcurrentTest("getFactoryKey");
 t2.run = function() {
   var properties = service.getDefaultConnectionProperties();
-  var key = service.getFactoryKey(properties);
+  service.getFactoryKey(properties);
   return true; // test is complete
 };
 

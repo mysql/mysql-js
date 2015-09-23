@@ -45,18 +45,18 @@ t2.run = function() {
   var start_number = 4010;
   var number_of_objects = 10;
   var i, object;
-  
+
+  function t2OnError(err) {
+    if(err) { testCase.appendErrorMessage(err); }
+  }
+
   fail_openSession(testCase, function(session) {
     var batch = session.createBatch();
     // create objects
     for (i = start_number; i < start_number + number_of_objects; ++i) {
       object = new global.t_basic(i, 'Employee ' + i, i, i);
       // use variant save(constructor, object, callback)
-      batch.save(global.t_basic, object, function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.save(global.t_basic, object, t2OnError);
     }
     batch.execute(function(err, session2) {
       if (err) {
@@ -114,17 +114,17 @@ t4.run = function() {
   var testCase = this;
   var start_number = 4030;
   var number_of_objects = 10;
+
+  function t4OnError(err) {
+    if(err) { testCase.appendErrorMessage(err); }
+  }
+
   // create objects
-  
   fail_openSession(testCase, function(session) {
     var i;
     var batch = session.createBatch();
     for (i = start_number; i < start_number + number_of_objects; i += 2) {
-      batch.save(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), function(err) {
-        if (err) {
-          testCase.appendErrorMessage(err);
-        }
-      });
+      batch.save(new global.t_basic(i, 'Employee ' + (i + 100), i + 100, i + 100), t4OnError);
     }
     batch.execute(function(err, session2) {
       if (err) {
@@ -133,11 +133,7 @@ t4.run = function() {
       var batch2 = session2.createBatch();
       // save objects (on top of original objects)
       for (i = start_number; i < start_number + number_of_objects; ++i) {
-        batch2.save(new global.t_basic(i, 'Employee ' + i, i, i), function(err) {
-          if (err) {
-            testCase.appendErrorMessage(err);
-          }
-        });
+        batch2.save(new global.t_basic(i, 'Employee ' + i, i, i), t4OnError);
       }
       batch2.execute(function(err, session3) {
         if (err) {

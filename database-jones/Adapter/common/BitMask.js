@@ -43,8 +43,9 @@ function greater(x, y) {
 
 BitMask.prototype.inspect = function() {
   var i, str = "";
-  for(i = 0 ; i < this.displaySize ; i++)
+  for(i = 0 ; i < this.displaySize ; i++) {
     str += this.bitIsSet(i) ? "1" : "0";
+  }
   return str;
 };
 
@@ -126,7 +127,7 @@ BitMask.prototype.orWith = function(that) {
 BitMask.prototype.isNonZero = function() {
   var i;
   for(i = 0 ; i < this._mask.length ; i++) {
-    if (this._mask[i]) return true;
+    if (this._mask[i]) { return true; }
   }
   return false;
 };

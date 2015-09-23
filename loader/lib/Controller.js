@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -17,6 +17,8 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  02110-1301  USA
  */
+
+"use strict";
 
 var udebug = unified_debug.getLogger("Controller.js"),
     DbWriter = require("./DbWriter.js").DbWriter,
@@ -99,6 +101,8 @@ Controller.prototype.run = function() {
 Controller.prototype.dsNewItem = function(record) {
   var handlerReturnCode;
 
+  udebug.log("dsNewItem", record);
+  
   /* Count all rows processed */
   this.stats.rowsProcessed++;
 
@@ -179,7 +183,7 @@ Controller.prototype.commitIfComplete = function() {
 
 Controller.prototype.loaderTransactionDidCommit = function() {
   this.badRecordLogger.end();
-}
+};
 
 Controller.prototype.loaderTransactionDidRollback = function() {
   this.fatalError = new Error("Transaction rolled back.  No records loaded.");
