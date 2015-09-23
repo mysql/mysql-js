@@ -34,18 +34,24 @@ harness.predefineLint(["unified_debug", "harness", "mynode", "adapter", "jones",
 more(harness.getLintTestsForDirectory(mynode.fs.api_dir));
 more(harness.getLintTestsForDirectory(mynode.fs.spi_common_dir));
 
+/* Files in database-jones/test */
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir));
-
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "spi"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "api"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "autoincrement"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "composition"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "freeform"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "issues"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multipartkeys"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "spi"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
 
-// harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "loader", "lib");
-more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
+/* Files in loader/ */
+// more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "loader", "lib"));
+
+/* Files in samples/ */
+more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "Tweet"));
 
 /**** ERRORS TO IGNORE:
  ignore(filename, startpos, message) 
@@ -65,42 +71,14 @@ harness.ignoreLint("stats.js",13,"Expected '{' and instead saw 'r'.");
 harness.ignoreLint("UserContext.js", 33, "Unexpected \'\\.\'.");
 harness.ignoreLint("UserContext.js", 7, "Confusing use of \'!\'.");
 
-
-// spi
-harness.ignoreLint("BasicVarcharTest.js", 19, "Expected \'{\' and instead saw \'onSession\'.");
-harness.ignoreLint("BasicVarcharTest.js", 10, "Expected \'{\' and instead saw \'connection\'.");
-harness.ignoreLint("SmokeTest.js", 13, "Expected \'{\' and instead saw \'test\'.");
-harness.ignoreLint("SmokeTest.js", 10, "Expected \'{\' and instead saw \'test\'.");
-
-// t_basic
-harness.ignoreLint("BatchTest.js", 6, "Don't make functions within a loop.");
-harness.ignoreLint("ParallelOperationTest.js", 6, "Don't make functions within a loop.");
-harness.ignoreLint("SaveTest.js", 8, "Don't make functions within a loop.", 2);
-harness.ignoreLint("SaveTest.js", 10, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 8, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 10, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 8, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 10, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 8, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 10, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 8, "Don't make functions within a loop.");
-harness.ignoreLint("UpdateTest.js", 10, "Don't make functions within a loop.");
-
-// multidb
-harness.ignoreLint("ConnectTest.js", 42,  "Unexpected \'\\.\'.");
-harness.ignoreLint("ConnectTest.js", 42,  "Unexpected \'\\.\'.");
-
 // API
 harness.ignoreLint("ProxyFactory.js", 47, /Unexpected/);
 harness.ignoreLint("ProxyFactory.js", 6,  /The body of a/);
 
 // Composition
 harness.ignoreLint("lib.js", 9, "Unexpected 'continue'", 2);
-harness.ignoreLint("lib.js", 8, /Don\'t make functions/);
-harness.ignoreLint("lib.js", 10, /Don\'t make functions/);
 
 //numerictypes
 harness.ignoreLint("QueryKeywordTest.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
-harness.ignoreLint("lib.js", 95, "Expected \'String\' and instead saw \'\'\'\'.");
 
 module.exports.tests = tests;

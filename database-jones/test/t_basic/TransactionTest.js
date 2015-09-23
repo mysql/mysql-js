@@ -138,15 +138,6 @@ t10.run = function() {
   udebug.log("t10 run");
   var testCase = this;
   
-  var t10OnFind = function(err, found) {
-    udebug.log("t10 OnFind");
-    if (found.id === 1000) {
-      testCase.pass();  
-    } else {
-      testCase.fail('t10 Failed to find 1000');
-    }
-  };
-  
   var t10OnCommit = function(err, session, persisted) {
     udebug.log("t10 OnCommit");
     session.find(t_basic, 1000, fail_verify_t_basic, 1000, testCase, false); // should succeed

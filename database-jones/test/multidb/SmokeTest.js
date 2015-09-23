@@ -23,10 +23,6 @@
 
 "use strict";
 
-try {
-  require("./suite_config.js");
-} catch (e) {}
-
 var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {

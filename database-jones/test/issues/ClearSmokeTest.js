@@ -21,6 +21,7 @@
 var test = new harness.ClearSmokeTest("ClearSmokeTest");
 
 test.run = function() {
+  "use strict";
   var t = this;
 
   function onDrop() {

@@ -24,7 +24,7 @@ global.converter = function(id, name, status, magic) {
   if (id !== undefined)     { this.id = id; }
   if (name !== undefined)   { this.name = name; }
   if (status !== undefined) { this.status = status; }
-  if (magic !== undefined)  {this.magic = magic; }
+  if (magic !== undefined)  { this.magic = magic; }
 };
 global.converter.prototype.getStatus = function() {
     return this.status;
@@ -66,7 +66,6 @@ tablemapping.applyToClass(global.converter);
 /** Test the toDB and fromDB functions */
 var t0 = new harness.ConcurrentTest('testStatusColumnConverter');
 t0.run = function() {
-  var testCase = this;
   this.errorIfNotEqual('toDB', 1, statusConverter.toDB(STATUS.MARRIED));
   this.errorIfNotEqual('fromDB', STATUS.DIVORCED, statusConverter.fromDB(2));
   this.failOnError();
@@ -90,13 +89,13 @@ t1.run = function() {
         if (err) {
           testCase.fail(err);
         } else {
-          if (typeof(instance) !== 'object') {
-            testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance));
+          if (typeof instance !== 'object') {
+            testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof instance);
           } else {
             if (instance === null) {
               testCase.appendErrorMessage('Result for id ' + id + ' is null.');
             } else {
-              if (typeof(instance.getStatus) !== 'function') {
+              if (typeof instance.getStatus !== 'function') {
               testCase.appendErrorMessage('Result for id ' + id + ' is not a domain object');
             }
             testCase.errorIfNotEqual('fail to verify id', id, instance.id);
@@ -111,6 +110,8 @@ t1.run = function() {
     });
   });
 };
+
+// TODO: Convert t2 to use stats API and always run it
 
 var t2 = new harness.ConcurrentTest('testPerformance');
 t2.converter = {
@@ -137,7 +138,7 @@ t2.convert2 = function(value) {
 
 /** Only use convert function if it is not undefined */
 t2.convert3 = function(value) {
-  if (typeof t2.converter999 !== 'undefined') {
+  if (t2.converter999 !== undefined) {
     return t2.converter999.toDB(value);
   }
   return value;
@@ -166,43 +167,42 @@ t2.Timer.prototype.stop = function() {
 };
 
 t2.run = function() {
-  var testCase = this;
   var i, numberOfIterations = 100000000;
   var r, numberOfRuns = 5;
-  var value;
+  var timer1, timer2, timer3, timer4;
   // test performance of empty converter
   for (r = 0; r < numberOfRuns; ++r) {
-    var timer1 = new this.Timer('                  empty converter', numberOfIterations);
+    timer1 = new this.Timer('                  empty converter', numberOfIterations);
     for (i = 0; i < numberOfIterations; ++i) {
-      value = this.convert1(i);
+      this.convert1(i);
     }
     timer1.stop();
   }
   for (r = 0; r < numberOfRuns; ++r) {
-    var timer2 = new this.Timer('                   if (converter)', numberOfIterations);
+    timer2 = new this.Timer('                   if (converter)', numberOfIterations);
     // test performance of if then converter
     for (i = 0; i < numberOfIterations; ++i) {
-      value = this.convert2(i);
+      this.convert2(i);
     }
     timer2.stop();
   }
   for (r = 0; r < numberOfRuns; ++r) {
-    var timer3 = new this.Timer('if typeof converter !== undefined', numberOfIterations);
+    timer3 = new this.Timer('       if converter !== undefined', numberOfIterations);
     // test performance of if then converter
     for (i = 0; i < numberOfIterations; ++i) {
-      value = this.convert3(i);
+      this.convert3(i);
     }
     timer3.stop();
   }
   for (r = 0; r < numberOfRuns; ++r) {
-    var timer4 = new this.Timer(' if typeof converter === function', numberOfIterations);
+    timer4 = new this.Timer(' if typeof converter === function', numberOfIterations);
     // test performance of if then converter
     for (i = 0; i < numberOfIterations; ++i) {
-      value = this.convert4(i);
+      this.convert4(i);
     }
     timer4.stop();
   }
-  testCase.pass();
+  this.pass();
 };
 
 /*************** EXPORT THE TOP-LEVEL GROUP ********/

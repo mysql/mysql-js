@@ -27,10 +27,10 @@ var udebug = unified_debug.getLogger("t_basic/lib.js");
 
 /** The t_basic domain object */
 global.t_basic = function(id, name, age, magic) {
-  if (typeof id !== 'undefined') this.id = id;
-  if (typeof name !== 'undefined') this.name = name;
-  if (typeof age !== 'undefined') this.age = age;
-  if (typeof magic !== 'undefined') this.magic = magic;
+  if (id !== undefined)    { this.id = id; }
+  if (name !== undefined)  { this.name = name; }
+  if (age !== undefined)   { this.age = age; }
+  if (magic !== undefined) { this.magic = magic; }
 };
 
 global.t_basic.prototype.getAge = function() {return this.age;};
@@ -59,8 +59,8 @@ global.verify_t_basic = function(err, instance, id, testCase, domainObject) {
     testCase.appendErrorMessage(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance));
+  if (typeof instance !== 'object') {
+    testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof instance);
   }
   if (instance === null) {
     testCase.appendErrorMessage('Result for id ' + id + ' is null.');
@@ -85,8 +85,8 @@ global.fail_verify_t_basic = function(err, instance, id, testCase, domainObject)
     testCase.fail(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance)));
+  if (typeof instance !== 'object') {
+    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof instance));
     return;
   }
   if (instance === null) {

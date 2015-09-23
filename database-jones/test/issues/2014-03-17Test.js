@@ -22,12 +22,14 @@
 // Open a session
 // Attempt an operation on the table
 
+"use strict";
+
 var nosql = require('../..');
 
 var t1 = new harness.ConcurrentTest("useLiteralMapping");
 
 function RowConstructor() {
-};
+}
 
 // Literal Mapping
 var mapping, literalMapping;
@@ -49,7 +51,7 @@ t1.run = function() {
       t1.failOnError();
     });
   });
-}
+};
 
 module.exports.tests = [ t1 ];
 

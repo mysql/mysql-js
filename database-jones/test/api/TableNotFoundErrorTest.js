@@ -49,19 +49,19 @@ function checkErrorMessage(tc, err) {
   tc.failOnError();
 }
 
-var domainClass = function(id, name) {
+var DomainClass = function(id, name) {
   this.id = id;
   this.name = name;
 };
 
 var tableMapping = new mynode.TableMapping('test.DoesNotExist');
-tableMapping.applyToClass(domainClass);
+tableMapping.applyToClass(DomainClass);
 
 var t1 = new harness.ConcurrentTest('t1 table not found on persist domainObject');
 t1.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.persist(domainClass, {'id': 1, name: 'Employee 1'}, function(err) {
+    session.persist(DomainClass, {'id': 1, name: 'Employee 1'}, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -72,7 +72,7 @@ var t2 = new harness.ConcurrentTest('t2 table not found on remove domainObject')
 t2.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.remove(domainClass, {'id': 1}, function(err) {
+    session.remove(DomainClass, {'id': 1}, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -82,7 +82,7 @@ var t3 = new harness.ConcurrentTest('t3 table not found on save domainObject');
 t3.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.save(domainClass, {'id': 1, name: 'Employee 1'}, function(err) {
+    session.save(DomainClass, {'id': 1, name: 'Employee 1'}, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -92,7 +92,7 @@ var t4 = new harness.ConcurrentTest('t4 table not found on createQuery domainObj
 t4.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.createQuery(domainClass, function(err) {
+    session.createQuery(DomainClass, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -102,7 +102,7 @@ var t5 = new harness.ConcurrentTest('t5 table not found on find domainObject');
 t5.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.find(domainClass, {'id': 1}, function(err) {
+    session.find(DomainClass, {'id': 1}, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -112,7 +112,7 @@ var t6 = new harness.ConcurrentTest('t6 table not found on update domainObject')
 t6.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.update(domainClass, {'id': 1}, {'name': 'Woger Wabbit'}, function(err) {
+    session.update(DomainClass, {'id': 1}, {'name': 'Woger Wabbit'}, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -122,7 +122,7 @@ var t7 = new harness.ConcurrentTest('t7 table not found on getMapping domainObje
 t7.run = function() {
   var testCase = this;
   fail_openSession(testCase, function(session) {
-    session.getMapping(domainClass, function(err) {
+    session.getMapping(DomainClass, function(err) {
       checkErrorMessage(testCase, err);
     });
   });
@@ -131,7 +131,7 @@ t7.run = function() {
 var t8 = new harness.ConcurrentTest('t8 table not found on load domainObject');
 t8.run = function() {
   var testCase = this;
-  var instance = new domainClass(1, 'Tham Thnead');
+  var instance = new DomainClass(1, 'Tham Thnead');
   fail_openSession(testCase, function(session) {
     session.load(instance, function(err) {
       checkErrorMessage(testCase, err);

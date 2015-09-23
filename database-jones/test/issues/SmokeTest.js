@@ -21,6 +21,7 @@
 var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
+  "use strict";
   var t = this;
   function onCreate(error) {
     if (error) {
