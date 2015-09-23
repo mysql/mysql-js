@@ -180,8 +180,10 @@ exports.ConnectionProperties = function(nameOrProperties, deployment) {
   newProps = JSON.parse(JSON.stringify(defaultProps));
 
   /* Merge with the supplied properties */
-  for(key in mergeProps) if(mergeProps.hasOwnProperty(key)) {
-    newProps[key] = mergeProps[key];
+  for(key in mergeProps) {
+    if(mergeProps.hasOwnProperty(key)) {
+      newProps[key] = mergeProps[key];
+    }
   }
   udebug.log(newProps);
 

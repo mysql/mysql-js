@@ -60,8 +60,6 @@ harness.ignoreLint("IndexBounds.js", 11, /Expected a conditional expression/, 2)
 
 harness.ignoreLint("LintTest.js",14,"Expected a conditional expression and instead saw an assignment.");
 harness.ignoreLint("TableMapping.js",3,"The body of a for in should be wrapped in an if statement to filter unwanted properties from the prototype.");
-harness.ignoreLint("stats.js",13,"Expected '{' and instead saw 'r'.");
-
 harness.ignoreLint("UserContext.js", 33, "Unexpected \'\\.\'.");
 harness.ignoreLint("UserContext.js", 7, "Confusing use of \'!\'.");
 
@@ -92,6 +90,7 @@ harness.ignoreLint("ConnectTest.js", 42,  "Unexpected \'\\.\'.");
 
 // API
 harness.ignoreLint("ProxyFactory.js", 47, /Unexpected/);
+harness.ignoreLint("ProxyFactory.js", 46, /Unexpected/);
 harness.ignoreLint("ProxyFactory.js", 6,  /The body of a/);
 
 // Composition

@@ -68,8 +68,8 @@ queryDomainTypeFunctions.execute = execute;
  * @return
  */
 var QueryField = function(queryDomainType, field) {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryField<ctor>', field.fieldName);
-//  this.class = 'QueryField'; // useful for debugging
+  if(udebug.is_detail()) {udebug.log_detail('QueryField<ctor>', field.fieldName);}
+//  this.class = 'QueryField';        // useful for debugging
 //  this.fieldName = field.fieldName; // useful for debugging
   this.queryDomainType = queryDomainType;
   this.field = field;
@@ -151,7 +151,7 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
       // field name is not a keyword
       queryDomainType[fieldName] = queryField;
     } else {
-      if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryDomainType<ctor> field', fieldName, 'is a keyword.');
+      if(udebug.is_detail()) {udebug.log_detail('QueryDomainType<ctor> field', fieldName, 'is a keyword.');}
       // field name is a keyword
       // allow e.g. qdt.where.id
       if (fieldName !== 'field') {
@@ -185,7 +185,7 @@ QueryDomainType.prototype.not = function(queryPredicate) {
  * @return
  */
 QueryParameter = function QueryParameter(queryDomainType, name) {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryParameter<ctor>', name);
+  if(udebug.is_detail()) {udebug.log_detail('QueryParameter<ctor>', name);}
   this.queryDomainType = queryDomainType;
   this.name = name;
 };
@@ -224,7 +224,6 @@ SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
   var columnName = node.queryField.field.fieldName;
   var value = '?';
-  var parameter = node.parameter;
   if(node.constants) {
     // the parameter is a literal (String, number, or object with a toString method)
     value = getEscapedValue(node.parameter);
@@ -381,8 +380,8 @@ var AbstractQueryPredicate = function() {
 AbstractQueryPredicate.prototype.inspect = function() {
   var str = this.operator + "(";
   this.predicates.forEach(function(value,index) { 
-    if(index) str += " , ";
-    str += value.inspect(); 
+    if(index) {str += " , ";}
+    str += value.inspect();
   });
   str += ")";
   return str;
@@ -646,7 +645,7 @@ QueryAnd = function(left, right) {
   this.operator = ' AND ';
   this.operationCode = 1;
   this.predicates = [left, right];
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryAnd<ctor>', this);
+  if(udebug.is_detail()) {udebug.log_detail('QueryAnd<ctor>', this);}
 };
 
 QueryAnd.prototype = new AbstractQueryNaryPredicate();
@@ -668,7 +667,7 @@ QueryOr = function(left, right) {
   this.operator = ' OR ';
   this.operationCode = 2;
   this.predicates = [left, right];
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryOr<ctor>', this);
+  if(udebug.is_detail()) {udebug.log_detail('QueryOr<ctor>', this);}
 };
 
 QueryOr.prototype = new AbstractQueryNaryPredicate();
@@ -690,7 +689,7 @@ QueryNot = function(left) {
   this.operator = ' NOT ';
   this.operationCode = 3;
   this.predicates = [left];
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('QueryNot<ctor>', this, 'parameter', left);
+  if(udebug.is_detail()) {udebug.log_detail('QueryNot<ctor>', this, 'parameter', left);}
 };
 
 QueryNot.prototype = new AbstractQueryUnaryPredicate();
@@ -761,7 +760,7 @@ QueryHandler.prototype.getKeys = function(parameterValues) {
       if(node.predicates) {
         for(i = 0 ; i < node.predicates.length ; i++) {
           name = getParameterNameForColumn(node, columnNumber);
-          if(name !== null) return name;
+          if(name !== null) {return name;}
         }
       }
     }

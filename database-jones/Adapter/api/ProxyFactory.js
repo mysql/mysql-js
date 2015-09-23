@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ var proxyFactory = require("ProxyFactory.js");
 var proxy = proxyFactory.createProxy(obj);
  */
 function createProxy(obj) {
-  var handler, proxy;
+  var handler;
   handler = handlerMaker(obj);
   try {
     return Proxy.create(handler);

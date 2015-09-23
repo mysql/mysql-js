@@ -48,15 +48,9 @@ function Projection(domainObject) {
  * @param toBeInvalidated an array of projections to be invalidated.
  */
 function invalidateAll(toBeInvalidated) {
-  var ps = '';
-  toBeInvalidated.forEach(function(p) {
-    ps += ' ' + p.name;
-  });
-  if (toBeInvalidated.length === 0) {
-    return;
-  }
+  if (toBeInvalidated.length === 0) {return;}
   var projection = toBeInvalidated.shift();
-  if (projection.error != '') return;
+  if (projection.error != '') {return;}
   projection.validated = false;
   projection.usedBy.forEach(function(used) {
     toBeInvalidated.push(used);
@@ -67,7 +61,7 @@ function invalidateAll(toBeInvalidated) {
 Projection.prototype.addFields = function() {
   var projection = this;
   // if this projection is in error just return
-  if (projection.error != '') return;
+  if (projection.error != '') {return;}
   var toBeInvalidated = [this];
   invalidateAll(toBeInvalidated);
   var i, j;
@@ -103,7 +97,7 @@ Projection.prototype.addField = Projection.prototype.addFields;
 Projection.prototype.addRelationship = function(fieldName, relationshipProjection) {
   var projection = this;
   // if this projection is in error just return
-  if (projection.error != '') return;
+  if (projection.error != '') {return;}
   var toBeInvalidated = [this];
   invalidateAll(toBeInvalidated);
   if (typeof fieldName !== 'string') {

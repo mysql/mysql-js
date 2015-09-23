@@ -107,19 +107,20 @@ SessionFactory.prototype.close = function(user_callback) {
   var self = this;
   udebug.log('close for key', self.key, 'database', self.properties.database);
   var i;
-  var session;
   var numberOfSessionsToClose = 0;
   var closedSessions = 0;
 
   function closeOnConnectionClose() {
-    if(typeof(user_callback) === 'function') { 
+    if(typeof user_callback === 'function') {
       udebug.log_detail('closeOnConnectionClose calling user_callback');
       user_callback();
     }
   }
     
   function closeConnection() {
-    if(udebug.is_detail()) udebug.log('closeConnection calling jones.delete_callback for key', self.key, 'database', self.properties.database);
+    if(udebug.is_detail()) {udebug.log_detail(
+        'closeConnection calling jones.delete_callback for key', self.key, 'database', self.properties.database);
+    }
     self.delete_callback(self.key, self.properties.database, closeOnConnectionClose);
   }
   

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -143,7 +143,6 @@ Table.prototype.insert = function(obj, callback) {
 };
 
 Table.prototype.find = function(params, callback) {
-  var table = this;
   callback(new Error('Table.find not implemented'));
 };
 

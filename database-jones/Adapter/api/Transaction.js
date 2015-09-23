@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ Idle.prototype.rollback = function(session, user_arguments) {
 };
 
 Idle.prototype.isActive = function() {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('Idle isActive');
+  if(udebug.is_detail()) {udebug.log_detail('Idle isActive');}
   return false;
 };
 
@@ -148,7 +148,7 @@ Active.prototype.rollback = function(session, user_arguments) {
 };
 
 Active.prototype.isActive = function() {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('Active isActive');
+  if(udebug.is_detail()) {udebug.log_detail('Active isActive');}
   return true;
 };
 
@@ -184,7 +184,7 @@ RollbackOnly.prototype.rollback = function(session, user_arguments) {
 };
 
 RollbackOnly.prototype.isActive = function() {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('RollbackOnly isActive');
+  if(udebug.is_detail()) {udebug.log_detail('RollbackOnly isActive');}
   return true;
 };
 
@@ -223,7 +223,7 @@ Transaction.prototype.rollback = function() {
 };
 
 Transaction.prototype.isActive = function() {
-  if(udebug.is_detail()) if(udebug.is_debug()) udebug.log('Transaction.isActive');
+  if(udebug.is_detail()) {udebug.log_detail('Transaction.isActive');}
   return this.state.isActive();
 };
 

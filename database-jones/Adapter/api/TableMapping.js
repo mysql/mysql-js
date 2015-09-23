@@ -180,7 +180,7 @@ function isValidMapping(m, verifiers) {
 }    
 
 function isValidFieldMapping(fm, number) {
-  if (fm && typeof fm.persistent === 'undefined') {
+  if (fm && fm.persistent === undefined) {
     udebug.log('TableMapping.isValidFieldMapping persistent undefined; setting persistent to true');
     fm.persistent = true;
   }
@@ -204,10 +204,10 @@ function isValidFieldMappingArray(fieldMappings) {
 
 function isStringOrStringArray(arg) {
   var i;
-  if (typeof arg === 'string') return true;
-  if (!Array.isArray(arg)) return 'must be a string or string array';
+  if (typeof arg === 'string') {return true;}
+  if (!Array.isArray(arg)) {return 'must be a string or string array';}
   for (i = 0; i < arg.length; ++i) {
-    if (typeof arg[i] !== 'string') return 'must be a string or string array';
+    if (typeof arg[i] !== 'string') {return 'must be a string or string array';}
   }
   return true;
 }
@@ -243,7 +243,7 @@ function buildMappingFromObject(mapping, literal, verifier) {
   keys = Object.keys(verifier);
   for(p in keys) {
     key = keys[p];
-    if(typeof literal[key] !== 'undefined') {
+    if(literal[key] !== undefined) {
       mapping[key] = literal[key];
     }
   }
@@ -342,9 +342,9 @@ TableMapping.prototype.mapField = function() {
   args = arguments;  
 
   function getFieldMapping(tableMapping, fieldName) {
-    var fm, i;
-    for(i = 0 ; i < tableMapping.fields.length ; i++) {
-      fm = tableMapping.fields[i];
+    var fm, j;
+    for(j = 0 ; j < tableMapping.fields.length ; j++) {
+      fm = tableMapping.fields[j];
       if(fm.fieldName === fieldName) {
         return fm;
       }
@@ -498,10 +498,10 @@ TableMapping.prototype.mapManyToMany = function(literalMapping) {
  * Exclude the named field(s) from being persisted as part of sparse field handling.
  */
 TableMapping.prototype.excludeFields = function() {
-  var i, j, fieldName;
-  if (!this.excludedFieldNames) this.excludedFieldNames = [];
+  var i, j, fieldName, fieldNames;
+  this.excludedFieldNames = this.excludedFieldNames || [];
   for (i = 0; i < arguments.length; ++i) {
-    var fieldNames = arguments[i];
+    fieldNames = arguments[i];
     if (typeof fieldNames === 'string') {
       this.excludedFieldNames.push(fieldNames);
     } else if (Array.isArray(fieldNames)) {

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ var DETAIL = udebug.is_detail();
 /* Because modules are cached, this initialization should happen only once. 
    If you try to do it twice the assert will fail.
 */ 
-assert(typeof(global_stats) === 'undefined');
+assert(global_stats === undefined);
 global_stats = {};
 
 
@@ -42,7 +42,7 @@ function getStatsDomain(root, keys, nparts) {
 
   for(i = 0 ; i < nparts; i++) {
     key = keys[i];
-    if(typeof(stat[key]) === 'undefined') {
+    if(stat[key] === undefined) {
       stat[key] = {};
     }
     stat = stat[key];
@@ -53,8 +53,8 @@ function getStatsDomain(root, keys, nparts) {
 function dot(argsList, length) {
   var i, r = "";
   for (i = 0 ; i < length ; i++) {
-    if(typeof argsList[i] !== 'undefined') {
-      if(i) r += ".";
+    if(argsList[i] !== undefined) {
+      if(i > 0) {r += ".";}
       r += argsList[i];
     }
   }
