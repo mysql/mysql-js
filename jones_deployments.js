@@ -9,8 +9,8 @@ deployments.test = function(properties) {
     properties.mysql_port = process.env["PORT_SQL1"];
     properties.ndb_connectstring =
       process.env["HOSTNAME"] + ":" + process.env["PORT_MGMD"];
-  };
-}
+  }
+};
 
 
 /* Example of a deployment function defining a production environment.
@@ -21,6 +21,7 @@ deployments.production = function(properties) {
   properties.mysql_host = "rw.db.prod.mysite.com";
   properties.mysql_user = "prod_web_user";
   properties.mysql_password = "secretPassword";
+  properties.database = "my_app_db";
 };
 
 

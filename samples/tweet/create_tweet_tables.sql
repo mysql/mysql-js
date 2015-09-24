@@ -1,19 +1,28 @@
-use test;
 
 --  Simple twitter-like appliction
 --
---  Supports Users (author table); Tweets (tweet table); 
---  @user references (mention table); Hashtags (hashtag table); 
---  Followers (follow table).
+--  Supports:
+--     Users (author table)
+--     Tweets (tweet table)
+--     @user references (mention table)
+--     Hashtags (hashtag table);
+--     Followers (follow table).
 --
 --  Some notes about this schema:
 --    Tweets have ascending auto-increment ids
 --    timestamp(2) on tweet table is accurate to hundredths of a second
 --    UTF16LE encoding of strings is also the native JavaScript encoding
---    Foreign key constraints maintain integrity of relationships
+--    Foreign key constraints maintain integrity of relationships,
+--    and tables must be dropped in reverse order of dependencies
 
+--  By default we create NDBCluster tables, so the demo can be used with
+--  either the "ndb" or the "mysql" backend.  You can change this here to
+--  use InnDB tables.
 
--- tables must be dropped in reverse order of dependencies
+set storage_engine=ndbcluster;   # Use NDB
+-- set storage_engine=innodb;    # Use InnoDB
+
+use test;
 
 DROP TABLE if exists follow;
 DROP TABLE if exists hashtag;
@@ -27,7 +36,7 @@ CREATE TABLE author (
   full_name varchar(250),
   tweets int unsigned not null default 0,
   PRIMARY KEY USING HASH(user_name)
-) ENGINE=ndbcluster;
+) ;
 
 
 CREATE TABLE tweet (
@@ -39,7 +48,7 @@ CREATE TABLE tweet (
   KEY idx_btree_author_date(author, date_created),
   CONSTRAINT author_fk FOREIGN KEY (author) REFERENCES author(user_name) 
     ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=ndbcluster;
+) ;
 
 
 CREATE TABLE hashtag (
@@ -48,7 +57,7 @@ CREATE TABLE hashtag (
   PRIMARY KEY(hashtag, tweet_id),
   CONSTRAINT tweet_fk FOREIGN KEY (tweet_id) REFERENCES tweet(id) 
     ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE=ndbcluster;
+) ;
 
 
 CREATE TABLE mention (
@@ -57,7 +66,7 @@ CREATE TABLE mention (
   PRIMARY KEY (at_user, tweet_id),
   CONSTRAINT tweet_fk FOREIGN KEY (tweet_id) REFERENCES tweet(id) 
     ON DELETE CASCADE ON UPDATE RESTRICT  
-) ENGINE=ndbcluster;
+) ;
 
 
 CREATE TABLE follow (
@@ -69,5 +78,5 @@ CREATE TABLE follow (
     ON DELETE CASCADE ON UPDATE RESTRICT,
   CONSTRAINT followed_fk FOREIGN KEY (followed) REFERENCES author(user_name) 
     ON DELETE CASCADE ON UPDATE RESTRICT  
-) ENGINE=ndbcluster;
+) ;
 
