@@ -47,7 +47,7 @@ function handleError(error) {
 */
 if (process.argv.length !== 4) {
   handleError("Usage: node insert <table> <JSON_object>\n");
-};
+}
 
 var table_name = process.argv[2],
     object     = JSON.parse(process.argv[3]);

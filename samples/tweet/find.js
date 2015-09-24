@@ -44,7 +44,7 @@ function handleError(error) {
 */
 if (process.argv.length !== 4) {
   handleError("Usage: node find <table> <key>\n");
-};
+}
 
 var table_name = process.argv[2],
     find_key   = process.argv[3];

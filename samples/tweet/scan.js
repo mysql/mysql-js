@@ -27,7 +27,7 @@ var queryTable = process.argv[2] || "tweet";
 jones.openSession(connectionProperties).
   then(function(s) {
     session = s;
-    return session.createQuery(queryTable)
+    return session.createQuery(queryTable);
   }).
   then(function(query) {
     /* Here we can define query conditions.  If no conditions are defined,
