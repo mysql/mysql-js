@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -68,7 +68,6 @@ stats_module.register(op_stats, "spi","mysql","DBOperation");
  */
 function driverTypeConverter(field, next) {
   var type = field.type;
-  var name = field.name;
   var value;
   switch (type) {
   case 'DATE':
@@ -101,20 +100,19 @@ function driverTypeConverter(field, next) {
 exports.DBSession = function(pooledConnection, connectionPool, index) {
   if (arguments.length !== 3) {
     throw new Error('Fatal internal exception: expected 3 arguments; got ' + arguments.length);
-  } else {
-    if (typeof(pooledConnection) === 'undefined') {
-      throw new Error('Fatal internal exception: got undefined for pooledConnection');
-    }
-    if (pooledConnection === null) {
-      throw new Error('Fatal internal exception: got null for pooledConnection');
-    }
-    this.pooledConnection = pooledConnection; 
-    this.connectionPool = connectionPool;
-    this.transactionHandler = null;
-    this.autocommit = true;
-    this.index = index;
-    session_stats.created++;
   }
+  if (pooledConnection === undefined) {
+    throw new Error('Fatal internal exception: got undefined for pooledConnection');
+  }
+  if (pooledConnection === null) {
+    throw new Error('Fatal internal exception: got null for pooledConnection');
+  }
+  this.pooledConnection = pooledConnection;
+  this.connectionPool = connectionPool;
+  this.transactionHandler = null;
+  this.autocommit = true;
+  this.index = index;
+  session_stats.created++;
 };
 
 /** Construct an operation that when executed reports the error code */
@@ -285,6 +283,7 @@ exports.DBSession.prototype.TransactionHandler = function(dbSession) {
   };
 
   this.operationCompleteCallback = function(completedOperation) {
+    var operation, operationCallback;
     udebug.log('TransactionHandler.operationCompleteCallback', completedOperation.type);
     // analyze the completed operation to see if it had an error
     if (completedOperation.result.error) {
@@ -310,10 +309,10 @@ exports.DBSession.prototype.TransactionHandler = function(dbSession) {
             transactionHandler.currentOperation < transactionHandler.numberOfOperations;
             transactionHandler.currentOperation++) {
           udebug.log_detail('transactionHandler error aborting operation ' + transactionHandler.currentOperation);
-          var operation = transactionHandler.operationsList[transactionHandler.currentOperation];
-          var operationCallback = operation.callback;
+          operation = transactionHandler.operationsList[transactionHandler.currentOperation];
+          operationCallback = operation.callback;
           operation.result.error = transactionHandler.error;
-          if (typeof(operationCallback) === 'function') {
+          if (typeof operationCallback === 'function') {
             // call the UserContext callback
             operationCallback(transactionHandler.error, operation);
           }
@@ -363,7 +362,7 @@ var DBOperationError = function(cause) {
   // the cause is the mysql driver error
   // the code from the driver is the string form of the mysql error, e.g. ER_DUP_ENTRY
   this.code = mysql_code_to_sqlstate_map[cause.code];
-  if (typeof(this.code) === 'undefined') {
+  if (this.code === undefined) {
     this.code = 0;
     this.sqlstate = 'HY000';
   } else {
@@ -373,9 +372,6 @@ var DBOperationError = function(cause) {
   this.message = cause.message;
   this.cause = cause;
   udebug.log('MySQLConnection DBOperationError constructor', this);
-  var toString = function() {
-    return 'DBOperationError ' + this.message;
-  };
 };
 
 function InsertOperation(sql, data, callback) {
@@ -651,7 +647,6 @@ function initializeProjection(projection) {
   var joinType, joinIndex;
   var offset;
   var keyField, nonKeyField;
-  var errors = '';
 
   // create the sql query for the find method.
   select = 'SELECT ';
@@ -761,7 +756,7 @@ function initializeProjection(projection) {
   }
   // mark this as having been processed
   projection.mysql.id = projection.id;
-  if (udebug.is_debug()) udebug.log('initializeProjection', select, from);
+  if (udebug.is_debug()) {udebug.log_detail('initializeProjection', select, from);}
 }
 
 
@@ -846,12 +841,12 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
   function findResultTupleInParent(row, sector) {
     var result = null;
     var parent = op.sectors[sector.parentSectorIndex];
-    if (udebug.is_detail()) udebug.log_detail('onResult.findResultTupleInParent parent', parent);
+    if (udebug.is_detail()) {udebug.log_detail('onResult.findResultTupleInParent parent', parent);}
     var candidates = op.tuples[sector.parentSectorIndex][sector.parentFieldMapping.fieldName];
-    var i;
+    var i, candidate;
     if (candidates) {
       for (i = 0; i < candidates.length; ++i) {
-        var candidate = candidates[i];
+        candidate = candidates[i];
         if (isRowSectorKeyEqual(row, sector, candidate)) {
           result = candidate;
           break;
@@ -870,7 +865,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     var nullValue;
     op.rows++;
     // process the row by sector, left to right
-    udebug.log_detail('onResult processing row with', op.sectors.length, 'sectors:\n', row);
+    if (udebug.is_detail()) {udebug.log_detail('onResult processing row with', op.sectors.length, 'sectors:\n', row);}
     processSector(0, row); // experimental for now
     // do each sector in turn; the parent sector will always be processed before any of its children
     for (i = 0; i < op.sectors.length; ++i) {
@@ -1130,7 +1125,7 @@ function createInsertSQL(dbTableHandler, fieldValueDefinedKey) {
   }
   valuesSQL += ')';
   insertSQL += ')' + valuesSQL;
-  if (typeof(fieldValueDefinedKey) === 'undefined') {
+  if (fieldValueDefinedKey === undefined) {
     dbTableHandler.mysql.insertSQL = insertSQL;
     dbTableHandler.mysql.duplicateSQL = insertSQL + duplicateSQL;
     udebug.log_detail('insertSQL:', insertSQL);
@@ -1211,6 +1206,7 @@ function createSelectSQL(dbTableHandler, index) {
   var whereSQL;
   var separator = '';
   var i, j, columns, column, fields, field;
+  var indexMetadatas, indexMetadata;
   columns = dbTableHandler.getColumnMetadata();
   fields = dbTableHandler.getAllFields();
   if (!index) {
@@ -1232,11 +1228,11 @@ function createSelectSQL(dbTableHandler, index) {
     // loop over the index columns
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    var indexMetadatas = dbTableHandler.dbTable.indexes;
+    indexMetadatas = dbTableHandler.dbTable.indexes;
     separator = '';
     for (i = 0; i < indexMetadatas.length; ++i) {
       if (indexMetadatas[i].name === index) {
-        var indexMetadata = indexMetadatas[i];
+        indexMetadata = indexMetadatas[i];
         for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
           whereSQL += separator + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
           separator = ' AND ';
@@ -1255,6 +1251,7 @@ function createWhereSQL(dbTableHandler, index) {
   var whereSQL;
   var separator = '';
   var i, j, columns;
+  var indexMetadatas, indexMetadata;
   columns = dbTableHandler.getColumnMetadata();
   if (index) {
     // create the where SQL clause from the table metadata for the named index
@@ -1263,11 +1260,11 @@ function createWhereSQL(dbTableHandler, index) {
     // loop over the index columns
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    var indexMetadatas = dbTableHandler.dbTable.indexes;
+    indexMetadatas = dbTableHandler.dbTable.indexes;
     separator = '';
     for (i = 0; i < indexMetadatas.length; ++i) {
       if (indexMetadatas[i].name === index) {
-        var indexMetadata = indexMetadatas[i];
+        indexMetadata = indexMetadatas[i];
         for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
           whereSQL += separator + 't0.' + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
           separator = ' AND ';
@@ -1318,13 +1315,13 @@ function FieldValueDefinedListener() {
 }
 
 FieldValueDefinedListener.prototype.setDefined = function(fieldNumber) {
-  if (typeof(this.key) !== 'undefined') {
+  if (this.key !== undefined) {
     this.key += 'D';
   }
 };
 
 FieldValueDefinedListener.prototype.setUndefined = function(fieldNumber) {
-  if (typeof(this.key) === 'undefined') {
+  if (this.key === undefined) {
     // first undefined value; create the key for all previous defined values e.g. 'DDDDDDDDD'
     this.key = '';
     var i; 
@@ -1360,7 +1357,7 @@ exports.DBSession.prototype.buildInsertOperation = function(dbTableHandler, obje
   }
   var fieldValueDefinedKey = fieldValueDefinedListener.key;
   udebug.log_detail('MySQLConnection.buildWriteOperation', fieldValueDefinedKey);
-  if (typeof(fieldValueDefinedKey) === 'undefined') {
+  if (fieldValueDefinedKey === undefined) {
     // all fields are defined; use the standard generated INSERT... DUPLICATE SQL statement
     return new InsertOperation(dbTableHandler.mysql.insertSQL, fieldValues, callback);
   }
@@ -1433,6 +1430,7 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   var limit = parameterValues.limit;
   var queryHandler = queryDomainType.jones_query_domain_type.queryHandler;
   var err;
+  var parameterName, value;
   getMetadata(dbTableHandler);
   // add the WHERE clause to the sql
   var whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
@@ -1445,8 +1443,8 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
   var i;
   for (i = 0; i < formalParameters.length; ++i) {
-    var parameterName = formalParameters[i].name;
-    var value = parameterValues[parameterName];
+    parameterName = formalParameters[i].name;
+    value = parameterValues[parameterName];
     sqlParameters.push(value);
   }
   // handle order: must be an index scan and specify ignoreCase 'Asc' or 'Desc' 
@@ -1457,7 +1455,7 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
       return new ErrorOperation(err, callback);
     }
     // validate parameter; must be ignoreCase Asc or Desc
-    if (typeof(order) === 'string') {
+    if (typeof order === 'string') {
       if (order.toUpperCase() === 'ASC') {
         scanSQL += ' ORDER BY ';
         scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
@@ -1477,14 +1475,14 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
     }
   }
   // handle SKIP and LIMIT; must use index
-  if (typeof(skip) !== 'undefined' || typeof(limit) !== 'undefined') {
-    if (typeof(skip) !== 'undefined' && (queryHandler.queryType !== 2 || typeof(order) !== 'string')) {
+  if (skip !== undefined || limit !== undefined) {
+    if (skip !== undefined && (queryHandler.queryType !== 2 || typeof order !== 'string')) {
       err = new Error('Bad skip parameter \'' + skip + '\'; must be used only with index scan.');
       return new ErrorOperation(err, callback);
     }
     // set default values if not provided
-    if (typeof(skip) === 'undefined') skip = 0;
-    if (typeof(limit) === 'undefined') limit = MAX_LIMIT;
+    if (skip === undefined)  {skip = 0;}
+    if (limit === undefined) {limit = MAX_LIMIT;}
 
     scanSQL += ' LIMIT ' + skip + ' , ' + limit;
   }
@@ -1494,7 +1492,6 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
 
 exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys, values, transaction, callback) {
   udebug.log('dbSession.buildUpdateOperation with indexHandler:', dbIndexHandler.dbIndex, keys, values);
-  var object;
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   // build the SQL Update statement along with the data values
@@ -1503,7 +1500,6 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
   var separatorWhereSQL = '';
   var separatorUpdateSetSQL = '';
   var updateFields = [];
-  var keyFields = [];
   // get an array of key field names
   var valueFieldName, keyFieldNames = [];
   var j, field;
@@ -1559,7 +1555,7 @@ exports.DBSession.prototype.buildWriteOperation = function(dbIndexHandler, value
     return new ErrorOperation(fieldValueDefinedListener.err, callback);
   }
   var fieldValueDefinedKey = fieldValueDefinedListener.key;
-  if (typeof(fieldValueDefinedKey) === 'undefined') {
+  if (fieldValueDefinedKey === undefined) {
     // all fields are defined; use the standard generated INSERT... DUPLICATE SQL statement
     return new WriteOperation(dbTableHandler.mysql.duplicateSQL, fieldValues, callback);
   }

@@ -41,7 +41,7 @@ harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");
 
 // impl
 harness.ignoreLint("MySQLDictionary.js",7,"Missing 'break' after 'case'.");
-harness.ignoreLint("MysqlErrToSQLStateMap.js", 60, "Unexpected ','");
+harness.ignoreLint("MysqlErrToSQLStateMap.js", 57, "Unexpected ','");
 
 //stringtypes
 harness.ignoreLint("CharsetTest.js", 27, "Missing \'new\'.");

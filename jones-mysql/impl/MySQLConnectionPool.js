@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ function getDriverProperties(props) {
     driver.charset = 'UTF8MB4';
   }
 
-  if (typeof props.mysql_sql_mode !== 'undefined') {
+  if (props.mysql_sql_mode !== undefined) {
     driver.sql_mode = props.mysql_sql_mode;
   } else {
     // default to STRICT_ALL_TABLES
@@ -82,7 +82,7 @@ function getDriverProperties(props) {
   }
 
   // connection pool maximum size
-  if (typeof props.mysql_pool_size !== 'undefined') {
+  if (props.mysql_pool_size !== undefined) {
     driver.connectionLimit = props.mysql_pool_size;
     if (props.mysql_pool_queue_size !== 'undefined') {
       driver.queueLimit = props.mysql_pool_queue_size;
@@ -206,7 +206,7 @@ exports.DBConnectionPool.prototype.getDomainTypeConverter = function(typeName) {
  */
 exports.DBConnectionPool.prototype.getConnection = function(callback) {
   var connectionPool = this;
-  var connection, error, pool;
+  var connection, error;
 
   function getConnectionOnConnection(err, c) {
     udebug.log('getConnectionOnConnection');
@@ -307,9 +307,9 @@ exports.DBConnectionPool.prototype.connect = function(callback) {
 exports.DBConnectionPool.prototype.close = function(user_callback) {
   var connectionPool = this;
   udebug.log('close');
-  var i;
+  var i, openConnection;
   for (i = 0; i < this.openConnections.length; ++i) {
-    var openConnection = this.openConnections[i];
+    openConnection = this.openConnections[i];
     udebug.log('close ending open connection', i);
     if (openConnection && openConnection._connectCalled) {
       connectionPool.releaseConnection(openConnection);
@@ -349,7 +349,7 @@ exports.DBConnectionPool.prototype.getDBSession = function(index, callback) {
     '\';';
   var sqlModeQuery = '';
   // set SQL_MODE if specified in driverproperties
-  if (typeof connectionPool.driverproperties.sql_mode !== 'undefined') {
+  if (connectionPool.driverproperties.sql_mode !== undefined) {
     sqlModeQuery = 'SET SQL_MODE = \'' + connectionPool.driverproperties.sql_mode + '\';';
   }
   udebug.log(sqlModeQuery);
@@ -384,7 +384,7 @@ exports.DBConnectionPool.prototype.closeConnection = function(dbSession, callbac
     dbSession.pooledConnection = null;
   }
   connectionPool.openConnections[dbSession.index] = null;
-  if (typeof(callback) === 'function') {
+  if (typeof callback === 'function') {
     callback(null);
   }
 };

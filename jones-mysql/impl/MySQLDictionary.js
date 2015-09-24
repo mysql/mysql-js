@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -119,32 +119,33 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
     // split lines by '\n'
     var lines = statement.split('\n');
     var i;
-    var foreignKey, foreignKeyName, foreignKeyColumnNames, foreignKeyColumnNumbers;
-    var foreignKeyTarget, foreignKeyTargetTable, foreignKeyTargetDatabase, foreignKeyTargetWithDatabase;
-    var foreignKeyTargetColumnNames, foreignKeyTargetColumnNumbers;
+    var foreignKey, foreignKeyName, foreignKeyColumnNames;
+    var foreignKeyTargetTable, foreignKeyTargetDatabase, foreignKeyTargetWithDatabase;
+    var foreignKeyTargetColumnNames;
     var columnNumber = 0;
     var columnNames, indexColumnNames, indexColumnNumbers;
     var column, columnName, columnNumberIndex,
       columnTypeAndSize, columnTypeAndSizeSplit, columnSize, columnType,
-      unsigned, nullable;
+      unsigned, nullable, defaultValue, rawDefaultValue, line, tokens, token, j, unique;
+    var databaseTypeConverter, domainTypeConverter, charset, collation;
     // first line has table name which we ignore because we already know it
     for (i = 1; i < lines.length; ++i) {
-      var defaultValue;    // if DEFAULT is not specified, defaultValue is undefined
-      var rawDefaultValue; // if DEFAULT is specified, this is the raw text following DEFAULT
-      var line = lines[i];
+      // var defaultValue;    // if DEFAULT is not specified, defaultValue is undefined
+      // var rawDefaultValue; // if DEFAULT is specified, this is the raw text following DEFAULT
+      line = lines[i];
       if (line[line.length - 1] === ',') {
         // remove trailing comma from line
         line = line.substr(0, line.length - 1);
       }
       udebug.log_detail('\n parseCreateTable:', line);
-      var tokens = line.split(' ');
-      var j = 0; // index into tokens in the line
-      var token = tokens[j];
+      tokens = line.split(' ');
+      j = 0; // index into tokens in the line
+      token = tokens[j];
       // remove empty tokens
       while (token.length === 0) {
         token = tokens[++j];
       }
-      var unique = false;
+      unique = false;
       udebug.log_detail('parseCreateTable token:', token);
       switch (token) {
       case 'PRIMARY':
@@ -227,7 +228,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
           break;
         }
         j += 1; // skip past FOREIGN
-        if (tokens[j] === 'KEY') j += 1; // there may be an extra blank after FOREIGN KEY before column names
+        if (tokens[j] === 'KEY') {j += 1;} // there may be an extra blank after FOREIGN KEY before column names
         columnNames = tokens[j];
         foreignKeyColumnNames = decodeIndexColumnNames(columnNames);
         udebug.log_detail('parseCreateTable FOREIGN KEY foreignKeyColumnNames:', foreignKeyColumnNames);
@@ -317,11 +318,10 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
           column.length = parseInt(columnSize, 10);
           column.isIntegral = true;
           break;
-        default:
         }
         
         // set the a database type converter for the column type
-        var databaseTypeConverter = dbConnectionPool.getDatabaseTypeConverter(column.columnType);
+        databaseTypeConverter = dbConnectionPool.getDatabaseTypeConverter(column.columnType);
         if (databaseTypeConverter) {
           column.databaseTypeConverter = {};
           column.databaseTypeConverter.mysql = databaseTypeConverter;
@@ -329,7 +329,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
         // set the default domain type converter for the column type
         // this may be overridden by the user's domain type converter
-        var domainTypeConverter = dbConnectionPool.getDomainTypeConverter(column.columnType);
+        domainTypeConverter = dbConnectionPool.getDomainTypeConverter(column.columnType);
         if (domainTypeConverter) {
           column.domainTypeConverter = domainTypeConverter;
         }
@@ -338,13 +338,13 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
         // check for character set
         if (tokens[j] === 'CHARACTER') {
-          var charset = tokens[j + 2];
+          charset = tokens[j + 2];
           udebug.log_detail('parseCreateTable for:', columnName, ': charset: ', charset);
           j += 3; // skip 'CHARACTER SET charset'
           column.charsetName = charset;
           // check for collation
           if (tokens[j] === 'COLLATE') {
-            var collation = tokens[j + 1];
+            collation = tokens[j + 1];
             udebug.log_detail('parseCreateTable for: ', columnName, ': collation: ', collation);
             column.collationName = collation;
             j+= 2; // skip 'COLLATE collation'
@@ -372,7 +372,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
             }
           }
           udebug.log_detail('parseCreateTable for:', columnName,
-              'DEFAULT:', rawDefaultValue, 'defaultValue:', typeof(defaultValue), defaultValue);
+              'DEFAULT:', rawDefaultValue, 'defaultValue: (', typeof defaultValue, ')', defaultValue);
           // add defaultValue to model
           column.defaultValue = defaultValue;
           j += 2; // skip 'DEFAULT <value>'
@@ -473,6 +473,7 @@ exports.MetadataManager = function(connectionProperties) {
     }
     udebug.log_detail('harness runSQL forking process...' + cmd);
     var child = child_process.exec(cmd, childProcess);
+    return child;
   }
 
   var existsSync = fs.existsSync || path.existsSync;
@@ -482,9 +483,9 @@ exports.MetadataManager = function(connectionProperties) {
     path1 = path.join(config.suites_dir, "standard", suiteName + "-" + file);
     path2 = path.join(config.suites_dir, suiteName, file);
     path3 = path.join(suitePath, file);
-    if(existsSync(path1)) return path1;
-    if(existsSync(path2)) return path2;
-    if(existsSync(path3)) return path3;
+    if(existsSync(path1)) {return path1;}
+    if(existsSync(path2)) {return path2;}
+    if(existsSync(path3)) {return path3;}
 
     console.log("No path to:", suiteName, file);
   }
