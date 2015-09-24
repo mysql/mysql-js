@@ -143,11 +143,12 @@ exports.UserContext.prototype.listTables = function() {
 exports.UserContext.prototype.getOpenSessionFactories = function() {
   var result = [];
   var x, y;
+  var factory;
   for (x in jonesConnections) {
     if (jonesConnections.hasOwnProperty(x)) {
       for (y in jonesConnections[x].factories) {
         if (jonesConnections[x].factories.hasOwnProperty(y)) {
-          var factory = jonesConnections[x].factories[y];
+          factory = jonesConnections[x].factories[y];
           result.push(factory);
         }
       }
@@ -292,7 +293,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
       var tableMapping;
       
       var onExistingTableMetadata = function(err, tableMetadata) {
-        var tableHandler;
+//        var tableHandler;
         var tableKey = tableHandlerFactory.tableSpecification.qualifiedTableName;
         if(udebug.is_detail()) {
           udebug.log('TableHandlerFactory.onTableMetadata for ',
@@ -302,13 +303,13 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
           tableHandlerFactory.onTableHandler(err, null);
         } else {
           // check to see if the metadata has already been processed
-          if (typeof tableHandlerFactory.sessionFactory.tableMetadatas[tableKey] === 'undefined') {
+          if (tableHandlerFactory.sessionFactory.tableMetadatas[tableKey] === undefined) {
             // put the table metadata into the table metadata map
             tableHandlerFactory.sessionFactory.tableMetadatas[tableKey] = tableMetadata;
           }
           // we have the table metadata; now create the table handler if needed
           // put the table handler into the session factory
-          if (typeof(tableHandlerFactory.sessionFactory.tableHandlers[tableKey]) === 'undefined') {
+          if (tableHandlerFactory.sessionFactory.tableHandlers[tableKey] === undefined) {
             if(udebug.is_detail()) {
               udebug.log('UserContext caching the table handler in the sessionFactory for ', 
                 tableHandlerFactory.tableName);
@@ -328,7 +329,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
                 tableHandlerFactory.tableName);
           }
           if (tableHandlerFactory.ctor) {
-            if (typeof(tableHandlerFactory.ctor.prototype.jones.tableHandler) === 'undefined') {
+            if (tableHandlerFactory.ctor.prototype.jones.tableHandler === undefined) {
               // if a domain object mapping, cache the table handler in the prototype
               stats.TableHandler.success++;
               tableHandler = new DBTableHandler(tableMetadata, tableHandlerFactory.mapping,
@@ -414,7 +415,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
 
     // parameter is a table name; look up in table name to table handler hash
     tableHandler = session.sessionFactory.tableHandlers[tableSpecification.qualifiedTableName];
-    if (typeof(tableHandler) === 'undefined') {
+    if (tableHandler === undefined) {
       udebug.log('UserContext.getTableHandler did not find cached tableHandler for table ',
           tableSpecification.qualifiedTableName);
       // get a table mapping from session factory
@@ -439,14 +440,14 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for constructor.'); }
     jones = domainObjectTableNameOrConstructor.prototype.jones;
     // parameter is a constructor; it must have been annotated already
-    if (typeof(jones) === 'undefined') {
+    if (jones === undefined) {
       err = new Error('User exception: constructor for ' + 
           domainObjectTableNameOrConstructor.prototype.constructor.name +
           ' must have been annotated (call TableMapping.applyToClass).');
       onTableHandler(err, null);
     } else {
       tableHandler = jones.tableHandler;
-      if (typeof(tableHandler) === 'undefined') {
+      if (tableHandler === undefined) {
         udebug.log('UserContext.getTableHandler did not find cached tableHandler for constructor.',
             domainObjectTableNameOrConstructor);
         // create the tableHandler
@@ -476,13 +477,13 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
     if(udebug.is_detail()) { udebug.log('UserContext.getTableHandler for domain object.'); }
     // parameter is a domain object; it must have been mapped already
     jones = domainObjectTableNameOrConstructor.constructor.prototype.jones;
-    if (typeof(jones) === 'undefined') {
+    if (jones === undefined) {
       err = new Error('User exception: constructor for ' +  domainObjectTableNameOrConstructor.constructor.name +
           ' must have been annotated (call TableMapping.applyToClass).');
       onTableHandler(err, null);
     } else {
       tableHandler = jones.tableHandler;
-      if (typeof(tableHandler) === 'undefined') {
+      if (tableHandler === undefined) {
         if(udebug.is_detail()) {
           udebug.log('UserContext.getTableHandler did not find cached tableHandler for object\n',
                       util.inspect(domainObjectTableNameOrConstructor),
@@ -504,7 +505,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
     }    
   }
 
-  tableIndicatorType = typeof(domainObjectTableNameOrConstructor);
+  tableIndicatorType = typeof domainObjectTableNameOrConstructor;
   if (tableIndicatorType === 'string') {
     tableIndicatorTypeString();
   } else if (tableIndicatorType === 'function') {
@@ -542,9 +543,9 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   }
 
   function newConnection(connectionKey) {
-    var connection = new Connection(connectionKey);
-    jonesConnections[connectionKey] = connection;
-    return connection;
+    var c = new Connection(connectionKey);
+    jonesConnections[connectionKey] = c;
+    return c;
   }
 
   function getConnection(connectionKey) {
@@ -553,11 +554,11 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
 
   function deleteFactory(key, database, callback) {
     udebug.log('deleteFactory for key', key, 'database', database);
-    var connection = jonesConnections[key];
-    var factory = connection.factories[database];
-    var dbConnectionPool = factory.dbConnectionPool;
+    var c = jonesConnections[key];
+    var f = c.factories[database];
+    var dbConnectionPool = f.dbConnectionPool;
     
-    delete connection.factories[database];
+    delete c.factories[database];
     if (--connection.count === 0) {
       // no more factories in this connection
       udebug.log('deleteFactory closing dbConnectionPool for key', key, 'database', database);
@@ -609,7 +610,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
 
     // resolveTableMappingsOnSession begins here
     
-    var tableMappingsType = typeof(tableMappings);
+    var tableMappingsType = typeof tableMappings;
     var tableMapping;
     var tableMappingType;
     switch (tableMappingsType) {
@@ -623,7 +624,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
       if (tableMappings.length) {
         for (m = 0; m < tableMappings.length; ++m) {
           tableMapping = tableMappings[m];
-          tableMappingType = typeof(tableMapping);
+          tableMappingType = typeof tableMapping;
           if (tableMappingType === 'function' || tableMappingType === 'string') {
             mappings.push(tableMapping);
           } else {
@@ -660,7 +661,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
           err = new Error(userContext.errorMessages);
           callback(err, null);          
         } else {
-          var newSession = new apiSession.Session(sessionSlot, factory, dbSession);
+          newSession = new apiSession.Session(sessionSlot, factory, dbSession);
           factory.sessions[sessionSlot] = newSession;
           resolveTableMappingsOnSession(err, newSession);
         }
@@ -721,7 +722,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   connectionKey = dbServiceProvider.getFactoryKey(properties);
   connection = getConnection(connectionKey);
 
-  if(typeof(connection) === 'undefined') {
+  if(connection === undefined) {
     // there is no connection yet using this connection key    
     udebug.log('connect connection does not exist; creating factory for',
                connectionKey, 'database', database);
@@ -737,7 +738,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
     } else {
       // there is a connection, but is there a SessionFactory for this database?
       factory = connection.factories[database];
-      if (typeof(factory) === 'undefined') {
+      if (  factory === undefined) {
         if (!connection.dbConnectionPool) {
           // this connection is unusable due to failure reported in connection.error
           callback(connection.error);
@@ -870,19 +871,18 @@ Sector.prototype.inspect = function() {
  * @param offset the number of fields in all sectors already processed
  */
 function createSector(outerLoopProjections, innerLoopProjections, sectors, index, offset) {
-  if (udebug.is_debug()) udebug.log('createSector ' + outerLoopProjections[0].name
+  if (udebug.is_debug()) {udebug.log('createSector ' + outerLoopProjections[0].name
       + ' for ' + outerLoopProjections[0].domainObject.name +
       ' inner: ' + innerLoopProjections[0].name + ' for ' + innerLoopProjections[0].domainObject.name +
-      ' index: ' + index + ' offset: ' + offset);
+      ' index: ' + index + ' offset: ' + offset);}
   var sector = new Sector();
 
   var projection = innerLoopProjections.shift();
   var outerNestedProjection;
-  var tableHandler, relationships;
+  var tableHandler;
   var keyFieldCount;
   var fieldNames, field, candidateField;
   var indexHandler;
-  var relationshipName;
   var parentFieldMapping, parentSectorIndex, parentTableHandler, parentSectorProjection;
   var parentTargetFieldName, parentTargetField;
   var thisFieldMapping;
@@ -900,8 +900,8 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
   // it contains the field in the parent sector and mapping information including join columns
   parentFieldMapping = projection.parentFieldMapping;
   sector.parentFieldMapping = parentFieldMapping;
-  if (udebug.is_detail()) udebug.log_detail('createSector for table handler', tableHandler.dbTable.name,
-      'thisDBTable name', tableHandler.dbTable.name);
+  if (udebug.is_detail()) {udebug.log_detail('createSector for table handler', tableHandler.dbTable.name,
+      'thisDBTable name', tableHandler.dbTable.name);}
   if (parentFieldMapping && index !== 0) {
     // only perform related field mapping for nested projections
     // find the parent sector which will be somewhere between 0 and immediately to the left
@@ -997,10 +997,11 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
 
   // create relationship field list for object creation
   if (projection.relationships) {
+    var relationship;
     // for each relationship add to either sector.toOneRelationships or sector.toManyRelationships
     for (projectionRelationshipName in projection.relationships) {
       if (projection.relationships.hasOwnProperty(projectionRelationshipName)) {
-        var relationship = projection.relationships[projectionRelationshipName];
+        relationship = projection.relationships[projectionRelationshipName];
         // add this relationship to the list of projections to create a sector for
         innerLoopProjections.push(relationship);
         if (outerLoopProjections.indexOf(relationship) == -1) {
@@ -1159,8 +1160,8 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   var fieldMapping;
   var index;
   var errors;
-  var foreignKeyNames, foreignKeyName;
-  var toBeChecked, toBeValidated, allValidated;
+  var foreignKeyName;
+  var toBeValidated;
   var domainObjectMynode;
   var joinTableRelationshipField, joinTableRelationshipFields = [];
   var continueValidation;
@@ -1206,9 +1207,9 @@ exports.UserContext.prototype.validateProjection = function(callback) {
     if (!err) {
       projection.dbTableHandler = dbTableHandler;
       // validate projected fields against columns using table handler
-      if (typeof(domainObject) === 'function' &&
-          typeof(domainObject.prototype.jones) === 'object' &&
-          typeof(domainObject.prototype.jones.mapping) === 'object') {
+      if (typeof domainObject === 'function' &&
+          typeof domainObject.prototype.jones === 'object' &&
+          typeof domainObject.prototype.jones.mapping === 'object') {
         projection.mapping = domainObject.prototype.jones.mapping;
         // good domainObject; have we seen this one before?
         mappingId = domainObject.prototype.jones.mappingId;
@@ -1378,9 +1379,9 @@ exports.UserContext.prototype.validateProjection = function(callback) {
   } else {
     // set up to iteratively validate projection starting with the user parameter
     projections = [this.user_arguments[0]]; // projections will grow at the end as validation proceeds
-    if (udebug.is_debug()) udebug.log('validateProjection for', projections[0].name,
+    if (udebug.is_debug()) {udebug.log('validateProjection for', projections[0].name,
         'for domain object:', projections[0].domainObject.prototype.constructor.name,
-        'with projection error:', projections[0].error);
+        'with projection error:', projections[0].error);}
     index = 0;                              // index into projections for the projection being validated
     errors = projections[0].error;          // initialize errors in validation
     mappingIds = [];                        // mapping ids seen so far
@@ -1419,7 +1420,6 @@ exports.UserContext.prototype.findWithProjection = function() {
 
   function findWithProjectionOnResult(err, dbOperation) {
       udebug.log('find.findWithProjectionOnResult');
-      var result, values;
       var error = checkOperation(err, dbOperation);
       if (error && dbOperation.result.error.sqlstate !== '02000') {
         if (userContext.session.tx.isActive()) {
@@ -1473,14 +1473,12 @@ exports.UserContext.prototype.findWithProjection = function() {
  */
 exports.UserContext.prototype.find = function() {
   var userContext = this;
-  var tableHandler;
-  if (typeof(this.user_arguments[0]) === 'function') {
+  if (typeof this.user_arguments[0] === 'function') {
     userContext.domainObject = true;
   }
 
   function findOnResult(err, dbOperation) {
     udebug.log('find.findOnResult');
-    var result, values;
     var error = checkOperation(err, dbOperation);
     if (error && dbOperation.result.error.sqlstate !== '02000') {
       if (userContext.session.tx.isActive()) {
@@ -1549,7 +1547,6 @@ exports.UserContext.prototype.find = function() {
  */
 exports.UserContext.prototype.createQuery = function() {
   var userContext = this;
-  var tableHandler;
   var queryDomainType;
 
   function createQueryOnTableHandler(err, dbTableHandler) {
@@ -1618,7 +1615,6 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
   // transform query result
   function executeQueryScanOnResult(err, dbOperation) {
     if(udebug.is_detail()) { udebug.log('executeQuery.executeQueryScanOnResult'); }
-    var result, values, resultList;
     var error = checkOperation(err, dbOperation);
     if (error) {
       userContext.applyCallback(error, null);
@@ -1636,13 +1632,13 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     var orderToUpperCase;
     var order = params.order, skip = params.skip, limit = params.limit;
     var error;
-    if (typeof(limit) !== 'undefined') {
+    if (limit !== undefined) {
       if (limit < 0 || limit > MAX_LIMIT) {
         // limit is out of valid range
         error = new Error('Bad limit parameter \'' + limit + '\'; limit must be >= 0 and <= ' + MAX_LIMIT + '.');
       }
     }
-    if (typeof(skip) !== 'undefined') {
+    if (skip !== undefined) {
       if (skip < 0 || skip > MAX_SKIP) {
         // skip is out of valid range
         error = new Error('Bad skip parameter \'' + skip + '\'; skip must be >= 0 and <= ' + MAX_SKIP + '.');
@@ -1653,8 +1649,8 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
         }
       }
     }
-    if (typeof(order) !== 'undefined') {
-      if (typeof(order) !== 'string') {
+    if (order !== undefined) {
+      if (typeof order !== 'string') {
         error = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');
       } else {
         orderToUpperCase = order.toUpperCase();
@@ -1743,7 +1739,6 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
  */
 exports.UserContext.prototype.persist = function() {
   var userContext = this;
-  var object;
 
   function persistOnResult(err, dbOperation) {
     udebug.log('persist.persistOnResult with err', err);
@@ -1809,7 +1804,7 @@ exports.UserContext.prototype.persist = function() {
  */
 exports.UserContext.prototype.save = function() {
   var userContext = this;
-  var tableHandler, object, indexHandler;
+  var indexHandler;
 
   function saveOnResult(err, dbOperation) {
     // return any error code
@@ -1874,7 +1869,7 @@ exports.UserContext.prototype.save = function() {
  */
 exports.UserContext.prototype.update = function() {
   var userContext = this;
-  var tableHandler, object, indexHandler;
+  var indexHandler;
 
   function updateOnResult(err, dbOperation) {
     // return any error code
@@ -1942,11 +1937,10 @@ exports.UserContext.prototype.update = function() {
  */
 exports.UserContext.prototype.load = function() {
   var userContext = this;
-  var tableHandler;
 
   function loadOnResult(err, dbOperation) {
     udebug.log('load.loadOnResult');
-    var result, values;
+    var values;
     var error = checkOperation(err, dbOperation);
     if (error) {
       if (userContext.session.tx.isActive()) {
@@ -2011,7 +2005,6 @@ exports.UserContext.prototype.load = function() {
  */
 exports.UserContext.prototype.remove = function() {
   var userContext = this;
-  var tableHandler, object;
 
   function removeOnResult(err, dbOperation) {
     udebug.log('remove.removeOnResult');
@@ -2023,13 +2016,12 @@ exports.UserContext.prototype.remove = function() {
       }
       userContext.applyCallback(error);
     } else {
-      var result = dbOperation.result.value;
       userContext.applyCallback(null);
     }
   }
 
   function removeOnTableHandler(err, dbTableHandler) {
-    var transactionHandler, object, dbIndexHandler;
+    var transactionHandler, dbIndexHandler;
     var dbSession = userContext.session.dbSession;
     if (userContext.clear) {
       // if batch has been cleared, user callback has already been called
@@ -2139,7 +2131,7 @@ exports.UserContext.prototype.executeBatch = function(operationContexts) {
     // make sure all operations are defined
     operationContexts.forEach(function(operationContext) {
       // is the operation already defined?
-      if (typeof(operationContext.operation) !== 'undefined') {
+      if (operationContext.operation !== undefined) {
         userContext.numberOfOperationsDefined++;
       } else {
         // the operation has not been defined yet; set a callback for when the operation is defined
@@ -2317,8 +2309,8 @@ exports.UserContext.prototype.applyCallback = function(err, result) {
     if(udebug.is_detail()) { udebug.log('UserContext.applyCallback.fulfill', result); }
     this.promise.fulfill(result);
   }
-  if (typeof(this.user_callback) === 'undefined') {
-    if(udebug.is_detail()) udebug.log('UserContext.applyCallback with no user_callback.');
+  if (this.user_callback === undefined) {
+    if(udebug.is_detail()) {udebug.log('UserContext.applyCallback with no user_callback.');}
     return;
   }
   var args = [];
