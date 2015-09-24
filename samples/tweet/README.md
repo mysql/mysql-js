@@ -12,16 +12,20 @@ using the standard mysql command:
     mysql -u root < create_tweet_tables.sql
 
 The Node.js application *tweet.js* is a rather complete large example which
-can run as either as a command-line tool or as a REST web server.  Some
-demonstration scripts are provided to illustrate *tweet.js*:
+can run as either as a command-line tool or as a REST web server.  *tweet.js*
+responds to a number of verb-object commands; to see a list of them, simply
+type:
 
+    node tweet
+
+Some demonstration scripts are provided to illustrate *tweet.js*:
 - *demo_cli_populate.sh* populates the database with some sample data.
 - *demo_cli_get.sh* demonstrates querying the sample data from the command shell.
 - *demo_http_get.sh* demonstrates querying the sample data (and posting a new
 tweet) over the HTTP interface.
 - *demo_http_delete.sh* uses the HTTP interface to delete the sample data.
 
-Note that in order to run the HTTP demo scripts, you must first start the
+Note that in order to run the HTTP demo scripts, you should first start the
 server on port 7800, using the command:
 
     node tweet start server 7800

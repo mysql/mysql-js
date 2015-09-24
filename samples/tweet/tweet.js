@@ -224,7 +224,6 @@ function Operation() {
   this.setResult = function(value) {
     udebug.log("Operation setResult", value);
     self.result = value;
-    return value;
   };
   
   this.onComplete = function() {
@@ -294,7 +293,7 @@ function LookupUserOperation(params, data) {
 LookupUserOperation.signature = [ "get", "user", "<user_name>" ]; 
 
 
-/* Delete a user, with cascading delete of tweets, mentions, and followers
+/* Delete a user, with cascading delete of tweets, mentions, and follows
 */
 function DeleteUserOperation(params, data) { 
   Operation.call(this);    /* inherit */
@@ -686,9 +685,9 @@ function runCmdlineOperation(sessionFactory, operation) {
   }
   else {
     operation.responder = new ConsoleOperationResponder(operation);
-    sessionFactory.openSession(null).then(function(session) {
+    sessionFactory.openSession().then(function(session) {
       onOpenSession(session, operation); 
-    });
+    }, console.log);
   }
 }
 
@@ -755,5 +754,4 @@ function run(sessionFactory) {
   runCmdlineOperation(sessionFactory, operation);
 }
 
-jones.connect(dbProperties, mappings).then(run);
-
+jones.connect(dbProperties, mappings).then(run, console.log);
