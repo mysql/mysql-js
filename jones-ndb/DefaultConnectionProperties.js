@@ -21,7 +21,7 @@ var NdbDefaultConnectionProperties = {
   /* The next 3 properties control the behavior when opening a connection. */
   "ndb_connect_retries" : 4,         // if < 0, keep trying forever
   "ndb_connect_delay"   : 5,         // full seconds between connection retries
-  "ndb_connect_verbose" : 0,         // enable extra console output
+  "ndb_connect_verbose" : 1,         // enable extra console output
 
   "linger_on_close_msec": 500,       /* When a client closes a DBConnectionPool,
                                         the underlying connection is kept open 
