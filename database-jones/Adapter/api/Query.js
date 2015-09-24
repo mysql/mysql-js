@@ -43,7 +43,6 @@ var where = function(predicate) {
   jones.predicate = predicate;
   jones.queryHandler = new QueryHandler(jones.dbTableHandler, predicate);
   jones.queryType = jones.queryHandler.queryType;
-  this.prototype = {};
   return this;
 };
 
@@ -132,10 +131,12 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
   // avoid most name conflicts: put all implementation artifacts into the property jones_query_domain_type
   this.jones_query_domain_type = {};
   this.field = {};
+  this.prototype = {};
   var jones = this.jones_query_domain_type;
   jones.session = session;
   jones.dbTableHandler = dbTableHandler;
   jones.domainObject = domainObject;
+  jones.queryType = 3; // default is table scan
   var queryDomainType = this;
   // initialize the functions (may be overridden below if a field has the name of a keyword)
   queryDomainType.where = where;
@@ -716,22 +717,23 @@ var QueryHandler = function(dbTableHandler, predicate) {
   this.dbTableHandler = dbTableHandler;
   this.predicate = predicate;
 
-  // Mark constant expressions in each query node
-  predicate.visit(theConstMarkerVisitor);
+  if (predicate) {
+    // Mark constant expressions in each query node
+    predicate.visit(theConstMarkerVisitor);
 
-  // Mark the usedColumnMask and equalColumnMask in each query node
-  predicate.visit(theMaskMarkerVisitor);
-  
-  candidateIndex = dbTableHandler.chooseUniqueIndexForPredicate(predicate);
+    // Mark the usedColumnMask and equalColumnMask in each query node
+    predicate.visit(theMaskMarkerVisitor);
+    candidateIndex = dbTableHandler.chooseUniqueIndexForPredicate(predicate);
 
-  if(candidateIndex) {
-    this.dbIndexHandler = candidateIndex;
-    this.queryType = candidateIndex.dbIndex.isPrimaryKey ? 0 : 1;
-    return;   // we're done!
+    if(candidateIndex) {
+      this.dbIndexHandler = candidateIndex;
+      this.queryType = candidateIndex.dbIndex.isPrimaryKey ? 0 : 1;
+      return;   // we're done!
+    }
+
+    // otherwise, look for the best ordered index
+    candidateIndex = dbTableHandler.chooseOrderedIndexForPredicate(predicate);
   }
-
-  // otherwise, look for the best ordered index
-  candidateIndex = dbTableHandler.chooseOrderedIndexForPredicate(predicate);
 
   if(candidateIndex) {
     this.dbIndexHandler = candidateIndex;

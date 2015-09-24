@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -62,7 +62,12 @@ var q9 = {p1: 7, p2: 2, expected: [0, 1, 8, 9], queryType: 3, ordered: false, pr
   return qdt.ttinyint.gt(qdt.param('p1')).orNot((qdt.ttinyint.ge(qdt.param('p2'))));
 }};
 
-var queryTests = [q1, q2, q3, q4, q5, q6, q7, q8, q9];
+// no predicate === no where function
+var q10 = {expected: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], queryType: 3, ordered: false,
+    predicate: function(qdt) {
+  }};
+
+var queryTests = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10];
 
 /***** Build and run queries ***/
 var testQueries = new harness.ConcurrentTest("testQueries");
@@ -70,6 +75,7 @@ testQueries.run = function() {
   var testCase = this;
   var from = global.integraltypes;
   testCase.mappings = from;
+  var predicate;
   fail_openSession(testCase, function(session) {
       var i = 0, j = 0, completedTestCount = 0, testCount = queryTests.length;
       queryTests.forEach(function(queryTest) {
@@ -85,11 +91,15 @@ testQueries.run = function() {
             --testCount;
             return;
           }
-          q.where(queryTest.predicate(q));
+          predicate = queryTest.predicate(q);
+          if (predicate !== undefined) {
+            q.where(predicate);
+          }
           testCase.errorIfNotEqual('Wrong query type for ' + queryTest.testName,
               queryTest.queryType, q.jones_query_domain_type.queryType);
           q.execute(queryTest, function(err, results, queryTest) {
-            testCase.errorIfNull("NoResults:q"+i+" ", results);
+            if (err) {testCase.error(queryTest.testName + err);}
+            testCase.errorIfNull("NoResults: "+ queryTest.testName +" ", results);
             if(results) {
               // check results
               // get the result ids in an array
@@ -97,7 +107,7 @@ testQueries.run = function() {
                 queryTest.resultIds[j] = results[j].id;
               }
               if (queryTest.expected.length !== results.length) {
-                testCase.errorIfNotEqual('q' + i + ' wrong results: expected ' + 
+                testCase.errorIfNotEqual(queryTest.testName + ' wrong results: expected ' +
                     queryTest.expected + '; actual: ' + queryTest.resultIds,
                     queryTest.expected.length, results.length);
               } else {

@@ -11,6 +11,10 @@ var connectionProperties = new jones.ConnectionProperties("ndb", "test");
 var session;            // our Jones session
 var p1, p2;             // some promises
 
+function processExit() {
+  process.exit(0);
+}
+
 function handleError(error) {
   console.log("Error", error);
   if(session) {
@@ -46,5 +50,5 @@ jones.openSession(connectionProperties).
   then(function(resultsArray) {
     console.log("a", resultsArray);
     return session.close();
-  }, handleError);
-
+  }).
+  then(processExit, handleError);

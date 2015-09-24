@@ -1432,52 +1432,56 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   var err;
   var parameterName, value;
   getMetadata(dbTableHandler);
-  // add the WHERE clause to the sql
-  var whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
-  var scanSQL = dbTableHandler.mysql.selectTableScanSQL + whereSQL;
-  udebug.log_detail('dbSession.buildScanOperation sql', scanSQL, 'parameter values', parameterValues);
-  // resolve parameters
-  var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
-  var formalParameters = sql.formalParameters;
+  var whereSQL = '';
+  var scanSQL = dbTableHandler.mysql.selectTableScanSQL;
   var sqlParameters = [];
-  udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
-  var i;
-  for (i = 0; i < formalParameters.length; ++i) {
-    parameterName = formalParameters[i].name;
-    value = parameterValues[parameterName];
-    sqlParameters.push(value);
-  }
-  // handle order: must be an index scan and specify ignoreCase 'Asc' or 'Desc' 
-  if (order) {
-    // validate this is an index scan
-    if (queryHandler.queryType !== 2) {
-      err = new Error('Bad order parameter; must be used only with index scans');
-      return new ErrorOperation(err, callback);
+  // add the WHERE clause to the sql if the user specified a predicate
+  if (queryDomainType.jones_query_domain_type.predicate !== undefined) {
+    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
+    scanSQL += whereSQL;
+    udebug.log_detail('dbSession.buildScanOperation sql', scanSQL, 'parameter values', parameterValues);
+    // resolve parameters
+    var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
+    var formalParameters = sql.formalParameters;
+    udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
+    var i;
+    for (i = 0; i < formalParameters.length; ++i) {
+      parameterName = formalParameters[i].name;
+      value = parameterValues[parameterName];
+      sqlParameters.push(value);
     }
-    // validate parameter; must be ignoreCase Asc or Desc
-    if (typeof order === 'string') {
-      if (order.toUpperCase() === 'ASC') {
-        scanSQL += ' ORDER BY ';
-        scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
-        scanSQL += ' ASC ';
-      } else if (order.toUpperCase() === 'DESC') {
-        scanSQL += ' ORDER BY ';
-        scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
-        scanSQL += ' DESC ';
+    // handle order: must be an index scan and specify ignoreCase 'Asc' or 'Desc'
+    if (order) {
+      // validate this is an index scan
+      if (queryHandler.queryType !== 2) {
+        err = new Error('Bad order parameter; must be used only with index scans');
+        return new ErrorOperation(err, callback);
+      }
+      // validate parameter; must be ignoreCase Asc or Desc
+      if (typeof order === 'string') {
+        if (order.toUpperCase() === 'ASC') {
+          scanSQL += ' ORDER BY ';
+          scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
+          scanSQL += ' ASC ';
+        } else if (order.toUpperCase() === 'DESC') {
+          scanSQL += ' ORDER BY ';
+          scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
+          scanSQL += ' DESC ';
+        } else {
+          err = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');
+          return new ErrorOperation(err, callback);
+        }
       } else {
+        // bad order parameter; not ASC or DESC
         err = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');
         return new ErrorOperation(err, callback);
       }
-    } else {
-      // bad order parameter; not ASC or DESC
-      err = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');
-      return new ErrorOperation(err, callback);
     }
   }
-  // handle SKIP and LIMIT; must use index
+  // handle SKIP and LIMIT; must use index or table scan
   if (skip !== undefined || limit !== undefined) {
-    if (skip !== undefined && (queryHandler.queryType !== 2 || typeof order !== 'string')) {
-      err = new Error('Bad skip parameter \'' + skip + '\'; must be used only with index scan.');
+    if (skip !== undefined && (queryHandler.queryType < 2)) {
+      err = new Error('Bad skip parameter \'' + skip + '\'; must be used only with index or table scan.');
       return new ErrorOperation(err, callback);
     }
     // set default values if not provided
