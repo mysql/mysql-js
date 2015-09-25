@@ -10,7 +10,8 @@
    Tweet, and then executing a find() on the Projection.
    
    In Jones, find() only returns a single result. In this case the result is
-   an instance of an Author having an array of Tweets.
+   a single instance of an Author.  However, that Author will have an array 
+   of Tweets.
 
    Expressed in terms of SQL, scan.js is like "SELECT FROM tweet" using an
    ordered index, while join.js is like "SELECT FROM author" on primary key
@@ -25,21 +26,14 @@
 "use strict";
 var jones = require("database-jones");
 
-//  see find.js for more information about ConnectionProperties
-var connectionProperties = new jones.ConnectionProperties("ndb", "test");
 
 /* Constructors for application objects */
-function Tweet() { }
-
 function Author() { }
 
-/* 
-  TableMappings describe the structure of the data.
-  "new TableMapping(t)" returns a default mapping for table t.
-  applyToClass() associates the table with a JavaScript constructor.
-  mapManyToOne() & friends take a literal object that describing 
-  a relationship to another table.
-*/
+function Tweet() { }
+
+
+/*  TableMappings describe the structure of the data. */
 var authorMapping = new jones.TableMapping("author");
 authorMapping.applyToClass(Author);
 
@@ -47,11 +41,16 @@ var tweetMapping = new jones.TableMapping("tweet");
 tweetMapping.applyToClass(Tweet);
 
 authorMapping.mapOneToMany(
-  { fieldName:  "user_name",      // field in the Author object
-    targetField: "author",        // foreign key defined in the SQL DDL
-    target:     Tweet             // mapped constructor of relationship target
+  { fieldName:    "tweets",      // field in the Author object
+    target:       Tweet,         // mapped constructor
+    targetField:  "author"       // target join field
   });
 
+tweetMapping.mapManyToOne(
+  { fieldName:    "author",      // field in the Tweet object
+    target:       Author,        // mapped constructor
+    foreignKey:   "author_fk"    // SQL foreign key relationship
+  });
 
 /* 
    Projections describe the structure to be returned from find().
@@ -72,10 +71,11 @@ var find_key = process.argv[2];
 var session;
 
 
-/* The rest of this example looks like find.js, only using find() with 
-   a projection, rather than a table name.
+/* The rest of this example looks like find.js, 
+   only using find() with a projection rather than a table name.
 */
-jones.openSession(connectionProperties).
+
+jones.openSession(new jones.ConnectionProperties("ndb", "test")).
   then(function(s) {
     session = s;
     return session.find(authorProjection, find_key);
