@@ -60,7 +60,7 @@ function prepare(testCase, runTestMethod, testObj) {
       testCase.fail(err);               
     }
     else    {   /* set global dbt */
-      dbt = new dbtablehandler.DBTableHandler(table, mapping, null);
+      dbt = new dbtablehandler.DBTableHandler(table, mapping);
       runTestMethod(testCase, testObj);  }
   }
 

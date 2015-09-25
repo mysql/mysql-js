@@ -37,7 +37,7 @@ function prepare(testCase, callback) {
       testCase.fail(err);
     }
     else {
-      callback(new dbtablehandler.DBTableHandler(dbTable, mapping, null));
+      callback(new dbtablehandler.DBTableHandler(dbTable, mapping));
     }
   }
 

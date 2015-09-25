@@ -166,7 +166,7 @@ function createTable(tableMapping, sessionFactory, session, callback) {
     var qualifiedTableName = tableMapping.database + '.' + tableName;
     if(! err) {
       // create the table handler
-      var tableHandler = new DBTableHandler(tableMetadata, tableMapping, null);
+      var tableHandler = new DBTableHandler(tableMetadata, tableMapping);
       // remember the table metadata in the session factory
       sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
       // remember the table handler in the session factory

@@ -61,7 +61,7 @@ function prepare(testCase, testObj) {
     if(err) {  testCase.fail(err);               }
     else {
       table = dbTable;         // set global
-      dbt = new dbtablehandler.DBTableHandler(table, mapping, null);   // set global
+      dbt = new dbtablehandler.DBTableHandler(table, mapping);   // set global
       testCase.runTestMethod(testCase, testObj);
     }
   }

@@ -51,7 +51,7 @@ function isValidConverterObject(converter) {
 }
 
 function isValidConstructor(constructor) {
-  return (constructor != null && typeof constructor === 'function');
+  return (typeof constructor === 'function');
 }
 
 function isMeta(value) {

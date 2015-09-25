@@ -97,16 +97,15 @@ DBTableHandlerPrivate.prototype.inspect = function() {
 
    Create a DBTableHandler for a table and a mapping.
 
-   The TableMetadata may not be null.
+   If dbtable is null or has no columns, this function returns null.
 
-   If the TableMapping is null, default mapping behavior will be used.
+   If the tablemapping is null, default mapping behavior will be used.
    Default mapping behavior is to:
      select all columns when reading
      use default domainTypeConverters for all data types
      perform no remapping between field names and column names
 */
 function DBTableHandler(dbtable, tablemapping, ctor) {
-  assert(arguments.length === 3);
   var i,               // an iterator
       f,               // a FieldMapping
       c,               // a ColumnMetadata
@@ -121,18 +120,12 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 
   stats.constructor_calls++;
 
-  if (tablemapping && !tablemapping.isValid) {
-    // bad table mapping
-    this.err = new Error(tablemapping.error);
-    this.isValid = false;
-  }
-
   if(! ( dbtable && dbtable.columns)) {
     stats.return_null++;
     return null;
   }
 
-	if(stats.created[dbtable.name] === undefined) {
+ if(stats.created[dbtable.name] === undefined) {
 		stats.created[dbtable.name] = 1;
 	} else { 
 		stats.created[dbtable.name]++;
@@ -156,15 +149,19 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 
   /* this.mapping */
   if(tablemapping) {
-    stats.explicit_mappings++;
-    this.mapping = tablemapping;
+    if(tablemapping.isValid) {
+      stats.explicit_mappings++;
+      this.mapping = tablemapping;
+    } else {
+      this.err = new Error(tablemapping.error || "Invalid TableMapping");
+      this.isValid = false;
+    }
   }
   else {                                          // Create a default mapping
     stats.default_mappings++;
     this.mapping          = new TableMapping(this.dbTable.name);
     this.mapping.database = this.dbTable.database;
   }
-
 
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
@@ -173,7 +170,8 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   }
   for(i = 0 ; i < this.mapping.fields.length ; i++) {
     f = this.mapping.fields[i];
-    udebug.log_detail('DBTableHandler<ctor> field:', f, 'persistent', f.persistent, 'relationship', f.relationship);
+    udebug.log_detail('DBTableHandler<ctor> field:', f, 'persistent', f.persistent,
+                      'relationship', f.relationship);
     if(f && f.persistent) {
       if (!f.relationship) {
         c = getColumnByName(this.dbTable, f.columnName);

@@ -66,7 +66,7 @@ t1.runTestMethod = function do_insert_op(dataObj) {
   udebug.log("do_insert_op");
 
   var tx = dbSession.getTransactionHandler();
-  var thandler = new dbt.DBTableHandler(table, null, null);
+  var thandler = new dbt.DBTableHandler(table);
   var test = this;
   
   var op = dbSession.buildInsertOperation(thandler, dataObj, tx, null);
