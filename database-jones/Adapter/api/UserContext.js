@@ -573,6 +573,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   var resolveTableMappingsOnSession = function(err, session) {
     var mappings = [];
     var mappingBeingResolved = 0;
+    var currentTableMapping, currentTableMappingType, currentTableMappingName, currentTableName, message;
 
     var resolveTableMappingsOnTableHandler = function(err, tableHandler) {
       if(udebug.is_detail()) {
@@ -580,7 +581,19 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
                    'of', mappings.length, mappings[mappingBeingResolved]);
       }
       if (err) {
-        userContext.appendErrorMessage(err);
+        // what were we resolving?
+        currentTableMapping = mappings[mappingBeingResolved];
+        currentTableMappingType = typeof currentTableMapping;
+        currentTableName = currentTableMapping;
+        message = currentTableName;
+        if (currentTableMappingType === 'function') {
+          currentTableMappingName = currentTableMapping.prototype.constructor.name;
+          if (currentTableMapping.prototype.jones !== undefined) {
+            currentTableName = currentTableMapping.prototype.jones.mapping.table;
+            message = currentTableName + ' for domain object ' + currentTableMappingName;
+          }
+        }
+        userContext.appendErrorMessage('Error resolving table ' + message + ': ' + util.inspect(err));
       }
       if (++mappingBeingResolved === mappings.length || mappingBeingResolved > 10) {
         // close the session the hard way (not using UserContext)
@@ -1569,7 +1582,7 @@ exports.UserContext.prototype.createQuery = function() {
   }
   // if the first parameter is a table name the query results will be literals
   // if not (constructor or domain object) the query results will be domain objects
-  userContext.domainObject = typeof(this.user_arguments[0]) !== 'string';
+  userContext.domainObject = typeof this.user_arguments[0] !== 'string';
   // get DBTableHandler for constructor/tableName
   getTableHandler(userContext.user_arguments[0], userContext.session, createQueryOnTableHandler);
 
