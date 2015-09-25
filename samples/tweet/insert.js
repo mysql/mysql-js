@@ -1,12 +1,11 @@
-"use strict";
-
-var jones = require("database-jones");
-
 /* This script shows an example persist() operation using a table name and
    primary key, and working with callbacks. 
    
    For a similar example using promises rather than callbacks, see find.js
 */
+
+"use strict";
+var jones = require("database-jones");
 
 
 /*  new ConnectionProperties(adapter, deployment)
@@ -18,33 +17,31 @@ var jones = require("database-jones");
     preferred way to customize the host, username, password, schema, etc., 
     used for the database connection is to edit the deployments file.
 */
-var connectionProperties =
-  new jones.ConnectionProperties("ndb", "test");
+var connectionProperties = new jones.ConnectionProperties("ndb", "test");
 
 var session;   // our Jones session
 
-/* handleError() exits if "error" is set (closing the session, if needed)
-   or simply returns on no error.
+function closeSessionAndExit(status) {
+  function disconnectAndExit() {
+    jones.closeAllOpenSessionFactories(function() {
+      process.exit(status);
+    });
+  }
+  if(session) { session.close(disconnectAndExit); }
+  else        { disconnectAndExit(); }
+}
+
+/* handleError() exits if "error" is set, or otherwise simply returns.
 */
 function handleError(error) {
   if(error) {
-    console.log(error);
-    if(session) {
-      session.close(function() {
-        process.exit(1);
-      });
-    } else {
-      process.exit(1);
-    }
+    console.trace(error);
+    closeSessionAndExit(1);
   }
 }
 
-/* The "insert" script takes two arguments:
-   arg0: "node"
-   arg1: "find.js"
-   arg2: table name
-   arg3: a JSON object
-*/
+/* node     find.js     table_name      JSON_object
+   argv[0]  argv[1]     argv[2]         argv[3]             */
 if (process.argv.length !== 4) {
   handleError("Usage: node insert <table> <JSON_object>\n");
 }
@@ -55,8 +52,7 @@ var table_name = process.argv[2],
 /* This version of openSession() takes three arguments:
      ConnectionProperties
      A table name, which will be validated upon connecting
-     A callback
-   (Compare vs. the one-argument openSession() in find.js)
+     A callback which will receive (error, session)
 */
 jones.openSession(connectionProperties, table_name, function(err, s) {
   handleError(err);
@@ -66,11 +62,7 @@ jones.openSession(connectionProperties, table_name, function(err, s) {
   session.persist(table_name, object, function(err) {
     handleError(err);
     console.log("Inserted: ", object);
-
-    /* Finally close the session */
-    session.close(function() {
-      process.exit(0);
-    });
+    closeSessionAndExit(0);
   });
 });
 

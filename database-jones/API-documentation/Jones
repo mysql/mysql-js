@@ -92,6 +92,7 @@ Projection(constructor);
  * JavaScript objects.  If constructorsOrTableNames contains a string table name, a Domain 
  * Object Constructor function, or an array of these, then metadata is loaded 
  * from the database and validated against the requirements of the mapping.
+ * Any failure to validate the mappings will result in an error.
  * If constructorsOrTableNames is undefined, null, or an empty array, no mappings will be 
  * loaded or validated; this means validation is deferred until tables are 
  * used in application code.
@@ -122,6 +123,7 @@ connect(properties, mappings, [callback], [...]);
  * JavaScript objects.  If constructorsOrTableNames contains a string table name, a Domain 
  * Object Constructor function, or an array of these, then metadata is loaded 
  * from the database and validated against the requirements of the mapping.
+ * Any failure to validate the mappings will result in an error.
  * If constructorsOrTableNames is undefined, null, or an empty array, no mappings will be 
  * loaded or validated; this means validation is deferred until tables are 
  * used in application code.

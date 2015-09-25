@@ -687,7 +687,7 @@ function runCmdlineOperation(sessionFactory, operation) {
     operation.responder = new ConsoleOperationResponder(operation);
     sessionFactory.openSession().then(function(session) {
       onOpenSession(session, operation); 
-    }, console.log);
+    }, console.trace);
   }
 }
 
@@ -754,4 +754,4 @@ function run(sessionFactory) {
   runCmdlineOperation(sessionFactory, operation);
 }
 
-jones.connect(dbProperties, mappings).then(run, console.log);
+jones.connect(dbProperties, mappings).then(run, console.trace);

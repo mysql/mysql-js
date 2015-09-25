@@ -1,71 +1,87 @@
-"use strict";
 
+/* This script provides an example of the Jones Projection API.
+
+   Functionally it is identical to both "node tweet.js get tweets-by <author>"
+   and to "node scan.js <author>". It produces a list of tweets by
+   a particular user.
+   
+   However, where scan.js works by using a Query to scan the tweet table,
+   join.js works by describing a one-to-many Projection from Author to
+   Tweet, and then executing a find() on the Projection.
+   
+   In Jones, find() only returns a single result. In this case the result is
+   an instance of an Author having an array of Tweets.
+
+   Expressed in terms of SQL, scan.js is like "SELECT FROM tweet" using an
+   ordered index, while join.js is like "SELECT FROM author" on primary key
+   with "JOIN tweet on tweet.author = author.user_name".
+
+   There are two steps to this. First, TableMappings describe the relationships
+   of JavaScript objects to the two SQL tables and to each other. Then, a
+   Projection describes the desired shape of the result, referring to the mapped
+   constructors.
+*/
+
+"use strict";
 var jones = require("database-jones");
 
 //  see find.js for more information about ConnectionProperties
 var connectionProperties = new jones.ConnectionProperties("ndb", "test");
 
-/* Here are some constructors for application objects */
+/* Constructors for application objects */
 function Tweet() { }
 
 function Author() { }
 
 /* 
- "new TableMapping(t)" returns a default mapping for a table.
+  TableMappings describe the structure of the data.
+  "new TableMapping(t)" returns a default mapping for table t.
   applyToClass() associates the table with a JavaScript constructor.
   mapManyToOne() & friends take a literal object that describing 
   a relationship to another table.
 */
+var authorMapping = new jones.TableMapping("author");
+authorMapping.applyToClass(Author);
+
 var tweetMapping = new jones.TableMapping("tweet");
 tweetMapping.applyToClass(Tweet);
 
-var authorMapping = new jones.TableMapping("author");
-authorMapping.applyToClass(Hashtag);
-
 authorMapping.mapOneToMany(
-  { fieldName:  "tweets",        // field in the Hashtag object
-    foreignKey: "author_fk",     // foreign key defined in the SQL DDL
-    target:     Tweet            // mapped constructor of relationship target
+  { fieldName:  "user_name",      // field in the Author object
+    targetField: "author",        // foreign key defined in the SQL DDL
+    target:     Tweet             // mapped constructor of relationship target
   });
+
+
+/* 
+   Projections describe the structure to be returned from find().
+*/
+var tweetProjection = new jones.Projection(Tweet);
+var authorProjection = new jones.Projection(Author);
+authorProjection.addRelationship("tweets", tweetProjection);
 
 
 /* This script takes one argument, the user name.  e.g.:
    "node join.js uncle_claudius"
 */
 if (process.argv.length !== 3) {
-  handleError("Usage: node join.js <user_name>\n");
-};
-var find_key   = process.argv[2];
-
-
-/* This version of openSession() takes one argument and returns a promise.
-   The argument is the set of connection properties obtained above.
-
-   Other versions of openSession() can validate table mappings and take
-   callbacks; these are documented in database-jones/API-documentation/Jones.
-*/
-p1 = jones.openSession(connectionProperties);
-
-
-/* Here is the function that will display a result after it has been read.
-*/
-function displayResult(object) {
-  console.log('Found: ' + JSON.stringify(object));
-  return session.close();  // returns a promise
+  console.err("Usage: node join.js <user_name>\n");
+  process.exit(1);
 }
+var find_key = process.argv[2];
+var session;
 
 
-/* Once the session is open, use it to find an object.
-   find() is a Jones API call that takes a primary key or unique key and,
-   on success, returns *only one object*.
+/* The rest of this example looks like find.js, only using find() with 
+   a projection, rather than a table name.
 */
-p2 = p1.then(function(s) {
-  session = s;
-  p3 = session.find(table_name, find_key);
-  p4 = p3.then(displayResult, handleError);
-  p4.then(function() { process.exit(0); });   // success
-});
-
-
-
+jones.openSession(connectionProperties).
+  then(function(s) {
+    session = s;
+    return session.find(authorProjection, find_key);
+  }).
+  then(console.log, console.trace).    // log the result or error
+  then(function() { if(session) { return session.close(); }}).  // close this session
+  then(function() { return jones.closeAllOpenSessionFactories(); }).  // disconnect
+  then(process.exit);
 
