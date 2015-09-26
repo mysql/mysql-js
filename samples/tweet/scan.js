@@ -8,6 +8,10 @@
 "use strict";
 var jones = require("database-jones");
 
+if (process.argv.length < 3 ) {
+  console.log('usage: node scan <author> [limit] [order]');
+  process.exit(0);
+}
 /* new ConnectionProperties(adapter, deployment)
    see find.js for more information about ConnectionProperties
 */
@@ -39,4 +43,4 @@ jones.openSession(connectionProperties).
   then(console.log, console.trace).  // log the result or error
   then(function() { if(session) { return session.close(); }}).  // close this session
   then(function() { return jones.closeAllOpenSessionFactories(); }).  // disconnect
-  then(process.exit);
+  then(process.exit, process.exit);
