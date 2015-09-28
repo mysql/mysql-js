@@ -318,7 +318,10 @@ exports.DBConnectionPool.prototype.close = function(user_callback) {
   this.openConnections = [];
   this.is_connected = false;
 
-  user_callback();
+  // end the underlying connection pool (close all connections gracefully)
+  connectionPool.pool.end(function() {
+    user_callback();
+  });
 };
 
 exports.DBConnectionPool.prototype.destroy = function() { 
