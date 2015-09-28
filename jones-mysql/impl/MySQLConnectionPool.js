@@ -319,8 +319,8 @@ exports.DBConnectionPool.prototype.close = function(user_callback) {
   this.is_connected = false;
 
   // end the underlying connection pool (close all connections gracefully)
-  connectionPool.pool.end(function() {
-    user_callback();
+  connectionPool.pool.end(function(err) {
+    user_callback(err);
   });
 };
 
