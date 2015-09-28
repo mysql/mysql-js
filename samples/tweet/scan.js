@@ -11,16 +11,14 @@ var jones = require("database-jones");
 /* new ConnectionProperties(adapter, deployment)
    see find.js for more information about ConnectionProperties
 */
-var connectionProperties = new jones.ConnectionProperties("mysql", "test"),
-    session,                       // our Jones session
+var connectionProperties = new jones.ConnectionProperties("ndb", "test"),
     queryTerm = process.argv[2],   //  node scan.js <author> [limit] [order]
     limit = Number(process.argv[3]) || 20,
     order = (process.argv[4] == "asc" ? "asc" : "desc");
 
 
 jones.openSession(connectionProperties).
-  then(function(s) {
-    session = s;
+  then(function(session) {
     return session.createQuery("tweet");
   }).
   then(function(query) {
@@ -37,6 +35,4 @@ jones.openSession(connectionProperties).
     return query.execute({ "limit" : limit, "order" : order });
   }).
   then(console.log, console.trace).  // log the result or error
-  then(function() { if(session) { return session.close(); }}).  // close this session
-  then(function() { return jones.closeAllOpenSessionFactories(); }).  // disconnect
-  then(process.exit);
+  then(jones.closeAllOpenSessionFactories);  // disconnect

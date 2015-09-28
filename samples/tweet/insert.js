@@ -19,16 +19,10 @@ var jones = require("database-jones");
 */
 var connectionProperties = new jones.ConnectionProperties("ndb", "test");
 
-var session;   // our Jones session
-
-function closeSessionAndExit(status) {
-  function disconnectAndExit() {
-    jones.closeAllOpenSessionFactories(function() {
-      process.exit(status);
-    });
-  }
-  if(session) { session.close(disconnectAndExit); }
-  else        { disconnectAndExit(); }
+function disconnectAndExit(status) {
+  jones.closeAllOpenSessionFactories(function() {
+    process.exit(status);
+  });
 }
 
 /* handleError() exits if "error" is set, or otherwise simply returns.
@@ -36,7 +30,7 @@ function closeSessionAndExit(status) {
 function handleError(error) {
   if(error) {
     console.trace(error);
-    closeSessionAndExit(1);
+    disconnectAndExit(1);
   }
 }
 
@@ -54,15 +48,14 @@ var table_name = process.argv[2],
      A table name, which will be validated upon connecting
      A callback which will receive (error, session)
 */
-jones.openSession(connectionProperties, table_name, function(err, s) {
+jones.openSession(connectionProperties, table_name, function(err, session) {
   handleError(err);
-  session = s;
 
   /* The callback to persist() only gets one argument */
   session.persist(table_name, object, function(err) {
     handleError(err);
     console.log("Inserted: ", object);
-    closeSessionAndExit(0);
+    disconnectAndExit(0);
   });
 });
 

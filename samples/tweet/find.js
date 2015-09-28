@@ -1,4 +1,4 @@
-/* This script shows an example find() operation using a table name and 
+/* This script shows an example find() operation using a table name and
    primary key, and working with promises.
 
    For a similar example using callbacks rather than promises, see insert.js
@@ -6,6 +6,10 @@
 
 "use strict";
 var jones = require("database-jones");
+
+/* Uncomment this to enable internal debugging output
+*/
+require("unified_debug").level_debug();
 
 /*  new ConnectionProperties(adapter, deployment)
 
@@ -27,9 +31,7 @@ if (process.argv.length !== 4) {
 }
 
 var table_name = process.argv[2],
-    find_key   = process.argv[3],
-    session;   // our Jones session
-
+    find_key   = process.argv[3];
 
 /* This version of openSession() takes one argument and returns a promise.
    The argument is the set of connection properties obtained above.
@@ -41,11 +43,8 @@ var table_name = process.argv[2],
    on success, returns *only one object*.
 */
 jones.openSession(connectionProperties).
-  then(function(s) {
-    session = s;
+  then(function(session) {
     return session.find(table_name, find_key);
   }).
   then(console.log, console.trace).    // log the result or error
-  then(function() { if(session) { return session.close(); }}).  // close this session
-  then(function() { return jones.closeAllOpenSessionFactories(); }).  // disconnect
-  then(process.exit);
+  then(jones.closeAllOpenSessionFactories);  // disconnect

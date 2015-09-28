@@ -40,24 +40,28 @@ authorMapping.applyToClass(Author);
 var tweetMapping = new jones.TableMapping("tweet");
 tweetMapping.applyToClass(Tweet);
 
-authorMapping.mapOneToMany(
-  { fieldName:    "tweets",      // field in the Author object
-    target:       Tweet,         // mapped constructor
-    targetField:  "author"       // target join field
-  });
-
 tweetMapping.mapManyToOne(
   { fieldName:    "author",      // field in the Tweet object
     target:       Author,        // mapped constructor
     foreignKey:   "author_fk"    // SQL foreign key relationship
   });
 
+authorMapping.mapOneToMany(
+  { fieldName:    "tweets",      // field in the Author object
+    target:       Tweet,         // mapped constructor
+    targetField:  "author"       // target join field
+  });
+
+
 /* 
    Projections describe the structure to be returned from find().
 */
 var tweetProjection = new jones.Projection(Tweet);
+tweetProjection.addFields(["message","date_created"]);
+
 var authorProjection = new jones.Projection(Author);
 authorProjection.addRelationship("tweets", tweetProjection);
+authorProjection.addFields(["full_name"]);
 
 
 /* This script takes one argument, the user name.  e.g.:
@@ -68,20 +72,16 @@ if (process.argv.length !== 3) {
   process.exit(1);
 }
 var find_key = process.argv[2];
-var session;
 
 
 /* The rest of this example looks like find.js, 
    only using find() with a projection rather than a table name.
 */
 
-jones.openSession(new jones.ConnectionProperties("ndb", "test")).
-  then(function(s) {
-    session = s;
+jones.openSession(new jones.ConnectionProperties("mysql", "test")).
+  then(function(session) {
     return session.find(authorProjection, find_key);
   }).
   then(console.log, console.trace).    // log the result or error
-  then(function() { if(session) { return session.close(); }}).  // close this session
-  then(function() { return jones.closeAllOpenSessionFactories(); }).  // disconnect
-  then(process.exit);
-
+  then(jones.closeAllOpenSessionFactories).  // disconnect
+  then(process.exit, console.trace);
