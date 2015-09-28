@@ -9,7 +9,7 @@ var jones = require("database-jones");
 
 /* Uncomment this to enable internal debugging output
 */
-require("unified_debug").level_debug();
+//require("unified_debug").level_debug();
 
 /*  new ConnectionProperties(adapter, deployment)
 
