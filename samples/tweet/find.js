@@ -26,7 +26,7 @@ var connectionProperties = new jones.ConnectionProperties("mysql", "test");
    argv[0]  argv[1]     argv[2]         argv[3]             */
 
 if (process.argv.length !== 4) {
-  console.err("Usage: node find <table> <key>\n");
+  console.log("Usage: node find <table> <key>\n");
   process.exit(1);
 }
 
