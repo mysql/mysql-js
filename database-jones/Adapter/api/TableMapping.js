@@ -338,7 +338,8 @@ FieldMapping.prototype = doc.FieldMapping;
    Create or replace FieldMapping for fieldName
 */
 TableMapping.prototype.mapField = function() {
-  var i, args, arg, fieldName, fieldMapping;
+  var i, args, arg, fieldMapping;
+  var fieldName = '';
   args = arguments;  
 
   function getFieldMapping(tableMapping, fieldName) {
@@ -392,7 +393,11 @@ TableMapping.prototype.mapField = function() {
 
   /* Validate the candidate mapping */
   this.error  += isValidFieldMapping(fieldMapping);
-  this.mappedFieldNames.push(fieldName);
+  if (this.mappedFieldNames.indexOf(fieldName) !== -1) {
+    this.error += '\nfieldName "' + fieldName + '" is duplicated.';
+  } else {
+    this.mappedFieldNames.push(fieldName);
+  }
   return this;
 };
 
@@ -431,6 +436,9 @@ function createRelationshipFieldFromLiteral(relationshipProperties, tableMapping
   }
   if (!relationship.target) {
     errorMessage += '\nMappingError: target is a required field for relationship mapping';
+  }
+  if (tableMapping.mappedFieldNames.indexOf(relationship.fieldName) !== -1) {
+    errorMessage += '\nMappingError: relationship field "' + relationship.fieldName + '" is duplicated.';
   }
   if (errorMessage) {
     tableMapping.error += errorMessage;
