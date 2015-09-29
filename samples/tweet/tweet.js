@@ -32,8 +32,8 @@ var http   = require('http'),
     url    = require('url'),
     jones  = require('database-jones'),
     udebug = unified_debug.getLogger("tweet.js"),
-    adapter = process.env["JONES_ADAPTER"] || "ndb",
-    deployment = process.env["JONES_DEPLOYMENT"] || "test",
+    adapter = process.env.JONES_ADAPTER || "ndb",
+    deployment = process.env.JONES_DEPLOYMENT || "test",
     mainLoopComplete, parse_command, allOperations, operationMap;
 
 //////////////////////////////////////////
@@ -48,11 +48,20 @@ var http   = require('http'),
     If the constructor fails to do this, and overwrites the value just read
     from the database, the read operation will fail with error WCTOR.
 */
-
-function Author(user_name, full_name) {
+function Author(user_name, propertiesString) {
+  var properties, p;
   if(user_name !== undefined) {
     this.user_name = user_name;
-    this.full_name = full_name;
+    this.tweet_count = 0;
+    if(typeof propertiesString === 'string') {
+      try {
+        properties = JSON.parse(propertiesString);
+        for(p in properties) {
+          if(properties.hasOwnProperty(p)) { this[p] = properties[p]; }
+        }
+      }
+      catch(e) { console.log(e); }
+    }
   }
 }
 
@@ -734,7 +743,7 @@ function prepareOperationMap() {
 // *** Main program starts here ***
 
 /* Global Variable Declarations */
-var mappings, dbProperties, operation;
+var mappings, dbProperties, operation, authorMapping;
 
 prepareOperationMap();
 
@@ -744,10 +753,18 @@ operation = get_cmdline_args();
 /* Connection Properties */
 dbProperties = new jones.ConnectionProperties(adapter, deployment);
 
-// Map SQL Tables to JS Constructors using default mappings
-mappings = [];
+mappings = [];   // an array of mapped constructors
+
+// Create a TableMapping for Author
+authorMapping = new jones.TableMapping('author');
+authorMapping.mapField("user_name");
+authorMapping.mapField("full_name");
+authorMapping.mapField("tweet_count");
+authorMapping.mapSparseFields("SPARSE_FIELDS");
+mappings.push(authorMapping.applyToClass(Author));
+
+// Map other SQL Tables to JS Constructors using default mappings
 mappings.push(new jones.TableMapping('tweet').applyToClass(Tweet));
-mappings.push(new jones.TableMapping('author').applyToClass(Author));
 mappings.push(new jones.TableMapping('hashtag').applyToClass(HashtagEntry));
 mappings.push(new jones.TableMapping('follow').applyToClass(Follow));
 mappings.push(new jones.TableMapping('mention').applyToClass(Mention));

@@ -17,16 +17,9 @@ jones.openSession(connectionProperties).then(
   function(session) {
     var user = { id: 1, name: "Database Jones"};
     return session.persist("user", user);
-  }
-).then(
-  function success() { 
-    console.log("Complete");
-    jones.closeAllOpenSessionFactories();
-  },
-  function failure(error) { 
-    console.log("Error", error);l
-  }
-);
+  }).
+  then(function() { console.log("Complete"); }, console.trace).
+  then(jones.closeAllOpenSessionFactories);
 ```
 
 Key features include:
@@ -37,7 +30,7 @@ Key features include:
 + Flexible mapping from JavaScript objects to relational tables
 + A fluent Query language using domain model tokens
 + Default mapping of a relational table to a simple object 
-+ Complex mapping of relational tables to complex objects
++ Projection of several related tables to a complex object structure
 + Asynchronous API using well-known node.js callback patterns
 + Promises/A+, allowing easier management of callbacks
 + Connection pooling, allowing in-process scale up
@@ -54,6 +47,7 @@ To use the mysql adapter, you will also need node-mysql.
 To use the ndb adapter, you need MySQL Cluster, and you must use node-gyp to build
 the C++ source code under jones-ndb.  
 
+Sample applications 
 
 Git Branches
 ------------

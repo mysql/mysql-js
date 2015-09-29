@@ -1,13 +1,13 @@
 # This script populates the sample database
+export JONES_ADAPTER=mysql || setenv JONES_ADAPTER mysql  # sh || csh
 set -x
-export JONES_ADAPTER=mysql
 
 # Create four users: Caligula, Claudius, Nero, Agrippina
 #
-node tweet put user caligula 'Gaius Julius Casear Germanicus'
-node tweet put user uncle_claudius 'Tiberius Claudius Nero Germanicus'
-node tweet put user nero 'Lucius Domitius Ahenobarus'
-node tweet put user agrippina 'Julia Augusta Agrippina Minor'
+node tweet put user caligula '{ "full_name": "Gaius Julius Casear Germanicus" , "profile_text": "I am your little boot!" }'
+node tweet put user uncle_claudius '{ "full_name": "Tiberius Claudius Nero Germanicus" }'
+node tweet put user nero '{ "full_name": "Lucius Domitius Ahenobarus" }'
+node tweet put user agrippina '{ "full_name": "Julia Augusta Agrippina Minor"}'
 
 
 # Create follow records: Nero follows Agrippina, etc.
