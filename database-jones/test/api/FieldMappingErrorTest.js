@@ -30,7 +30,8 @@
  * t7 mapOneToOne with missing targetField
  * t8 mapOneToOne with missing target
  * t9 mapField with duplicate field name
- * t10 mapOneToOne with duplicate field name
+ * t10 mapOneToOne relationship name duplicates field name
+ * t11 mapField field name duplicates relationship name
  */
 
 function checkErrorMessage(tc, tm, msg) {
@@ -130,7 +131,7 @@ t9.run = function() {
   checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
 };
 
-var t10 = new harness.ConcurrentTest('t10FieldMappingDuplicateRelationshipName');
+var t10 = new harness.ConcurrentTest('t10FieldMappingRelationshipNameDuplicatesFieldName');
 t10.run = function() {
   var testCase = this;
   var relatedDomainObject = function() {};
@@ -144,6 +145,20 @@ t10.run = function() {
   checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
 };
 
+var t11 = new harness.ConcurrentTest('t11FieldMappingFieldNameDuplicatesRelationshipName');
+t11.run = function() {
+  var testCase = this;
+  var relatedDomainObject = function() {};
+  var tableMapping = new mynode.TableMapping('t_basic');
+  tableMapping.mapOneToOne({
+    fieldName: 'name',
+    target: relatedDomainObject,
+    targetField: 'f1'
+  });
+  tableMapping.mapField({fieldName: 'name'});
+  checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
+};
 
 
-module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10];
+
+module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11];

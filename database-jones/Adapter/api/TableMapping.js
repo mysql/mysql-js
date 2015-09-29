@@ -355,11 +355,17 @@ TableMapping.prototype.mapField = function() {
     return fm;
   }
 
-  /* mapField() starts here */
+  // mapField() starts here
   arg = args[0];
   if(typeof arg === 'string') {
     fieldName = arg;
     fieldMapping = getFieldMapping(this, fieldName);
+    // existing field mapping cannot be a relationship
+    if (fieldMapping.target !== undefined) {
+      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
+      return;
+    }
+
     for(i = 1; i < args.length ; i++) {
       arg = args[i];
       switch(typeof arg) {
@@ -385,6 +391,10 @@ TableMapping.prototype.mapField = function() {
   else if(typeof args[0] === 'object') {
     fieldName = args[0].fieldName;
     fieldMapping = getFieldMapping(this, fieldName);
+    if (fieldMapping.target !== undefined) {
+      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
+      return;
+    }
     buildMappingFromObject(fieldMapping, args[0], fieldMappingProperties);
   }
   else {
