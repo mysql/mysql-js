@@ -95,8 +95,8 @@ var sqlStateMessages = {
 };
 
 
-function DBOperationError() {
-  this.message   = "";
+function DBOperationError(message) {
+  this.message   = message || "";
   this.ndb_error = null;
 }
 
@@ -930,9 +930,16 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
 
   /* Create an NdbProjection, then use it to create a QueryOperation */
   ndbProjection = NdbProjection.initialize(projection.sectors, indexHandler);
-  op.query = ndbProjection.root;
-  depth = ndbProjection.depth + 1;
-  op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
+  if(ndbProjection.root.error) {
+    /* TODO: Report this error back to the user rather than attempting
+       to execute the operation */
+    op.result.error = new DBOperationError(ndbProjection.root.error);
+    op.result.success = false;
+  } else {
+    op.query = ndbProjection.root;
+    depth = ndbProjection.depth + 1;
+    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
+  }
   return op;
 }
 

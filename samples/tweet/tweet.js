@@ -32,8 +32,8 @@ var http   = require('http'),
     url    = require('url'),
     jones  = require('database-jones'),
     udebug = unified_debug.getLogger("tweet.js"),
-    adapter = "ndb",
-    deployment = "test",
+    adapter = process.env["JONES_ADAPTER"] || "ndb",
+    deployment = process.env["JONES_DEPLOYMENT"] || "test",
     mainLoopComplete, parse_command, allOperations, operationMap;
 
 //////////////////////////////////////////
@@ -59,7 +59,7 @@ function Author(user_name, full_name) {
 function Tweet(author, message) {
   if(author !== undefined) {
     this.date_created = new Date();
-    this.author = author;
+    this.author_user_name = author;
     this.message = message;
   }
 }
@@ -353,7 +353,7 @@ function InsertTweetOperation(params, data) {
     }
 
     function incrementTweetCount(author) {
-      author.tweets++;
+      author.tweet_count++;
       return session.save(author);
     }
   
@@ -468,7 +468,9 @@ RecentTweetsOperation.signature = [ "get", "tweets-recent" , "<count>" ];
 function TweetsByUserOperation(params, data) {
   Operation.call(this);
   this.queryClass = Tweet;
-  this.queryParams = {"author" : params[0] , "order" : "desc" , "limit" : 20 };
+  this.queryParams = {"author_user_name" : params[0] ,
+                      "order"            : "desc" ,
+                      "limit"            : 20 };
   this.run = this.buildQueryAndPresentResults;
 }
 TweetsByUserOperation.signature = [ "get" , "tweets-by" , "<user_name>" ];
@@ -561,7 +563,7 @@ function RunWebServerOperation(cli_params, cli_data) {
       var operation = parse_command(request.method, params, data);
       if(operation && ! operation.isServer) {
         operation.responder = new HttpOperationResponder(operation, response);
-        sessionFactory.openSession(null).then(function(session) {
+        sessionFactory.openSession().then(function(session) {
           onOpenSession(session, operation); });
       } else {
         hangup(400);

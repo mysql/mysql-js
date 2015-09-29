@@ -1,4 +1,5 @@
 # Some sample queries using the command line
+export JONES_ADAPTER=mysql
 
 
 # Get tweets that mention @agrippina

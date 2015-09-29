@@ -34,19 +34,20 @@ DROP TABLE if exists author;
 CREATE TABLE author (
   user_name varchar(20) CHARACTER SET UTF16LE not null,
   full_name varchar(250),
-  tweets int unsigned not null default 0,
-  PRIMARY KEY USING HASH(user_name)
+  tweet_count int unsigned not null default 0,
+  PRIMARY KEY(user_name)
 ) ;
 
 
 CREATE TABLE tweet (
   id bigint unsigned auto_increment not null primary key,
-  author varchar(20) CHARACTER SET UTF16LE,
+  author_user_name varchar(20) CHARACTER SET UTF16LE,
   message varchar(140) CHARACTER SET UTF16LE,
   date_created timestamp(2), 
   KEY idx_btree_date(date_created),
-  KEY idx_btree_author_date(author, date_created),
-  CONSTRAINT author_fk FOREIGN KEY (author) REFERENCES author(user_name) 
+  KEY idx_btree_author_date(author_user_name, date_created),
+  CONSTRAINT author_fk FOREIGN KEY (author_user_name)
+    REFERENCES author(user_name)
     ON DELETE CASCADE ON UPDATE RESTRICT
 ) ;
 

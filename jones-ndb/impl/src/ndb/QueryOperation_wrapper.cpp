@@ -103,7 +103,7 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
 const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
-  DEBUG_ENTER();
+  DEBUG_MARKER(UDEB_DEBUG);
   Isolate * isolate = Isolate::GetCurrent();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
@@ -155,6 +155,7 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
 const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
                                              Handle<Object> spec,
                                              const NdbQueryOperationDef * parent) {
+  DEBUG_MARKER(UDEB_DEBUG);
   NdbQueryBuilder *builder = queryOp->getBuilder();
   Isolate * isolate = Isolate::GetCurrent();
 
@@ -163,7 +164,6 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
   int depth = spec->Get(GET_KEY(K_depth))->Int32Value();
-  DEBUG_PRINT("Creating QueryOperationDef at level %d",depth);
 
   v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
@@ -173,6 +173,9 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
     }
   }
   bool isPrimaryKey = spec->Get(GET_KEY(K_isPrimaryKey))->BooleanValue();
+
+  DEBUG_PRINT("Creating QueryOperationDef at level %d for table: %s",
+              depth, table->getName());
 
   if(! isPrimaryKey) {
     v = spec->Get(GET_KEY(K_indexHandler));
@@ -195,6 +198,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   for(int i = 0 ; i < nKeyParts ; i++) {
     String::Utf8Value column_name(joinColumns->Get(i));
     key_parts[i] = builder->linkedValue(parent, *column_name);
+    DEBUG_PRINT_DETAIL("Key part %d: %s", i, *column_name);
   }
   key_parts[nKeyParts] = 0;
 

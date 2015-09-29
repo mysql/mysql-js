@@ -1,4 +1,6 @@
 # This script populates the sample database
+set -x
+export JONES_ADAPTER=mysql
 
 # Create four users: Caligula, Claudius, Nero, Agrippina
 #

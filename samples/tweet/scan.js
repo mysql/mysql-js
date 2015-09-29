@@ -9,9 +9,10 @@
 var jones = require("database-jones");
 
 if (process.argv.length < 3 ) {
-  console.log('usage: node scan <author> [limit] [order]');
-  process.exit(0);
+  console.log("usage: node scan <author> [limit] [order]");
+  process.exit(1);
 }
+
 /* new ConnectionProperties(adapter, deployment)
    see find.js for more information about ConnectionProperties
 */

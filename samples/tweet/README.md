@@ -19,7 +19,7 @@ type:
     node tweet
 
 Some demonstration scripts are provided to illustrate *tweet.js*:
-- *demo_cli_populate.sh* populates the database with some sample data.
+- *demo_populate_data.sh* populates the database with some sample data.
 - *demo_cli_get.sh* demonstrates querying the sample data from the command shell.
 - *demo_http_get.sh* demonstrates querying the sample data (and posting a new
 tweet) over the HTTP interface.
@@ -30,6 +30,8 @@ server on port 7800, using the command:
 
     node tweet start server 7800
 
+tweet.js pays attention to the environment variables JONES_ADAPTER (which 
+defaults to "ndb") and JONES_DEPLOYMENT (which defaults to "test").
 
 ### The API example code
 
