@@ -5,14 +5,16 @@
 Here we provide short but complete and working samples of some of the most 
 important parts of the Jones API.
 
-- [find.js] illustrates using session.find() to retreive a single record from a
-table.
-- [insert.js] illustrates using session.persist() to store a record.
-- [scan.js] illustrates using session.createQuery() to build and execute a query
-that returns multiple records.
-- [join.js] illustrates using a Projection to define a relationship between
-tables, and then running session.find() against the projection.  The equivalent
-query in SQL would be a join.
+- [find.js](find.js) illustrates using [session.find()]
+(../../database-jones/API-documentation/Session) 
+to retreive a single record from a table.
+- [insert.js](insert.js) illustrates using session.persist() to store a record.
+- [scan.js](scan.js) illustrates using session.createQuery() to build and execute 
+a [Query](../../database-jones/API-documentation/Query) that returns multiple records.
+- [join.js](join.js) illustrates using a 
+[Projection](../../database-jones/API-documentation/Projection) to define a 
+relationship between tables, and then running session.find() against the 
+projection.  The equivalent query in SQL would be a join.
 
 The scan and join samples use the tables in the tweet demo, described below.
 
@@ -28,8 +30,8 @@ using the standard mysql command:
 
     mysql -u root < create_tweet_tables.sql
 
-The Node.js application [tweet.js] is a rather complete large example which
-can run as either as a command-line tool or as a REST web server.  tweet.js 
+The Node.js application [tweet.js](tweet.js) is a rather complete large example 
+which can run as either as a command-line tool or as a REST web server.  tweet.js 
 supplements the simple API examples with sample code for explicit transaction 
 handling and batching (e.g. in InsertTweetOperation at line 320). *tweet.js*
 responds to a number of verb-object commands; to see a list of them, simply
@@ -38,11 +40,11 @@ type:
     node tweet
 
 Some demonstration scripts are provided to illustrate *tweet.js*:
-- *demo_populate_data.sh* populates the database with some sample data.
-- *demo_cli_get.sh* demonstrates querying the sample data from the command shell.
-- *demo_http_get.sh* demonstrates querying the sample data (and posting a new
+- [demo_populate_data.sh](demo_populate_data.sh) populates the database with some sample data.
+- [demo_cli_get.sh](demo_cli_get.sh) demonstrates querying the sample data from the command shell.
+- [demo_http_get.sh](demo_http_get.sh) demonstrates querying the sample data (and posting a new
 tweet) over the HTTP interface.
-- *demo_http_delete.sh* uses the HTTP interface to delete the sample data.
+- [demo_http_delete.sh](demo_http_delete.sh) uses the HTTP interface to delete the sample data.
 
 Note that in order to run the HTTP demo scripts, you should first start the
 server on port 7800, using the command:
