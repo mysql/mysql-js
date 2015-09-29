@@ -51,17 +51,19 @@ server on port 7800, using the command:
 
     node tweet start server 7800
 
-tweet.js pays attention to the environment variables JONES_ADAPTER (which 
-defaults to "ndb") and JONES_DEPLOYMENT (which defaults to "test").
+tweet.js pays attention to the environment variables `JONES_ADAPTER` (which 
+defaults to "ndb") and `JONES_DEPLOYMENT` (which defaults to "test").
 
 
 ### Connecting to a database server in your environment
 
 Jones applications connect to a particular database using a
-named **deployment** defined in the file *jones_deployments.js*.  The sample
+named **deployment** defined in the file 
+[jones_deployments.js](../../jones_deployments.js).  The sample
 code uses the "test" deployment. You can customize jones_deployments.js for
 your environment, and you can supply a different deployment as a command-line
-option in tweet.js or by editing the call to ConnectionProperties() in the
+option in tweet.js or by editing the call to 
+[ConnectionProperties()](../../database-jones/API-documentation/Jones) in the
 API samples.
 
 
