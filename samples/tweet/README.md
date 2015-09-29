@@ -1,5 +1,22 @@
 # Sample Application
 
+### API example code
+
+Here we provide short but complete and working samples of some of the most 
+important parts of the Jones API.
+
+- [find.js] illustrates using session.find() to retreive a single record from a
+table.
+- [insert.js] illustrates using session.persist() to store a record.
+- [scan.js] illustrates using session.createQuery() to build and execute a query
+that returns multiple records.
+- [join.js] illustrates using a Projection to define a relationship between
+tables, and then running session.find() against the projection.  The equivalent
+query in SQL would be a join.
+
+The scan and join samples use the tables in the tweet demo, described below.
+
+
 ### The Tweet Demo
 
 This directory contains a Twitter-like demo application using
@@ -11,8 +28,10 @@ using the standard mysql command:
 
     mysql -u root < create_tweet_tables.sql
 
-The Node.js application *tweet.js* is a rather complete large example which
-can run as either as a command-line tool or as a REST web server.  *tweet.js*
+The Node.js application [tweet.js] is a rather complete large example which
+can run as either as a command-line tool or as a REST web server.  tweet.js 
+supplements the simple API examples with sample code for explicit transaction 
+handling and batching (e.g. in InsertTweetOperation at line 320). *tweet.js*
 responds to a number of verb-object commands; to see a list of them, simply
 type:
 
@@ -32,20 +51,6 @@ server on port 7800, using the command:
 
 tweet.js pays attention to the environment variables JONES_ADAPTER (which 
 defaults to "ndb") and JONES_DEPLOYMENT (which defaults to "test").
-
-### The API example code
-
-Because tweet.js is quite complex, we have also included some simple
-code examples illustrating the Jones APIs.
-
-- *find.js* illustrates using session.find() to retreive a single record from a
-table.
-- *insert.js* illustrates using session.persist() to store a record.
-- *scan.js* illustrates using session.createQuery() to build and execute a query
-that returns multiple records.
-- *join.js* illustrates using a Projection to define a relationship between
-tables, and then running session.find() against the projection.  The equivalent
-query in SQL would be a join.
 
 
 ### Connecting to a database server in your environment
