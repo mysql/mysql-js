@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@
  * t5 mapOneToOne with empty string
  * t6 mapOneToOne with missing field name
  * t7 mapOneToOne with missing targetField
- * t8 mapOneToOne with missing target 
+ * t8 mapOneToOne with missing target
+ * t9 mapField with duplicate field name
+ * t10 mapOneToOne relationship name duplicates field name
+ * t11 mapField field name duplicates relationship name
  */
 
 function checkErrorMessage(tc, tm, msg) {
@@ -119,6 +122,43 @@ t8.run = function() {
   checkErrorMessage(testCase, tableMapping, 'target is a required field for relationship mapping');
 };
 
+var t9 = new harness.ConcurrentTest('t9FieldMappingDuplicateFieldName');
+t9.run = function() {
+  var testCase = this;
+  var tableMapping = new mynode.TableMapping('t_basic');
+  tableMapping.mapField({fieldName: 'name'});
+  tableMapping.mapField({fieldName: 'name'});
+  checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
+};
+
+var t10 = new harness.ConcurrentTest('t10FieldMappingRelationshipNameDuplicatesFieldName');
+t10.run = function() {
+  var testCase = this;
+  var relatedDomainObject = function() {};
+  var tableMapping = new mynode.TableMapping('t_basic');
+  tableMapping.mapField({fieldName: 'name'});
+  tableMapping.mapOneToOne({
+    fieldName: 'name',
+    target: relatedDomainObject,
+    targetField: 'f1'
+  });
+  checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
+};
+
+var t11 = new harness.ConcurrentTest('t11FieldMappingFieldNameDuplicatesRelationshipName');
+t11.run = function() {
+  var testCase = this;
+  var relatedDomainObject = function() {};
+  var tableMapping = new mynode.TableMapping('t_basic');
+  tableMapping.mapOneToOne({
+    fieldName: 'name',
+    target: relatedDomainObject,
+    targetField: 'f1'
+  });
+  tableMapping.mapField({fieldName: 'name'});
+  checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
+};
 
 
-module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8];
+
+module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11];

@@ -338,7 +338,8 @@ FieldMapping.prototype = doc.FieldMapping;
    Create or replace FieldMapping for fieldName
 */
 TableMapping.prototype.mapField = function() {
-  var i, args, arg, fieldName, fieldMapping;
+  var i, args, arg, fieldMapping;
+  var fieldName = '';
   args = arguments;  
 
   function getFieldMapping(tableMapping, fieldName) {
@@ -354,11 +355,17 @@ TableMapping.prototype.mapField = function() {
     return fm;
   }
 
-  /* mapField() starts here */
+  // mapField() starts here
   arg = args[0];
   if(typeof arg === 'string') {
     fieldName = arg;
     fieldMapping = getFieldMapping(this, fieldName);
+    // existing field mapping cannot be a relationship
+    if (fieldMapping.target !== undefined) {
+      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
+      return;
+    }
+
     for(i = 1; i < args.length ; i++) {
       arg = args[i];
       switch(typeof arg) {
@@ -384,6 +391,10 @@ TableMapping.prototype.mapField = function() {
   else if(typeof args[0] === 'object') {
     fieldName = args[0].fieldName;
     fieldMapping = getFieldMapping(this, fieldName);
+    if (fieldMapping.target !== undefined) {
+      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
+      return;
+    }
     buildMappingFromObject(fieldMapping, args[0], fieldMappingProperties);
   }
   else {
@@ -392,7 +403,11 @@ TableMapping.prototype.mapField = function() {
 
   /* Validate the candidate mapping */
   this.error  += isValidFieldMapping(fieldMapping);
-  this.mappedFieldNames.push(fieldName);
+  if (this.mappedFieldNames.indexOf(fieldName) !== -1) {
+    this.error += '\nfieldName "' + fieldName + '" is duplicated.';
+  } else {
+    this.mappedFieldNames.push(fieldName);
+  }
   return this;
 };
 
@@ -431,6 +446,9 @@ function createRelationshipFieldFromLiteral(relationshipProperties, tableMapping
   }
   if (!relationship.target) {
     errorMessage += '\nMappingError: target is a required field for relationship mapping';
+  }
+  if (tableMapping.mappedFieldNames.indexOf(relationship.fieldName) !== -1) {
+    errorMessage += '\nMappingError: relationship field "' + relationship.fieldName + '" is duplicated.';
   }
   if (errorMessage) {
     tableMapping.error += errorMessage;
