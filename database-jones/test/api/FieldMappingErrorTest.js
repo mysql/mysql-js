@@ -98,7 +98,7 @@ t6.run = function() {
   var testCase = this;
   var tableMapping = new mynode.TableMapping('t_basic');
   tableMapping.mapOneToOne({});
-  checkErrorMessage(testCase, tableMapping, 'fieldName is a required field for relationship mapping');
+  checkErrorMessage(testCase, tableMapping, "Required property 'fieldName' is missing");
 };
 
 var t7 = new harness.ConcurrentTest('t7FieldMappingInvalidMissingTargetField');
@@ -119,7 +119,7 @@ t8.run = function() {
     fieldName: 'r1',
     targetField: 't1'
   });
-  checkErrorMessage(testCase, tableMapping, 'target is a required field for relationship mapping');
+  checkErrorMessage(testCase, tableMapping, "Required property 'target' is missing");
 };
 
 var t9 = new harness.ConcurrentTest('t9FieldMappingDuplicateFieldName');

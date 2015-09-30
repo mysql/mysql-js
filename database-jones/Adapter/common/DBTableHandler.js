@@ -150,12 +150,13 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 
   /* this.mapping */
   if(tablemapping) {
-    if(tablemapping.isValid) {
+    if(tablemapping.isValid()) {
       stats.explicit_mappings++;
       this.mapping = tablemapping;
     } else {
       this.err = new Error(tablemapping.error || "Invalid TableMapping");
       this.isValid = false;
+      return;
     }
   }
   else {                                          // Create a default mapping
@@ -163,13 +164,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping          = new TableMapping(this.dbTable.name);
     this.mapping.database = this.dbTable.database;
   }
-
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
-  if (this.mapping.fields === undefined) {
-    this.mapping.fields = [];
-  }
-  for(i = 0 ; i < this.mapping.fields.length ; i++) {
+    for(i = 0 ; i < this.mapping.fields.length ; i++) {
     f = this.mapping.fields[i];
     udebug.log_detail('DBTableHandler<ctor> field:', f, 'persistent', f.persistent,
                       'relationship', f.relationship);

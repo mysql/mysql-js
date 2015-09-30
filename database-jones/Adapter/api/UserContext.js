@@ -451,8 +451,8 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
         udebug.log('UserContext.getTableHandler did not find cached tableHandler for constructor.',
             domainObjectTableNameOrConstructor);
         // create the tableHandler
-        if (!jones.mapping.isValid) {
-          console.log('UserContext.getTableHandler found invalid table mapping:', jones.mapping.error);
+        if (!jones.mapping.isValid()) {
+          udebug.log('UserContext.getTableHandler found invalid table mapping:', jones.mapping.error);
           err = new Error(jones.mapping.error);
           onTableHandler(err);
           return;
