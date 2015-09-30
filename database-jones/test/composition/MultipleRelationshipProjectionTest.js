@@ -101,8 +101,7 @@ t1.run = function() {
     session.find(complexCustomerProjection, '100').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, complexCustomerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -126,8 +125,7 @@ t2.run = function() {
     session.find(complexCustomerProjection, '101').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, complexCustomerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -154,8 +152,7 @@ t3.run = function() {
     session.find(complexCustomerProjection, '103').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, complexCustomerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -187,8 +184,7 @@ t6.run = function() {
     session.find(discountProjection, '3').
     then(function(actualDiscount) {
       lib.verifyProjection(testCase, discountProjection, t6expectedDiscount, actualDiscount);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -217,8 +213,7 @@ t7.run = function() {
     session.find(t7customerProjection, '101').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, t7customerProjection, expectedCustomer101, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -259,8 +254,7 @@ t9.run = function() {
     session.find(complexCustomerProjection, 100).
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, complexCustomerProjection, t9expectedCustomer100, actualCustomer);
-      testCase.failOnError();
-    }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
       then(null, function(err) {
         testCase.fail(err);
     });

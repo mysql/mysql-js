@@ -81,8 +81,7 @@ t1.run = function() {
     session.find(customerProjection, '100').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, customerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -104,8 +103,7 @@ t2.run = function() {
     session.find(customerProjection, '101').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, customerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -130,8 +128,7 @@ t3.run = function() {
     session.find(customerProjection, '103').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, customerProjection, expectedCustomer, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -170,8 +167,7 @@ t4.run = function() {
     }).
     then(function(actualShoppingCart2) {
       lib.verifyProjection(testCase, t4shoppingCartProjection, expectedShoppingCart, actualShoppingCart2);
-      testCase.failOnError();
-    }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -207,8 +203,7 @@ t5.run = function() {
     }).
     then(function(actualShoppingCart2) {
       lib.verifyProjection(testCase, shoppingCartProjection, expectedShoppingCart, actualShoppingCart2);
-      testCase.failOnError();
-    }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -238,8 +233,7 @@ t6.run = function() {
     session.find(discountProjection, '3').
     then(function(actualDiscount) {
       lib.verifyProjection(testCase, discountProjection, expectedDiscount, actualDiscount);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -271,8 +265,7 @@ t7.run = function() {
     session.find(t7customerProjection, '101').
     then(function(actualCustomer) {
       lib.verifyProjection(testCase, t7customerProjection, expectedCustomer101, actualCustomer);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
@@ -293,8 +286,7 @@ t8.run = function() {
     session.find(discountProjection, 10).
     then(function(actualDiscount) {
       lib.verifyProjection(testCase, customerProjection, t8expectedDiscount, actualDiscount);
-      testCase.failOnError();
-      }, function(err) {testCase.fail(err);}).
+      testCase.failOnError();}).
     then(null, function(err) {
       testCase.fail(err);
     });
