@@ -533,6 +533,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   var sp;
   var i;
   var m;
+  var firstError;
 
   function Connection(connectionKey) {
     this.connectionKey = connectionKey;
@@ -581,6 +582,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
                    'of', mappings.length, mappings[mappingBeingResolved]);
       }
       if (err) {
+        firstError = firstError || err;
         // what were we resolving?
         currentTableMapping = mappings[mappingBeingResolved];
         currentTableMappingType = typeof currentTableMapping;
@@ -608,6 +610,11 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
             // if any errors during table mapping, report them
             if (userContext.errorMessages) {
               err = new Error(userContext.errorMessages);
+              // fill in the Error detail from the first error
+              err.sqlState =       firstError.sqlState;
+              err.code =           firstError.code;
+              err.classification = firstError.classification;
+              err.status =         firstError.status;
               callback(err, null);
             } else {
               // no errors
