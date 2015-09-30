@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@ t1.run = function() {
   .then(function(found) {
     // verify found
     udebug.log("ReadSemistructTest found: " + util.inspect(found));
+    testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify SPARSE_FIELDS", undefined, found.SPARSE_FIELDS);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify id", 1, found.id);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify name", 'Name 1', found.name);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify number", 1, found.number);
@@ -99,6 +100,7 @@ t2.run = function() {
   .then(function(found) {
     // verify found
     udebug.log("WriteSemistructTest found: " + util.inspect(found));
+    testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify SPARSE_FIELDS", undefined, found.SPARSE_FIELDS);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify id", 10, found.id);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify name", 'Name 10', found.name);
     testCase.errorIfNotEqual('\n' + testCase.name + " failed to verify number", 10, found.number);
