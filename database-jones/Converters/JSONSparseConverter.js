@@ -37,7 +37,7 @@ var udebug = unified_debug.getLogger("JSONSparseConverter.js");
 exports.toDB = function(value, jsObject, fieldMapping) {
   var candidateField;
   var mappedFieldNames = fieldMapping.tableMapping.mappedFieldNames;
-  var excludedFieldNames = fieldMapping.tableMapping.excludedFieldNames || [];
+  var excludedFieldNames = fieldMapping.tableMapping.excludedFieldNames;
   udebug.log_detail("JSONSparseConverter.toDB excludedFieldNames: ", excludedFieldNames);
   var dbValue = '{';
   var separator = '';
@@ -53,7 +53,7 @@ exports.toDB = function(value, jsObject, fieldMapping) {
     if (jsObject.hasOwnProperty(candidateField)) {
       if (mappedFieldNames.indexOf(candidateField) === -1) {
         // don't handle mapped fields as sparse
-        if (fieldMapping.sparseFieldNames) {
+        if (fieldMapping.sparseFieldNames.length) {
           // if sparse field names are explicit, only process fields that match
           if (fieldMapping.sparseFieldNames.indexOf(candidateField) !== -1) {
             processField();

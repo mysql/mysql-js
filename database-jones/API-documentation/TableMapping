@@ -1,36 +1,3 @@
-/** @class TableMapping 
- *
- * A TableMapping describes the mapping of a domain object in the application
- * to a table stored in the database.
- *
- * A *default* TableMapping is one where each column in a table is mapped
- * to a field of the same name. 
- *
- * Errors that are detected during construction of a TableMapping, including
- * field mapping functions, are reported via the error field. 
- */
-TableMapping = {
-  isValid                : true,
-  table                  :  "" ,  /** Table name @type String */
-  database               :  "" ,  /** Database name @type String */
-  mapAllColumns          : true,  /** Create a default FieldMapping for
-                                      all columns not listed in fields[].
-                                      Specifies that all columns not explicitly
-                                      mapped, should be given a default mapping 
-                                      to a field of the same name.
-                                      @property mapAllColumns @type Boolean 
-                                      @default true 
-                                  */
-  fields                 : null,  /** Holds an array of FieldMapping objects.
-                                      Can also be called "field",
-                                      and can also hold a single FieldMapping. 
-                                      @property fields @type Array */
-  error                  : '',    /** Reports errors during construction */ 
-  mappedFieldNames       : [],    /** mapped field names (excluded from sparse field handling) */
-  meta                   : []
- 
-};
-
 
 /** @class FieldMapping 
  *  A FieldMapping describes a single field in a domain object.

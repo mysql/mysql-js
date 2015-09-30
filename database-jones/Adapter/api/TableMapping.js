@@ -1,6 +1,5 @@
- 
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -17,19 +16,77 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  02110-1301  USA
- */
+*/
 
 "use strict";
 
-var udebug       = unified_debug.getLogger("TableMapping.js"),
+var jones = require("database-jones"),
+    unified_debug = require("unified_debug"),
+
+udebug       = unified_debug.getLogger("TableMapping.js"),
     path         = require("path"),
     util         = require("util"),
-    doc          = require(path.join(jones.fs.api_doc_dir, "TableMapping"));
+    assert       = require("assert");
 
 /* file scope mapping id used to uniquely identify a mapped domain object */
 var mappingId = 0;
 
-/* Code to verify the validity of a TableMapping */
+
+//////// FieldMapping             /////////////////
+
+function FieldMapping(fieldName) {
+  this.fieldName        = fieldName;
+  this.columnName       = fieldName;
+  this.persistent       = true;
+  this.relationship     = false;
+  this.sparseFieldNames = [];
+  this.meta             = null;
+}
+
+
+//////// Relationship             /////////////////
+
+function Relationship() {
+  this.relationship = true;
+  this.persistent   = true;
+  this.toMany       = false;
+  this.manyTo       = false;
+  this.target       = null;   // a mapped constructor
+  this.targetField  = "";
+  this.columnName   = "";
+  this.foreignKey   = "";
+  this.converter    = null;
+  this.error        = "";
+}
+
+function OneToOneMapping() {
+  Relationship.call(this);
+}
+
+function OneToManyMapping() {
+  Relationship.call(this);
+  this.toMany     = true;
+}
+
+function ManyToOneMapping() {
+  Relationship.call(this);
+  this.manyTo     = true;
+}
+
+function ManyToManyMapping() {
+  Relationship.call(this);
+  this.toMany     = true;
+  this.manyTo     = true;
+  this.joinTable  = "";
+}
+
+
+
+//////// Functions to verify the validity of an object literal
+
+function noCheck() {
+  return true;
+}
 
 function isString(value) { 
   return (typeof value === 'string' && value !== null);
@@ -43,473 +100,381 @@ function isBool(value) {
   return (value === true || value === false);
 }
 
-function isValidConverterObject(converter) {
+function isBoolOrNull(value) {
+  return (value === true || value === false || value === null);
+}
+
+function isConverter(converter) {
   return ((converter === null) || 
             (typeof converter === 'object'
              && typeof converter.toDB === 'function' 
              && typeof converter.fromDB === 'function'));
 }
 
-function isValidConstructor(constructor) {
-  return (typeof constructor === 'function');
+function isFunction(value) {
+  return (typeof value === 'function');
 }
 
 function isMeta(value) {
-  var i;
-  if (Array.isArray(value)) {
-    for (i=0; i > value.length; ++i) {
-      if (!value[i].isMeta || ! value[i].isMeta()) {
-        return false;
-      }
+  return(value && value.isMeta && value.isMeta());
+}
+
+function isArrayOf(elementVerifier) {
+  assert.equal(typeof elementVerifier, "function");
+
+  return function(value) {
+    var i;
+    if(! Array.isArray(value)) { return false; }
+    for(i = 0 ; i < value.length ; i++) {
+      if(! elementVerifier(value[i])) { return false; }
     }
-  } else {
-    return (value.isMeta());
-  }
-  return true;
+    return true;
+  };
 }
 
-function Relationship() {
-}
-Relationship.prototype.relationship = true;
-Relationship.prototype.persistent   = true;
 
-function OneToOneMapping() {
+function LiteralObjectVerifier() {
+  this.requiredProperties = [];   // List of property names
+  this.allowedProperties  = [];   // List of property names
+  this.verifiers          = {};   // Map property name => verifier function
+  // Any literal object can have a property "user" which we ignore
+  this.set("user", noCheck);
 }
-OneToOneMapping.prototype = new Relationship();
 
-function OneToManyMapping() {
-}
-OneToManyMapping.prototype = new Relationship();
-OneToManyMapping.prototype.toMany = true;
-
-function ManyToOneMapping() {
-}
-ManyToOneMapping.prototype = new Relationship();
-ManyToOneMapping.prototype.manyTo = true;
-
-function ManyToManyMapping() {
-}
-ManyToManyMapping.prototype = new Relationship();
-ManyToManyMapping.prototype.toMany = true;
-ManyToManyMapping.prototype.manyTo = true;
-
-var fieldMappingProperties = {
-  "fieldName"    : isNonEmptyString,
-  "columnName"   : isString,
-  "persistent"   : isBool,
-  "converter"    : isValidConverterObject,
-  "relationship" : isBool,
-  "user"         : function() { return true; },
-  "meta"         : isMeta
+LiteralObjectVerifier.prototype.set = function(name, verifier) {
+  this.allowedProperties.push(name);
+  this.verifiers[name] = verifier;
+  return this;  // chainable
 };
 
-var manyToOneMappingProperties = {
-  "type"           : "ManyToOne",
-  "foreignKey"     : isNonEmptyString,
-  "target"         : isValidConstructor,
-  "targetField"    : isNonEmptyString,
-  "fieldName"      : isNonEmptyString,
-  "columnName"     : isString,
-  "converter"      : isValidConverterObject,
-  "user"           : function() { return true; },
-  "ctor"           : ManyToOneMapping
-};
-
-var oneToManyMappingProperties = {
-  "type"           : "OneToMany",
-  "target"         : isValidConstructor,
-  "targetField"    : isNonEmptyString,
-  "fieldName"      : isNonEmptyString,
-  "columnName"     : isString,
-  "converter"      : isValidConverterObject,
-  "user"           : function() { return true; },
-  "ctor"           : OneToManyMapping
-};
-
-var manyToManyMappingProperties = {
-  "type"           : "ManyToMany",
-  "target"         : isValidConstructor,
-  "targetField"    : isNonEmptyString,
-  "fieldName"      : isNonEmptyString,
-  "columnName"     : isString,
-  "converter"      : isValidConverterObject,
-  "joinTable"      : isNonEmptyString,
-  "user"           : function() { return true; },
-  "ctor"           : ManyToManyMapping
-};
-
-var oneToOneMappingProperties = {
-  "type"           : "OneToOne",
-  "foreignKey"     : isNonEmptyString,
-  "target"         : isValidConstructor,
-  "targetField"    : isNonEmptyString,
-  "fieldName"      : isNonEmptyString,
-  "columnName"     : isString,
-  "converter"      : isValidConverterObject,
-  "user"           : function() { return true; },
-  "ctor"           : OneToOneMapping
+LiteralObjectVerifier.prototype.setRequired = function(property) {
+  this.requiredProperties.push(property);
+  return this;  // chainable
 };
 
 // These functions return error message, or empty string if valid
-function verifyProperty(property, value, verifiers) {
-  udebug.log_detail('verifyProperty', property, value);
-  var isValid = '', chk;
-  if(verifiers[property]) {
-    chk = verifiers[property](value);    
-    if(chk !== true && chk.length) {
-      isValid = 'property ' + property + ' invalid: ' + chk;
-    }
-    else if(chk === false) {
-      isValid = 'property ' + property + ' invalid: ' + JSON.stringify(value);
-    }
-  }
-  else if(typeof value !== 'function') {
-    isValid = 'unknown property ' + property +'; ' ;
-  }
-  return isValid;
-}
-
-function isValidMapping(m, verifiers) {
-  var property = '', isValid = '';
-  for(property in m) {
-    if(m.hasOwnProperty(property)) {
-      isValid += verifyProperty(property, m[property], verifiers);
-    }
-  }
-  return isValid;
-}    
-
-function isValidFieldMapping(fm, number) {
-  if (fm && fm.persistent === undefined) {
-    udebug.log('TableMapping.isValidFieldMapping persistent undefined; setting persistent to true');
-    fm.persistent = true;
-  }
-  var reason = isValidMapping(fm, fieldMappingProperties);
-  number = number || '';
-  if(reason.length) {
-    return "field " + number + " is not a valid FieldMapping: " + reason;
-  }
-  return '';
-}
-
-function isValidFieldMappingArray(fieldMappings) {
-  var i, isValid = '';
-  if(fieldMappings !== null) {
-    for(i = 0; i < fieldMappings.length ; i++) {
-      isValid += isValidFieldMapping(fieldMappings[i], i+1);
-    }
-  }
-  return isValid;
-}
-
-function isStringOrStringArray(arg) {
-  var i;
-  if (typeof arg === 'string') {return true;}
-  if (!Array.isArray(arg)) {return 'must be a string or string array';}
-  for (i = 0; i < arg.length; ++i) {
-    if (typeof arg[i] !== 'string') {return 'must be a string or string array';}
-  }
-  return true;
-}
-
-var tableMappingProperties = {
-  "isValid"       : isBool,
-  "error"         : isString,
-  "table"         : isNonEmptyString,
-  "database"      : isString, 
-  "mapAllColumns" : isBool,
-  "field"         : isValidFieldMapping,
-  "fields"        : isValidFieldMappingArray,
-  "user"          : function() { return true; },
-  "excludedFieldNames": isStringOrStringArray,
-  "mappedFieldNames" : isStringOrStringArray,
-  "meta"          : isMeta
-};
-
-function isValidTableMapping(tm) {
-  var err = isValidMapping(tm, tableMappingProperties);
-  if (!err) {
-    // no errors, but make sure there is a valid table
-    if (!tm.hasOwnProperty('table')) {
-      return '\nRequired property \'table\' is missing.';
+LiteralObjectVerifier.prototype.checkProperty = function(property, value) {
+  var msg = "";
+  if(typeof this.verifiers[property] === 'function') {
+    if(! this.verifiers[property](value)) {
+      msg = "property " + property + " invalid: " + JSON.stringify(value);
     }
   } else {
-    return err;
+    msg = "unknown property " + property + "; " ;
   }
-}
+  return msg;
+};
 
-function buildMappingFromObject(mapping, literal, verifier) {
-  var p, keys, key;
-  keys = Object.keys(verifier);
-  for(p in keys) {
-    key = keys[p];
-    if(literal[key] !== undefined) {
-      mapping[key] = literal[key];
+LiteralObjectVerifier.prototype.getErrors = function(literal) {
+  var property, msg, i, req;
+  msg = "";
+  for(property in literal) {
+    if(literal.hasOwnProperty(property)) {
+      msg += this.checkProperty(property, literal[property]);
     }
   }
+  for(i = 0; i < this.requiredProperties.length ; i++) {
+    req = this.requiredProperties[i];
+    if(! literal.hasOwnProperty(req)) {
+      msg += "Required property '" + req + "' is missing; ";
+    }
+  }
+  return msg;
+};
+
+LiteralObjectVerifier.prototype.buildObjectFromLiteral = function(object, literal) {
+  var i, key, errors;
+  errors = this.getErrors(literal);
+  if(! errors.length) {
+    for(i = 0 ; i < this.allowedProperties.length ; i++) {
+      key = this.allowedProperties[i];
+      if(literal[key] !== undefined) {
+        object[key] = literal[key];
+      }
+    }
+  }
+  return errors;
+};
+
+function getValidator(literalObjectVerifier) {
+  return function(value) {
+    var errors = literalObjectVerifier.getErrors(value);
+    return (errors.length === 0);
+  };
 }
 
-/* A canonical TableMapping has a "fields" array,
-   though a literal one may have a "field" or "fields" object or array
-*/
-function makeCanonical(tableMapping) {
-  if(tableMapping.field) {            // rename field => fields
-    tableMapping.fields = tableMapping.field;
-    delete tableMapping.field;
-  }
 
-  if(! tableMapping.fields) {
-    tableMapping.fields = [];        // create empty fields array if needed
-  }                             
-  else if(! Array.isArray(tableMapping.fields)) {
-    tableMapping.fields = [ tableMapping.fields ];
-  }
+//////// Allowed properties in literal values
+
+function BasicFieldVerifier() {
+  var that = new LiteralObjectVerifier();
+  // properties that can be present in any field-related literal
+  that.set("fieldName", isNonEmptyString);
+  that.set("columnName", isString);
+  that.set("persistent", isBool);
+  that.set("converter", isConverter);
+  that.set("relationship", isBool);
+  that.setRequired("fieldName");
+  return that;
 }
 
+/* A FieldMapping literal can have any of the basic properties, plus "meta" */
+var fieldMappingProperties =
+  new BasicFieldVerifier().set("meta", isMeta);
 
-/* TableMapping constructor
-   Takes tableName or tableMappingLiteral
-*/
+
+function RelationshipVerifier(type, ctor) {
+  var that = new BasicFieldVerifier();
+  that.type = type;
+  that.ctor = ctor;
+  // properties that can be present in any relationship literal:
+  that.set("target", isFunction);
+  that.setRequired("target");
+  that.set("targetField", isNonEmptyString);
+  return that;
+}
+
+var manyToOneMappingProperties =
+  new RelationshipVerifier("ManyToOne", ManyToOneMapping).
+    set("foreignKey", isNonEmptyString);
+
+var oneToManyMappingProperties =
+  new RelationshipVerifier("OneToMany", OneToManyMapping);
+
+var manyToManyMappingProperties =
+  new RelationshipVerifier("ManyToMany", ManyToManyMapping).
+    set("joinTable", isNonEmptyString);
+
+var oneToOneMappingProperties =
+  new RelationshipVerifier("OneToOne", OneToOneMapping).
+    set("foreignKey", isNonEmptyString);
+
+
+
+
+//////// TableMapping             /////////////////
+
+/* Table Mapping literal properties */
+var tableMappingProperties =
+  new LiteralObjectVerifier().
+    set("table",              isNonEmptyString).
+    set("database",           isString).
+    set("mapAllColumns",      isBool).
+    set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
+    set("excludedFieldNames", isArrayOf(isNonEmptyString)).
+    set("mappedFieldNames",   isArrayOf(isNonEmptyString)).
+    set("meta",               isArrayOf(isMeta)).
+    setRequired("table");
+
+
 function TableMapping(tableNameOrLiteral) {
-  var err;
-  var i, arg;
+  this.table              = "";
+  this.database           = "";
+  this.mapAllColumns      = true;
+  this.fields             = [];
+  this.mappedFieldNames   = [];
+  this.excludedFieldNames = [];
+  this.meta               = [];
+  this.error              = "";
+
   switch(typeof tableNameOrLiteral) {
     case 'object':
-      buildMappingFromObject(this, tableNameOrLiteral, tableMappingProperties);
-      makeCanonical(this);
+      this.constructFromObject(tableNameOrLiteral);
       break;
-
     case 'string':
-      var parts = tableNameOrLiteral.split(".");
-      if (parts[2] || tableNameOrLiteral.indexOf(' ') !== -1) {
-        this.error = 'MappingError: tableName must contain one or two parts: [database.]table';
-        this.table = parts[0];
-      } else if(parts[0] && parts[1]) {
-        this.database = parts[0];
-        this.table = parts[1];
-      }
-      else {
-        this.table = parts[0];
-      }
-      this.fields = [];
-      this.mappedFieldNames = [];
-      if (arguments.length >1) {
-        this.meta = [];
-        // look for optional meta following the table name
-        for (i = 1; i < arguments.length; i++) {
-          arg = arguments[i];
-          if (arg && arg.isMeta && arg.isMeta()) {
-            this.meta.push(arg);
-          } else {
-            this.error += 'MappingError: valid arguments are meta; invalid argument ' + i + ': (' + typeof arg + ') ' + arg;
-          }
-        }
-      }
+      this.constructFromTableName(tableNameOrLiteral);
       break;
-    
-    default: 
-      this.error = "MappingError: TableMapping<ctor> string tableName or literal tableMapping is a required parameter.";
+    default:
+      this.error = "TableMapping(): string tableName or " +
+                   "literal tableMapping is a required parameter.";
+      return;
   }
-  err = isValidTableMapping(this);
-  if (err) {
-    this.error += err;
+
+  if (arguments.length > 1) {   // Each additional argument is a Meta
+    this.assignMeta(arguments);
   }
 }
-/* Get prototype from documentation
-*/
-TableMapping.prototype = doc.TableMapping;
+
+TableMapping.prototype.isValid = function() {
+  return (this.error.length === 0);
+};
 
 
-/* FieldMapping constructor
- * This is exported & used by DBTableHandler, but not by the public.
- */
-function FieldMapping(fieldName) {
-  this.fieldName  = fieldName;
-  this.columnName = fieldName; 
-  this.relationship = false;
-}
-FieldMapping.prototype = doc.FieldMapping;
+TableMapping.prototype.constructFromObject = function(literal) {
+  if(literal.field && ! literal.fields) {
+    literal.fields = [ literal.field ];
+  } else if(literal.fields && ! Array.isArray(literal.fields)) {
+    literal.fields = [ literal.fields ];
+  }
+  this.error = tableMappingProperties.buildObjectFromLiteral(this, literal);
+};
+
+TableMapping.prototype.constructFromTableName = function(tableName) {
+   var parts = tableName.split(".");
+   if (parts[2] || tableName.indexOf(' ') !== -1) {
+     this.error = 'MappingError: tableName must contain one or two parts: [database.]table';
+   } else if(parts[0] && parts[1]) {
+     this.database = parts[0];
+     this.table    = parts[1];
+   } else {
+     this.table    = parts[0];
+   }
+};
+
+TableMapping.prototype.assignMeta = function(args) {
+  var i, arg;
+  for (i = 1; i < args.length; i++) {
+    arg = arguments[i];
+    if(isMeta(arg)) {
+      this.meta.push(arg);
+    } else {
+      this.error += 'MappingError: valid arguments are meta; invalid argument '
+        + i + ': (' + typeof arg + ') ' + arg;
+    }
+  }
+};
+
+TableMapping.prototype.getFieldMapping = function(fieldName) {
+  var fm, j;
+  for(j = 0 ; j < this.fields.length ; j++) {
+    fm = this.fields[j];
+    if(fm.fieldName === fieldName) {
+        return fm;
+    }
+  }
+};
 
 
 /* mapField(fieldName, [columnName], [converter], [persistent])
    mapField(literalFieldMapping)
    IMMEDIATE
 
-   Create or replace FieldMapping for fieldName
+   Create FieldMapping for fieldName
 */
-TableMapping.prototype.mapField = function() {
-  var i, args, arg, fieldMapping;
-  var fieldName = '';
-  args = arguments;  
+TableMapping.prototype.mapField = function(nameOrLiteral) {
+  var i, arg, fieldMapping, fieldName, fieldMappingLiteral;
 
-  function getFieldMapping(tableMapping, fieldName) {
-    var fm, j;
-    for(j = 0 ; j < tableMapping.fields.length ; j++) {
-      fm = tableMapping.fields[j];
-      if(fm.fieldName === fieldName) {
-        return fm;
+  switch(typeof nameOrLiteral) {
+    case 'string':
+      fieldMappingLiteral = { "fieldName" : nameOrLiteral };
+      for(i = 1; i < arguments.length ; i++) {
+        arg = arguments[i];
+        switch(typeof arg) {
+          case 'string':
+            fieldMappingLiteral.columnName = arg;
+            break;
+          case 'boolean':
+            fieldMappingLiteral.persistent = arg;
+            break;
+          case 'object':
+            if (isMeta(arg)) {
+              fieldMappingLiteral.meta = arg;
+            } else if(isConverter(arg)) {
+              fieldMappingLiteral.converter = arg;
+            } else {
+              this.error += "mapField(): Invalid argument " + arg;
+            }
+            break;
+          default:
+            this.error += "mapField(): Invalid argument " + arg;
+        }
       }
-    }
-    fm = new FieldMapping(fieldName);
-    tableMapping.fields.push(fm);
-    return fm;
+      break;
+
+    case 'object':
+      fieldMappingLiteral = nameOrLiteral;
+      break;
+
+    default:
+      this.error += "mapField() expects a literal FieldMapping or valid arguments list";
+      return this;
   }
 
-  // mapField() starts here
-  arg = args[0];
-  if(typeof arg === 'string') {
-    fieldName = arg;
-    fieldMapping = getFieldMapping(this, fieldName);
-    // existing field mapping cannot be a relationship
-    if (fieldMapping.target !== undefined) {
-      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
-      return;
-    }
+  this.error += fieldMappingProperties.getErrors(fieldMappingLiteral);
 
-    for(i = 1; i < args.length ; i++) {
-      arg = args[i];
-      switch(typeof arg) {
-        case 'string':
-          fieldMapping.columnName = arg;
-          break;
-        case 'boolean':
-          fieldMapping.persistent = arg;
-          break;
-        case 'object':
-          // argument is a meta or converter
-          if (arg && arg.isMeta && arg.isMeta()) {
-            fieldMapping.meta = arg;
-          } else {
-            fieldMapping.converter = arg;
-          }
-          break;
-        default:
-          this.error += "mapField(): Invalid argument " + arg;
-      }
+  if(! this.error.length) {
+    fieldName = fieldMappingLiteral.fieldName;
+    if(this.getFieldMapping(fieldName)) {
+      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing field.';
+    } else {
+      fieldMapping = new FieldMapping(fieldName);
+      fieldMappingProperties.buildObjectFromLiteral(fieldMapping, fieldMappingLiteral);
+      this.fields.push(fieldMapping);
+      udebug.log("mapField success: field", fieldMapping);
     }
-  }
-  else if(typeof args[0] === 'object') {
-    fieldName = args[0].fieldName;
-    fieldMapping = getFieldMapping(this, fieldName);
-    if (fieldMapping.target !== undefined) {
-      this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing relationship.';
-      return;
-    }
-    buildMappingFromObject(fieldMapping, args[0], fieldMappingProperties);
-  }
-  else {
-    this.error +="\nmapField() expects a literal FieldMapping or valid arguments list";
   }
 
-  /* Validate the candidate mapping */
-  this.error  += isValidFieldMapping(fieldMapping);
-  if (this.mappedFieldNames.indexOf(fieldName) !== -1) {
-    this.error += '\nfieldName "' + fieldName + '" is duplicated.';
-  } else {
-    this.mappedFieldNames.push(fieldName);
-  }
   return this;
 };
 
-function createRelationshipFieldFromLiteral(relationshipProperties, tableMapping, literal) {
-  var relationship = new relationshipProperties.ctor();
-  relationship.error = '';
-  var fieldValidator, value, valid;
-  var errorMessage = "";
-  // iterate the literal and set properties
-  var literalField;
-  for (literalField in literal) {
-    if (literal.hasOwnProperty(literalField)) {
-      // validate each field in the literal
-      udebug.log_detail('createRelationshipFieldFromLiteral validating', relationshipProperties.type, literalField, 
-          literal[literalField]);
-      fieldValidator = relationshipProperties[literalField];
-      if (!fieldValidator) {
-        errorMessage += "\nMappingError: invalid literal field: " + literalField + "\n";
-      } else {
-        value = literal[literalField];
-        valid = fieldValidator(value);
-        udebug.log_detail('createRelationshipFieldFromLiteral fieldValidator for', literalField, "is", valid);
-        if (valid) {
-          relationship[literalField] = value;
-        } else {
-          errorMessage += "\nMappingError: invalid value for literal field: " + literalField + "\n";
-        }
-      }
-    }
-  }
-  if (!relationship.fieldName) {
-    errorMessage += "\nMappingError: fieldName is a required field for relationship mapping";
-  }
-  if (!relationship.targetField && !relationship.foreignKey && !relationship.joinTable) {
+
+TableMapping.prototype.createRelationshipField = function(verifier, literal) {
+  var relationship = new verifier.ctor();
+  var errorMessage = verifier.getErrors(literal);
+
+  if (!literal.targetField && !literal.foreignKey && !literal.joinTable) {
     errorMessage += "\nMappingError: targetField, foreignKey, or joinTable is a required field for relationship mapping";
   }
-  if (!relationship.target) {
-    errorMessage += '\nMappingError: target is a required field for relationship mapping';
+  if (this.mappedFieldNames.indexOf(literal.fieldName) !== -1) {
+    errorMessage += '\nMappingError: relationship field "' + literal.fieldName + '" is duplicated.';
   }
-  if (tableMapping.mappedFieldNames.indexOf(relationship.fieldName) !== -1) {
-    errorMessage += '\nMappingError: relationship field "' + relationship.fieldName + '" is duplicated.';
-  }
+
   if (errorMessage) {
-    tableMapping.error += errorMessage;
+    this.error += errorMessage;
+  } else {
+    verifier.buildObjectFromLiteral(relationship, literal);
+    return relationship;
   }
-  return relationship;
-}
+};
+
+
+TableMapping.prototype.mapRelationship = function(relationshipVerifier, literalMapping) {
+  var mapping;
+  if (typeof literalMapping !== 'object') {
+    this.error += "\nMappingError: map" + relationshipVerifier.type +
+                  " supports only literal field mapping";
+    return this;
+  }
+
+  if(this.getFieldMapping(literalMapping.fieldName)) {
+    this.error += '"' + literalMapping.fieldName + '" is duplicated; ' +
+      "it cannot replace an existing field.";
+    return this;
+  }
+
+  mapping = this.createRelationshipField(relationshipVerifier, literalMapping);
+  if(mapping) {
+    this.fields.push(mapping);
+  }
+  return this;
+};
 
 /* mapOneToOne(literalFieldMapping)
  * IMMEDIATE
  */
 TableMapping.prototype.mapOneToOne = function(literalMapping) {
-  var mapping;
-  if (typeof literalMapping === 'object') {
-    mapping = createRelationshipFieldFromLiteral(oneToOneMappingProperties, this, literalMapping);
-    this.fields.push(mapping);
-  } else {
-    this.error += '\nMappingError: mapOneToOne supports only literal field mapping';
-  }
-  return this;
+  return this.mapRelationship(oneToOneMappingProperties, literalMapping);
 };
 
 /* mapManyToOne(literalFieldMapping)
  * IMMEDIATE
  */
 TableMapping.prototype.mapManyToOne = function(literalMapping) {
-  var mapping;
-  if (typeof literalMapping === 'object') {
-    mapping = createRelationshipFieldFromLiteral(manyToOneMappingProperties, this, literalMapping);
-    this.fields.push(mapping);
-  } else {
-    this.error += '\nMappingError: mapManyToOne supports only literal field mapping';
-  }
-  return this;
+  return this.mapRelationship(manyToOneMappingProperties, literalMapping);
 };
 
 /* mapOneToMany(literalFieldMapping)
  * IMMEDIATE
  */
 TableMapping.prototype.mapOneToMany = function(literalMapping) {
-  var mapping;
-  if (typeof literalMapping === 'object') {
-    mapping = createRelationshipFieldFromLiteral(oneToManyMappingProperties, this, literalMapping);
-    this.fields.push(mapping);
-  } else {
-    this.error += '\nMappingError: mapManyToOne supports only literal field mapping';
-  }
-  return this;
-};
+  return this.mapRelationship(oneToManyMappingProperties, literalMapping);
+ };
 
 /* mapManyToMany(literalFieldMapping)
  * IMMEDIATE
  */
 TableMapping.prototype.mapManyToMany = function(literalMapping) {
-  var mapping;
-  if (typeof literalMapping === 'object') {
-    mapping = createRelationshipFieldFromLiteral(manyToManyMappingProperties, this, literalMapping);
-    this.fields.push(mapping);
-  } else {
-    this.error += '\nMappingError: mapManyToOne supports only literal field mapping';
-  }
-  return this;
+  return this.mapRelationship(manyToManyMappingProperties, literalMapping);
 };
 
 /** excludeFields(fieldNames)
@@ -517,7 +482,6 @@ TableMapping.prototype.mapManyToMany = function(literalMapping) {
  */
 TableMapping.prototype.excludeFields = function() {
   var i, j, fieldName, fieldNames;
-  this.excludedFieldNames = this.excludedFieldNames || [];
   for (i = 0; i < arguments.length; ++i) {
     fieldNames = arguments[i];
     if (typeof fieldNames === 'string') {
@@ -572,11 +536,11 @@ TableMapping.prototype.mapSparseFields = function() {
             }
           } else {
             // argument is a meta or converter
-            if (arg && arg.isMeta && arg.isMeta()) {
+            if(isMeta(arg)) {
               fieldMapping.meta = arg;
             } else {
               // validate converter
-              if (isValidConverterObject(arg)) {
+              if (isConverter(arg)) {
                 fieldMapping.converter = arg;
               } else {
                 this.error += "\nmapSparseFields Argument is an object " +
@@ -628,4 +592,4 @@ TableMapping.prototype.applyToClass = function(ctor) {
 /* Public exports of this module: */
 exports.TableMapping = TableMapping;
 exports.FieldMapping = FieldMapping;
-exports.isValidConverterObject = isValidConverterObject;
+exports.isValidConverterObject = isConverter;
