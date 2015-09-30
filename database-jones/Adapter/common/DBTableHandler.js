@@ -112,6 +112,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       n,               // a field or column number
       index,           // a DBIndex
       stubFields,      // fields created through default mapping
+      stubFieldNames=[], // names of fields created through default mapping
       foreignKey,      // foreign key object from dbTable
       nMappedFields,
       priv,
@@ -209,8 +210,10 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     for(i = 0 ; i < this.dbTable.columns.length ; i++) {
       if(! priv.columnNumberToFieldMap[i]) {
         c = this.dbTable.columns[i];
+        udebug.log_detail('DBTableHandler adding unmapped column', c.name);
         f = new FieldMapping(c.name);
         stubFields.push(f);
+        stubFieldNames.push(c.name);
         priv.columnNumberToFieldMap[i] = f;
         f.columnNumber = i;
         f.defaultValue = c.defaultValue;
@@ -225,6 +228,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
         }
       }
     }
+    this.mapping.excludeFields(stubFieldNames);
   }
 
   /* Total number of mapped fields */

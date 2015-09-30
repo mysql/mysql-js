@@ -521,12 +521,16 @@ TableMapping.prototype.excludeFields = function() {
   for (i = 0; i < arguments.length; ++i) {
     fieldNames = arguments[i];
     if (typeof fieldNames === 'string') {
-      this.excludedFieldNames.push(fieldNames);
+      if (this.excludedFieldNames.indexOf(fieldNames) === -1) {
+        this.excludedFieldNames.push(fieldNames);
+      }
     } else if (Array.isArray(fieldNames)) {
       for (j = 0; j < fieldNames.length; ++j) {
         fieldName = fieldNames[j];
         if (typeof fieldName === 'string') {
-          this.excludedFieldNames.push(fieldName);
+          if (this.excludedFieldNames.indexOf(fieldNames) === -1) {
+            this.excludedFieldNames.push(fieldName);
+          }
         } else {
           this.error += '\nMappingError: excludeFields argument must be a field name or an array or list of field names: \"' +
               fieldName + '\"';
