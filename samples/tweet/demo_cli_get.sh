@@ -1,5 +1,5 @@
 # Some sample queries using the command line
-export JONES_ADAPTER=mysql
+export JONES_ADAPTER=mysql || setenv JONES_ADAPTER mysql  # sh || csh
 
 
 # Get tweets that mention @agrippina

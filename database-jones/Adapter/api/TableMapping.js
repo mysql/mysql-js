@@ -593,7 +593,7 @@ TableMapping.prototype.mapSparseFields = function() {
     }
     if (!fieldMapping.converter) {
       // default sparse fields converter
-      fieldMapping.converter = mynode.converters.JSONSparseConverter;
+      fieldMapping.converter = jones.converters.JSONSparseConverter;
     }
     if (sparseFieldNames.length !== 0) {
       fieldMapping.sparseFieldNames = sparseFieldNames;

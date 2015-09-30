@@ -36,6 +36,12 @@ function Tweet() { }
 /*  TableMappings describe the structure of the data. */
 var authorMapping = new jones.TableMapping("author");
 authorMapping.applyToClass(Author);
+authorMapping.mapSparseFields("SPARSE_FIELDS");
+authorMapping.mapOneToMany(
+  { fieldName:    "tweets",      // field in the Author object
+    target:       Tweet,         // mapped constructor
+    targetField:  "author"       // target join field
+  });
 
 var tweetMapping = new jones.TableMapping("tweet");
 tweetMapping.applyToClass(Tweet);
@@ -46,11 +52,6 @@ tweetMapping.mapManyToOne(
     foreignKey:   "author_fk"    // SQL foreign key relationship
   });
 
-authorMapping.mapOneToMany(
-  { fieldName:    "tweets",      // field in the Author object
-    target:       Tweet,         // mapped constructor
-    targetField:  "author"       // target join field
-  });
 
 
 /* 
