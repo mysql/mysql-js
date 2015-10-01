@@ -20,10 +20,7 @@
 
 "use strict";
 
-var jones = require("database-jones"),
-    unified_debug = require("unified_debug"),
-
-udebug       = unified_debug.getLogger("TableMapping.js"),
+var udebug       = unified_debug.getLogger("TableMapping.js"),
     path         = require("path"),
     util         = require("util"),
     assert       = require("assert");
