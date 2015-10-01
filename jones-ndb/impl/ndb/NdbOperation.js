@@ -603,9 +603,13 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
 }
 
 function getResultValue(op, tableHandler, buffer, blobs) {
-  return op.connProperties.use_mapped_ndb_record ?
-         buildValueObject(op, tableHandler, buffer, blobs) :
-         buildResultRow_nonVO(op, tableHandler, buffer, blobs);
+  // workaround: currently NdbRecordObject will not correctly hide
+  // the sparse field container from the user
+  var use_nro = (op.connProperties.use_mapped_ndb_record &&
+                 ! tableHandler.mapping.hasSparseFields);
+
+  return use_nro ? buildValueObject(op, tableHandler, buffer, blobs) :
+                   buildResultRow_nonVO(op, tableHandler, buffer, blobs);
 }
 
 function getScanResults(scanop, userCallback) {

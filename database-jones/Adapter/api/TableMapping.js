@@ -275,6 +275,7 @@ function TableMapping(tableNameOrLiteral) {
   this.mappedFieldNames   = [];
   this.excludedFieldNames = [];
   this.meta               = [];
+  this.hasSparseFields    = false;
   this.error              = "";
 
   switch(typeof tableNameOrLiteral) {
@@ -513,16 +514,15 @@ TableMapping.prototype.excludeFields = function() {
  * fieldNames: optional string or array of strings
  * converter: optional converter function default Converters/JSONSparseFieldsConverter
  */
-TableMapping.prototype.mapSparseFields = function() {
-  var i, j, args, arg, columnName, fieldMapping, sparseFieldNames = [];
-  args = arguments;  
-    
-  if(typeof args[0] === 'string') {
-    columnName = args[0];
+TableMapping.prototype.mapSparseFields = function(columnName) {
+  var i, j, arg, fieldMapping, sparseFieldNames = [];
+
+  if(typeof columnName === 'string') {
+    this.hasSparseFields = true;
     fieldMapping = new FieldMapping(columnName);
-    fieldMapping.tableMapping = this;
-    for(i = 1; i < args.length ; i++) {
-      arg = args[i];
+    fieldMapping.tableMapping = this;   // what !? used in JSONSparseConverter
+    for(i = 1; i < arguments.length ; i++) {
+      arg = arguments[i];
       switch(typeof arg) {
         case 'string':
           sparseFieldNames.push(arg);

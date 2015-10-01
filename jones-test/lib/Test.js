@@ -144,9 +144,12 @@ Test.prototype.run = function() {
 function getType(obj) {
   var type = typeof obj;
   if (type === 'object' && obj !== null) {
-    return obj.constructor.name;
+    type = obj.constructor.name;
   }
-  return type;
+  if (type === 'undefined') {
+    return " ";
+  }
+  return " (" + type + ") ";
 }
 
 function compare(o1, o2) {
@@ -164,7 +167,7 @@ Test.prototype.errorIfNotEqual = function(message, o1, o2) {
 	if (!compare(o1, o2)) {
 	  var o1type = getType(o1);
 	  var o2type = getType(o2);
-    message += ': expected (' + o1type + ') ' + o1 + '; actual (' + o2type + ') ' + o2 + '\n';
+    message += ': expected' + o1type + o1 + '; actual' + o2type + o2 + '\n';
 		this.errorMessages += message;
 	}
 };
@@ -173,7 +176,7 @@ Test.prototype.errorIfNotStrictEqual = function(message, o1, o2) {
   if(o1 !== o2) {
     var o1type = getType(o1);
     var o2type = getType(o2);
-    message += ': expected (' + o1type + ') ' + o1 + '; actual (' + o2type + ') ' + o2 + '\n';
+    message += ': expected' + o1type + o1 + '; actual' + o2type + o2 + '\n';
 		this.errorMessages += message;
 	}
 };
