@@ -398,6 +398,9 @@ TableMapping.prototype.mapField = function(nameOrLiteral) {
       fieldMapping = new FieldMapping(fieldName);
       fieldMappingProperties.buildObjectFromLiteral(fieldMapping, fieldMappingLiteral);
       this.fields.push(fieldMapping);
+      if (!fieldMapping.persistent) {
+        this.excludedFieldNames.push(fieldMapping.fieldName);
+      }
       udebug.log("mapField success: field", fieldMapping);
     }
   }
