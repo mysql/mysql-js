@@ -103,6 +103,7 @@ bool QueryOperation::pushResultForTable(int level) {
 }
 
 bool QueryOperation::pushResultNull(int level) {
+  DEBUG_ENTER();
   bool ok = true;
   size_t n = nresults;
 
@@ -119,6 +120,7 @@ bool QueryOperation::pushResultNull(int level) {
 }
 
 bool QueryOperation::pushResultValue(int level) {
+  DEBUG_ENTER();
   bool ok = true;
   size_t n = nresults;
   size_t & size = buffers[level].size;
@@ -171,12 +173,14 @@ int QueryOperation::fetchAllResults() {
     switch(status) {
       case NdbQuery::NextResult_gotRow:
         /* New results at every level */
+        DEBUG_PRINT_DETAIL("NextResult_gotRow");
         for(int level = 0 ; level < depth ; level++) {
           if(! pushResultForTable(level)) return -1;
         }
         break;
 
       case NdbQuery::NextResult_scanComplete:
+        DEBUG_PRINT_DETAIL("NextResult_scanComplete");
         break;
 
       default:
@@ -247,7 +251,10 @@ const NdbQueryOperationDef *
 bool QueryOperation::createNdbQuery(NdbTransaction *tx) {
   DEBUG_MARKER(UDEB_DEBUG);
   ndbQuery = tx->createQuery(definedQuery);
-  if(! ndbQuery) return false;
+  if(! ndbQuery) {
+    DEBUG_PRINT("createQuery returned null");
+    return false;
+  }
 
   for(int i = 0 ; i < depth ; i++) {
     NdbQueryOperation * qop = ndbQuery->getQueryOperation(i);

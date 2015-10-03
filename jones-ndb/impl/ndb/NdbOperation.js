@@ -240,7 +240,7 @@ function encodeFieldsInBuffer(fields, nfields, metadata,
 
 function encodeKeyBuffer(op) {
   var oneCol = op.indexHandler.singleColumn;  // single-column index
-  if(oneCol && op.keys[0]) {  // ... and value is not undefined or null
+  if(oneCol && op.keys[0] !== null && op.keys[0] !== undefined) {
     return op.index.record.encoderWrite(0, op.buffers.key, op.keys[0]);
   }
   return encodeFieldsInBuffer(op.keys, 

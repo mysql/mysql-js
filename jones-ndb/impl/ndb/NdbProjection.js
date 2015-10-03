@@ -149,6 +149,11 @@ function createNdbProjection(sector, parentProjection) {
 
    NOTE: The server uses a different strategy here.  Divides the tree after
    the last consecutive lookup then runs all lookups.
+
+   TODO: NdbProjection should detect whether SPJ can execute the whole query.
+   If not, it should divide the query into parts that can be executed
+   independently and return this to NdbOperation, so that NdbOperation can
+   itself manage a join.
 */
 NdbProjection.prototype.rewriteAsScan = function(sector) {
   var mock_keys = mockKeys(sector.keyFieldNames);
