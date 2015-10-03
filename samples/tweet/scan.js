@@ -30,10 +30,10 @@ jones.openSession(connectionProperties).
     /* Here we can define query conditions.
        For more details see API-documentation/Query
     */
-    query.where(query.author.eq(queryTerm));   // author == x
-    // query.where(query.author.ne(queryTerm));   // author != x
-    // query.where(query.author.gt(queryTerm));   // author > x
-    // query.where(query.id.lt(queryTerm));       // id < x
+    query.where(query.author_user_name.eq(queryTerm));   // author == x
+    // query.where(query.author_user_name.ne(queryTerm));   // author != x
+    // query.where(query.author_user_name.gt(queryTerm));   // author > x
+    // query.where(query.id.lt(queryTerm));                 // id < x
 
     /* Then execute the query, using limit & order parameters.
     */

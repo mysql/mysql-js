@@ -21,6 +21,9 @@
    of JavaScript objects to the two SQL tables and to each other. Then, a
    Projection describes the desired shape of the result, referring to the mapped
    constructors.
+
+   NOTE - 3 Oct 2015 - due to a known bug, this example is currently working
+   correctly with the "mysql" adapter but not with the "ndb" adapter.
 */
 
 "use strict";
@@ -36,7 +39,6 @@ function Tweet() { }
 /*  TableMappings describe the structure of the data. */
 var authorMapping = new jones.TableMapping("author");
 authorMapping.applyToClass(Author);
-authorMapping.mapSparseFields("SPARSE_FIELDS");
 authorMapping.mapOneToMany(
   { fieldName:    "tweets",      // field in the Author object
     target:       Tweet,         // mapped constructor
@@ -58,11 +60,11 @@ tweetMapping.mapManyToOne(
    Projections describe the structure to be returned from find().
 */
 var tweetProjection = new jones.Projection(Tweet);
-tweetProjection.addFields(["message","date_created"]);
+tweetProjection.addFields(["id", "message","date_created"]);
 
 var authorProjection = new jones.Projection(Author);
 authorProjection.addRelationship("tweets", tweetProjection);
-authorProjection.addFields(["full_name"]);
+authorProjection.addFields(["user_name", "full_name"]);
 
 
 /* This script takes one argument, the user name.  e.g.:

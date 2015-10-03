@@ -51,7 +51,7 @@ var table_name = process.argv[2],
 jones.openSession(connectionProperties, table_name, function(err, session) {
   handleError(err);
 
-  /* The callback to persist() only gets one argument */
+  /* The callback for persist() only gets one argument */
   session.persist(table_name, object, function(err) {
     handleError(err);
     console.log("Inserted: ", object);

@@ -284,7 +284,7 @@ function AddUserOperation(params, data) {
       then(this.onComplete, this.onError);
   };
 }
-AddUserOperation.signature = [ "put", "user", "<user_name>", " << Full Name >>" ];
+AddUserOperation.signature = [ "put", "user", "<user_name>", " << JSON Extra Fields >>" ];
 
 
 /* Profile a user based on username.
