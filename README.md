@@ -3,6 +3,9 @@ Database Jones
 
 Introduction
 ------------
+See our latest presentation [on slideshare]
+(http://www.slideshare.net/jdduncan/building-nodejs-applications-with-database-jones).
+
 This package provides a fast, easy, and safe framework for building 
 database applications in Node.js. 
 
