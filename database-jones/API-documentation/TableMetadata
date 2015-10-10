@@ -74,29 +74,3 @@ ForeignKeyMetadata = {
   targetColumnNames: null  ,  // an ordered array of target column names
 };
 
-
-ColumnTypes =  [
-  "TINYINT",
-  "SMALLINT",
-  "MEDIUMINT",
-  "INT",
-  "BIGINT",
-  "FLOAT",
-  "DOUBLE",
-  "DECIMAL",
-  "CHAR",
-  "VARCHAR",
-  "BLOB",
-  "TEXT",
-  "DATE",
-  "TIME",
-  "DATETIME",
-  "YEAR",
-  "TIMESTAMP",
-  "BIT",
-  "BINARY",
-  "VARBINARY"
-];
-
-
-exports.ColumnTypes = ColumnTypes;

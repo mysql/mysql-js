@@ -52,6 +52,7 @@ more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
 
 /* Files in samples/ */
 more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
+more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "DBServiceProvider", "impl"));
 
 /**** ERRORS TO IGNORE:
  ignore(filename, startpos, message) 

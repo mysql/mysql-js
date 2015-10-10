@@ -44,11 +44,19 @@ var conf             = require("./path_config"),
     autoincrement    = require("./NdbAutoIncrement.js"),
     udebug           = unified_debug.getLogger("NdbConnectionPool.js"),
     stats_module     = require(jones.api.stats),
-    ColumnTypes      = require(jones.api_doc.TableMetadata).ColumnTypes,
     isValidConverterObject = require(jones.api.TableMapping).isValidConverterObject,
     QueuedAsyncCall  = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
     baseConnections  = {},
     initialized      = false;
+
+var ColumnTypes =  [
+  "TINYINT",  "SMALLINT",  "MEDIUMINT",  "INT",  "BIGINT",
+  "FLOAT",  "DOUBLE",  "DECIMAL",
+  "CHAR",  "VARCHAR",  "BLOB",  "TEXT",
+  "DATE",  "TIME",  "DATETIME",  "YEAR",  "TIMESTAMP",
+  "BIT",  "BINARY",  "VARBINARY"
+];
+
 
 /* Load-Time Function Asserts */
 assert(typeof adapter.ndb.ndbapi.Ndb_cluster_connection === 'function');
@@ -480,7 +488,7 @@ DBConnectionPool.prototype.getTableMetadata = function(dbname, tabname,
 };
 
 
-/* registerTypeConverter(typeName, converterObject) 
+/* registerTypeConverter(typeName, converterObject)
    IMMEDIATE
 */
 DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter) {

@@ -5,22 +5,18 @@ var DBTransactionHandler; // Standard members of DBTransactionHandler object
 
 
 DBTransactionHandler = { 
-  autocommit         : null,  // Boolean autocommit mode flag
-  dbSession          : null,  // DBSession link for this transaction
-  state              : null,  // DBTransactionState applying to the transaction
-  success            : null,  // Boolean inidcating success with no errors
+  dbSession          : null,  // DBSession for this transaction
   error              : null,  // DBOperationError applying to the transaction
-  userCallback       : null,  // A higher-level callback function 
-  executedOperations : null,  // List of dbOperations already executed
+  executedOperations : null,  // Array of DBOperations already executed
 };
 
 
 /* setPartitionKey(TableHandler Table, Array partitionKey)
   IMMEDIATE
   
-  In NDB, setting the partition key causes the NDB API to select a 
-  Transaction Coordinator on the node that would be the primary node
-  for a row with that key.
+  When a database is partitioned in some way, setPartitionKey() gives the
+  application an opportunity to indicate which partition to use for
+  a particular transaction.
 */
   function setPartitionKey(tableHandler, partitionKey) {}
 

@@ -1,0 +1,20 @@
+
+{
+  "name"        : "jones-sample"
+  ,
+  "version"     : "0.0.1"
+  ,  
+  "description" : "Sample DBServiceProvider for Database Jones"
+  ,
+  "license"     : "GPL-2.0"
+  ,
+  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
+                    "Craig Russell <craig.russell@oracle.com>" ]
+  ,
+  "main"        : "impl/sample_service_provider"
+  ,
+  "dependencies": { 
+                  }
+}
+
+
