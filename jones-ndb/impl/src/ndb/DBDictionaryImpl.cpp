@@ -699,13 +699,6 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
     obj->ForceSet(SYMBOL(isolate, "isLob"),
              Boolean::New(isolate, is_lob),
              ReadOnly);
-    
-    if(is_char) {
-      const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
-      obj->ForceSet(SYMBOL(isolate, "charsetName"),
-               String::NewFromUtf8(isolate, csinfo->name),
-               ReadOnly);
-    }
   }
     
   return scope.Escape(obj);

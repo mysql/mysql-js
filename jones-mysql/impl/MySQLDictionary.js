@@ -115,7 +115,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
     var column, columnName, columnNumberIndex,
       columnTypeAndSize, columnTypeAndSizeSplit, columnSize, columnType,
       unsigned, nullable, defaultValue, rawDefaultValue, line, tokens, token, j, unique;
-    var databaseTypeConverter, domainTypeConverter, charset, collation;
+    var databaseTypeConverter, domainTypeConverter;
     // first line has table name which we ignore because we already know it
     for (i = 1; i < lines.length; ++i) {
       // var defaultValue;    // if DEFAULT is not specified, defaultValue is undefined
@@ -322,20 +322,13 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
         // continue parsing the rest of the column definition line
 
-        // check for character set
         if (tokens[j] === 'CHARACTER') {
-          charset = tokens[j + 2];
-          udebug.log_detail('parseCreateTable for:', columnName, ': charset: ', charset);
           j += 3; // skip 'CHARACTER SET charset'
-          column.charsetName = charset;
-          // check for collation
           if (tokens[j] === 'COLLATE') {
-            collation = tokens[j + 1];
-            udebug.log_detail('parseCreateTable for: ', columnName, ': collation: ', collation);
-            column.collationName = collation;
             j+= 2; // skip 'COLLATE collation'
           }
         }
+
         if (tokens[j] === 'NOT') { // 'NOT NULL' clause
           nullable = false;
           j += 2; // skip 'not null'
