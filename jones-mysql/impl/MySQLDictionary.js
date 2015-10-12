@@ -61,18 +61,6 @@ exports.DataDictionary.prototype.listTables = function(databaseName, user_callba
 exports.DataDictionary.prototype.getTableMetadata = function(databaseName, tableName, user_callback) {
   var dbConnectionPool = this.dbConnectionPool;
 
-  // get precision from columnSize e.g. 10,2
-  var getPrecision = function(columnSize) {
-    var precision = columnSize.split(',')[0];
-    return parseInt(precision, 10);
-  };
-
-  // get scale from columnSize e.g. 10,2
-  var getScale = function(columnSize) {
-    var scale = columnSize.split(',')[1];
-    return parseInt(scale, 10);
-  };
-
   var decodeIndexColumnNames = function(columnNames) {
     var columnNamesSplit = columnNames.split('`');
     var indexColumnNames = [];
@@ -299,8 +287,6 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         case 'bigint':    column.intSize = 8; column.isIntegral = true; break;
 
         case 'decimal' :
-          column.precision = getPrecision(columnSize); 
-          column.scale = getScale(columnSize); 
           break;
         case 'binary':
         case 'varbinary':
