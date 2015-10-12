@@ -20,7 +20,7 @@ ColumnMetadata = {
   /* Required Properties */
   name             : ""   , // column name
   columnNumber     : -1   , // position of column in table, and in columns array
-  columnType       : ""   , // a ColumnType
+  columnType       : ""   , // column type name, specific to this backend
   isIntegral       : false, // true if column is some variety of INTEGER type
   isNullable       : false, // true if NULLABLE
   isInPrimaryKey   : false, // true if column is part of PK

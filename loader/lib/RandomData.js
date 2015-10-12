@@ -119,6 +119,8 @@ function getRandomGeneratorForColumn(column) {
   var g = {},
       min, max, bits;
 
+  // TODO: This should rely on generic metadata rather than
+  // MySQL-specific column type names
   switch(column.columnType.toLocaleUpperCase()) {
     case "TINYINT":
     case "SMALLINT":

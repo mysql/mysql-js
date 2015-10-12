@@ -1,7 +1,7 @@
 "use strict";
 
 /* TableMetadata object represents a table.
-   This is the object returned in the getTable() callback.
+   This is the object returned in the getTableMetadata() callback.
    indexes[0] will *ALWAYS* represent the intrinsic primary key.
 */
 function TableMetadata() {
@@ -20,7 +20,7 @@ function ColumnMetadata(isNumeric) {
   /* Required Properties */
   this.name             = ""   ; // column name
   this.columnNumber     = -1   ; // position of column in table; and in columns array
-  this.columnType       = ""   ; // a ColumnType
+  this.columnType       = ""   ; // column type name, specific to this backend
   this.isIntegral       = false; // true if column is some variety of INTEGER type
   this.isNullable       = false; // true if NULLABLE
   this.isInPrimaryKey   = false; // true if column is part of PK
