@@ -2,7 +2,8 @@
 "use strict";
 
 var assert           = require("assert"),
-    DBSession        = require("./DBSession");
+    DBSession        = require("./DBSession"),
+    DBDictionary     = require("./DBDictionary");
 
 
 /* DBConnectionPool constructor.
@@ -12,7 +13,8 @@ var assert           = require("assert"),
 */   
 function DBConnectionPool(properties) {
   assert(properties.implementation === "sample");
-  this.properties = properties;
+  this.properties       = properties;
+  this.typeConverterMap = {};
 }
 
 
@@ -51,6 +53,7 @@ DBConnectionPool.prototype.getDBSession = function(index, userCallback) {
   */
 DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
                                                  userCallback) {
+  return DBDictionary.listTables(databaseName, dbSession, userCallback);
 };
 
 
@@ -60,6 +63,7 @@ DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
   */
 DBConnectionPool.prototype.getTableMetadata = function(databaseName, tableName,
                                                        dbSession, userCallback) {
+  return DBDictionary.getTableMetadata(databaseName, tableName, dbSession, userCallback);
 };
 
 
@@ -67,6 +71,7 @@ DBConnectionPool.prototype.getTableMetadata = function(databaseName, tableName,
    IMMEDIATE
 */
 DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter) {
+  this.typeConverterMap[typeName] = converter;
 };
 
 
@@ -77,8 +82,9 @@ DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter)
   * indicating column types and indexes.
   */
 DBConnectionPool.prototype.createTable = function(tableMapping,
-                                                  session,
+                                                  dbSession,
                                                   userCallback) {
+  return DBDictionary.createTable(tableMapping, dbSession, userCallback);
 };
 
 module.exports = DBConnectionPool;

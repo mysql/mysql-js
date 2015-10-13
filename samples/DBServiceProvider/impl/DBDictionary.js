@@ -1,5 +1,7 @@
 "use strict";
 
+// TODO: Move this code to jones.common.Metadata ??
+
 /* TableMetadata object represents a table.
    This is the object returned in the getTableMetadata() callback.
    indexes[0] will *ALWAYS* represent the intrinsic primary key.
@@ -70,4 +72,17 @@ function ForeignKeyMetadata() {
   this.targetDatabase    = ""    ;  // referenced database
   this.targetColumnNames = []    ;  // an ordered array of target column names
 }
+
+
+exports.createTable = function(tableMapping, session, userCallback) {
+
+};
+
+exports.listTables = function(databaseName, dbSession, userCallback) {
+
+};
+
+exports.getTableMetadata = function(dbName, tableName, dbSession, userCallback) {
+
+};
 
