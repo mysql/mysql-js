@@ -163,6 +163,13 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping.database = this.dbTable.database;
   }
 
+  /* If the TableMetadata has a fallbackContainer, tell the TableMapping */
+  if(     this.dbTable.fallbackContainer
+     && ! this.mapping.columnIsMapped(this.dbTable.fallbackContainer))
+  {
+    this.mapping.mapSparseFields(this.dbTable.fallbackContainer);
+  }
+
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
     for(i = 0 ; i < this.mapping.fields.length ; i++) {

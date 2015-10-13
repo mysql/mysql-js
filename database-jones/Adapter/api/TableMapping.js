@@ -342,6 +342,15 @@ TableMapping.prototype.getFieldMapping = function(fieldName) {
   }
 };
 
+TableMapping.prototype.columnIsMapped = function(colName) {
+  var i;
+  for(i = 0 ; i < this.fields.length ; i++) {
+    if(this.fields[i].columnName === colName) {
+      return true;
+    }
+  }
+  return false;
+};
 
 /* mapField(fieldName, [columnName], [converter], [persistent])
    mapField(literalFieldMapping)
