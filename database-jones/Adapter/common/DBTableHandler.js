@@ -112,11 +112,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       n,               // a field or column number
       index,           // a DBIndex
       stubFields,      // fields created through default mapping
-      stubFieldNames=[], // names of fields created through default mapping
       foreignKey,      // foreign key object from dbTable
-      nMappedFields,
-      priv,
-      numberOfNotPersistentFields = 0,
+      priv,            // our DBTableHandlerPrivate
+      nMappedFields = 0,
       ctorName = 'none';
 
   stats.constructor_calls++;
@@ -164,6 +162,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping          = new TableMapping(this.dbTable.name);
     this.mapping.database = this.dbTable.database;
   }
+
   /* Build the first draft of the columnNumberToFieldMap, using only the
      explicitly mapped fields. */
     for(i = 0 ; i < this.mapping.fields.length ; i++) {
@@ -171,7 +170,10 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     udebug.log_detail('DBTableHandler<ctor> field:', f, 'persistent', f.persistent,
                       'relationship', f.relationship);
     if(f && f.persistent) {
-      if (!f.relationship) {
+      nMappedFields++;
+      if (f.relationship) {
+        this.relationshipFields.push(f);
+      } else {
         c = getColumnByName(this.dbTable, f.columnName);
         if(c) {
           n = c.columnNumber;
@@ -191,13 +193,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
           this.appendErrorMessage(
               'for table ' + dbtable.name + ', field ' + f.fieldName + ': column ' + f.columnName + ' does not exist.');
         }
-      } else {
-        // relationship field
-        this.relationshipFields.push(f);
       }
-    } else {
-      // increment not-persistent field count
-      ++numberOfNotPersistentFields;
     }
   }
 
@@ -208,9 +204,10 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       if(! priv.columnNumberToFieldMap[i]) {
         c = this.dbTable.columns[i];
         udebug.log_detail('DBTableHandler adding unmapped column', c.name);
+        this.mapping.excludeField(c.name);  // Used by JSONSparseConverter
         f = new FieldMapping(c.name);
         stubFields.push(f);
-        stubFieldNames.push(c.name);
+        nMappedFields++;
         priv.columnNumberToFieldMap[i] = f;
         f.columnNumber = i;
         f.defaultValue = c.defaultValue;
@@ -225,13 +222,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
         }
       }
     }
-    this.mapping.excludeFields(stubFieldNames);
   }
 
-  /* Total number of mapped fields */
-  nMappedFields = this.mapping.fields.length + stubFields.length - numberOfNotPersistentFields;
-         
-  /* Create the resolved mapping to be returned by getMapping() */
+  /* Create the resolved mapping to be returned by getResolvedMapping() */
   priv.resolvedMapping = {};
   priv.resolvedMapping.database = this.dbTable.database;
   priv.resolvedMapping.table = this.dbTable.name;
