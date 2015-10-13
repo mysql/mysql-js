@@ -478,24 +478,29 @@ TableMapping.prototype.mapManyToMany = function(literalMapping) {
   return this.mapRelationship(manyToManyMappingProperties, literalMapping);
 };
 
+/** excludeField(name)
+ *  Exclude a single field from being persisted as part of sparse field handling.
+ */
+TableMapping.prototype.excludeField = function(fieldName) {
+  if (this.excludedFieldNames.indexOf(fieldName) === -1) {
+    this.excludedFieldNames.push(fieldName);
+  }
+};
+
 /** excludeFields(fieldNames)
- * Exclude the named field(s) from being persisted as part of sparse field handling.
+ * Exclude a list or array of named field(s) from being persisted.
  */
 TableMapping.prototype.excludeFields = function() {
   var i, j, fieldName, fieldNames;
   for (i = 0; i < arguments.length; ++i) {
     fieldNames = arguments[i];
     if (typeof fieldNames === 'string') {
-      if (this.excludedFieldNames.indexOf(fieldNames) === -1) {
-        this.excludedFieldNames.push(fieldNames);
-      }
+      this.excludeField(fieldNames);
     } else if (Array.isArray(fieldNames)) {
       for (j = 0; j < fieldNames.length; ++j) {
         fieldName = fieldNames[j];
         if (typeof fieldName === 'string') {
-          if (this.excludedFieldNames.indexOf(fieldNames) === -1) {
-            this.excludedFieldNames.push(fieldName);
-          }
+          this.excludeFeild(fieldName);
         } else {
           this.error += '\nMappingError: excludeFields argument must be a field name or an array or list of field names: \"' +
               fieldName + '\"';
@@ -520,7 +525,7 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
   if(typeof columnName === 'string') {
     this.hasSparseFields = true;
     fieldMapping = new FieldMapping(columnName);
-    fieldMapping.tableMapping = this;   // what !? used in JSONSparseConverter
+    fieldMapping.tableMapping = this;   // Used in JSONSparseConverter
     for(i = 1; i < arguments.length ; i++) {
       arg = arguments[i];
       switch(typeof arg) {
