@@ -3,23 +3,14 @@
 
 var assert = require("assert"),
     path   = require("path"),
-    config = require("./path_config"),
-    DBConnectionPool = require("./DBConnectionPool.js");
+    config = require("./path_config");
 
 
-try {
-  /* Attempt to load all dependencies here, but rather than failing on 
-     error, let the unmet module dependencies be caught by loadRequiredModules() 
-     so that the user can get a customized (and appropriately-timed) error.
-  */
-
-}
-catch(ignore) {
-}
-
-
-/* loadRequiredModules() should attempt to load all dependencies, and return 
+/* loadRequiredModules() should attempt to load all dependencies, and return
    helpful error messages for any that cannot be loaded.
+
+   We assume that requiring DBConnectionPool.js will require the dependencies
+   in fact, so that is deferred until connect().
 */
 exports.loadRequiredModules = function() {
   var error;
@@ -31,7 +22,7 @@ exports.loadRequiredModules = function() {
     error = new Error("Error loading dependencies: " + e.message);
     throw error;
   }
-  
+
   return true;
 };
 
@@ -44,7 +35,7 @@ exports.getDefaultConnectionProperties = function() {
 };
 
 
-/* getFactoryKey() should take a set of connection properties and return a 
+/* getFactoryKey() should take a set of connection properties and return a
    URI-like string identifying that specific database connection. For example,
    the MySQL version returns "mysql://server_host_name:port/user_name".
 */
@@ -55,6 +46,7 @@ exports.getFactoryKey = function(properties) {
 
 
 exports.connect = function(properties, userCallback) {
+  var DBConnectionPool = require("./DBConnectionPool");
   var pool = new DBConnectionPool(properties);
   pool.connect(userCallback);
 };
@@ -63,5 +55,5 @@ exports.connect = function(properties, userCallback) {
 exports.getDBMetadataManager = function(properties) {
 };
 
-exports.config = config;
+exports.fs = config;
 

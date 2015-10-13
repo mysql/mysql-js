@@ -1,7 +1,8 @@
 
 "use strict";
 
-var assert           = require("assert");
+var assert           = require("assert"),
+    DBSession        = require("./DBSession");
 
 
 /* DBConnectionPool constructor.
@@ -10,7 +11,7 @@ var assert           = require("assert");
    Throws an exception if the Properties object is not valid.
 */   
 function DBConnectionPool(properties) {
-  assert(properties.implementation = "sample");
+  assert(properties.implementation === "sample");
   this.properties = properties;
 }
 

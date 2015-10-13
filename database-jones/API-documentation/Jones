@@ -164,5 +164,20 @@ closeAllOpenSessionFactories();
 
 
 /** getDBServiceProvider
+ *  Generally not used in application development.
+ *  Given a name, returns a DBServiceProvider.
+ * IMMEDIATE
  */
-getDBServiceProvider();
+getDBServiceProvider(name);
+
+
+/** registerDBServiceProvider(name, module)
+ *  Generally not used in application development.
+ *
+ *  This allows you to bootstrap a DBServiceProvider in development,
+ *  registering it by name so that Jones can use it before it has been
+ *  installed.
+ *
+ * IMMEDIATE
+ */
+registerDBServiceProvider(name, node_module);

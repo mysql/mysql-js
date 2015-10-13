@@ -29,7 +29,8 @@ var path           = require("path"),
     UserContext    = null,   // loaded later to prevent circular dependency
 
     udebug         = unified_debug.getLogger("jones.js"),
-    existsSync     = fs.existsSync || path.existsSync;
+    existsSync     = fs.existsSync || path.existsSync,
+    registry       = {};
 
 
 function common(file) { return path.join(conf.spi_common_dir, file); }
@@ -80,15 +81,22 @@ function getDBServiceProviderModule(impl_name) {
   var externalModule = "jones-" + impl_name;
   var service;
   
-  try {
-    service = require(externalModule);
-  }
-  catch(e) {
-    console.log("Cannot load module " + externalModule);
-    throw e;
+  service = registry[impl_name];
+  if(! service) {
+    try {
+      service = require(externalModule);
+    }
+    catch(e) {
+      console.log("Cannot load module " + externalModule);
+      throw e;
+    }
   }
 
   return service;
+}
+
+function registerDBServiceProvider(name, module) {
+  registry[name] = module;
 }
 
 function getDBServiceProvider(impl_name) {

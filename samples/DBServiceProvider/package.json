@@ -11,7 +11,7 @@
   "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
                     "Craig Russell <craig.russell@oracle.com>" ]
   ,
-  "main"        : "impl/sample_service_provider"
+  "main"        : "impl/DBServiceProvider"
   ,
   "dependencies": { 
                   }
