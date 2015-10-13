@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -23,26 +23,26 @@
 var udebug       = unified_debug.getLogger("Meta.js");
 
 /** Meta allow users to define the metadata of a field or table to create tables.
- * meta is exported and functions return a new object of type Meta.
- * DBConnection pool uses meta to map metadata to database-specific schema.
+ *  meta is exported and functions return a new object of type Meta.
+ *  DBConnection pool uses meta to map metadata to database-specific schema.
  */
 
 function Meta() {
-  this.isHash = false;
-  this.isLob = false;
   this.isNullable = true;
-  this.isPrimaryKey = false;
-  this.isUniqueKey = false;
-  this.isUnsigned = false;
 }
+
+Meta.prototype.isMeta = function() {
+  return true;
+};
+
+Meta.prototype.sparseContainer = function() {
+  this.isSparseContainer = true;
+  return this;
+};
 
 Meta.prototype.autoincrement = function() {
   this.isAutoincrement = true;
   return this;
-};
-
-Meta.prototype.isMeta = function() {
-  return true;
 };
 
 Meta.prototype.charset = function(charset, collation) {
