@@ -95,9 +95,9 @@ function getDBServiceProviderModule(impl_name) {
   return service;
 }
 
-function registerDBServiceProvider(name, module) {
+exports.registerDBServiceProvider = function(name, module) {
   registry[name] = module;
-}
+};
 
 function getDBServiceProvider(impl_name) {
   var service = getDBServiceProviderModule(impl_name);

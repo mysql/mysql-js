@@ -403,6 +403,7 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
       columns          : []    ,  // ordered array of DBColumn objects
       indexes          : []    ,  // array of DBIndex objects 
       partitionKey     : []    ,  // ordered array of column numbers in the partition key
+      fallbackContainer: null     // default column for sparse fields
     };
   */    
   if(ndb_table && ! return_val) {
@@ -419,7 +420,10 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
     int nPartitionKeys = 0;
     Handle<Array> partitionKeys = Array::New(isolate);
     table->Set(SYMBOL(isolate, "partitionKey"), partitionKeys);
-    
+
+    // fallbackContainer
+    table->Set(SYMBOL(isolate,"fallbackContainer"), Null(isolate));
+
     // columns
     Local<Array> columns = Array::New(isolate, ndb_table->getNoOfColumns());
     for(int i = 0 ; i < ndb_table->getNoOfColumns() ; i++) {
@@ -428,6 +432,14 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
       columns->Set(i, col);
       if(ndb_col->getPartitionKey()) { /* partition key */
         partitionKeys->Set(nPartitionKeys++, String::NewFromUtf8(isolate, ndb_col->getName()));
+      }
+      if(     ! strcmp(ndb_col->getName(), "SPARSE_FIELDS")
+          && ( (! strncmp(getColumnType(ndb_col), "VARCHAR", 7)
+                  && (getEncoderCharsetForColumn(ndb_col)->isUnicode))
+              || ! strncmp(getColumnType(ndb_col), "VARBINARY", 9)))
+      {
+        table->Set(SYMBOL(isolate,"fallbackContainer"),
+                   String::NewFromUtf8(isolate, ndb_col->getName()));
       }
     }
     table->Set(SYMBOL(isolate, "columns"), columns);

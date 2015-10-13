@@ -2,7 +2,7 @@ use test;
 drop table if exists freeform;
 create table if not exists freeform (
   id int not null AUTO_INCREMENT,
-  SPARSE_FIELDS varchar(1000),
+  SPARSE_FIELDS varchar(1000) CHARACTER SET "UTF8",
   primary key(id)
 );
 
@@ -14,7 +14,7 @@ create table if not exists semistruct (
   id int not null AUTO_INCREMENT,
   name varchar(30),
   number int,
-  SPARSE_FIELDS varchar(1000),
+  SPARSE_FIELDS varchar(1000) CHARACTER SET "UTF8",
   primary key(id)
 );
 

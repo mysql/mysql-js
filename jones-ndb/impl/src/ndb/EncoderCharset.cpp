@@ -44,6 +44,10 @@ inline bool colIsUtf8(const NdbDictionary::Column *col) {
   return (strncmp("utf8", col->getCharset()->csname, 4) == 0);
 }
 
+inline bool colIsUnicode(const NdbDictionary::Column *col) {
+  return (strncmp("utf", col->getCharset()->csname, 3) == 0);
+}
+
 inline bool colIsLatin1(const NdbDictionary::Column *col) {
   return (strncmp("latin1", col->getCharset()->csname, 6) == 0);
 }
@@ -65,6 +69,7 @@ EncoderCharset * createEncoderCharset(const NdbDictionary::Column *col) {
   csinfo->maxlen = col->getCharset()->mbmaxlen;
   csinfo->isMultibyte = colIsMultibyte(col);
   csinfo->isAscii = colIsAscii(col);
+  csinfo->isUnicode = colIsUnicode(col);
   csinfo->isUtf8 = colIsUtf8(col);
   csinfo->isUtf16le = colIsUtf16le(col);
 

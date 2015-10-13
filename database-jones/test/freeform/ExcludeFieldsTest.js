@@ -39,7 +39,7 @@ t1.run = function() {
   semistructMapping.mapField('id');
   semistructMapping.mapField('name');
   semistructMapping.mapField('number');
-  semistructMapping.mapSparseFields('SPARSE_FIELDS');
+  semistructMapping.mapSparseFields('SPARSE_FIELDS');  // fixme
   semistructMapping.excludeFields('c');
   semistructMapping.applyToClass(Semistruct);
 

@@ -77,7 +77,7 @@ t2.run = function() {
   var testCase = this;
   var freeformMapping = new mynode.TableMapping('freeform');
   freeformMapping.mapField('id');
-  freeformMapping.mapSparseFields('SPARSE_FIELDS');
+  freeformMapping.mapSparseFields('SPARSE_FIELDS');  // fixme
   freeformMapping.applyToClass(Freeform);
 
   testCase.mappings = Freeform;
@@ -117,6 +117,22 @@ t2.run = function() {
   );
 };
 
+var t3 = new harness.ConcurrentTest("FallbackContainerTest");
+t3.run = function() {
+  var testCase = this;
+  fail_openSession(testCase, function(session) {
+    testCase.session = session;
+  })
+  .then(function(session) {
+    return session.getTableMetadata("test", "freeform");
+  })
+  .then(function(metadata) {
+    testCase.errorIfNotEqual("Failed to verify fallbackContainer",
+                             "SPARSE_FIELDS", metadata.fallbackContainer);
+  })
+  .then(function() {testCase.failOnError();}, function(err) {testCase.fail(err);}
+  )
+  .then(function() { testCase.session.close(); });
+};
 
-
-exports.tests = [t1, t2];
+exports.tests = [t1, t2, t3];

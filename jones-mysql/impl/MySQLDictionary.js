@@ -101,7 +101,8 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         'database' : databaseName,
         'columns' : columns,
         'indexes' : indexes,
-        'foreignKeys': foreignKeys
+        'foreignKeys': foreignKeys,
+        'fallbackContainer': null
         };
     
     // split lines by '\n'
@@ -257,6 +258,10 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         columnName = (token.split('`'))[1];
         udebug.log_detail('parseCreateTable: columnName:', columnName);
         column.name = columnName;
+        if(columnName === "SPARSE_FIELDS") {
+          // Note: NDB also requires (VARCHAR + UNICODE) or (VARBINARY)
+          result.fallbackContainer = columnName;
+        }
         // analyze column type
         columnTypeAndSize = tokens[++j];
         udebug.log_detail('parseCreateTable: columnDefinition:', columnTypeAndSize);

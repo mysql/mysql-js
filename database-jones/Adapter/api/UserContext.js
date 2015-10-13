@@ -251,7 +251,7 @@ function createDefaultTableMapping(qualified_table_name) {
   udebug.log('UserContext.createDefaultTableMapping for', qualified_table_name);
   tableMapping = new TableMapping.TableMapping(qualified_table_name);
   tableMapping.mapField('id', meta.int(32).primaryKey().autoincrement());
-  tableMapping.mapSparseFields('SPARSE_FIELDS', meta.varchar(11111));
+  tableMapping.mapSparseFields('SPARSE_FIELDS', meta.varchar(11111).sparseContainer());
   return tableMapping;
 }
 

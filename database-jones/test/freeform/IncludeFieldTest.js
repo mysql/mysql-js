@@ -39,7 +39,7 @@ t2.run = function() {
   semistructMapping.mapField('id');
   semistructMapping.mapField('name');
   semistructMapping.mapField('number');
-  semistructMapping.mapSparseFields('SPARSE_FIELDS', 'a', 'b');
+  semistructMapping.mapSparseFields('SPARSE_FIELDS', 'a', 'b');  // fixme
   semistructMapping.applyToClass(Semistruct);
 
   testCase.mappings = Semistruct;

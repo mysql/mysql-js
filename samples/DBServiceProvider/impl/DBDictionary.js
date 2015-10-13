@@ -7,12 +7,13 @@
    indexes[0] will *ALWAYS* represent the intrinsic primary key.
 */
 function TableMetadata() {
-  this.database         = ""; // Database name
-  this.name             = ""; // Table Name
-  this.columns          = []; // ordered array of ColumnMetadata objects
-  this.indexes          = []; // array of IndexMetadata objects
-  this.foreignKeys      = []; // array of ForeignKeyMetadata objects
-  this.partitionKey     = []; // ordered array of column numbers in the partition key
+  this.database          = "";    // Database name
+  this.name              = "";    // Table Name
+  this.columns           = [];    // ordered array of ColumnMetadata objects
+  this.indexes           = [];    // array of IndexMetadata objects
+  this.foreignKeys       = [];    // array of ForeignKeyMetadata objects
+  this.partitionKey      = [];    // ordered array of column numbers in the partition key
+  this.fallbackContainer = null;  // column name of default sparse fields container
 }
 
 

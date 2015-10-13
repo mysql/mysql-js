@@ -25,6 +25,7 @@ public:
   short maxlen;
   bool isUtf16le;
   bool isUtf8;
+  bool isUnicode;
   bool isAscii;
   bool isMultibyte;
 };
