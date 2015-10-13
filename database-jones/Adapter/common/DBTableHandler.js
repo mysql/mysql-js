@@ -183,6 +183,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       } else {
         c = getColumnByName(this.dbTable, f.columnName);
         if(c) {
+          this.mapping.fieldIsNotSparse(c.name);
           n = c.columnNumber;
           priv.columnNumberToFieldMap[n] = f;
           f.columnNumber = n;
@@ -211,7 +212,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       if(! priv.columnNumberToFieldMap[i]) {
         c = this.dbTable.columns[i];
         udebug.log_detail('DBTableHandler adding unmapped column', c.name);
-        this.mapping.excludeField(c.name);  // Used by JSONSparseConverter
+        this.mapping.fieldIsNotSparse(c.name);
         f = new FieldMapping(c.name);
         stubFields.push(f);
         nMappedFields++;

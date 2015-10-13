@@ -487,10 +487,10 @@ TableMapping.prototype.mapManyToMany = function(literalMapping) {
   return this.mapRelationship(manyToManyMappingProperties, literalMapping);
 };
 
-/** excludeField(name)
- *  Exclude a single field from being persisted as part of sparse field handling.
+/** fieldIsNotSparse(name)
+ *  Exclude a field from sparse field handling.
  */
-TableMapping.prototype.excludeField = function(fieldName) {
+TableMapping.prototype.fieldIsNotSparse = function(fieldName) {
   if (this.excludedFieldNames.indexOf(fieldName) === -1) {
     this.excludedFieldNames.push(fieldName);
   }
@@ -504,12 +504,12 @@ TableMapping.prototype.excludeFields = function() {
   for (i = 0; i < arguments.length; ++i) {
     fieldNames = arguments[i];
     if (typeof fieldNames === 'string') {
-      this.excludeField(fieldNames);
+      this.fieldIsNotSparse(fieldNames);
     } else if (Array.isArray(fieldNames)) {
       for (j = 0; j < fieldNames.length; ++j) {
         fieldName = fieldNames[j];
         if (typeof fieldName === 'string') {
-          this.excludeFeild(fieldName);
+          this.fieldIsNotSparse(fieldName);
         } else {
           this.error += '\nMappingError: excludeFields argument must be a field name or an array or list of field names: \"' +
               fieldName + '\"';
