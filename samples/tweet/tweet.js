@@ -760,7 +760,6 @@ authorMapping = new jones.TableMapping('author');
 authorMapping.mapField("user_name");
 authorMapping.mapField("full_name");
 authorMapping.mapField("tweet_count");
-authorMapping.mapSparseFields("SPARSE_FIELDS");
 mappings.push(authorMapping.applyToClass(Author));
 
 // Map other SQL Tables to JS Constructors using default mappings

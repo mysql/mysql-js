@@ -1,0 +1,19 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/jdd/git-work-trees/installed/node-v0.12.7-darwin-x64/bin/node',
+1 verbose cli   '/Users/jdd/git-work-trees/installed/node-v0.12.7-darwin-x64/bin/npm',
+1 verbose cli   'explore',
+1 verbose cli   'mysql' ]
+2 info using npm@2.11.3
+3 info using node@v0.12.7
+4 verbose stack Error: It doesn't look like mysql is installed.
+4 verbose stack     at /Users/jdd/git-work-trees/installed/node-v0.12.7-darwin-x64/lib/node_modules/npm/lib/explore.js:23:43
+4 verbose stack     at FSReqWrap.oncomplete (evalmachine.<anonymous>:95:15)
+5 verbose cwd /Users/jdd/git-work-trees/working/mysql-js/samples/tweet
+6 error Darwin 14.0.0
+7 error argv "/Users/jdd/git-work-trees/installed/node-v0.12.7-darwin-x64/bin/node" "/Users/jdd/git-work-trees/installed/node-v0.12.7-darwin-x64/bin/npm" "explore" "mysql"
+8 error node v0.12.7
+9 error npm  v2.11.3
+10 error It doesn't look like mysql is installed.
+11 error If you need help, you may report this error at:
+11 error     <https://github.com/npm/npm/issues>
+12 verbose exit [ 1, true ]
