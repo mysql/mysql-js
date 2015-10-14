@@ -2344,4 +2344,3 @@ exports.UserContext.prototype.applyCallback = function(err, result) {
   this.user_callback.apply(null, args);
 };
 
-exports.Promise = Promise;

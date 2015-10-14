@@ -20,8 +20,9 @@
 
 "use strict";
 
-var     udebug     = unified_debug.getLogger("Transaction.js");
-var userContext    = require("./UserContext.js");
+var udebug         = unified_debug.getLogger("Transaction.js"),
+    userContext    = require("./UserContext.js"),
+    JonesPromise   = require("jones-promises");
 
 /** Transaction is implemented as a state machine. 
  * States are:
@@ -68,7 +69,7 @@ var rollbackOnly = new RollbackOnly();
  * If no callback is defined with an error, throw the error (and remain in the current state).
  */
 var callbackErrOrThrow = function(err, user_arguments) {
-  var promise = new userContext.Promise();
+  var promise = new JonesPromise();
   // signal the error via the promise
   if (err) {
     promise.reject(err);
