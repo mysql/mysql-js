@@ -1,5 +1,7 @@
 "use strict";
 
+var jones = require("database-jones");
+
 // TODO: Move this code to jones.common.Metadata ??
 
 /* TableMetadata object represents a table.

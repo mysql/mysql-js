@@ -20,7 +20,6 @@
 
 "use strict";
 
-var udebug       = unified_debug.getLogger("Meta.js");
 
 /** Meta allow users to define the metadata of a field or table to create tables.
  *  meta is exported and functions return a new object of type Meta.
@@ -33,6 +32,11 @@ function Meta() {
 
 Meta.prototype.isMeta = function() {
   return true;
+};
+
+Meta.prototype.numeric = function() {
+  this.isNumeric = true;
+  return this;
 };
 
 Meta.prototype.sparseContainer = function() {
@@ -122,7 +126,7 @@ meta.datetime = function(fsp) {
 };
 
 meta.decimal = function(precision, scale) {
-  var result = new Meta();
+  var result = new Meta().numeric();
   result.precision = precision;
   result.scale = scale || 0;
   result.doit = function(callback) {
@@ -132,7 +136,7 @@ meta.decimal = function(precision, scale) {
 };
 
 meta.double = function() {
-  var result = new Meta();
+  var result = new Meta().numeric();
   result.doit = function(callback) {
     return callback.double(this.isNullable);
   };
@@ -140,7 +144,7 @@ meta.double = function() {
 };
 
 meta.float = function() {
-  var result = new Meta();
+  var result = new Meta().numeric();
   result.doit = function(callback) {
     return callback.float(this.isNullable);
   };
@@ -167,7 +171,8 @@ meta.index = function(columns, name) {
 };
 
 meta.integer = function(bits) {
-  var result = new Meta();
+  var result = new Meta().numeric();
+  result.isInteger = true;
   result.bits = bits;
   result.doit = function(callback) {
     return callback.integer(this.bits, this.isUnsigned, this.isNullable);
@@ -233,7 +238,7 @@ meta.varchar = function(length) {
 };
 
 meta.year = function() {
-  var result = new Meta();
+  var result = new Meta().numeric();
   result.doit = function(callback) {
     return callback.year(this.isNullable);
   };
