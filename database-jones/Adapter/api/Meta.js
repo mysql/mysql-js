@@ -88,6 +88,11 @@ Meta.prototype.unsigned = function() {
   return this;
 };
 
+Meta.prototype.default = function(val) {
+  this.default = val;
+  return this;
+};
+
 var meta = {};
 
 meta.binary = function(length) {
