@@ -162,18 +162,18 @@ function createTable(tableMapping, sessionFactory, session, callback) {
   var connectionPool = sessionFactory.dbConnectionPool;
   var tableName = tableMapping.table;
 
-  function createTableOnTableMetadata(err, tableMetadata) {
-    var qualifiedTableName = tableMapping.database + '.' + tableName;
-    if(! err) {
-      // create the table handler
-      var tableHandler = new DBTableHandler(tableMetadata, tableMapping);
-      // remember the table metadata in the session factory
-      sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
-      // remember the table handler in the session factory
-      sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
-    }
-    callback(err);
-  }
+//  function createTableOnTableMetadata(err, tableMetadata) {
+//    var qualifiedTableName = tableMapping.database + '.' + tableName;
+//    if(! err) {
+//      // create the table handler
+//      var tableHandler = new DBTableHandler(tableMetadata, tableMapping);
+//      // remember the table metadata in the session factory
+//      sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
+//      // remember the table handler in the session factory
+//      sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
+//    }
+//    callback(err);
+//  }
 
   function createTableOnTableCreated(err) {
     if (err) {
@@ -181,9 +181,10 @@ function createTable(tableMapping, sessionFactory, session, callback) {
     } else {
       stats.tables_created++;
       // create the table metadata and table handler for the new table
-      connectionPool.getTableMetadata(tableMapping.database, tableName,
-                                      session.dbSession,
-                                      createTableOnTableMetadata);
+//      connectionPool.getTableMetadata(tableMapping.database, tableName,
+//                                      session.dbSession,
+//                                      createTableOnTableMetadata);
+      callback();
     }
   }
 
