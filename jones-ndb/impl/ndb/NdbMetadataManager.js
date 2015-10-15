@@ -63,7 +63,7 @@ NdbMetadataManager.prototype.execDDL = function(statement, callback) {
     var driver = session.dbSession.pooledConnection;
     assert(driver);
     driver.query(statement, function(err) {
-      udebug.log("onQuery");
+      udebug.log("onQuery // err:", err);
       session.close();
       callback(err);
     });
