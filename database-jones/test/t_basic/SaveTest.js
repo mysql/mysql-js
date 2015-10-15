@@ -100,7 +100,11 @@ t3.run = function() {
         }
         session3.find('t_basic', 4020, function(err, object3) {
           // verify that object3 has updated magic field from object2
-          testCase.errorIfNotEqual('testSaveUpdate mismatch on magic', 4029, object3.magic);
+          if(object3) {
+            testCase.errorIfNotEqual('testSaveUpdate mismatch on magic', 4029, object3.magic);
+          } else {
+            testCase.errorIfNull("find: no result", object3);
+          }
           testCase.failOnError();
         });
       }, session2);
@@ -177,11 +181,13 @@ t7.run = function() {
           return;
         }
         session3.find('t_basic', 4040, function(err, object3) {
-          // verify that object3 has updated name field from object2
-          testCase.errorIfNotEqual('testSaveUpdate mismatch on name', 'Employee 4050', object3.name);
-          testCase.errorIfNotEqual('testSaveUpdate mismatch on magic', 4050, object3.magic);
-          // age should be unchanged
-          testCase.errorIfNotEqual('testSaveUpdate mismatch on age', 4040, object3.age);
+          if(object3) {   // verify that object3 has updated name field from object2
+            testCase.errorIfNotEqual('testSaveUpdate mismatch on name', 'Employee 4050', object3.name);
+            testCase.errorIfNotEqual('testSaveUpdate mismatch on magic', 4050, object3.magic);
+            testCase.errorIfNotEqual('testSaveUpdate mismatch on age', 4040, object3.age);
+          } else {
+            testCase.errorIfNull("find: no result", object3);
+          }
           testCase.failOnError();
         });
       }, session2);

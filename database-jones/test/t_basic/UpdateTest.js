@@ -291,8 +291,11 @@ t7.run = function() {
           return;
         }
         session3.find('t_basic', 5240, function(err, object3) {
-          // verify that object3 has updated name field from object2
-          testCase.errorIfNotEqual('testPartialUpdate mismatch on name', 'Employee 5249', object3.name);
+          if(object3) { // verify that object3 has updated name field from object2
+            testCase.errorIfNotEqual('testPartialUpdate mismatch on name', 'Employee 5249', object3.name);
+          } else {
+            testCase.errorIfNull("find: no result", object3);
+          }
           testCase.failOnError();
         });
       }, session2);
