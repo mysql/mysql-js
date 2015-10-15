@@ -129,6 +129,16 @@ function isArrayOf(elementVerifier) {
   };
 }
 
+function isElementOrArrayOf(elementVerifier) {
+  var arrayVerifier;
+
+  assert.equal(typeof elementVerifier, "function");
+  arrayVerifier = isArrayOf(elementVerifier);
+
+  return function(value) {
+    return Array.isArray(value) ? arrayVerifier(value) : elementVerifier(value);
+  }
+}
 
 function LiteralObjectVerifier() {
   this.requiredProperties = [];   // List of property names
@@ -260,7 +270,7 @@ var tableMappingProperties =
     set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
     set("mappedFieldNames",   isArrayOf(isNonEmptyString)).
-    set("meta",               isArrayOf(isMeta)).
+    set("meta",               isElementOrArrayOf(isMeta)).
     setRequired("table");
 
 
@@ -322,7 +332,7 @@ TableMapping.prototype.constructFromTableName = function(tableName) {
 TableMapping.prototype.assignMeta = function(args) {
   var i, arg;
   for (i = 1; i < args.length; i++) {
-    arg = arguments[i];
+    arg = args[i];
     if(isMeta(arg)) {
       this.meta.push(arg);
     } else {
@@ -352,7 +362,7 @@ TableMapping.prototype.columnIsMapped = function(colName) {
   return false;
 };
 
-/* mapField(fieldName, [columnName], [converter], [persistent])
+/* mapField(fieldName, [columnName], [converter], [meta], [persistent])
    mapField(literalFieldMapping)
    IMMEDIATE
 
@@ -399,7 +409,9 @@ TableMapping.prototype.mapField = function(nameOrLiteral) {
 
   this.error += fieldMappingProperties.getErrors(fieldMappingLiteral);
 
-  if(! this.error.length) {
+  if(this.error.length) {
+    udebug.log("mapField() Errors: ", this.error);
+  } else {
     fieldName = fieldMappingLiteral.fieldName;
     if(this.getFieldMapping(fieldName)) {
       this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing field.';
