@@ -440,6 +440,9 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
     meta = field.meta;
     if (meta) {
       columnMeta = meta.doit(translateMeta);
+      if(meta.defaultVal) {
+        columnMeta += ' DEFAULT "' + meta.defaultVal + '"';
+      }
       sql += columnMeta;
       sql += meta.isPrimaryKey? ' PRIMARY KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : '') : '';
       sql += meta.isUniqueKey?   ' UNIQUE KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : ''): '';

@@ -88,8 +88,8 @@ Meta.prototype.unsigned = function() {
   return this;
 };
 
-Meta.prototype.default = function(val) {
-  this.default = val;
+Meta.prototype.defaultValue = function(val) {
+  this.defaultVal = val;
   return this;
 };
 
