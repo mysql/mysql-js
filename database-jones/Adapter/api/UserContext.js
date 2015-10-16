@@ -160,8 +160,8 @@ exports.UserContext.prototype.getOpenSessionFactories = function() {
 
 function createTable(tableMapping, sessionFactory, session, callback) {
   var connectionPool = sessionFactory.dbConnectionPool;
-  var tableName = tableMapping.table;
-
+//  var tableName = tableMapping.table;
+//
 //  function createTableOnTableMetadata(err, tableMetadata) {
 //    var qualifiedTableName = tableMapping.database + '.' + tableName;
 //    if(! err) {

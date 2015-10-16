@@ -44,7 +44,7 @@ var Sqlstates = {
   "25000" : "Invalid Transaction State",  
   "2C000" : "Invalid character set name",  
   "42S02" : "Table not found",
-  "IM001" : "Driver does not support this function",  
+  "0A000" : "Driver does not support this function",
   
   /* Implementation-defined classes (NDB) */
   "NDB00" : "Refer to ndb_error for details",

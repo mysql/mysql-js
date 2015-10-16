@@ -1,31 +1,43 @@
-/* A DBOperation object represents a database operation. 
-   It contains read-only user-visible fields.
+
+var   OperationCodes,       // Array of defined opcodes
+      LockModes;            // Array of defined lock modes
+
+
+
+/* Standard representation of errors
 */
-
-//   DBSession.buildXXX takes additional transaction and callback
-//    The callback will receive(error, DBResult)
-
-
-var   DBOperation,          // DBOperation structure prototype
-      OperationCodes,       // Array of defined opcodes
-      OperationStates,      // Array of defined operation states
-      LockModes,            // Array of defined lock modes
-      DBResult,             // DBResult structure prototype
-      DBOperationError;     // DBOperationError structure prototype
+function DBOperationError() {
+  this.sqlstate  = null;    // Standardized error; see API-documentation/Errors
+  this.message   = null;    // User-friendly error message string
+  this.cause     = null;    // Optional adapter-specific error or original error
+  /* Other adapter-specific properties may also be present */
+}
 
 
-DBOperation = {
-  opcode          : null ,  // the OperationCode
-  userCallback    : null ,  // a higher level callback
-  transaction     : null ,  // pointer to the operation's transaction
-  values          : null ,  // array or map containing user-supplied values
-  tableHandler    : null ,  // the DBTableHandler used for this operation
-  lockMode        : null ,  // LockMode used for a read operation
-  index           : null ,  // the IndexMetadata used for this operation
-  state           : null ,  // the current OperationState
-  result          : null ,  // DBResult object containing the result of the operation
+/* Result of a database operation
+*/
+function DBResult() {
+  this.success   = null;  // boolean indicating whether the operation succeeded
+  this.error     = null;  // a DBOperationError object
+  this.value     = null;  // Result of the operation
+  this.insert_id = null;  // Value of generated fields on insert (e.g. Auto-increment)
 };
 
+
+
+/* A DBOperation is an opaque object created and used by the DBServiceProvider.
+   It has one required property, result, which should hold a DBOperationResult.
+   Other properties may be defined by the DBServiceProvider.
+*/
+function DBOperation () {
+  this.result    = null;   // DBResult object will hold the operation result
+};
+
+
+
+/* Operation codes defined here are provided as a convenience to DBServiceProviders.
+   They are not required, and not used by the higher-level Jones API.
+*/
 OperationCodes = {
   'OP_READ'        :  1,       1 : 'read',
   'OP_INSERT'      :  2,       2 : 'insert',
@@ -40,16 +52,8 @@ OperationCodes = {
 };
 
 
-OperationStates = [ 
-  "DEFINED",             // opcode, table, and required keys/values are present
-  "PREPARED",            // local preparation of the operation is complete
-  "COMPLETED"            // operation is complete and result is available
-];   
-
-
-/* All LockModes may not be implemented by all adapters.
-   The LockMode in the DBOperation reflects the actual supported LockMode in use 
-   for the operation.
+/*  The standard set of lock modes.
+    All LockModes may not be implemented by all adapters.
 */   
 LockModes = [ 
   "EXCLUSIVE",         // Read with an exclusive lock
@@ -58,27 +62,11 @@ LockModes = [
 ];
 
 
-DBResult = { 
-  success        : null ,  // boolean indicating whether the operation succeeded
-  error          : null ,  // a DBOperationError object  
-  value          : null ,  // Result value created according to the DBTableHandler
-  insert_id      : null ,  // value of AUTO-INCREMENT key on insert
-};
-
-
-DBOperationError = {
-  code           : null,   // MySQL Error Code number (number)
-  sqlstate       : null,   // MySQL SQLSTATE (string)
-  message        : null    // Error message (string)
-  /* ...  Other adapter-specific properties which may be present */
-};
-
 
 /* This documentation file is a valid JavaScript module and exports: 
 */
 exports.DBOperation = DBOperation;
 exports.OperationCodes = OperationCodes;
-exports.OperationStates = OperationStates;
 exports.LockModes = LockModes;
 exports.DBOperationError = DBOperationError;
 exports.DBResult = DBResult;
