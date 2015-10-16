@@ -33,7 +33,8 @@ var mapping = new TableMapping("test.tbl4");
 function prepare(testCase, callback) {
 
   function onTable(err, dbTable) {
-    if(err) {  
+    udebug.log("onTable");
+    if(err) {
       testCase.fail(err);
     }
     else {
@@ -44,7 +45,8 @@ function prepare(testCase, callback) {
   function onSession(err, sess) {
     dbSession = sess; // set global
     if(err) {   testCase.fail(err);   }
-    else    {   
+    else    {
+      udebug.log("Ready to getTableMetadata");
       dbSession.getConnectionPool().getTableMetadata("test", "tbl4", dbSession, onTable); 
     }
   }

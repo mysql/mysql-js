@@ -46,7 +46,8 @@ exports.common = {
   "MySQLTime"                 : common("MySQLTime"),
   "SQLBuilder"                : common("SQLBuilder"),
   "SQLTransactionHandler"     : common("SQLTransactionHandler"),
-  "FieldValueDefinedListener" : common("FieldValueDefinedListener")
+  "FieldValueDefinedListener" : common("FieldValueDefinedListener"),
+  "DictionaryCall"            : common("DictionaryCall")
 };
 
 exports.api = {

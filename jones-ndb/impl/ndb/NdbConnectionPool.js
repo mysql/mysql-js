@@ -46,6 +46,7 @@ var conf             = require("./path_config"),
     stats_module     = require(jones.api.stats),
     isValidConverterObject = require(jones.api.TableMapping).isValidConverterObject,
     QueuedAsyncCall  = require(jones.common.QueuedAsyncCall).QueuedAsyncCall,
+    DictionaryCall   = require(jones.common.DictionaryCall),
     baseConnections  = {},
     initialized      = false;
 
@@ -224,8 +225,7 @@ function DBConnectionPool(props) {
   this.ndbConnection      = null;
   this.impl               = null;
   this.asyncNdbContext    = null;
-  this.pendingListTables  = {};
-  this.pendingGetMetadata = {};
+  this.dictionaryCalls    = new DictionaryCall.Call();
   this.ndbSessionFreeList = [];
   this.typeConverters     = {};
   this.openTables         = [];
@@ -334,57 +334,18 @@ DBConnectionPool.prototype.getDBSession = function(index, user_callback) {
 /*
  *  Implementation of listTables() and getTableMetadata() 
  *
- *  Design notes: 
- *    A single Ndb can perform one metadata lookup at a time. 
+ *    A single Ndb can perform one metadata lookup at a time.
  *    An NdbSession object owns a dictionary lock and a queue of dictionary calls.
  *    If we can get the lock, we run a call immediately; if not, place it on the queue.
  *    
- *    Also, it often happens in a Batch context that a bunch of operations all
- *    need the same metadata.  So, for each dictionary call, we create a group callback,
- *    and then add individual user callbacks to that group as they come in.
- * 
- *    The dictionary call and the group callback are both created by generator functions.
- * 
- *    Who runs the queue?  The group callback checks it after it all the user 
- *    callbacks have completed. 
- * 
+ *    It often happens in a Batch context that a bunch of operations all need
+ *    the same metadata.  Common/DictionaryCall.js takes care of running the 
+ *    actual call only once for each batch.
  */
 
-
-function makeGroupCallback(dbSession, container, key) {
-  stats.group_callbacks_created++;
-  var groupCallback = function(param1, param2) {
-    var callbackList, i;
-
-    /* Run the user callbacks on our list */
-    callbackList = container[key];
-    udebug.log("GroupCallback for", key, "with", callbackList.length, "user callbacks");
-    for(i = 0 ; i < callbackList.length ; i++) { 
-      callbackList[i](param1, param2);
-    }
-
-    /* Then clear the list */
-    delete container[key];
-  };
-  
-  return groupCallback;
+function runListTables(arg, callback) {
+  adapter.ndb.impl.DBDictionary.listTables(arg.impl, arg.database, callback);
 }
-
-
-function makeListTablesCall(dbSession, ndbConnectionPool, databaseName) {
-  var container = ndbConnectionPool.pendingListTables;
-  var groupCallback = makeGroupCallback(dbSession, container, databaseName);
-  var apiCall = new QueuedAsyncCall(dbSession.execQueue, groupCallback);
-  apiCall.impl = dbSession.impl;
-  apiCall.databaseName = databaseName;
-  apiCall.description = "listTables";
-  apiCall.run = function() {
-    adapter.ndb.impl.DBDictionary.listTables(this.impl, this.databaseName, 
-                                             this.callback);
-  };
-  return apiCall;
-}
-
 
 /** List all tables in the schema
   * ASYNC
@@ -393,32 +354,36 @@ function makeListTablesCall(dbSession, ndbConnectionPool, databaseName) {
   */
 DBConnectionPool.prototype.listTables = function(databaseName, dictSession, 
                                                  user_callback) {
+  var arg, key;
+  assert(databaseName && dictSession && user_callback);
+  arg = { "impl"     : dictSession.impl,
+          "database" : databaseName
+        };
+  key = "listTables:" + databaseName;
   stats.list_tables++;
-  assert(databaseName && user_callback);
-
-  if(this.pendingListTables[databaseName]) {
-    // This request is already running, so add our own callback to its list
-    udebug.log("listTables", databaseName, "Adding request to pending group");
-    this.pendingListTables[databaseName].push(user_callback);
-  }
-  else {
-    this.pendingListTables[databaseName] = [];
-    this.pendingListTables[databaseName].push(user_callback);
-    makeListTablesCall(dictSession, this, databaseName).enqueue();
+  if(this.dictionaryCalls.add(key, user_callback)) {
+    this.dictionaryCalls.queueExecCall(dictSession.execQueue,
+                                       runListTables, arg,
+                                       this.dictionaryCalls.makeGroupCallback(key));
   }
 };
 
 
-function makeGetTableCall(dbSession, ndbConnectionPool, dbName, tableName) {
-  var container = ndbConnectionPool.pendingGetMetadata;
-  var key = dbName + "." + tableName;
-  var groupCallback = makeGroupCallback(dbSession, container, key);
+function runGetTable(arg, callback) {
+  adapter.ndb.impl.DBDictionary.getTable(arg.impl, arg.dbName,
+                                         arg.tableName, callback);
+}
+
+DBConnectionPool.prototype.makeMasterCallback = function(key) {
+  var ndbConnectionPool, groupCallback;
+
+  ndbConnectionPool = this;
+  groupCallback = this.dictionaryCalls.makeGroupCallback(key);
 
   /* Customize Column read from dictionary */
   function drColumn(c) {
     /* Set TypeConverter for column */
-    // TODO: c.ndb.typeConverter ??? 
-    c.typeConverter = {};
+    c.typeConverter = {};   // TODO: c.ndb.typeConverter ???
     c.typeConverter.ndb = ndbConnectionPool.typeConverters[c.columnType];
 
     /* Set defaultValue for column */
@@ -430,37 +395,26 @@ function makeGetTableCall(dbSession, ndbConnectionPool, dbName, tableName) {
     else if(c.isNullable) {
       c.defaultValue = null;
     }
-    else {
-      c.defaultValue = undefined;
-    }
     udebug.log_detail("drColumn:", c);
   }
 
-  function masterCallback(err, table) {
+  return function(err, table) {
+    var error;
     if(err) {
-      err.sqlState = "42S02";
-      err.message = "Table " + key + " not found in NDB data dictionary";
-    }
-    if(table) {
+      error = {
+        sqlState : "42S02",
+        message  : "Table " + key + " not found in NDB data dictionary",
+        cause    : err
+      };
+    } else {
       autoincrement.getCacheForTable(table);  // get AutoIncrementCache
       table.columns.forEach(drColumn);
       ndbConnectionPool.openTables.push(table);
     }
     /* Finally dispatch the group callbacks */
-    groupCallback(err, table);
-  }
-
-  var apiCall = new QueuedAsyncCall(dbSession.execQueue, masterCallback);
-  apiCall.impl = dbSession.impl;
-  apiCall.dbName = dbName;
-  apiCall.tableName = tableName;
-  apiCall.description = "getTableMetadata";
-  apiCall.run = function() {
-    adapter.ndb.impl.DBDictionary.getTable(this.impl, this.dbName, 
-                                           this.tableName, this.callback);
+    groupCallback(error, table);
   };
-  return apiCall;
-}
+};
 
 
 /** Fetch metadata for a table
@@ -470,20 +424,18 @@ function makeGetTableCall(dbSession, ndbConnectionPool, dbName, tableName) {
   */
 DBConnectionPool.prototype.getTableMetadata = function(dbname, tabname, 
                                                        dictSession, user_callback) {
-  var tableKey;
-  stats.get_table_metadata++;
+  var key, arg;
   assert(dbname && tabname && user_callback);
-  tableKey = dbname + "." + tabname;
-
-  if(this.pendingGetMetadata[tableKey]) {
-    // This request is already running, so add our own callback to its list
-    udebug.log("getTableMetadata", tableKey, "Adding request to pending group");
-    this.pendingGetMetadata[tableKey].push(user_callback);
-  }
-  else {
-    this.pendingGetMetadata[tableKey] = [];
-    this.pendingGetMetadata[tableKey].push(user_callback);
-    makeGetTableCall(dictSession, this, dbname, tabname).enqueue();
+  stats.get_table_metadata++;
+  key = dbname + "." + tabname;
+  arg = { "impl"      : dictSession.impl,
+          "dbName"    : dbname,
+          "tableName" : tabname
+        };
+  if(this.dictionaryCalls.add(key, user_callback)) {
+    this.dictionaryCalls.queueExecCall(dictSession.execQueue,
+                                       runGetTable, arg,
+                                       this.makeMasterCallback(key));
   }
 };
 
