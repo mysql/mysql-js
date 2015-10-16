@@ -119,10 +119,10 @@ exports.converters = {
 
 /* Find jones_deployments.js
      Read a deployments.js file from the same directory as the top-level
-     node.js executable module.
+     executable.
      If none, read one from the directory of a required module, descending
      through modules to the same directory as this module (jones.js).
-     If none is found, read one from the current working directory.
+     If none, read one from the current working directory.
 */
 
 function findDeploymentsFile() {
@@ -150,7 +150,7 @@ function findDeploymentsFile() {
   } while(oldDir !== sourceDir);   // these become equal at "/"
 
   // Finally look in CWD
-  depFile = depFile || findFile(process.env.CWD);
+  depFile = depFile || findFile(process.env.PWD);
 
   /* Load the file */
   if(depFile) {
