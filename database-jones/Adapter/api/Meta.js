@@ -250,5 +250,15 @@ meta.year = function() {
   return result;
 };
 
+meta.fromLiteralMeta = function(literal) {
+  var p, result;
+  result = new Meta();
+  for(p in literal) {
+    if(literal.hasOwnProperty(p)) {
+      result.p = literal.p;
+    }
+  }
+  return result;
+};
 
 module.exports = meta;

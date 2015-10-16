@@ -23,7 +23,8 @@
 var udebug       = unified_debug.getLogger("TableMapping.js"),
     path         = require("path"),
     util         = require("util"),
-    assert       = require("assert");
+    assert       = require("assert"),
+    Meta         = require("./Meta");
 
 /* file scope mapping id used to uniquely identify a mapped domain object */
 var mappingId = 0;
@@ -113,7 +114,15 @@ function isFunction(value) {
 }
 
 function isMeta(value) {
-  return(value && value.isMeta && value.isMeta());
+  return (value && value.isMeta && value.isMeta());
+}
+
+function isLiteralMeta(value) {
+  return (value && typeof value === 'object' && typeof value.isNullable === 'boolean');
+}
+
+function isMetaOrLiteral(value) {
+  return (isMeta(value) || isLiteralMeta(value));
 }
 
 function isArrayOf(elementVerifier) {
@@ -137,7 +146,7 @@ function isElementOrArrayOf(elementVerifier) {
 
   return function(value) {
     return Array.isArray(value) ? arrayVerifier(value) : elementVerifier(value);
-  }
+  };
 }
 
 function LiteralObjectVerifier() {
@@ -227,7 +236,7 @@ function BasicFieldVerifier() {
 
 /* A FieldMapping literal can have any of the basic properties, plus "meta" */
 var fieldMappingProperties =
-  new BasicFieldVerifier().set("meta", isMeta);
+  new BasicFieldVerifier().set("meta", isMetaOrLiteral);
 
 
 function RelationshipVerifier(type, ctor) {
@@ -270,7 +279,7 @@ var tableMappingProperties =
     set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
     set("mappedFieldNames",   isArrayOf(isNonEmptyString)).
-    set("meta",               isElementOrArrayOf(isMeta)).
+    set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
     setRequired("table");
 
 
@@ -335,6 +344,8 @@ TableMapping.prototype.assignMeta = function(args) {
     arg = args[i];
     if(isMeta(arg)) {
       this.meta.push(arg);
+    } else if(isLiteralMeta(arg)) {
+      this.meta.push(Meta.fromLiteralMeta(arg));
     } else {
       this.error += 'MappingError: valid arguments are meta; invalid argument '
         + i + ': (' + typeof arg + ') ' + arg;
@@ -386,6 +397,8 @@ TableMapping.prototype.mapField = function(nameOrLiteral) {
           case 'object':
             if (isMeta(arg)) {
               fieldMappingLiteral.meta = arg;
+            } else if(isLiteralMeta(arg)) {
+              fieldMappingLiteral.meta = Meta.fromLiteralMeta(arg);
             } else if(isConverter(arg)) {
               fieldMappingLiteral.converter = arg;
             } else {
@@ -568,6 +581,8 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
             // argument is a meta or converter
             if(isMeta(arg)) {
               fieldMapping.meta = arg;
+            } else if(isLiteralMeta(arg)) {
+              fieldMapping.meta = Meta.fromLiteralMeta(arg);
             } else {
               // validate converter
               if (isConverter(arg)) {
