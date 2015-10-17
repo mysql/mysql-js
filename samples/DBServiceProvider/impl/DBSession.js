@@ -51,7 +51,7 @@ DBSession.prototype.close = function(callback) {
    RETURNS a DBOperation 
 */
 DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
-                                                   tx, callback) {
+                                                  tx, callback) {
   if(udebug.is_debug()) {
     udebug.log("Read", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
@@ -89,7 +89,7 @@ DBSession.prototype.buildInsertOperation = function(tableHandler, row,
    RETURNS a DBOperation 
 */
 DBSession.prototype.buildWriteOperation = function(dbIndexHandler, row, 
-                                                    tx, callback) {
+                                                   tx, callback) {
   if(udebug.is_debug()) {
     udebug.log("Write to", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
@@ -110,7 +110,7 @@ DBSession.prototype.buildWriteOperation = function(dbIndexHandler, row,
    RETURNS a DBOperation 
 */
 DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, 
-                                                     keys, row, tx, callback) {
+                                                    keys, row, tx, callback) {
   if(udebug.is_debug()) {
     udebug.log("Update", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
@@ -129,7 +129,7 @@ DBSession.prototype.buildUpdateOperation = function(dbIndexHandler,
    RETURNS a DBOperation 
 */  
 DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys,
-                                                     tx, callback) {
+                                                    tx, callback) {
   if(udebug.is_debug()) {
     udebug.log("Delete from", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
@@ -145,7 +145,7 @@ DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys,
    IMMEDIATE
 */
 DBSession.prototype.buildScanOperation = function(queryHandler, properties, 
-                                                   tx, callback) {
+                                                  tx, callback) {
   udebug.log("buildScanOperation");
   return new DBOperation().scan(queryHandler, properties, tx, callback);
 };

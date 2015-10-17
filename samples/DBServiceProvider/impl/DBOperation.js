@@ -45,9 +45,6 @@ DBResult.prototype.setValue = function(value) {
 function DBOperation () {
   this.result        = new DBResult(); // will hold the operation result
   this.key           = null;
-  this.callback      = null;
-  this.tableHandler  = null;
-  this.tx            = null;
 }
 
 DBOperation.prototype.assign = function(tableHandler, transaction, callback) {

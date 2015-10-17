@@ -33,6 +33,7 @@ DBTransactionHandler.prototype.setPartitionKey = function (tableHandler, partiti
 
 DBTransactionHandler.prototype.begin = function() {
   assert.equal(this.autocommit, true);
+  assert.equal(this.executedOperations.length, 0);
   this.autocommit = false;
 };
 
@@ -85,5 +86,5 @@ DBTransactionHandler.prototype.rollback = function rollback(userCallback) {
 };
 
 
-exports.DBTransactionHandler = DBTransactionHandler;
+module.exports = DBTransactionHandler;
 

@@ -3,7 +3,6 @@
 
 var assert           = require("assert"),
     path             = require("path"),
-    DBDictionary     = require("./DBDictionary"),
     config           = require("./path_config");
 
 
@@ -54,7 +53,7 @@ exports.connect = function(properties, userCallback) {
 
 
 exports.getDBMetadataManager = function(properties) {
-  return DBDictionary.getMetadataManager(properties);
+  return require("./DBDictionary").getMetadataManager(properties);
 };
 
 exports.fs = config;
