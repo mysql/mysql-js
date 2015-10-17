@@ -87,11 +87,15 @@ function noCheck() {
 }
 
 function isString(value) { 
-  return (typeof value === 'string' && value !== null);
+  return (typeof value === 'string');
 }
 
 function isNonEmptyString(value) {
-  return (isString(value) && value.length > 0);
+  return (typeof value === 'string' && value.length > 0);
+}
+
+function isEmptyString(value) {
+  return (value === "");
 }
 
 function isBool(value) {
@@ -236,8 +240,9 @@ function BasicFieldVerifier() {
 
 /* A FieldMapping literal can have any of the basic properties, plus "meta" */
 var fieldMappingProperties =
-  new BasicFieldVerifier().set("meta", isMetaOrLiteral);
-
+  new BasicFieldVerifier().
+    set("meta", isMetaOrLiteral).
+    set("sparseFieldNames", Array.isArray);
 
 function RelationshipVerifier(type, ctor) {
   var that = new BasicFieldVerifier();
@@ -280,6 +285,8 @@ var tableMappingProperties =
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
     set("mappedFieldNames",   isArrayOf(isNonEmptyString)).
     set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
+    set("hasSparseFields",    isBool).
+    set("error",              isEmptyString).
     setRequired("table");
 
 

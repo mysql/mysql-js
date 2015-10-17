@@ -71,7 +71,7 @@ DBTransactionHandler.prototype.execute = function(dbOperationList, userCallback)
    
    Commit work.
 */
-DBTransactionHandler.prototype.commit = function commit(userCallback) {
+DBTransactionHandler.prototype.commit = function(userCallback) {
   userCallback(new DBOperationError().fromSqlState("0A000"));
 };
 
@@ -81,7 +81,7 @@ DBTransactionHandler.prototype.commit = function commit(userCallback) {
    
    Roll back all previously executed operations.
 */
-DBTransactionHandler.prototype.rollback = function rollback(userCallback) {
+DBTransactionHandler.prototype.rollback = function(userCallback) {
   userCallback(new DBOperationError().fromSqlState("0A000"));
 };
 

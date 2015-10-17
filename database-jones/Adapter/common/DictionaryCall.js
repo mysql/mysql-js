@@ -85,7 +85,7 @@ function Queue() {
 Queue.prototype.add = function(key, impl, arg, callback) {
   if(this.call.add(key, callback)) {
     this.call.queueExecCall(this.execQueue, impl, arg,
-                            this.makeGroupCallback(key));
+                            this.call.makeGroupCallback(key));
   }
 };
 
