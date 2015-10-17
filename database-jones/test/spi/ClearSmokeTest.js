@@ -29,11 +29,13 @@ var test = new harness.ClearSmokeTest("ClearSmokeTest");
 test.run = function() {
   var test = this;
 
-  function onDrop() {
-    test.pass();
+  function onDrop(err) {
+    test.errorIfError(err);
+    test.failOnError();
   }
   
-  function onClose() {
+  function onClose(err) {
+    test.errorIfError(err);
     sqlDrop(test.suite, onDrop);
   }
   

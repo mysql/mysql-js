@@ -1,15 +1,16 @@
 "use strict";
 
-
-var assert          = require("assert"),
-    unified_debug   = require("unified_debug"),
-    udebug          = unified_debug.getLogger("DBSession.js");
+var assert               = require("assert"),
+    unified_debug        = require("unified_debug"),
+    udebug               = unified_debug.getLogger("DBSession.js"),
+    DBOperation          = require("./DBOperation").DBOperation,
+    DBTransactionHandler = require("./DBTransactionHandler");
 
 
 /** 
   A session has a single transaction visible to the user at any time,
   which is created in DbSession.getTransactionHandler() and persists
-  until the user performs an execute commit or rollback.
+  until the user initiates a commit or rollback of the transaction.
 */
 
 
@@ -19,7 +20,6 @@ function DBSession(pool) {
   this.parentPool            = pool;
   this.transactionHandler    = null;
 }
-
 
 
 /*  getConnectionPool() 
@@ -36,6 +36,7 @@ DBSession.prototype.getConnectionPool = function() {
 */
 DBSession.prototype.close = function(callback) {
   udebug.log("close");
+  this.detachTransaction();
   this.parentPool.closeDbSession(this, callback);
 };
 
@@ -52,12 +53,10 @@ DBSession.prototype.close = function(callback) {
 DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
                                                    tx, callback) {
   if(udebug.is_debug()) {
-    udebug.log("Read",
-               dbIndexHandler.tableHandler.dbTable.name,
+    udebug.log("Read", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().read(dbIndexHandler, keys, tx, callback);
 };
 
 
@@ -76,8 +75,7 @@ DBSession.prototype.buildInsertOperation = function(tableHandler, row,
   if(udebug.is_debug()) {
     udebug.log("Insert into", tableHandler.dbTable.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().insert(tableHandler, row, tx, callback);
 };
 
 
@@ -93,12 +91,10 @@ DBSession.prototype.buildInsertOperation = function(tableHandler, row,
 DBSession.prototype.buildWriteOperation = function(dbIndexHandler, row, 
                                                     tx, callback) {
   if(udebug.is_debug()) {
-    udebug.log("Write to",
-               dbIndexHandler.tableHandler.dbTable.name,
+    udebug.log("Write to", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().write(dbIndexHandler, row, tx, callback);
 };
 
 
@@ -114,14 +110,12 @@ DBSession.prototype.buildWriteOperation = function(dbIndexHandler, row,
    RETURNS a DBOperation 
 */
 DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, 
-                                                     keys, row, tx, userData) {
+                                                     keys, row, tx, callback) {
   if(udebug.is_debug()) {
-    udebug.log("Update",
-               dbIndexHandler.tableHandler.dbTable.name,
+    udebug.log("Update", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().update(dbIndexHandler, keys, row, tx, callback);
 };
 
 
@@ -137,13 +131,12 @@ DBSession.prototype.buildUpdateOperation = function(dbIndexHandler,
 DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys,
                                                      tx, callback) {
   if(udebug.is_debug()) {
-    udebug.log("Delete from",
-               dbIndexHandler.tableHandler.dbTable.name,
+    udebug.log("Delete from", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().remove(dbIndexHandler, keys, tx, callback);
 };
+
 
 /* buildScanOperation(QueryHandler queryHandler,
                       Object properties,
@@ -154,22 +147,23 @@ DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys,
 DBSession.prototype.buildScanOperation = function(queryHandler, properties, 
                                                    tx, callback) {
   udebug.log("buildScanOperation");
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().scan(queryHandler, properties, tx, callback);
 };
+
 
 /* buildReadProjectionOperation
    IMMEDIATE
 */
 DBSession.prototype.buildReadProjectionOperation = function(dbIndexHandler,
-                                            keys, projection, tx, callback) {
+                                                            keys, projection,
+                                                            tx, callback) {
   if(udebug.is_debug()) {
-    udebug.log("Projection Read from",
-               dbIndexHandler.tableHandler.dbTable.name,
+    udebug.log("Projection Read from", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var op = {};    // this function should create and return a DBOperation
-  return op;
+  return new DBOperation().readProjection(dbIndexHandler,
+                                          keys, projection,
+                                          tx, callback);
 };
 
 
@@ -179,18 +173,31 @@ DBSession.prototype.buildReadProjectionOperation = function(dbIndexHandler,
    RETURNS the current transaction handler, creating it if necessary
 */
 DBSession.prototype.getTransactionHandler = function() {
-  // return this.trasactionHandler;
+  if(! this.transactionHandler) {
+    this.transactionHandler = new DBTransactionHandler(this);
+  }
+  return this.trasactionHandler;
+};
+
+
+/* detachTransaction()
+   IMMEDIATE
+
+   Detaches a transaction from the session that created it.
+   The user has initiated commit or rollback of the transaction.
+   The transaction itself still exists and may have active callbacks,
+   but the session is now free from it and able to begin another.
+*/
+DBSession.prototype.detachTransaction = function() {
+  this.transactionHandler = null;
 };
 
 
 /* begin() 
    IMMEDIATE
-   
-   Begin a user transaction context; exit autocommit mode.
 */
 DBSession.prototype.begin = function() {
-  var tx = this.getTransactionHandler();
-  assert(tx.executedOperations.length === 0);
+  return this.getTransactionHandler().begin();
 };
 
 
@@ -201,7 +208,9 @@ DBSession.prototype.begin = function() {
    Callback is optional; if supplied, will receive (err).
 */
 DBSession.prototype.commit = function(userCallback) {
-  this.trasactionHandler.commit(userCallback);
+  var tx = this.transactionHandler;
+  this.detachTransaction();
+  return tx.commit(userCallback);
 };
 
 
@@ -212,8 +221,10 @@ DBSession.prototype.commit = function(userCallback) {
    Callback is optional; if supplied, will receive (err).
 */
 DBSession.prototype.rollback = function (userCallback) {
-  this.trasactionHandler.rollback(userCallback);
+  var tx = this.transactionHandler;
+  this.detachTransaction();
+  return tx.rollback(userCallback);
 };
 
 
-exports.DBSession = DBSession;
+module.exports = DBSession;

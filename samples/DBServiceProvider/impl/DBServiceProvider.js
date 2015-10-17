@@ -1,9 +1,10 @@
 
 "use strict";
 
-var assert = require("assert"),
-    path   = require("path"),
-    config = require("./path_config");
+var assert           = require("assert"),
+    path             = require("path"),
+    DBDictionary     = require("./DBDictionary"),
+    config           = require("./path_config");
 
 
 /* loadRequiredModules() should attempt to load all dependencies, and return
@@ -53,6 +54,7 @@ exports.connect = function(properties, userCallback) {
 
 
 exports.getDBMetadataManager = function(properties) {
+  return DBDictionary.getMetadataManager(properties);
 };
 
 exports.fs = config;

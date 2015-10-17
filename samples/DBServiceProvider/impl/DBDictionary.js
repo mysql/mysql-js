@@ -1,8 +1,8 @@
 "use strict";
 
-var jones = require("database-jones");
+var jones            = require("database-jones"),
+    DBOperationError = require("./DBOperation").DBOperationError;
 
-// TODO: Move this code to jones.common.Metadata ??
 
 /* TableMetadata object represents a table.
    This is the object returned in the getTableMetadata() callback.
@@ -77,15 +77,66 @@ function ForeignKeyMetadata() {
 }
 
 
-exports.createTable = function(tableMapping, session, userCallback) {
-
+/* createTable() receives an args object created by DBConnectionPool,
+   containing members: tableMapping and dbSession.
+   It should use TableMapping (including table and field Meta) to create
+   an appropriate container table for the mapping.
+   The callback should receive (error).
+   The DictionaryCall queue guarantees that createTable() will only be called
+   once if many users request it simultaneously.
+*/
+exports.createTable = function(args, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
 };
 
-exports.listTables = function(databaseName, dbSession, userCallback) {
 
+/* listTables() receives an args object created by DBConnectionPool,
+   containing members: databaseName and dbSession.
+   The callback should receive (error, arrayOfTableNames).
+   The DictionaryCall queue guarantees that listTables() will only be called
+   once if many users request it simultaneously.
+*/
+exports.listTables = function(args, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
 };
 
-exports.getTableMetadata = function(dbName, tableName, dbSession, userCallback) {
 
+/* getTableMetadata() receives an args object created by DBConnectionPool,
+   containing members: databaseName, tableName, and dbSession.
+   The callback should receive (error, tableMetadata).
+   The DictionaryCall queue guarantees that getTableMetadata() will only
+   be called once if many users request it simultaneously.
+*/
+exports.getTableMetadata = function(args, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
 };
+
+
+/* A MetadataManager is an interpreter for SQL-style CREATE and DROP scripts.
+   Its two public functions are createTestTables() and dropTestTables().
+*/
+
+function MetadataManager(connectionProperties) {
+}
+
+
+MetadataManager.prototype.createTestTables = function(suiteName, suitePath, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
+};
+
+
+MetadataManager.prototype.dropTestTables = function(suiteName, suitePath, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
+};
+
+exports.getMetadataManager = function(properties) {
+  return new MetadataManager(properties);
+};
+
+
 

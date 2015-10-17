@@ -57,12 +57,12 @@ t_222.run = function() {
     test.errorIfNotEqual("typeof this (2.2.5) " + this, "undefined", typeof this); 
     session.close(function() {
       test.failOnError();
-      });
+    });
   }
   
   p = mynode.openSession(good_properties, null);
   if(typeof p === 'object' && typeof p.then === 'function') {
-    p.then(onSession);
+    p.then(onSession, function(err) { test.fail(err); });
   } else {
     this.fail("PromisesTest.t_222 not thenable");
   }
@@ -131,8 +131,8 @@ t_2261.run = function() {
 
   p = mynode.openSession(good_properties, null);
   if(typeof p === 'object' && typeof p.then === 'function') {
-    p.then(onSession_1);
-    p.then(onSession_2);
+    p.then(onSession_1, function(err) { test.fail(err); });
+    p.then(onSession_2, function(err) { test.fail(err); });
   } else {
     this.fail("PromisesTest.t_2261 not thenable");
   }  
@@ -187,7 +187,7 @@ t_227.run = function() {
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
   } else {
-    p2 = p1.then(onSession);
+    p2 = p1.then(onSession, function(err) { test.fail(err); });
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_227 p2 not thenable");
     }
@@ -217,7 +217,7 @@ t_2271fv.run = function() {
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
   } else {
-    p2 = p1.then(onSession);
+    p2 = p1.then(onSession, function(err) { test.fail(err); });
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_2271 p2 not thenable");
     }
@@ -356,7 +356,7 @@ t_2273.run = function() {
     if(typeof p2 !== 'object' || typeof p2.then !== 'function') {
       this.appendErrorMessage("PromisesTest.t_2273 p2 not thenable");
     }
-    p2.then(p2OnFulfilled);
+    p2.then(p2OnFulfilled, function(err) { test.fail(err); });
   }
 };
 tests.push(t_2273);

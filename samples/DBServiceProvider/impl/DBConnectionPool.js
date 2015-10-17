@@ -1,9 +1,12 @@
 
 "use strict";
 
-var assert           = require("assert"),
+var jones            = require("database-jones"),
+    assert           = require("assert"),
     DBSession        = require("./DBSession"),
-    DBDictionary     = require("./DBDictionary");
+    DBDictionary     = require("./DBDictionary"),
+    DBOperationError = require("./DBOperation").DBOperationError,
+    DictionaryCall   = require(jones.common.DictionaryCall);
 
 
 /* DBConnectionPool constructor.
@@ -15,12 +18,15 @@ function DBConnectionPool(properties) {
   assert(properties.implementation === "sample");
   this.properties       = properties;
   this.typeConverterMap = {};
+  this.dictionaryQueue  = new DictionaryCall.Queue();
 }
 
 
 /* Async connect 
 */
 DBConnectionPool.prototype.connect = function(userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
 };
 
 
@@ -29,6 +35,7 @@ DBConnectionPool.prototype.connect = function(userCallback) {
    Returns bool true/false
  */
 DBConnectionPool.prototype.isConnected = function() {
+  return false;
 };
 
 
@@ -36,6 +43,7 @@ DBConnectionPool.prototype.isConnected = function() {
    ASYNC
 */
 DBConnectionPool.prototype.close = function(userCallback) {
+  userCallback();
 };
 
 
@@ -44,16 +52,22 @@ DBConnectionPool.prototype.close = function(userCallback) {
    Users's callback receives (error, DBSession)
 */
 DBConnectionPool.prototype.getDBSession = function(index, userCallback) {
+  userCallback(null, new DBSession(this));
 };
 
 
-/** List all tables in the schema
+/** List all tables in the schema.
   * ASYNC
   * 
   */
 DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
                                                  userCallback) {
-  return DBDictionary.listTables(databaseName, dbSession, userCallback);
+  var key, args;
+  key = "listTables:" + databaseName;
+  args = { "databaseName" : databaseName,
+           "dbSession"    : dbSession
+         };
+  this.dictionaryQueue.add(key, DBDictionary.listTables, args, userCallback);
 };
 
 
@@ -63,7 +77,13 @@ DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
   */
 DBConnectionPool.prototype.getTableMetadata = function(databaseName, tableName,
                                                        dbSession, userCallback) {
-  return DBDictionary.getTableMetadata(databaseName, tableName, dbSession, userCallback);
+  var key, args;
+  key = databaseName + "." + tableName;
+  args = {  "databaseName" : databaseName,
+            "tableName"    : tableName,
+            "dbSession"    : dbSession
+         };
+  this.dictionaryQueue.add(key, DBDictionary.getTableMetadata, args, userCallback);
 };
 
 
@@ -84,7 +104,12 @@ DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter)
 DBConnectionPool.prototype.createTable = function(tableMapping,
                                                   dbSession,
                                                   userCallback) {
-  return DBDictionary.createTable(tableMapping, dbSession, userCallback);
+  var key, args;
+  key = "createTable:" + tableMapping.table + "." + tableMapping.database;
+  args = { "tableMapping" : tableMapping,
+           "dbSession"    : dbSession
+         };
+  this.dictionaryQueue.add(key, DBDictionary.createTable, args, userCallback);
 };
 
 module.exports = DBConnectionPool;

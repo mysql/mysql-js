@@ -45,6 +45,8 @@ function getConnectionPool(userCallback) {
 function closeConnectionPool(callback) {
   if(spi_test_connection) {
     spi_test_connection.close(callback);
+  } else {
+    callback("Not connected");
   }
 }
 

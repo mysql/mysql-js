@@ -3,7 +3,7 @@
 
 var jones       = require("database-jones"),
     driver      = require(jones.fs.test_driver),
-    this_module = require("../.."),
+    this_module = require(".."),
     properties;
 
 
