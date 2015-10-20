@@ -168,7 +168,7 @@ function createTable(tableMapping, sessionFactory, session, callback) {
 //      // create the table handler
 //      var tableHandler = new DBTableHandler(tableMetadata, tableMapping);
 //      // remember the table metadata in the session factory
-//      sessionFactory.tableMetadatas[qualifiedTableName] = tableMapping;
+//      sessionFactory.tableMetadatas[qualifiedTableName] = tableMetadata;
 //      // remember the table handler in the session factory
 //      sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
 //    }
@@ -182,7 +182,7 @@ function createTable(tableMapping, sessionFactory, session, callback) {
       stats.tables_created++;
       // create the table metadata and table handler for the new table
 //      connectionPool.getTableMetadata(tableMapping.database, tableName,
-//                                      session.dbSession,
+//                                      session?session.dbSession:null,
 //                                      createTableOnTableMetadata);
       callback();
     }
