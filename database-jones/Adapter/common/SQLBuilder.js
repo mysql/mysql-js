@@ -390,23 +390,32 @@ var translateMeta = {};
 translateMeta.binary = function(length, nullable) {return 'BINARY(' + length + ')' +  pn(nullable);};
 translateMeta.char = function(length, nullable) {return 'CHAR(' + length + ')' +  pn(nullable);};
 translateMeta.date = function(nullable) {return 'DATE' +  pn(nullable);};
-translateMeta.datetime = function(fsp, nullable) {return 'DATETIME(' +  fsp + ')' + pn(nullable);};
+translateMeta.datetime = function(fsp, nullable, generated) {
+  var sql = 'DATETIME(' +  fsp + ')' + pn(nullable);
+  if(generated) { sql += ' DEFAULT CURRENT_TIMESTAMP'; }
+  return sql;
+};
 translateMeta.decimal = function(precision, scale, nullable) {return 'DECIMAL(' + precision + ', ' + scale + ')' +  pn(nullable);};
 translateMeta.double = function(nullable) {return 'DOUBLE' +  pn(nullable);};
 translateMeta.float = function(nullable) {return 'FLOAT' +  pn(nullable);};
-translateMeta.integer = function(bits, unsigned, nullable) {
+translateMeta.integer = function(bits, unsigned, nullable, generated) {
   var u = pu(unsigned);
   var n = pn(nullable);
+  var autoinc = generated ? " AUTO_INCREMENT" : "";
   if (bits < 8)   {return 'BIT' + u + n;}
-  if (bits == 8)  {return 'TINYINT' + u + n;}
-  if (bits <= 16) {return 'SMALLINT' + u + n;}
-  if (bits <= 24) {return 'MEDIUMINT' + u + n;}
-  if (bits <= 32) {return 'INT' + u + n;}
-  /* else */       return 'BIGINT' + u + n;
+  if (bits == 8)  {return 'TINYINT' + u + n + autoinc;}
+  if (bits <= 16) {return 'SMALLINT' + u + n + autoinc;}
+  if (bits <= 24) {return 'MEDIUMINT' + u + n + autoinc;}
+  if (bits <= 32) {return 'INT' + u + n + autoinc;}
+  /* else */       return 'BIGINT' + u + n + autoinc;
 };
 translateMeta.interval = function(fsp, nullable) {return 'TIME' + pn(nullable);};
 translateMeta.time = function(fsp, nullable) {return 'TIME' + pn(nullable);};
-translateMeta.timestamp = function(fsp, nullable) {return 'TIMESTAMP' + pn(nullable);};
+translateMeta.timestamp = function(fsp, nullable, generated) {
+  var sql = 'TIMESTAMP' + pn(nullable);
+  if(generated) { sql += ' DEFAULT CURRENT_TIMESTAMP'; }
+  return sql;
+};
 translateMeta.varbinary = function(length, lob, nullable) {
   if (lob) {
     return 'BLOB(' + length + ')' + pn(nullable);
@@ -444,8 +453,12 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
         columnMeta += ' DEFAULT "' + meta.defaultVal + '"';
       }
       sql += columnMeta;
-      sql += meta.isPrimaryKey? ' PRIMARY KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : '') : '';
-      sql += meta.isUniqueKey?   ' UNIQUE KEY ' + (meta.isAutoincrement? ' AUTO_INCREMENT ' : ''): '';
+      if(meta.hasIndex) {
+        sql += meta.indexIsUnique ? ' UNIQUE' : '';
+        sql += ' KEY ';
+      } else {
+        sql += meta.isPrimaryKey? ' PRIMARY KEY' : '';
+      }
       udebug.log('sqlForTableCreation field:', field.fieldName, 'column:', field.columnName, 'meta:', meta, 'columnMeta:', columnMeta);
     } else {
       sql += defaultFieldMeta(field);
@@ -455,11 +468,16 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
   // need to support PRIMARY and HASH
   for (i = 0; i < tableMapping.meta.length; ++i) {
     tableMeta = tableMapping.meta[i];
-    if (tableMeta.index) {
+    if (tableMeta.isIndex) {
       sql += delimiter;
-      // index name calculation
-      sql += tableMeta.unique?' UNIQUE': '';
-      sql += ' INDEX ' + tableMeta.columns + ' ( ' + tableMeta.columns + ') ';
+      if(tableMeta.isPrimaryKey) {
+        sql += ' PRIMARY KEY ';
+      } else {
+        sql += (tableMeta.unique?' UNIQUE ': ' ') + 'INDEX ';
+        sql += tableMeta.name || "";
+      }
+      if(tableMeta.isHash) { sql += "USING HASH"; }
+      sql += ' ( ' + tableMeta.columns + ') ';
     }
   }
   sql += ")";

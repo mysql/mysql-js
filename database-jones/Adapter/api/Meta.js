@@ -34,18 +34,19 @@ Meta.prototype.isMeta = function() {
   return true;
 };
 
-Meta.prototype.numeric = function() {
-  this.isNumeric = true;
-  return this;
-};
-
 Meta.prototype.sparseContainer = function() {
   this.isSparseContainer = true;
   return this;
 };
 
+Meta.prototype.generated = function() {
+  this.isGenerated = true;
+  return this;
+};
+
 Meta.prototype.autoincrement = function() {
   this.isAutoincrement = true;
+  this.isGenerated = true;
   return this;
 };
 
@@ -78,10 +79,16 @@ Meta.prototype.primaryKey = function() {
 Meta.prototype.primary = Meta.prototype.primaryKey;
 
 Meta.prototype.uniqueKey = function() {
-  this.isUniqueKey = true;
+  this.hasIndex = true;
+  this.indexIsUnique = true;
   return this;
 };
 Meta.prototype.unique = Meta.prototype.uniqueKey;
+
+Meta.prototype.index = function(name) {
+  this.hasIndex = true;
+  return this;
+};
 
 Meta.prototype.unsigned = function() {
   this.isUnsigned = true;
@@ -93,13 +100,15 @@ Meta.prototype.defaultValue = function(val) {
   return this;
 };
 
+
+// Meta Factory
 var meta = {};
 
 meta.binary = function(length) {
   var result = new Meta();
   result.length = length;
   result.doit = function(callback) {
-    return callback.binary(this.length, this.isLob, this.isNullable);
+    return callback.binary(this.length, this.isLob, this.isNullable, this.isGenerated);
   };
   return result;
 };
@@ -108,7 +117,7 @@ meta.char = function(length) {
   var result = new Meta();
   result.length = length;
   result.doit = function(callback) {
-    return callback.char(this.length, this.isLob, this.isNullable);
+    return callback.char(this.length, this.isLob, this.isNullable, this.isGenerated);
   };
   return result;
 };
@@ -125,13 +134,14 @@ meta.datetime = function(fsp) {
   var result = new Meta();
   result.fsp = fsp;
   result.doit = function(callback) {
-    return callback.datetime(this.fsp, this.isNullable);
+    return callback.datetime(this.fsp, this.isNullable, this.isGenerated);
   };
   return result;
 };
 
 meta.decimal = function(precision, scale) {
-  var result = new Meta().numeric();
+  var result = new Meta();
+  result.isNumeric = true;
   result.precision = precision;
   result.scale = scale || 0;
   result.doit = function(callback) {
@@ -141,7 +151,8 @@ meta.decimal = function(precision, scale) {
 };
 
 meta.double = function() {
-  var result = new Meta().numeric();
+  var result = new Meta();
+  result.isNumeric = true;
   result.doit = function(callback) {
     return callback.double(this.isNullable);
   };
@@ -149,7 +160,8 @@ meta.double = function() {
 };
 
 meta.float = function() {
-  var result = new Meta().numeric();
+  var result = new Meta();
+  result.isNumeric = true;
   result.doit = function(callback) {
     return callback.float(this.isNullable);
   };
@@ -159,7 +171,7 @@ meta.float = function() {
 meta.hashKey = function(columns, name) {
   var result = new Meta();
   result.name = name;
-  result.index = true;
+  result.isIndex = true;
   result.hash = true;
   result.columns = columns;
   return result;
@@ -169,18 +181,19 @@ meta.hash = meta.hashKey;
 meta.index = function(columns, name) {
   var result = new Meta();
   result.name = name;
-  result.index = true;
+  result.isIndex = true;
   result.unique = false;
   result.columns = columns;
   return result;
 };
 
 meta.integer = function(bits) {
-  var result = new Meta().numeric();
+  var result = new Meta();
+  result.isNumeric = true;
   result.isInteger = true;
-  result.bits = bits;
+  result.bits = isFinite(bits) ? bits : 32;
   result.doit = function(callback) {
-    return callback.integer(this.bits, this.isUnsigned, this.isNullable);
+    return callback.integer(this.bits, this.isUnsigned, this.isNullable, this.isGenerated);
   };
   return result;
 };
@@ -197,6 +210,14 @@ meta.number = meta.decimal;
 
 meta.orderedIndex = meta.index;
 
+meta.primaryKey = function(columns) {
+  var result = new Meta();
+  result.isIndex = true;
+  result.isPrimaryKey = true;
+  result.columns = columns;
+  return result;
+};
+
 meta.time = function(fsp) {
   var result = new Meta();
   result.fsp = fsp;
@@ -210,7 +231,7 @@ meta.timestamp = function(fsp) {
   var result = new Meta();
   result.fsp = fsp;
   result.doit = function(callback) {
-    return callback.timestamp(this.fsp, this.isNullable);
+    return callback.timestamp(this.fsp, this.isNullable, this.isGenerated);
   };
   return result;
 };
@@ -218,7 +239,7 @@ meta.timestamp = function(fsp) {
 meta.uniqueIndex = function(columns, name) {
   var result = new Meta();
   result.name = name;
-  result.index = true;
+  result.isIndex = true;
   result.unique = true;
   result.columns = columns;
   return result;
@@ -243,7 +264,8 @@ meta.varchar = function(length) {
 };
 
 meta.year = function() {
-  var result = new Meta().numeric();
+  var result = new Meta();
+  result.isNumeric = true;
   result.doit = function(callback) {
     return callback.year(this.isNullable);
   };
