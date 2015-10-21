@@ -85,11 +85,6 @@ Meta.prototype.uniqueKey = function() {
 };
 Meta.prototype.unique = Meta.prototype.uniqueKey;
 
-Meta.prototype.index = function(name) {
-  this.hasIndex = true;
-  return this;
-};
-
 Meta.prototype.unsigned = function() {
   this.isUnsigned = true;
   return this;

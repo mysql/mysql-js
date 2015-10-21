@@ -38,10 +38,10 @@ function TBasic(number) {
 function mapTBasic() {
   var t = new jones.TableMapping("test.t_basic",
                                  meta.index(["age"], "idx_btree_age"));
-  t.mapField("id", meta.int(32).notNull().primaryKey());
+  t.mapField("id", meta.int().notNull().primaryKey());
   t.mapField("name", meta.varchar(32).defaultValue("Employee 666"));
-  t.mapField("age", meta.int(32));
-  t.mapField("magic", meta.int(32).notNull().uniqueKey());
+  t.mapField("age", meta.int());
+  t.mapField("magic", meta.int().notNull().uniqueKey());
   t.applyToClass(TBasic);
   return t;
 }
