@@ -11,7 +11,7 @@ TableMetadata = {
   indexes          : {}, // array of IndexMetadata objects 
   foreignKeys      : {}, // array of ForeignKeyMetadata objects
   partitionKey     : {}, // ordered array of column numbers in the partition key
-  fallbackContainer: null  // default column for sparse fields
+  sparseContainer  : null  // default column for sparse fields
 };
 
 

@@ -15,7 +15,7 @@ function TableMetadata() {
   this.indexes           = [];    // array of IndexMetadata objects
   this.foreignKeys       = [];    // array of ForeignKeyMetadata objects
   this.partitionKey      = [];    // ordered array of column numbers in the partition key
-  this.fallbackContainer = null;  // column name of default sparse fields container
+  this.sparseContainer   = null;  // column name of default sparse fields container
 }
 
 

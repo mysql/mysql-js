@@ -163,11 +163,11 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping.database = this.dbTable.database;
   }
 
-  /* If the TableMetadata has a fallbackContainer, tell the TableMapping */
-  if(     this.dbTable.fallbackContainer
-     && ! this.mapping.columnIsMapped(this.dbTable.fallbackContainer))
+  /* If the TableMetadata has a sparseContainer, tell the TableMapping */
+  if(     this.dbTable.sparseContainer
+     && ! this.mapping.columnIsMapped(this.dbTable.sparseContainer))
   {
-    this.mapping.mapSparseFields(this.dbTable.fallbackContainer);
+    this.mapping.mapSparseFields(this.dbTable.sparseContainer);
   }
 
   /* Build the first draft of the columnNumberToFieldMap, using only the

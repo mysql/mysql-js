@@ -102,7 +102,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         'columns' : columns,
         'indexes' : indexes,
         'foreignKeys': foreignKeys,
-        'fallbackContainer': null
+        'sparseContainer': null
         };
     
     // split lines by '\n'
@@ -260,7 +260,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         column.name = columnName;
         if(columnName === "SPARSE_FIELDS") {
           // Note: NDB also requires (VARCHAR + UNICODE) or (VARBINARY)
-          result.fallbackContainer = columnName;
+          result.sparseContainer = columnName;
         }
         // analyze column type
         columnTypeAndSize = tokens[++j];

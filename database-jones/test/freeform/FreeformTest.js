@@ -127,8 +127,8 @@ t3.run = function() {
     return session.getTableMetadata("test", "freeform");
   })
   .then(function(metadata) {
-    testCase.errorIfNotEqual("Failed to verify fallbackContainer",
-                             "SPARSE_FIELDS", metadata.fallbackContainer);
+    testCase.errorIfNotEqual("Failed to verify sparseContainer",
+                             "SPARSE_FIELDS", metadata.sparseContainer);
   })
   .then(function() {testCase.failOnError();}, function(err) {testCase.fail(err);}
   )
