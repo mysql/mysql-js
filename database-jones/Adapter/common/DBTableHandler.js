@@ -198,8 +198,13 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
             f.domainTypeConverter = c.domainTypeConverter;
           }
         } else {
-          this.appendErrorMessage(
-              'for table ' + dbtable.name + ', field ' + f.fieldName + ': column ' + f.columnName + ' does not exist.');
+          /* If there is a sparse fields container, and the TableMapping has
+             not overridden the default column name, the field can be treated
+             as sparse.  Otherwise is an error. */
+          if(! (f.columnName === f.fieldName && this.mapping.hasSparseFields)) {
+            this.appendErrorMessage('for table ' + dbtable.name + ', field ' +
+              f.fieldName + ': column ' + f.columnName + ' does not exist.');
+          }
         }
       }
     }
@@ -313,6 +318,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   udebug.log_detail("DBTableHandler<ctor>:\n", this);
 }
 
+// FIXME: _private.resolvedMapping is not an actual TableMapping
 DBTableHandler.prototype.getResolvedMapping = function() {
   return this._private.resolvedMapping;
 };
@@ -484,7 +490,7 @@ DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
     }
     if(f.domainTypeConverter) {
       value = obj[f.fieldName];
-      convertedValue = f.domainTypeConverter.fromDB(value, obj, f);
+      convertedValue = f.domainTypeConverter.fromDB(value, obj, this.mapping);
       if (convertedValue !== undefined) {
         obj[f.fieldName] = convertedValue;
       }
@@ -664,7 +670,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
     throw new Error('FatalInternalError: field number does not exist: ' + fieldNumber);
   }
   if(f.domainTypeConverter) {
-    result = f.domainTypeConverter.toDB(obj[f.fieldName], obj, f);
+    result = f.domainTypeConverter.toDB(obj[f.fieldName], obj, this.mapping);
   }
   else {
     result = obj[f.fieldName];
@@ -694,7 +700,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
 DBTableHandler.prototype.getFieldsSimple = function(obj, fieldNumber) {
   var f = this._private.fieldNumberToFieldMap[fieldNumber];
   if(f.domainTypeConverter) {
-    return f.domainTypeConverter.toDB(obj[f.fieldName], obj, f);
+    return f.domainTypeConverter.toDB(obj[f.fieldName], obj, this.mapping);
   }
   return obj[f.fieldName];
 };
@@ -739,7 +745,7 @@ DBTableHandler.prototype.set = function(obj, fieldNumber, value, adapter) {
       userValue = databaseTypeConverter.fromDB(value);
     }
     if(f.domainTypeConverter) {
-      userValue = f.domainTypeConverter.fromDB(userValue, obj, f);
+      userValue = f.domainTypeConverter.fromDB(userValue, obj, this.mapping);
     }
     udebug.log_detail('DBTableHandler.set', f.fieldName, 'value', userValue);
     if (userValue === undefined) {

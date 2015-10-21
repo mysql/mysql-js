@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2015 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -34,10 +34,10 @@
 
 var udebug = unified_debug.getLogger("JSONSparseConverter.js");
 
-exports.toDB = function(value, jsObject, fieldMapping) {
+exports.toDB = function(value, jsObject, tableMapping) {
   var candidateField;
-  var mappedFieldNames = fieldMapping.tableMapping.mappedFieldNames;
-  var excludedFieldNames = fieldMapping.tableMapping.excludedFieldNames;
+  var mappedFieldNames = tableMapping.mappedFieldNames;
+  var excludedFieldNames = tableMapping.excludedFieldNames;
   udebug.log_detail("JSONSparseConverter.toDB excludedFieldNames: ", excludedFieldNames);
   var dbValue = '{';
   var separator = '';
@@ -51,17 +51,9 @@ exports.toDB = function(value, jsObject, fieldMapping) {
   }
   for (candidateField in jsObject) {
     if (jsObject.hasOwnProperty(candidateField)) {
-      if (mappedFieldNames.indexOf(candidateField) === -1) {
-        // don't handle mapped fields as sparse
-        if (fieldMapping.sparseFieldNames.length) {
-          // if sparse field names are explicit, only process fields that match
-          if (fieldMapping.sparseFieldNames.indexOf(candidateField) !== -1) {
+      if ((mappedFieldNames.indexOf(candidateField) === -1)  &&
+          (excludedFieldNames.indexOf(candidateField) === -1)) {
             processField();
-          }
-        } else if (excludedFieldNames.indexOf(candidateField) === -1) {
-          // if sparse field names are not explicit, only process fields not excluded from the table
-          processField();
-        }
       }
     }
   }
@@ -69,7 +61,7 @@ exports.toDB = function(value, jsObject, fieldMapping) {
   return dbValue;
 };
 
-exports.fromDB = function(dbValue, jsObject, fieldMapping) {
+exports.fromDB = function(dbValue, jsObject, tableMapping) {
   udebug.log("JSONSparseConverter.fromDB value: ", dbValue);
   var dbValues = JSON.parse(dbValue);
   for (sparse in dbValues) {

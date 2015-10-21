@@ -37,7 +37,6 @@ function FieldMapping(fieldName) {
   this.columnName       = fieldName;
   this.persistent       = true;
   this.relationship     = false;
-  this.sparseFieldNames = [];
   this.meta             = null;
 }
 
@@ -241,8 +240,7 @@ function BasicFieldVerifier() {
 /* A FieldMapping literal can have any of the basic properties, plus "meta" */
 var fieldMappingProperties =
   new BasicFieldVerifier().
-    set("meta", isMetaOrLiteral).
-    set("sparseFieldNames", Array.isArray);
+    set("meta", isMetaOrLiteral);
 
 function RelationshipVerifier(type, ctor) {
   var that = new BasicFieldVerifier();
@@ -555,13 +553,12 @@ TableMapping.prototype.excludeFields = function() {
 };
 
 
-/* mapSparseFields(columnName, fieldNames, converter)
+/* mapSparseFields(columnName, converter)
  * columnName: required
- * fieldNames: optional string or array of strings
  * converter: optional converter function default Converters/JSONSparseFieldsConverter
  */
 TableMapping.prototype.mapSparseFields = function(columnName) {
-  var i, j, arg, fieldMapping, sparseFieldNames = [];
+  var i, arg, fieldMapping;
 
   if(typeof columnName === 'string') {
     this.hasSparseFields = true;
@@ -570,58 +567,32 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
     for(i = 1; i < arguments.length ; i++) {
       arg = arguments[i];
       switch(typeof arg) {
-        case 'string':
-          sparseFieldNames.push(arg);
-          break;
-        case 'object':
-          if (Array.isArray(arg)) {
-            // verify array of field names
-            for (j = 0; j < arg.length; ++j) {
-              if (typeof arg[j] !== 'string') {
-                this.error += "\nmapSparseFields Illegal argument; element " + j + 
-                    " is not a string: \"" + util.inspect(arg[j]) + "\"";
-              } else {
-                sparseFieldNames.push(arg[j]);
-              }
-            }
+        case 'object':          // argument is a meta or converter
+          if(isMeta(arg)) {
+            fieldMapping.meta = arg;
+          } else if(isLiteralMeta(arg)) {
+            fieldMapping.meta = Meta.fromLiteralMeta(arg);
+          } else if (isConverter(arg)) {    // validate converter
+              fieldMapping.converter = arg;
           } else {
-            // argument is a meta or converter
-            if(isMeta(arg)) {
-              fieldMapping.meta = arg;
-            } else if(isLiteralMeta(arg)) {
-              fieldMapping.meta = Meta.fromLiteralMeta(arg);
-            } else {
-              // validate converter
-              if (isConverter(arg)) {
-                fieldMapping.converter = arg;
-              } else {
-                this.error += "\nmapSparseFields Argument is an object " +
-                    "that is not a meta, an array of field names, or a converter object: \"" + util.inspect(arg) + "\"";
-              }
-            }
+              this.error += "\nmapSparseFields Argument is an object " +
+                  "that is not a meta or a converter object: \"" + util.inspect(arg) + "\"";
           }
           break;
         default:
-          this.error += "\nmapSparseFields: Argument must be a field name, " +
-              "a meta, an array of field names, or a converter object: \"" + 
+          this.error += "\nmapSparseFields: Argument must be a meta or converter object: \"" +
               util.inspect(arg) + "\"";
       }
     }
-    if (!fieldMapping.converter) {
-      // default sparse fields converter
+    if (!fieldMapping.converter) {      // default sparse fields converter
       fieldMapping.converter = jones.converters.JSONSparseConverter;
-    }
-    if (sparseFieldNames.length !== 0) {
-      fieldMapping.sparseFieldNames = sparseFieldNames;
     }
     fieldMapping.sparseFieldMapping = true;
     this.fields.push(fieldMapping);
-  }
-  else {
+  } else {
     this.error +="\nmapSparseFields() requires a valid arguments list with column name as the first argument";
   }
   return this;
-
 };
 
 

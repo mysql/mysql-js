@@ -67,7 +67,7 @@ t3.run = function() {
   var tableMapping = new mynode.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', 1);
-  checkErrorMessage(testCase, tableMapping, 'an array of field names, or a converter object');
+  checkErrorMessage(testCase, tableMapping, 'Argument must be a meta or converter object');
 };
 
 var t4 = new harness.ConcurrentTest('t4SparseMappingNumberInArrayOfFieldNames');
@@ -76,7 +76,7 @@ t4.run = function() {
   var tableMapping = new mynode.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', ['a', 'b', 1]);
-  checkErrorMessage(testCase, tableMapping, 'element 2 is not a string');
+  checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');
 };
 
 var t5 = new harness.ConcurrentTest('t5SparseMappingObjectInArrayOfFieldNames');
@@ -85,7 +85,7 @@ t5.run = function() {
   var tableMapping = new mynode.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', ['a', 'b', {f:9}]);
-  checkErrorMessage(testCase, tableMapping, 'element 2 is not a string');
+  checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');
 };
 
 var t6 = new harness.ConcurrentTest('t6SparseMappingNonConverterObjectParameter');
@@ -94,7 +94,7 @@ t6.run = function() {
   var tableMapping = new mynode.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', {f:9});
-  checkErrorMessage(testCase, tableMapping, 'an array of field names, or a converter object');
+  checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');
 };
 
 exports.tests = [t1, t2, t3, t4, t5, t6];
