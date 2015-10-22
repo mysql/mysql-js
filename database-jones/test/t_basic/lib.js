@@ -22,9 +22,6 @@
 
 var udebug = unified_debug.getLogger("t_basic/lib.js");
 
-/** This is the smoke test for the t_basic suite.
- */
-
 /** The t_basic domain object */
 global.t_basic = function(id, name, age, magic) {
   if (id !== undefined)    { this.id = id; }

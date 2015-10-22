@@ -510,3 +510,35 @@ exports.DBConnectionPool.prototype.createTable = function(tableMapping, session,
   }
 };
 
+
+exports.DBConnectionPool.prototype.dropTable = function(dbName, tableName, session, user_callback) {
+  var connectionPool, connection, qualifiedName;
+  connectionPool = this;
+
+  function dropTableOnQuery(err) {
+     if (!session || !session.dbSession) {
+       // return the connection we got just for this call
+       connectionPool.releaseConnection(connection);
+    }
+    user_callback(err);
+  }
+
+  function dropTableOnConnection(err, c) {
+    if(err) {
+      user_callback(err);
+    } else {
+      connection = c;
+      connection.query("DROP TABLE " + qualifiedName, dropTableOnQuery);
+    }
+  }
+
+  // dropTable starts here
+  qualifiedName = dbName + "." + tableName;
+  udebug.log('dropTable for ', qualifiedName);
+  if(session && session.dbSession) {
+    dropTableOnConnection(null, session.dbSession.pooledConnection);
+  } else {
+    this.getConnection(dropTableOnConnection);
+  }
+};
+

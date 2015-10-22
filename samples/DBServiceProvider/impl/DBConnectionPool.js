@@ -19,14 +19,20 @@ function DBConnectionPool(properties) {
   this.properties       = properties;
   this.typeConverterMap = {};
   this.dictionaryQueue  = new DictionaryCall.Queue();
+  this.dictDbSession    = null;
 }
 
 
 /* Async connect 
 */
 DBConnectionPool.prototype.connect = function(userCallback) {
-  var error = new DBOperationError().fromSqlState("0A000");
-  userCallback(error);
+  var self, errorNotImplemented;
+  self = this;
+  errorNotImplemented = new DBOperationError().fromSqlState("0A000");
+  this.getDbSession(function(err, dbSession) {
+    self.dictDbSession = dbSession;
+    userCallback(errorNotImplemented);
+  });
 };
 
 
@@ -58,14 +64,15 @@ DBConnectionPool.prototype.getDBSession = function(index, userCallback) {
 
 /** List all tables in the schema.
   * ASYNC
-  * 
+  * We must check whether dbSession is null, and, if so, provide a dbSession.
+  *
   */
 DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
                                                  userCallback) {
   var key, args;
   key = "listTables:" + databaseName;
-  args = { "databaseName" : databaseName,
-           "dbSession"    : dbSession
+  args = {  "databaseName" : databaseName,
+            "dbSession"    : dbSession || this.dictDbSession
          };
   this.dictionaryQueue.add(key, DBDictionary.listTables, args, userCallback);
 };
@@ -73,7 +80,8 @@ DBConnectionPool.prototype.listTables = function(databaseName, dbSession,
 
 /** Fetch metadata for a table
   * ASYNC
-  * 
+  * We must check whether dbSession is null, and, if so, provide a dbSession.
+  *
   */
 DBConnectionPool.prototype.getTableMetadata = function(databaseName, tableName,
                                                        dbSession, userCallback) {
@@ -81,7 +89,7 @@ DBConnectionPool.prototype.getTableMetadata = function(databaseName, tableName,
   key = databaseName + "." + tableName;
   args = {  "databaseName" : databaseName,
             "tableName"    : tableName,
-            "dbSession"    : dbSession
+            "dbSession"    : dbSession || this.dictDbSession
          };
   this.dictionaryQueue.add(key, DBDictionary.getTableMetadata, args, userCallback);
 };
@@ -100,16 +108,34 @@ DBConnectionPool.prototype.registerTypeConverter = function(typeName, converter)
   * 
   * tableMapping is a TableMapping with possible Meta annotations 
   * indicating column types and indexes.
+  *
+  * We must check whether dbSession is null, and, if so, provide a dbSession.
   */
 DBConnectionPool.prototype.createTable = function(tableMapping,
                                                   dbSession,
                                                   userCallback) {
   var key, args;
-  key = "createTable:" + tableMapping.table + "." + tableMapping.database;
-  args = { "tableMapping" : tableMapping,
-           "dbSession"    : dbSession
+  key = "createTable:" + tableMapping.database + "." + tableMapping.table;
+  args = {  "tableMapping" : tableMapping,
+            "dbSession"    : dbSession || this.dictDbSession
          };
   this.dictionaryQueue.add(key, DBDictionary.createTable, args, userCallback);
+};
+
+
+/** Drop a table
+  * ASYNC
+  *
+  * We must check whether dbSession is null, and, if so, provide a dbSession.
+  */
+DBConnectionPool.prototype.dropTable = function(dbName, tableName, dbSession, userCallback) {
+  var key, args;
+  key = "dropTable:" + dbName + "." + tableName;
+  args = {  "databaseName" : dbName,
+            "tableName"    : tableName,
+            "dbSession"    : dbSession || this.dictDbSession
+         };
+  this.dictionaryQueue.add(key, DBDictionary.dropTable, args, userCallback);
 };
 
 module.exports = DBConnectionPool;

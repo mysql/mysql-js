@@ -23,7 +23,6 @@
 var session     = require("./Session.js"),
     udebug      = unified_debug.getLogger("SessionFactory.js"),  
     userContext = require("./UserContext.js"),
-    util        = require("util"),
     Db          = require("./Db.js");
 
 var SessionFactory = function(key, dbConnectionPool, properties, mappings, delete_callback) {
@@ -95,14 +94,26 @@ SessionFactory.prototype.getTableMetadata = function() {
 
 /** Create table for a table mapping.
  * @param tableMapping
- * @param user_callback
+ * @param allowExistingTableFlag (default: false)
+ * @param callback
  * @return promise
  */
-SessionFactory.prototype.createTable = function(tableMapping, user_callback) {
-  var context = new userContext.UserContext(arguments, 2, 1, null, this);
+SessionFactory.prototype.createTable = function(tableMapping, allowFlag, callback) {
+  var context = new userContext.UserContext(arguments, 3, 1, null, this);
   return context.createTable();
 };
 
+/** Drop table ("IF EXISTS")
+ *  @param tableNameOrMapping
+ *  @param callback
+ *  @return promise
+ */
+SessionFactory.prototype.dropTable = function(tableNameOrMapping, callback) {
+  var context = new userContext.UserContext(arguments, 2, 1, null, this);
+  return context.dropTable();
+};
+
+// FIXME: close() should return a promise.
 SessionFactory.prototype.close = function(user_callback) {
   var self = this;
   udebug.log('close for key', self.key, 'database', self.properties.database);
@@ -189,7 +200,7 @@ SessionFactory.prototype.mapTable = function(tableMapping) {
   var database = tableMapping.database || this.properties.database;
   var qualifiedTableName = database + '.' + tableMapping.table;
   this.tableMappings[qualifiedTableName] = tableMapping;
-  udebug.log('mapTable', util.inspect(tableMapping), this.properties, qualifiedTableName);
+  udebug.log('mapTable', tableMapping, this.properties, qualifiedTableName);
 };
 
 SessionFactory.prototype.userSessionFactory = function() {

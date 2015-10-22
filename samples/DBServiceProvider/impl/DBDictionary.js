@@ -91,6 +91,18 @@ exports.createTable = function(args, userCallback) {
 };
 
 
+/* dropTable() receives an args object created by DBConnectionPool,
+   containing members: databaseName, tableName, and dbSession.
+   The callback should receive (error).
+   The DictionaryCall queue guarantees that getTableMetadata() will only
+   be called once if many users request it simultaneously.
+*/
+exports.dropTable = function(args, userCallback) {
+  var error = new DBOperationError().fromSqlState("0A000");
+  userCallback(error);
+};
+
+
 /* listTables() receives an args object created by DBConnectionPool,
    containing members: databaseName and dbSession.
    The callback should receive (error, arrayOfTableNames).

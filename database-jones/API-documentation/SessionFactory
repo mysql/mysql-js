@@ -45,7 +45,7 @@ Array getOpenSessions();
  * Close the connection to the database.
  * This ensures proper disconnection.
  * 
- * @param function to call when close is complete
+ * @param callback function to call when close is complete
  * @return nothing
  */
 close(function(error));
@@ -83,3 +83,28 @@ db db(databaseName);
  */
 mapTable(tableMapping);
 
+/** getTableMetadata
+ * Get a table's metadata from the DBServiceProvider.
+ * ASYNC
+ *
+ * @param dbName name of database
+ * @param tableName name of table
+ * @param callback
+ * @return promise
+ */
+getTableMetadata(dbName, tableName, callback);
+
+/** Create table for a table mapping.
+ * @param tableMapping
+ * @param allowExistingTableFlag (default: false)
+ * @param callback
+ * @return promise
+ */
+createTable(tableMapping, allowFlag, callback);
+
+/** Drop table ("IF EXISTS")
+ *  @param tableNameOrMapping: string name, or TableMapping
+ *  @param callback
+ *  @return promise
+ */
+dropTable(tableNameOrMapping, callback);

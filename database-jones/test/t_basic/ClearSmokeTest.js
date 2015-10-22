@@ -24,14 +24,10 @@
 var test = new harness.ClearSmokeTest("ClearSmokeTest");
 
 test.run = function() {
-  var t = this;
-  sqlDrop(this.suite, function(error) {
-    if (error) {
-      t.fail('dropSQL failed: ' + error);
-    } else {
-      t.pass();
-    }
-  });
+  jones.connect(global.test_conn_properties).
+    then(function(sessionFactory) {
+      sessionFactory.dropTable("t_basic", function() { test.pass(); });
+    });
 };
 
 module.exports.tests = [test];

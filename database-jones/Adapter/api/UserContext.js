@@ -64,7 +64,7 @@ stats_module.register(stats, "api", "UserContext");
  * @param user_arguments the original arguments as supplied by the user
  * @param required_parameter_count the number of required parameters 
  * NOTE: the user callback function must be the last of the required parameters
- * @param returned_parameter_count the number of required parameters returned to the callback
+ * @param returned_parameter_count the number of parameters returned to the callback
  * @param session the Session which may be null for SessionFactory functions
  * @param session_factory the SessionFactory which may be null for Session functions
  * @param execute (optional; defaults to true) whether to execute the operation immediately;
@@ -192,17 +192,58 @@ function createTable(tableMapping, sessionFactory, session, callback) {
 }
 
 /** Create schema from a table mapping. 
- * promise = createTable(tableMapping, callback);
+ * promise = createTable(tableMapping, allowExistingTableFlag, callback);
  */
 exports.UserContext.prototype.createTable = function() {
-  var userContext = this;
+  var userContext, tableMapping, allowExisting;
+  userContext = this;
 
-  createTable(this.user_arguments[0], this.session_factory, this.session,
-              function(err) {
-    userContext.applyCallback(err);
+  /* Let the allowExistingTableFlag be optional */
+  tableMapping = this.user_arguments[0];
+  allowExisting = (this.user_arguments[1] === true);
+  if(! this.user_callback && typeof this.user_arguments[1] === 'function') {
+    this.user_callback = this.user_arguments[1];
+  }
+
+  createTable(tableMapping, this.session_factory, this.session, function(err) {
+    if(allowExisting && err && err.sqlstate == "42S02") {
+      userContext.applyCallback();
+    } else {
+      userContext.applyCallback(err);
+    }
   });
 
   return userContext.promise;
+};
+
+
+/** Drop table
+ *
+ */
+exports.UserContext.prototype.dropTable = function() {
+  var dbName, tableName, nameParts, userContext;
+  if(typeof this.user_arguments[0] === 'string') {
+    tableName = this.user_arguments[0];
+    nameParts = tableName.split(".");
+    if(nameParts.length == 2) {   // database.table
+      dbName = nameParts[0];
+      tableName = nameParts[1];
+    } else {
+      dbName = this.session_factory.properties.database;
+    }
+  } else if(this.user_arguments[0] && this.user_arguments[0].table) {
+    dbName = this.user_arguments[0].database;
+    tableName = this.user_arguments[0].table;
+  } else {
+    this.applyCallback(new Error('dropTable() illegal argument: ' +
+                       'must be string table name or TableMapping'));
+  }
+
+  userContext = this;
+  this.session_factory.dbConnectionPool.dropTable(dbName, tableName, this.session, function(err) {
+    userContext.applyCallback(err);
+  });
+  return this.promise;
 };
 
 

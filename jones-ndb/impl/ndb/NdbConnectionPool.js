@@ -473,5 +473,14 @@ DBConnectionPool.prototype.createTable = function(tableMapping,
   this.metadataManager.execDDL(sql, userCallback);
 };
 
+
+DBConnectionPool.prototype.dropTable = function(dbName,
+                                                tableName,
+                                                session,
+                                                userCallback) {
+  this.metadataManager.execDDL("DROP TABLE " + dbName + "." + tableName,
+                               userCallback);
+};
+
 exports.DBConnectionPool = DBConnectionPool; 
 
