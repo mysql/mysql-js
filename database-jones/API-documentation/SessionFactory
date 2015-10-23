@@ -102,9 +102,24 @@ getTableMetadata(dbName, tableName, callback);
  */
 createTable(tableMapping, allowFlag, callback);
 
-/** Drop table ("IF EXISTS")
+/** Drop table
  *  @param tableNameOrMapping: string name, or TableMapping
  *  @param callback
  *  @return promise
  */
 dropTable(tableNameOrMapping, callback);
+
+/** Capabilities  (Property)
+ *
+ *  SessionFactory.capabilities holds an object describing the capabilities
+ *  of the underlying DBConnectionPool.
+ *
+ *  Properties of the capabilities object:
+ *    UniqueIndexes     (Boolean)     Tables can have secondary unique keys
+ *    TableScans        (Boolean)     Query can scan a table
+ *    OrderedIndexScans (Boolean)     Query can scan an index
+ *    ForeignKeys       (Boolean)     Tables can have named foreign key relationships
+ *
+ */
+sessionFactory.capabilities;
+

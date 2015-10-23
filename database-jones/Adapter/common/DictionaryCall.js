@@ -42,8 +42,8 @@ Call.prototype.makeGroupCallback = function(key) {
   var owner = this;
   return function(param1, param2) {
     var i;
-    udebug.log("GroupCallback for", key, "with", callbackList.length, "user",
-               callbackList.length == 1 ? "" : "s");
+    udebug.log("GroupCallback for", key, "with", callbackList.length,
+               callbackList.length == 1 ? "user" : "users");
     for(i = 0 ; i < callbackList.length ; i++) {
       callbackList[i](param1, param2);
     }

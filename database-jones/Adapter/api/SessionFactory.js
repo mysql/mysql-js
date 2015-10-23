@@ -38,6 +38,7 @@ var SessionFactory = function(key, dbConnectionPool, properties, mappings, delet
   this.tableHandlers = {};
   this.tableMetadatas = {};
   this.tableMappings  = {}; // mappings for tables
+  this.capabilities = dbConnectionPool.getCapabilities();
 };
 
 SessionFactory.prototype.inspect = function() {

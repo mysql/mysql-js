@@ -233,6 +233,18 @@ function DBConnectionPool(props) {
 }
 
 
+/* Capabilities provided by this connection.
+*/
+DBConnectionPool.prototype.getCapabilities = function() {
+  return {
+    "UniqueIndexes"     : true,   //  Tables can have secondary unique keys
+    "TableScans"        : true,   //  Query can scan a table
+    "OrderedIndexScans" : true,   //  Query can scan an index
+    "ForeignKeys"       : true    //  Named foreign key relationships
+  };
+};
+
+
 /* Async connect 
 */
 DBConnectionPool.prototype.connect = function(user_callback) {
