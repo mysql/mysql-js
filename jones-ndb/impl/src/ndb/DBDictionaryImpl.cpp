@@ -694,6 +694,16 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
              ReadOnly);
   }
   
+  if(is_dec) {
+    obj->ForceSet(SYMBOL(isolate, "scale"),
+             v8::Int32::New(isolate, col->getScale()),
+             ReadOnly);
+    
+    obj->ForceSet(SYMBOL(isolate, "precision"),
+             v8::Int32::New(isolate, col->getPrecision()),
+             ReadOnly);
+  }
+
   obj->ForceSet(SYMBOL(isolate, "isAutoincrement"),
            Boolean::New(isolate, col->getAutoIncrement()),
            ReadOnly);

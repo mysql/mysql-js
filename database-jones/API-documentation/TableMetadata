@@ -35,6 +35,8 @@ ColumnMetadata = {
   /* Group A: Numeric */
   isUnsigned       : false,  //  true for UNSIGNED
   intSize          : null ,  //  1,2,3,4, or 8 if column type is INT
+  scale            : 0    ,  //  DECIMAL scale
+  precision        : 0    ,  //  DECIMAL precision
   isAutoincrement  : false,  //  true for AUTO_INCREMENT columns
 
   /* Group B: Non-numeric */

@@ -38,6 +38,8 @@ function ColumnMetadata(isNumeric) {
   if(isNumeric) {
     this.isUnsigned       = false;  //  true for UNSIGNED
     this.intSize          = null ;  //  1,2,3,4, or 8 if column type is INT
+    this.scale            = 0    ;  //  DECIMAL scale
+    this.precision        = 0    ;  //  DECIMAL precision
     this.isAutoincrement  = false;  //  true for AUTO_INCREMENT columns
   }
   else {
