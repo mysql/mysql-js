@@ -95,6 +95,11 @@ Meta.prototype.defaultValue = function(val) {
   return this;
 };
 
+Meta.prototype.shared = function() {
+  this.isShared = true;
+  return this;
+};
+
 
 // Meta Factory
 var meta = {};
@@ -210,6 +215,12 @@ meta.primaryKey = function(columns) {
   result.isIndex = true;
   result.isPrimaryKey = true;
   result.columns = columns;
+  return result;
+};
+
+meta.shared = function() {
+  var result = new Meta();
+  result.shared();
   return result;
 };
 
