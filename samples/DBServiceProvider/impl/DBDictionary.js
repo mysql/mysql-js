@@ -45,6 +45,7 @@ function ColumnMetadata(isNumeric) {
   else {
     this.length           = 0    ;  //  CHAR or VARCHAR length in characters
     this.isBinary         = false;  //  true for BLOB/BINARY/VARBINARY
+    this.charsetName      = ""   ;  //  name of charset
   }
 }
 
