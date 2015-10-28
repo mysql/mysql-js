@@ -521,30 +521,6 @@ DBTableHandler.prototype.getMappedFieldCount = function() {
 };
 
 
-/* allColumnsMapped()
-   IMMEDIATE   
-   Boolean: returns True if all columns are mapped
-*/
-DBTableHandler.prototype.allColumnsMapped = function() {
-  return (this.dbTable.columns.length === this._private.fieldNumberToColumnMap.length);
-};
-
-/** allFieldsIncluded(values)
- *  IMMEDIATE
- *  returns array of indexes of fields included in values
- */
-DBTableHandler.prototype.allFieldsIncluded = function(values) {
-  // return a list of fields indexes that are found
-  // the caller can easily construct the appropriate database statement
-  var i, result = [];
-  for (i = 0; i < this.getNumberOfFields(); ++i) {
-    if (values[i] !== undefined) {
-      result.push(i);
-    }
-  }
-  return result;
-};
-
 /* getColumnMetadata() 
    IMMEDIATE 
    

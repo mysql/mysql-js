@@ -48,14 +48,6 @@
   getMappedFieldCount();
 
 
-/* allColumnsMapped()
-   IMMEDIATE   
-
-   Boolean: returns True if all columns are mapped
-*/
-  allColumnsMapped();
-
-
 /* getColumnMetadata() 
    IMMEDIATE 
    
@@ -122,10 +114,3 @@
           DBIndexHandler now does more than this
 */
   getIndexHandler(keys);
-  
-
-/** boolean allFieldsIncluded(Object values)
- *  IMMEDIATE
- *  Boolean: returns True if values include all mapped fields
- */
-  allFieldsIncluded(values);
