@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 var udebug = unified_debug.getLogger("t_basic/lib.js");
 
 /** The t_basic domain object */
-global.t_basic = function(id, name, age, magic) {
+global.t_basic = function t_basic(id, name, age, magic) {
   if (id !== undefined)    { this.id = id; }
   if (name !== undefined)  { this.name = name; }
   if (age !== undefined)   { this.age = age; }

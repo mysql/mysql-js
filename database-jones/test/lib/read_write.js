@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ function SQLDriver(connectionProperties) {
   this.props.database = connectionProperties.database;
   this.props.debug = connectionProperties.mysql_debug;
   udebug.log('SQLDriver using properties: ', util.inspect(this.props));
-};
+}
 
 SQLDriver.prototype.connect = function(callback) {
   this.connection = mysql.createConnection(this.props);
@@ -153,21 +153,25 @@ function augmentTableMapping(tableMapping, tableMetadata) {
     }
   });
   udebug.log('augmentTableMapping ', tableMapping.pkFields);
-};
+}
 
 /** Construct a new ReadWrite for a write implementation,
  * a read implementation, and test data.
  * The write implementation can be either an adapter or a driver.
  * The read implementation can be either an adapter or a driver.
  * The test data can be a domain object or a plain object.
+ * The property names in the domain object must exactly match the property names in the data
+ * and the column names.
  * 
  */
-var ReadWrite = function(testCase, tableNameOrConstructor, data, session, SQLDriver) {
+var ReadWrite = function(testCase, tableNameOrConstructor, data, session, resultTypeName) {
   this.testCase = testCase;
   this.tableNameOrConstructor = tableNameOrConstructor;
+  this.tableNameNotConstructor = typeof resultTypeName !== 'string';
+  udebug.log('read_write.js ReadWrite<ctor>', testCase.name, tableNameOrConstructor, '\n', data, '\n', resultTypeName);
   this.data = data;
   this.session = session;
-  this.SQLDriver = SQLDriver;
+  this.resultTypeName = resultTypeName;
   this.numberChecked = 0;
   this.numberRemoved = 0;
 };
@@ -266,21 +270,26 @@ ReadWrite.prototype.removeSQL = function(element, onRemove) {
 
 ReadWrite.prototype.checkResult = function(err, result, rw, index) {
   udebug.log('checkResult', err, rw.data, result, index);
-  var rw = rw;
   if (err) {
     rw.testCase.appendErrorMessage('checkResult err on read: ', err);
   } else {
-    if (typeof(rw.tableNameOrConstructor) === 'string') {
-      // table name; check properties in data against properties in result
-      var x;
-      var data = rw.data[index];
-      for (x in data) {
-        if (data.hasOwnProperty(x)) {
-          rw.testCase.errorIfNotEqual('mismatch in ' + x, data[x], result[x]);
-        }
+    // check the type of the return
+    if (rw.tableNameNotConstructor) {
+      // result of read with table name must not have a constructor
+      if (result.constructor) {
+        rw.testCase.appendErrorMessage(
+            'read with table name returned result with constructor: ' + result.constructor.name);
       }
     } else {
-      // constructor
+      // result constructor must match expected
+      rw.testCase.errorIfNotEqual('constructor mismatch', rw.resultTypeName, result.constructor.name);
+    }
+    var x;
+    var data = rw.data[index];
+    for (x in data) {
+      if (data.hasOwnProperty(x)) {
+        rw.testCase.errorIfNotEqual('mismatch in ' + x, data[x], result[x]);
+      }
     }
   }
   rw.incrementCheckCountAndExit();

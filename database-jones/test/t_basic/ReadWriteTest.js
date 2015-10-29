@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ t1.run = function() {
   var tableNameOrConstructor = 't_basic';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'Object');
     rw.writeAdapterReadAdapter();
   });
 };
@@ -51,82 +51,70 @@ t2.run = function() {
   var tableNameOrConstructor = global.t_basic;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_basic');
     rw.writeAdapterReadAdapter();
   });
 };
 
-/***** Read write sql table name ***/
-var t3 = new harness.SerialTest("write sql read sql table name");
+/***** Read write sql ***/
+var t3 = new harness.SerialTest("write sql read sql");
 t3.run = function() {
-  var testCase = this;
-  var tableNameOrConstructor = 't_basic';
-  testCase.mappings = tableNameOrConstructor;
-  fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
-    rw.writeSQLReadSQL();
-  });
-};
-
-/***** Read write sql constructor ***/
-var t4 = new harness.SerialTest("write sql read sql constructor");
-t4.run = function() {
   var testCase = this;
   var tableNameOrConstructor = global.t_basic;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
     rw.writeSQLReadSQL();
   });
 };
 
 /***** Write adapter read sql table name ***/
-var t5 = new harness.SerialTest("write adapter read sql table name");
-t5.run = function() {
+var t4 = new harness.SerialTest("write adapter read sql table name");
+t4.run = function() {
   var testCase = this;
   var tableNameOrConstructor = 't_basic';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
     rw.writeAdapterReadSQL();
   });
 };
 
 /***** Write adapter read sql constructor ***/
-var t6 = new harness.SerialTest("write adapter read sql constructor");
-t6.run = function() {
+var t5 = new harness.SerialTest("write adapter read sql constructor");
+t5.run = function() {
   var testCase = this;
   var tableNameOrConstructor = global.t_basic;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
     rw.writeAdapterReadSQL();
   });
 };
 
 /***** Write sql read adapter table name ***/
-var t7 = new harness.SerialTest("write sql read adapter table name");
-t7.run = function() {
+var t6 = new harness.SerialTest("write sql read adapter table name");
+t6.run = function() {
   var testCase = this;
   var tableNameOrConstructor = 't_basic';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'Object');
     rw.writeSQLReadAdapter();
   });
 };
 
 /***** Write sql read adapter constructor ***/
-var t8 = new harness.SerialTest("write sql read adapter constructor");
-t8.run = function() {
+var t7 = new harness.SerialTest("write sql read adapter constructor");
+t7.run = function() {
   var testCase = this;
   var tableNameOrConstructor = global.t_basic;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_basic');
     rw.writeSQLReadAdapter();
   });
 };
 
-module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8];
+module.exports.tests = [t1, t2, t3, t4, t5, t6, t7];
 

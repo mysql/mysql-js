@@ -463,12 +463,7 @@ DBTableHandler.prototype.newResultObjectFromRow = function(row, adapter,
  * @return the object to return to the user
  */
 DBTableHandler.prototype.applyMappingToResult = function(obj, adapter) {
-  if (this.newObjectConstructor) {
-    // create the domain object from the result
     obj = this.newResultObject(obj, adapter);
-  } else {
-    this.applyFieldConverters(obj, adapter);
-  }
   return obj;
 };
 
