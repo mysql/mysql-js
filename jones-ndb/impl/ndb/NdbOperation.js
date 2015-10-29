@@ -879,7 +879,7 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   typeConverters = {};
   for(i = 0 ; i < nfields ; i++) {
     fieldNames[i] = dbTableHandler.getResolvedMapping().fields[i].fieldName;
-    typeConverters[i] = dbTableHandler.getColumn(i).typeConverter.ndb;
+    typeConverters[i] = dbTableHandler.getColumnMetadata(i).typeConverter.ndb;
   }
 
   /* The user's constructor and prototype */

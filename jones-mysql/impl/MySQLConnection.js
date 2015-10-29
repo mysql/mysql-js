@@ -1461,11 +1461,11 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
       if (typeof order === 'string') {
         if (order.toUpperCase() === 'ASC') {
           scanSQL += ' ORDER BY ';
-          scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
+          scanSQL += queryHandler.dbIndexHandler.getColumnMetadata(0).name;
           scanSQL += ' ASC ';
         } else if (order.toUpperCase() === 'DESC') {
           scanSQL += ' ORDER BY ';
-          scanSQL += queryHandler.dbIndexHandler.getColumn(0).name;
+          scanSQL += queryHandler.dbIndexHandler.getColumnMetadata(0).name;
           scanSQL += ' DESC ';
         } else {
           err = new Error('Bad order parameter \'' + order + '\'; order must be ignoreCase asc or desc.');

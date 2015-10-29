@@ -53,7 +53,7 @@
    
    Returns an array containing ColumnMetadata objects in field order
 */   
-  getColumnMetadata();
+  getAllColumnMetadata();
 
   
 /* get()

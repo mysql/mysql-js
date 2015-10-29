@@ -323,7 +323,7 @@ DBTableHandler.prototype.getResolvedMapping = function() {
   return this._private.resolvedMapping;
 };
 
-DBTableHandler.prototype.getColumn = function(i) {
+DBTableHandler.prototype.getColumnMetadata = function(i) {
   return this._private.fieldNumberToColumnMap[i];
 };
 
@@ -805,7 +805,9 @@ DBIndexHandler = function(parent, dbIndex) {
     this._private.fieldNumberToColumnMap[i] = parent.dbTable.columns[colNo];
   }
   
-  if(i === 1) {this.singleColumn = this.getColumn(0);}   // One-column index
+  if(i === 1) {                                      // One-column index
+    this.singleColumn = this.getColumnMetadata(0);
+  }
 };
 
 /* DBIndexHandler inherits some methods from DBTableHandler 
@@ -816,7 +818,7 @@ DBIndexHandler.prototype = {
   getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
   getFields              : DBTableHandler.prototype.getFields,
   getAllColumnMetadata   : DBTableHandler.prototype.getAllColumnMetadata,
-  getColumn              : DBTableHandler.prototype.getColumn,
+  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
   getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
   getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,
   getField               : DBTableHandler.prototype.getField
