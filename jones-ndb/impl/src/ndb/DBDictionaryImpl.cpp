@@ -503,7 +503,7 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
 
 /* 
 DBIndex = {
-  name             : ""    ,  // Index name; undefined for PK 
+  name             : ""    ,  // Index name
   isPrimaryKey     : true  ,  // true for PK; otherwise undefined
   isUnique         : true  ,  // true or false
   isOrdered        : true  ,  // true or false; can scan if true
@@ -515,6 +515,7 @@ Handle<Object> GetTableCall::buildDBIndex_PK() {
   
   Local<Object> obj = Object::New(isolate);
 
+  obj->ForceSet(SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, "PRIMARY_KEY"));
   obj->ForceSet(SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, true), ReadOnly);
   obj->ForceSet(SYMBOL(isolate, "isUnique"),     Boolean::New(isolate, true), ReadOnly);
   obj->ForceSet(SYMBOL(isolate, "isOrdered"),    Boolean::New(isolate, false), ReadOnly);
@@ -548,6 +549,7 @@ Handle<Object> GetTableCall::buildDBIndex(const NdbDictionary::Index *idx) {
   wrapPointerInObject(idx, NdbDictIndexEnv, obj);
 
   obj->ForceSet(SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, idx->getName()));
+  obj->ForceSet(SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, false), ReadOnly);
   obj->ForceSet(SYMBOL(isolate, "isUnique"),
                 Boolean::New(isolate, idx->getType() == NdbDictionary::Index::UniqueHashIndex),
                 ReadOnly);

@@ -54,8 +54,8 @@ ColumnMetadata = {
    isOrdered flag set. 
 */
 IndexMetadata = {
-  name             : ""    ,  // Index name; undefined for PK 
-  isPrimaryKey     : true  ,  // true for PK; otherwise undefined
+  name             : ""    ,  // Index name
+  isPrimaryKey     : true  ,  // true or false
   isUnique         : true  ,  // true or false
   isOrdered        : true  ,  // true or false; can scan if true
   columnNumbers    : null  ,  // an ordered array of column numbers
