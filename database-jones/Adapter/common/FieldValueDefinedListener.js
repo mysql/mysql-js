@@ -24,9 +24,9 @@ var udebug = unified_debug.getLogger("FieldValueDefinedListener"),
     assert = require("assert");
 
 
-/** Track field values defined. An instance of this is passed to DBTableHandler.getFields.
+/** Track field values defined. An instance of this is passed to DBTableHandler.getColumns.
  * It constructs a key that indicates which field values are defined in the object.
- * After getFields returns, the value of key is either undefined, meaning that
+ * After getColumns returns, the value of key is either undefined, meaning that
  * all fields had values, or a string that indicates which fields had defined values
  * and which did not. For example, if fields 0, 1, and 3 were defined and field 2 was not,
  * the key would be 'DDUD'.

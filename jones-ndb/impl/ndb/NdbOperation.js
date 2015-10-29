@@ -274,7 +274,7 @@ function releaseRowBuffer(op) {
 
 function encodeRowBuffer(op) {
   udebug.log("encodeRowBuffer");
-  var valuesArray = op.tableHandler.getFields(op.values);
+  var valuesArray = op.tableHandler.getColumns(op.values);
   var nfields = op.tableHandler.getMappedFieldCount();
   var columnMetadata = op.tableHandler.getAllColumnMetadata();
 
@@ -901,7 +901,7 @@ function verifyIndexHandler(dbIndexHandler) {
 function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
   verifyIndexHandler(dbIndexHandler);
   var op = new DBOperation(opcodes.OP_READ, tx, dbIndexHandler, null);
-  op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getFields(keys);
+  op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getColumns(keys);
 
   if(! dbIndexHandler.tableHandler.ValueObject) {
     storeNativeConstructorInMapping(dbIndexHandler.tableHandler);
@@ -923,7 +923,7 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
   op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
-  op.keys = Array.isArray(keys) ? keys : indexHandler.getFields(keys);
+  op.keys = Array.isArray(keys) ? keys : indexHandler.getColumns(keys);
   allocateKeyBuffer(op);
   encodeKeyBuffer(op);
 
@@ -964,7 +964,7 @@ function newInsertOperation(tx, tableHandler, row) {
 function newDeleteOperation(tx, dbIndexHandler, keys) {
   verifyIndexHandler(dbIndexHandler);
   var op = new DBOperation(opcodes.OP_DELETE, tx, dbIndexHandler, null);
-  op.keys = dbIndexHandler.getFields(keys);
+  op.keys = dbIndexHandler.getColumns(keys);
   return op;
 }
 
@@ -973,7 +973,7 @@ function newWriteOperation(tx, dbIndexHandler, row) {
   verifyIndexHandler(dbIndexHandler);
   var op = new DBOperation(opcodes.OP_WRITE, tx, dbIndexHandler, null);
 // Test row for VO
-  op.keys = dbIndexHandler.getFields(row);
+  op.keys = dbIndexHandler.getColumns(row);
   op.values = row;
   return op;
 }
@@ -982,7 +982,7 @@ function newWriteOperation(tx, dbIndexHandler, row) {
 function newUpdateOperation(tx, dbIndexHandler, keys, row) {
   verifyIndexHandler(dbIndexHandler);
   var op = new DBOperation(opcodes.OP_UPDATE, tx, dbIndexHandler, null);
-  op.keys = dbIndexHandler.getFields(keys);
+  op.keys = dbIndexHandler.getColumns(keys);
   op.values = row;
   return op;
 }

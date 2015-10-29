@@ -59,41 +59,41 @@
 /* get()
    IMMEDIATE
    
-   Return the property of obj corresponding to fieldNumber 
+   Return the property of obj corresponding to columnNumber
 */
-  get(obj, fieldNumber);
+  get(obj, columnNumber);
 
 
-/* getFields(domainObject)
+/* getColumns(domainObject)
    IMMEDIATE 
    
-   Returns an array containing the properties of domainObject in field order
+   Returns an array of column values corresponding to domainObject
 */
-  getFields(obj);
+  getColumns(obj);
 
-/* getFieldsWithListener(domainObject, adapter, fieldValueDefinedListener) 
+/* getColumnsWithListener(domainObject, adapter, columnValueDefinedListener)
    IMMEDIATE 
    
-   Returns an array containing the properties of domainObject in field order
-   Calls into fieldValueDefinedListener to indicate whether each field is defined.
+   Returns an array of column values corresponding to domainObject.
+   Calls into columnValueDefinedListener to indicate whether each field is defined.
    Calls into databaseTypeConverter for adapter if needed.
 */
-  getFieldsWithListener(obj, adapter, fieldValueDefinedListener);
+  getColumnsWithListener(obj, adapter, columnValueDefinedListener);
 
 
 /* set() 
    IMMEDIATE
   
-   Set property of object, corresponding to fieldNumber, to value.
+   Set any fields of object mapped to column columnNumber using value.
    Returns true on success, false on failure.
 */
-  set(obj, fieldNumber, value);
+  set(obj, columnNumber, value);
 
 
 /* setFields()
    IMMEDIATE
    
-   Set all mapped fields in object according to an ordered array of field values
+   Set all mapped fields in object according to an ordered array of column values
 */
   setFields(obj, values);
   
@@ -108,7 +108,7 @@
    DBIndexHandler implements this subset of DBTableHandler methods:
       getMappedFieldCount()
       get()
-      getFields()
+      getColumns()
 
     TODO: Provide separate documentation for DBIndexHandler
           DBIndexHandler now does more than this

@@ -663,7 +663,7 @@ DBTableHandler.prototype.get = function(obj, fieldNumber, adapter, fieldValueDef
 
 /** Return the property of obj corresponding to fieldNumber.
 */
-DBTableHandler.prototype.getFieldsSimple = function(obj, fieldNumber) {
+DBTableHandler.prototype.getColumnsSimple = function(obj, fieldNumber) {
   var f = this._private.fieldNumberToFieldMap[fieldNumber];
   if(f.domainTypeConverter) {
     return f.domainTypeConverter.toDB(obj[f.fieldName], obj, this.mapping);
@@ -673,7 +673,7 @@ DBTableHandler.prototype.getFieldsSimple = function(obj, fieldNumber) {
   
   
 /* Return an array of values in field order */
-DBTableHandler.prototype.getFields = function(obj) {
+DBTableHandler.prototype.getColumns = function(obj) {
   var i, n, fields;
   fields = [];
   n = this.getMappedFieldCount();
@@ -683,17 +683,17 @@ DBTableHandler.prototype.getFields = function(obj) {
       fields.push(obj);
       break;
     default: 
-      for(i = 0 ; i < n ; i++) { fields.push(this.getFieldsSimple(obj, i)); }
+      for(i = 0 ; i < n ; i++) { fields.push(this.getColumnsSimple(obj, i)); }
   }
   return fields;
 };
 
 
 /* Return an array of values in field order */
-DBTableHandler.prototype.getFieldsWithListener = function(obj, adapter, fieldValueDefinedListener) {
+DBTableHandler.prototype.getColumnsWithListener = function(obj, adapter, valueDefinedListener) {
   var i, fields = [];
   for( i = 0 ; i < this.getMappedFieldCount() ; i ++) {
-    fields[i] = this.get(obj, i, adapter, fieldValueDefinedListener);
+    fields[i] = this.get(obj, i, adapter, valueDefinedListener);
   }
   return fields;
 };
@@ -815,8 +815,8 @@ DBIndexHandler = function(parent, dbIndex) {
 DBIndexHandler.prototype = {
   getMappedFieldCount    : DBTableHandler.prototype.getMappedFieldCount,   
   get                    : DBTableHandler.prototype.get,   
-  getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
-  getFields              : DBTableHandler.prototype.getFields,
+  getColumnsSimple       : DBTableHandler.prototype.getColumnsSimple,
+  getColumns             : DBTableHandler.prototype.getColumns,
   getAllColumnMetadata   : DBTableHandler.prototype.getAllColumnMetadata,
   getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
   getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,

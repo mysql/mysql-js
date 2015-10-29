@@ -51,7 +51,8 @@ var op_stats = {
 var mysql  = require("mysql"),
     udebug = unified_debug.getLogger("MySQLConnection.js"),
     stats_module  = require(jones.api.stats),
-    mysql_code_to_sqlstate_map = require("./MysqlErrToSQLStateMap");
+    mysql_code_to_sqlstate_map = require("./MysqlErrToSQLStateMap"),
+    FieldValueDefinedListener = require(jones.common.FieldValueDefinedListener);
 
 stats_module.register(session_stats, "spi","mysql","DBSession");
 stats_module.register(transaction_stats, "spi","mysql","DBTransactionHandler");
@@ -1304,34 +1305,6 @@ function getMetadata(dbTableHandler) {
   }
 }
 
-/** Track field values defined. An instance of this is passed to DBTableHandler.getFields.
- * It constructs a key that indicates which field values are defined in the object.
- * After getFields returns, the value of key is either undefined, meaning that
- * all fields had values, or a string that indicates which fields had defined values
- * and which did not. For example, if fields 0, 1, and 3 were defined and field 2 was not,
- * the key would be 'DDUD'.
- */
-function FieldValueDefinedListener() {
-}
-
-FieldValueDefinedListener.prototype.setDefined = function(fieldNumber) {
-  if (this.key !== undefined) {
-    this.key += 'D';
-  }
-};
-
-FieldValueDefinedListener.prototype.setUndefined = function(fieldNumber) {
-  if (this.key === undefined) {
-    // first undefined value; create the key for all previous defined values e.g. 'DDDDDDDDD'
-    this.key = '';
-    var i; 
-    for (i = 0; i < fieldNumber; ++i) {
-      this.key += 'D';
-    }
-  }
-  this.key += 'U';
-};
-
 function extractValues(fieldValues, fieldValueDefinedKey) {
   var statementValues = [];
   var fieldIndex;
@@ -1349,7 +1322,7 @@ exports.DBSession.prototype.buildInsertOperation = function(dbTableHandler, obje
                     dbTableHandler.dbTable.name, 'object:', object);
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
-  var fieldValues = dbTableHandler.getFieldsWithListener(object, 'mysql', fieldValueDefinedListener);
+  var fieldValues = dbTableHandler.getColumnsWithListener(object, 'mysql', fieldValueDefinedListener);
   if (fieldValueDefinedListener.err) {
     // error during preparation of field values
     udebug.log('MySQLConnection.buildInsertOperation error', fieldValueDefinedListener.err);
@@ -1371,7 +1344,7 @@ exports.DBSession.prototype.buildInsertOperation = function(dbTableHandler, obje
 
 exports.DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys, transaction, callback) {
   udebug.log_detail('dbSession.buildDeleteOperation with indexHandler:', dbIndexHandler.dbIndex.name, 'keys: ', keys);
-  var keysArray = dbIndexHandler.getFields(keys);
+  var keysArray = dbIndexHandler.getColumns(keys);
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   var deleteSQL = dbTableHandler.mysql.deleteSQL[dbIndexHandler.dbIndex.name];
@@ -1385,7 +1358,7 @@ exports.DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys, 
   var keysArray;
   if (!Array.isArray(keys)) {
     // the keys object is a domain object or value object from which we need to extract the array of keys
-    keysArray = dbIndexHandler.getFields(keys);
+    keysArray = dbIndexHandler.getColumns(keys);
   } else {
     keysArray = keys;
   }
@@ -1409,7 +1382,7 @@ exports.DBSession.prototype.buildReadProjectionOperation =
   var keysArray;
   if (!Array.isArray(keys)) {
     // the keys object is a domain object or value object from which we need to extract the array of keys
-    keysArray = dbIndexHandler.getFields(keys);
+    keysArray = dbIndexHandler.getColumns(keys);
   } else {
     keysArray = keys;
   }
@@ -1543,7 +1516,7 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
 
 updateSetSQL += updateWhereSQL;
 udebug.log('dbSession.buildUpdateOperation SQL:', updateSetSQL);
-var keysArray = dbIndexHandler.getFields(keys);
+var keysArray = dbIndexHandler.getColumns(keys);
 return new UpdateOperation(updateSetSQL, keysArray, updateFields, callback);
 };
 
@@ -1552,7 +1525,7 @@ exports.DBSession.prototype.buildWriteOperation = function(dbIndexHandler, value
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
-  var fieldValues = dbTableHandler.getFieldsWithListener(values, 'mysql', fieldValueDefinedListener);
+  var fieldValues = dbTableHandler.getColumnsWithListener(values, 'mysql', fieldValueDefinedListener);
   if (fieldValueDefinedListener.err) {
     // error during preparation of field values
     udebug.log('MySQLConnection.buildWriteOperation error', fieldValueDefinedListener.err);
