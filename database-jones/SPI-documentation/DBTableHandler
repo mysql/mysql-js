@@ -48,7 +48,7 @@
   getMappedFieldCount();
 
 
-/* getColumnMetadata() 
+/* getAllColumnMetadata()
    IMMEDIATE 
    
    Returns an array containing ColumnMetadata objects in field order

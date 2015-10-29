@@ -1105,7 +1105,7 @@ function createInsertSQL(dbTableHandler, fieldValueDefinedKey) {
   var insertSQL = 'INSERT INTO ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name + ' (';
   var valuesSQL = ' VALUES (';
   var duplicateSQL = ' ON DUPLICATE KEY UPDATE ';
-  var columns = dbTableHandler.getColumnMetadata();
+  var columns = dbTableHandler.getAllColumnMetadata();
   udebug.log_detail('getMetadata with columns', columns);
   // loop over the columns and extract the column name
   var columnSeparator = '';
@@ -1181,7 +1181,7 @@ function createDeleteSQL(dbTableHandler, index) {
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
     var indexMetadatas = dbTableHandler.dbTable.indexes;
-    var columns = dbTableHandler.getColumnMetadata();
+    var columns = dbTableHandler.getAllColumnMetadata();
     var separator = '';
     var i, j, indexMetadata;
     for (i = 0; i < indexMetadatas.length; ++i) {
@@ -1207,7 +1207,7 @@ function createSelectSQL(dbTableHandler, index) {
   var separator = '';
   var i, j, columns, column, fields, field;
   var indexMetadatas, indexMetadata;
-  columns = dbTableHandler.getColumnMetadata();
+  columns = dbTableHandler.getAllColumnMetadata();
   fields = dbTableHandler.getAllFields();
   if (!index) {
     selectSQL = 'SELECT ';
@@ -1252,7 +1252,7 @@ function createWhereSQL(dbTableHandler, index) {
   var separator = '';
   var i, j, columns;
   var indexMetadatas, indexMetadata;
-  columns = dbTableHandler.getColumnMetadata();
+  columns = dbTableHandler.getAllColumnMetadata();
   if (index) {
     // create the where SQL clause from the table metadata for the named index
     whereSQL = ' WHERE ';

@@ -327,7 +327,7 @@ DBTableHandler.prototype.getColumn = function(i) {
   return this._private.fieldNumberToColumnMap[i];
 };
 
-DBTableHandler.prototype.getAllColumns = function() {
+DBTableHandler.prototype.getAllColumnMetadata = function() {
   return this._private.fieldNumberToColumnMap;
 };
 
@@ -518,16 +518,6 @@ DBTableHandler.prototype.setAutoincrement = function(object, autoincrementValue)
 DBTableHandler.prototype.getMappedFieldCount = function() {
   udebug.log_detail("getMappedFieldCount");
   return this._private.fieldNumberToColumnMap.length;
-};
-
-
-/* getColumnMetadata() 
-   IMMEDIATE 
-   
-   Returns an array containing ColumnMetadata objects in field order
-*/   
-DBTableHandler.prototype.getColumnMetadata = function() {
-  return this._private.fieldNumberToColumnMap;
 };
 
 
@@ -825,7 +815,7 @@ DBIndexHandler.prototype = {
   get                    : DBTableHandler.prototype.get,   
   getFieldsSimple        : DBTableHandler.prototype.getFieldsSimple,
   getFields              : DBTableHandler.prototype.getFields,
-  getColumnMetadata      : DBTableHandler.prototype.getColumnMetadata,
+  getAllColumnMetadata   : DBTableHandler.prototype.getAllColumnMetadata,
   getColumn              : DBTableHandler.prototype.getColumn,
   getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
   getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,

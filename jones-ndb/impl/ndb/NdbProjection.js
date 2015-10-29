@@ -50,7 +50,7 @@ function buildJoinTableResultRecord(dbTableHandler) {
         dbTableHandler.dbTable,
         dbTableHandler.dbTable.per_table_ndb,
         dbTableHandler.getNumberOfColumns(),
-        dbTableHandler.getAllColumns()
+        dbTableHandler.getAllColumnMetadata()
     );
   }
 }

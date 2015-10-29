@@ -245,7 +245,7 @@ function encodeKeyBuffer(op) {
   }
   return encodeFieldsInBuffer(op.keys, 
                               op.indexHandler.getMappedFieldCount(),
-                              op.indexHandler.getColumnMetadata(),
+                              op.indexHandler.getAllColumnMetadata(),
                               op.index.record,
                               op.buffers.key, []);
 }
@@ -276,7 +276,7 @@ function encodeRowBuffer(op) {
   udebug.log("encodeRowBuffer");
   var valuesArray = op.tableHandler.getFields(op.values);
   var nfields = op.tableHandler.getMappedFieldCount();
-  var columnMetadata = op.tableHandler.getColumnMetadata();
+  var columnMetadata = op.tableHandler.getAllColumnMetadata();
 
   if(op.tableHandler.numberOfLobColumns) {
     op.blobs = defineBlobs(nfields, columnMetadata, valuesArray);
@@ -342,7 +342,7 @@ function BoundHelperSpec() {
 BoundHelperSpec.prototype.buildPartialSpec = function(base, bound,
                                                       dbIndexHandler, buffer) {
   var nparts, err, columns;
-  columns = dbIndexHandler.getColumnMetadata();
+  columns = dbIndexHandler.getAllColumnMetadata();
   err = null;
 
   /* count finite key parts.
@@ -551,7 +551,7 @@ function buildResultRow_nonVO(op, dbt, buffer, blobs) {
   var i, value;
   var record          = dbt.dbTable.record; // ??
   var nfields         = dbt.getMappedFieldCount();
-  var col             = dbt.getColumnMetadata();
+  var col             = dbt.getAllColumnMetadata();
   var resultRow       = dbt.newResultObject();
   
   for(i = 0 ; i < nfields ; i++) {
@@ -869,7 +869,7 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
     dbTableHandler.dbTable,
     dbTableHandler.dbTable.per_table_ndb,
     nfields,
-    dbTableHandler.getAllColumns()
+    dbTableHandler.getAllColumnMetadata()
   );
 
   /* Step 2: Get NdbRecordObject Constructor

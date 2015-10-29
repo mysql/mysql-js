@@ -184,8 +184,8 @@ function RandomRowGenerator(tableHandler) {
   Ctor = tableHandler.newObjectConstructor || DummyConstructor;
 
   for(i = 0; i < tableHandler.getNumberOfColumns() ; i++) {
-    column        = tableHandler.getColumn(i);
-    names[i]      = tableHandler.getField(i).fieldName;
+    column        = tableHandler.getColumnMetadata(i);
+    names[i]      = tableHandler.getField(i).fieldName;   // FIXME
     generators[i] = getRandomGeneratorForColumn(column);
   }
 
