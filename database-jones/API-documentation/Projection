@@ -49,9 +49,10 @@ function Projection(constructor) {};
    addField(fields)
    IMMEDIATE
    @see addFields
-   
+
    Add fields to the projection
-  
+
+    @return {Projection} @chainable
  */
   function addField(fields) {};
 
@@ -59,14 +60,26 @@ function Projection(constructor) {};
 /* @method addRelationship
    addRelationship(name, projection)
    IMMEDIATE 
-   
+
    Add a relationship to the projection.
-   
+
    @param name {String} name of the relationship field in the domain object
    @param projection {Projection} the projection to be assigned to the relationship
    @return Projection @chainable
 */
   function addRelationship(name, projection) {};
+
+
+/* @method addSparseFields
+   IMMEDIATE
+   @see addFields
+
+   Add all sparse fields to the projection. All sparse fields (those that do not
+   have their own mapped column) will be added to the projection.
+
+   @return Projection @chainable
+ */
+  function addSparseFields() {};
 
 
 /* This file is a JavaScript module */

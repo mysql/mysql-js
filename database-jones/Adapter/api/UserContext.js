@@ -358,8 +358,9 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
             }
             tableHandler = new DBTableHandler(tableMetadata, tableHandlerFactory.mapping,
                 tableHandlerFactory.ctor);
-            if (tableHandler.isValid) {
-              udebug.log('UserContext caching the table handler in the session factory.');
+            if (tableHandler.isValid && !tableHandlerFactory.ctor) {
+              // cache the table handler for the table name case
+              udebug.log('UserContext caching the table handler in the session factory for', tableKey);
               tableHandlerFactory.sessionFactory.tableHandlers[tableKey] = tableHandler;
             } else {
               tableHandlerFactory.err = tableHandler.err;

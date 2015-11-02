@@ -33,6 +33,7 @@ function Projection(domainObject) {
     this.fields = [];
     this.relationships = {};
     this.usedBy = [];
+    this.fetchSparseFields = false;
     this.error = '';
   } else {
     // there is nothing that we can do with a Projection with an invalid domain object
@@ -57,6 +58,10 @@ function invalidateAll(toBeInvalidated) {
   });
   invalidateAll(toBeInvalidated);
 }
+
+Projection.prototype.addSparseFields = function() {
+  this.fetchSparseFields = true;
+};
 
 Projection.prototype.addFields = function() {
   var projection = this;
