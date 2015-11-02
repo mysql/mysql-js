@@ -34,7 +34,6 @@ var mappingId = 0;
 
 function FieldMapping(fieldName) {
   this.fieldName        = fieldName;
-  this.columnName       = fieldName;
   this.persistent       = true;
   this.relationship     = false;
   this.meta             = null;
@@ -281,9 +280,10 @@ var tableMappingProperties =
     set("mapAllColumns",      isBool).
     set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
-    set("mappedFieldNames",   isArrayOf(isNonEmptyString)).
     set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
     set("hasSparseFields",    isBool).
+    set("sparseContainer",    isString).
+    set("sparseConverter",    isConverter).
     set("error",              isEmptyString).
     setRequired("table");
 
@@ -297,6 +297,8 @@ function TableMapping(tableNameOrLiteral) {
   this.excludedFieldNames = [];
   this.meta               = [];
   this.hasSparseFields    = false;
+  this.sparseContainer    = "";
+  this.sparseConverter    = null;
   this.error              = "";
 
   switch(typeof tableNameOrLiteral) {
@@ -368,15 +370,6 @@ TableMapping.prototype.getFieldMapping = function(fieldName) {
   }
 };
 
-TableMapping.prototype.columnIsMapped = function(colName) {
-  var i;
-  for(i = 0 ; i < this.fields.length ; i++) {
-    if(this.fields[i].columnName === colName) {
-      return true;
-    }
-  }
-  return false;
-};
 
 /* mapField(fieldName, [columnName], [converter], [meta], [persistent])
    mapField(literalFieldMapping)
@@ -455,7 +448,7 @@ TableMapping.prototype.createRelationshipField = function(verifier, literal) {
   if (!literal.targetField && !literal.foreignKey && !literal.joinTable) {
     errorMessage += "\nMappingError: targetField, foreignKey, or joinTable is a required field for relationship mapping";
   }
-  if (this.mappedFieldNames.indexOf(literal.fieldName) !== -1) {
+  if(this.getFieldMapping(literal.fieldName)) {
     errorMessage += '\nMappingError: relationship field "' + literal.fieldName + '" is duplicated.';
   }
 
@@ -562,8 +555,7 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
 
   if(typeof columnName === 'string') {
     this.hasSparseFields = true;
-    fieldMapping = new FieldMapping(columnName);
-    fieldMapping.tableMapping = this;   // Used in JSONSparseConverter
+    fieldMapping = new FieldMapping(columnName);  // why?
     for(i = 1; i < arguments.length ; i++) {
       arg = arguments[i];
       switch(typeof arg) {

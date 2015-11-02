@@ -328,8 +328,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         // set the a database type converter for the column type
         databaseTypeConverter = dbConnectionPool.getDatabaseTypeConverter(column.columnType);
         if (databaseTypeConverter) {
-          column.databaseTypeConverter = {};
-          column.databaseTypeConverter.mysql = databaseTypeConverter;
+          column.typeConverter = databaseTypeConverter;
         }
 
         // set the default domain type converter for the column type

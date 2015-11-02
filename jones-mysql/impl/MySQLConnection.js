@@ -527,7 +527,7 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
         op.result.value = rows[0];
         op.result.success = true;
         // convert the felix result into the user result
-        op.result.value = dbTableHandler.applyMappingToResult(op.result.value, 'mysql');
+        op.result.value = dbTableHandler.newResultObject(op.result.value);
         if (typeof(op.callback) === 'function') {
           // call the UserContext callback
           op.callback(null, op);
@@ -586,7 +586,7 @@ function ScanOperation(dbSession, dbTableHandler, sql, parameters, callback) {
       op.result.success = true;
       // convert the felix result into the user result
       for (i = 0; i < rows.length; ++i) {
-        rows[i] = dbTableHandler.applyMappingToResult(rows[i], 'mysql');
+        rows[i] = dbTableHandler.newResultObject(rows[i]);
       }
       op.callback(err, op);
     }
@@ -877,7 +877,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
         // root object handling; root will never be null
         if (!isRowSectorKeyEqual(row, sector, tuple)) {
           // create a new domain object from this row
-          op.tuples[0] = sector.tableHandler.newResultObjectFromRow(row, 'mysql',
+          op.tuples[0] = sector.tableHandler.newResultObjectFromRow(row,
               sector.offset, sector.keyFields, sector.nonKeyFields,
               sector.toManyRelationships, sector.toOneRelationships);
           // the child tuples belong to the previous tuple
@@ -918,7 +918,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
       }
       if (tuple == null) {
         // haven't seen this before; create a new tuple from the row
-        tuple = sector.tableHandler.newResultObjectFromRow(row, 'mysql',
+        tuple = sector.tableHandler.newResultObjectFromRow(row,
             sector.offset, sector.keyFields, sector.nonKeyFields,
             sector.toManyRelationships, sector.toOneRelationships);
         // the rest of the tuples belong to the previous object
@@ -1206,18 +1206,15 @@ function createSelectSQL(dbTableHandler, index) {
   var selectSQL;
   var whereSQL;
   var separator = '';
-  var i, j, columns, column, fields, field;
+  var i, j, columns;
   var indexMetadatas, indexMetadata;
   columns = dbTableHandler.getAllColumnMetadata();
-  fields = dbTableHandler.getAllFields();
   if (!index) {
     selectSQL = 'SELECT ';
-    var fromSQL =   ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;
+    var fromSQL = ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;
     // loop over the mapped column names in order
-    for (i = 0; i < fields.length; ++i) {
-      field = fields[i].fieldName;
-      column = fields[i].columnName;
-      selectSQL += separator + column + ' AS \'' + field + '\'';
+    for (i = 0; i < columns.length; ++i) {
+      selectSQL += separator + columns[i].name;
       separator = ', ';
     }
     selectSQL += fromSQL;
@@ -1322,7 +1319,7 @@ exports.DBSession.prototype.buildInsertOperation = function(dbTableHandler, obje
                     dbTableHandler.dbTable.name, 'object:', object);
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
-  var fieldValues = dbTableHandler.getColumnsWithListener(object, 'mysql', fieldValueDefinedListener);
+  var fieldValues = dbTableHandler.getColumns(object, fieldValueDefinedListener);
   if (fieldValueDefinedListener.err) {
     // error during preparation of field values
     udebug.log('MySQLConnection.buildInsertOperation error', fieldValueDefinedListener.err);
@@ -1477,47 +1474,33 @@ exports.DBSession.prototype.buildUpdateOperation = function(dbIndexHandler, keys
   var separatorWhereSQL = '';
   var separatorUpdateSetSQL = '';
   var updateFields = [];
-  // get an array of key field names
-  var valueFieldName, keyFieldNames = [];
-  var j, field;
-  for(j = 0 ; j < dbIndexHandler.getNumberOfFields() ; j++) {
-    keyFieldNames.push(dbIndexHandler.getField(j).fieldName);
-  }
-  // get an array of persistent field names
-  var valueFieldNames = [];
-  for(j = 0 ; j < dbTableHandler.getNumberOfFields() ; j++) {
-    field = dbTableHandler.getField(j);
-    valueFieldName = field.fieldName;
-    // exclude not persistent fields and fields that are part of the index
-    if (!field.NotPersistent && keyFieldNames.indexOf(valueFieldName) === -1) {
-      valueFieldNames.push(valueFieldName);
-    }
-  }
-  
-  var i, x, columnName;
+
+  var i, columnName;
   // construct the WHERE clause for all key columns in the index
-  for(i = 0 ; i < dbIndexHandler.dbIndex.columnNumbers.length ; i++) {
-    columnName = dbIndexHandler.getField(i).columnName;
+  for(i = 0 ; i < dbIndexHandler.getNumberOfColumns() ; i++) {
+    columnName = dbIndexHandler.getColumnMetadata(i).name;
     updateWhereSQL += separatorWhereSQL + columnName + ' = ? ';
     separatorWhereSQL = 'AND ';
   }
-  for (x in values) {
-    if (values.hasOwnProperty(x)) {
-      if (valueFieldNames.indexOf(x) !== -1) {
+
+  values = dbIndexHandler.tableHandler.getColumns(values);
+  for(i = 0 ; i < values.length ; i++) {
+    if(values[i] !== undefined) {
+      if(! dbIndexHandler.columnMask.bitIsSet(i)) {
         // add the value in the object to the updateFields
-        updateFields.push(values[x]);
+        updateFields.push(values[i]);
         // add the value field to the SET clause
-        columnName = dbTableHandler.getField(x).columnName;
+        columnName = dbTableHandler.getColumnMetadata(i).name;
         updateSetSQL += separatorUpdateSetSQL + columnName + ' = ?';
         separatorUpdateSetSQL = ', ';
       }
     }
   }
 
-updateSetSQL += updateWhereSQL;
-udebug.log('dbSession.buildUpdateOperation SQL:', updateSetSQL);
-var keysArray = dbIndexHandler.getColumns(keys);
-return new UpdateOperation(updateSetSQL, keysArray, updateFields, callback);
+  updateSetSQL += updateWhereSQL;
+  udebug.log('dbSession.buildUpdateOperation SQL:', updateSetSQL);
+  var keysArray = dbIndexHandler.getColumns(keys);
+  return new UpdateOperation(updateSetSQL, keysArray, updateFields, callback);
 };
 
 exports.DBSession.prototype.buildWriteOperation = function(dbIndexHandler, values, transaction, callback) {
@@ -1525,7 +1508,7 @@ exports.DBSession.prototype.buildWriteOperation = function(dbIndexHandler, value
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
-  var fieldValues = dbTableHandler.getColumnsWithListener(values, 'mysql', fieldValueDefinedListener);
+  var fieldValues = dbTableHandler.getColumns(values, fieldValueDefinedListener);
   if (fieldValueDefinedListener.err) {
     // error during preparation of field values
     udebug.log('MySQLConnection.buildWriteOperation error', fieldValueDefinedListener.err);

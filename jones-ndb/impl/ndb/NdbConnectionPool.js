@@ -395,8 +395,7 @@ DBConnectionPool.prototype.makeMasterCallback = function(key) {
   /* Customize Column read from dictionary */
   function drColumn(c) {
     /* Set TypeConverter for column */
-    c.typeConverter = {};   // TODO: c.ndb.typeConverter ???
-    c.typeConverter.ndb = ndbConnectionPool.typeConverters[c.columnType];
+    c.typeConverter = ndbConnectionPool.typeConverters[c.columnType];
 
     /* Set defaultValue for column */
     if(c.ndbRawDefaultValue) {

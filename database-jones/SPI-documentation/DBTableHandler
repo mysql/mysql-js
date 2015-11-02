@@ -40,18 +40,18 @@
   function newResultObject() {};
   
 
-/* getMappedFieldCount()
+/* getNumberOfColumns()
    IMMEDIATE 
      
-   Returns the number of fields mapped to columns in the table 
+   Returns the number of columns used by mapped fields
 */
-  getMappedFieldCount();
+  getNumberOfColumns();
 
 
 /* getAllColumnMetadata()
    IMMEDIATE 
    
-   Returns an array containing ColumnMetadata objects in field order
+   Returns an array of ColumnMetadata objects
 */   
   getAllColumnMetadata();
 

@@ -138,30 +138,27 @@ SQLBuilder.prototype.createSelectSQL = function (dbTableHandler, index) {
   var selectSQL;
   var whereSQL;
   var separator = '';
-  var i, j, columns, column, fields, field;
+  var i, j, columns;
+  var indexMetadatas, indexMetadata;
   columns = dbTableHandler.getAllColumnMetadata();
-  fields = dbTableHandler.getAllFields();
   if (!index) {
     selectSQL = 'SELECT ';
-    var fromSQL =   ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;
+    var fromSQL = ' FROM ' + dbTableHandler.dbTable.database + '.' + dbTableHandler.dbTable.name;
     // loop over the mapped column names in order
-    for (i = 0; i < fields.length; ++i) {
-      field = fields[i].fieldName;
-      column = fields[i].columnName;
-      selectSQL += separator + column + ' AS \'' + field + '\'';
+    for (i = 0; i < columns.length; ++i) {
+      selectSQL += separator + columns[i].name;
       separator = ', ';
     }
     selectSQL += fromSQL;
   } else {
     // create the select SQL statement from the table metadata for the named index
-    selectSQL = dbTableHandler[this.name].selectTableScanSQL;
+    selectSQL = dbTableHandler.mysql.selectTableScanSQL;
     whereSQL = ' WHERE ';
 
     // loop over the index columns
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    var indexMetadatas = dbTableHandler.dbTable.indexes;
-    var indexMetadata;
+    indexMetadatas = dbTableHandler.dbTable.indexes;
     separator = '';
     for (i = 0; i < indexMetadatas.length; ++i) {
       if (indexMetadatas[i].name === index) {

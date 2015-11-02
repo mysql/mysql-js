@@ -197,9 +197,9 @@ function releaseKeyBuffer(op) {
 }
 
 /* If an error occurs while encoding, 
-   encodeFieldsInBuffer() returns a DBOperationError
+   encodeColumnsInBuffer() returns a DBOperationError
 */
-function encodeFieldsInBuffer(fields, nfields, metadata, 
+function encodeColumnsInBuffer(fields, ncolumns, metadata,
                               record, buffer, definedColumnList) {
   var i, column, value, encoderError, error;
   error = null;
@@ -215,8 +215,8 @@ function encodeFieldsInBuffer(fields, nfields, metadata,
     }
   }
 
-  /* encodeFieldsInBuffer starts here */
-  for(i = 0 ; i < nfields ; i++) {
+  /* encodeColumnsInBuffer starts here */
+  for(i = 0 ; i < ncolumns ; i++) {
     column = metadata[i];
     value = fields[i];
     if(value !== undefined) {
@@ -226,8 +226,8 @@ function encodeFieldsInBuffer(fields, nfields, metadata,
         else                  {  encoderError = "23000"; addError();  }
       } 
       else {
-        if(column.typeConverter && column.typeConverter.ndb) {
-          value = column.typeConverter.ndb.toDB(value);
+        if(column.typeConverter) {
+          value = column.typeConverter.toDB(value);
         }
         encoderError = record.encoderWrite(i, buffer, value);
         if(encoderError) { addError(); }
@@ -243,18 +243,18 @@ function encodeKeyBuffer(op) {
   if(oneCol && op.keys[0] !== null && op.keys[0] !== undefined) {
     return op.index.record.encoderWrite(0, op.buffers.key, op.keys[0]);
   }
-  return encodeFieldsInBuffer(op.keys, 
-                              op.indexHandler.getMappedFieldCount(),
+  return encodeColumnsInBuffer(op.keys, 
+                              op.indexHandler.getNumberOfColumns(),
                               op.indexHandler.getAllColumnMetadata(),
                               op.index.record,
                               op.buffers.key, []);
 }
 
 
-function defineBlobs(nfields, metadata, values) {
+function defineBlobs(ncolumns, metadata, values) {
   var i, blobs, col;
   blobs = [];
-  for(i = 0 ; i < nfields ; i++) {
+  for(i = 0 ; i < ncolumns ; i++) {
     col = metadata[i];
     if(col.isLob) {
       blobs[i] = col.isBinary ? values[i] : bufferForText(col, values[i]) ;
@@ -275,15 +275,15 @@ function releaseRowBuffer(op) {
 function encodeRowBuffer(op) {
   udebug.log("encodeRowBuffer");
   var valuesArray = op.tableHandler.getColumns(op.values);
-  var nfields = op.tableHandler.getMappedFieldCount();
+  var ncolumns = op.tableHandler.getNumberOfColumns();
   var columnMetadata = op.tableHandler.getAllColumnMetadata();
 
   if(op.tableHandler.numberOfLobColumns) {
-    op.blobs = defineBlobs(nfields, columnMetadata, valuesArray);
+    op.blobs = defineBlobs(ncolumns, columnMetadata, valuesArray);
   }
 
-  return encodeFieldsInBuffer(valuesArray,
-                              nfields,
+  return encodeColumnsInBuffer(valuesArray,
+                              ncolumns,
                               columnMetadata,
                               op.tableHandler.dbTable.record,
                               op.buffers.row,
@@ -358,7 +358,7 @@ BoundHelperSpec.prototype.buildPartialSpec = function(base, bound,
     }
   }
   if(nparts > 0) {
-    err = encodeFieldsInBuffer(bound.key, nparts, columns,
+    err = encodeColumnsInBuffer(bound.key, nparts, columns,
                                dbIndexHandler.dbIndex.record, buffer, []);
   }
   udebug.log("Encoded", nparts, "parts for", (base ? "high" : "low"), "bound");
@@ -550,19 +550,19 @@ function buildResultRow_nonVO(op, dbt, buffer, blobs) {
   udebug.log("buildResultRow");
   var i, value;
   var record          = dbt.dbTable.record; // ??
-  var nfields         = dbt.getMappedFieldCount();
+  var ncolumns        = dbt.getNumberOfColumns();
   var col             = dbt.getAllColumnMetadata();
   var resultRow       = dbt.newResultObject();
   
-  for(i = 0 ; i < nfields ; i++) {
+  for(i = 0 ; i < ncolumns ; i++) {
     if(col[i].isLob) {
       value = col[i].isBinary ? blobs[i] : textFromBuffer(col[i], blobs[i]);
     } else if(record.isNull(i, buffer)) {
       value = null;
     } else {
       value = record.encoderRead(i, buffer);
-      if(col[i].typeConverter && col[i].typeConverter.ndb) {
-        value = col[i].typeConverter.ndb.fromDB(value);
+      if(col[i].typeConverter) {
+        value = col[i].typeConverter.fromDB(value);
       }
     }
 
@@ -606,7 +606,7 @@ function getResultValue(op, tableHandler, buffer, blobs) {
   // workaround: currently NdbRecordObject will not correctly hide
   // the sparse field container from the user
   var use_nro = (op.connProperties.use_mapped_ndb_record &&
-                 ! tableHandler.mapping.hasSparseFields);
+                 tableHandler.is1to1);
 
   return use_nro ? buildValueObject(op, tableHandler, buffer, blobs) :
                    buildResultRow_nonVO(op, tableHandler, buffer, blobs);
@@ -856,7 +856,7 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 
 
 storeNativeConstructorInMapping = function(dbTableHandler) {
-  var i, nfields, record, fieldNames, typeConverters, proto;
+  var i, ncolumns, record, fieldNames, typeConverters, proto;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
   if(dbTableHandler.ValueObject && dbTableHandler.resultRecord) {
     return;
@@ -864,11 +864,11 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   /* Step 1: Create Record
      getRecordForMapping(table, ndb, nColumns, columns array)
   */
-  nfields = dbTableHandler.getNumberOfColumns();
+  ncolumns = dbTableHandler.getNumberOfColumns();
   record = adapter.impl.DBDictionary.getRecordForMapping(
     dbTableHandler.dbTable,
     dbTableHandler.dbTable.per_table_ndb,
-    nfields,
+    ncolumns,
     dbTableHandler.getAllColumnMetadata()
   );
 
@@ -877,9 +877,9 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   */
   fieldNames = {};
   typeConverters = {};
-  for(i = 0 ; i < nfields ; i++) {
-    fieldNames[i] = dbTableHandler.getResolvedMapping().fields[i].fieldName;
-    typeConverters[i] = dbTableHandler.getColumnMetadata(i).typeConverter.ndb;
+  for(i = 0 ; i < ncolumns ; i++) {
+    fieldNames[i] = dbTableHandler.getColumnMapping(i).fieldNames[0];
+    typeConverters[i] = dbTableHandler.getColumnMetadata(i).typeConverter;
   }
 
   /* The user's constructor and prototype */

@@ -135,9 +135,15 @@ function ReadTest(key, value, result_col, result_val) {
     else { 
       op = tx.executedOperations.pop();
       test.errorIfNull("Null op", op);
-      test.errorIfNull("Null op.result", op.result);
-      test.errorIfNull("Null op.result.value", op.result.value);
-      test.errorIfNotEqual("Read Test", result_val, op.result.value[result_col]);
+      if(op) {
+        test.errorIfNull("Null op.result", op.result);
+        if(op.result) {
+          test.errorIfNull("Null op.result.value", op.result.value);
+          if(op.result.value) {
+            test.errorIfNotEqual("Read Test", result_val, op.result.value[result_col]);
+          }
+        }
+      }
     }
     test.failOnError();
   };
