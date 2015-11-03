@@ -35,8 +35,6 @@ var mappingId = 0;
 function FieldMapping(fieldName) {
   this.fieldName        = fieldName;
   this.persistent       = true;
-  this.relationship     = false;
-  this.meta             = null;
 }
 
 
@@ -281,9 +279,7 @@ var tableMappingProperties =
     set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
     set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
-    set("hasSparseFields",    isBool).
-    set("sparseContainer",    isString).
-    set("sparseConverter",    isConverter).
+    set("sparseContainer",    getValidator(fieldMappingProperties)).
     set("error",              isEmptyString).
     setRequired("table");
 
@@ -293,12 +289,8 @@ function TableMapping(tableNameOrLiteral) {
   this.database           = "";
   this.mapAllColumns      = true;
   this.fields             = [];
-  this.mappedFieldNames   = [];
   this.excludedFieldNames = [];
   this.meta               = [];
-  this.hasSparseFields    = false;
-  this.sparseContainer    = "";
-  this.sparseConverter    = null;
   this.error              = "";
 
   switch(typeof tableNameOrLiteral) {
@@ -554,8 +546,8 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
   var i, arg, fieldMapping;
 
   if(typeof columnName === 'string') {
-    this.hasSparseFields = true;
-    fieldMapping = new FieldMapping(columnName);  // why?
+    fieldMapping = new FieldMapping(columnName);
+    fieldMapping.columnName = columnName;
     for(i = 1; i < arguments.length ; i++) {
       arg = arguments[i];
       switch(typeof arg) {
@@ -579,8 +571,7 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
     if (!fieldMapping.converter) {      // default sparse fields converter
       fieldMapping.converter = jones.converters.JSONSparseConverter;
     }
-    fieldMapping.sparseFieldMapping = true;
-    this.fields.push(fieldMapping);
+    this.sparseContainer = fieldMapping;
   } else {
     this.error +="\nmapSparseFields() requires a valid arguments list with column name as the first argument";
   }
