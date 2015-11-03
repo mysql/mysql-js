@@ -388,7 +388,18 @@ function pu(unsigned) {return unsigned? ' UNSIGNED' : '';}
 var translateMeta = {};
 
 translateMeta.binary = function(length, nullable) {return 'BINARY(' + length + ')' +  pn(nullable);};
-translateMeta.char = function(length, nullable) {return 'CHAR(' + length + ')' +  pn(nullable);};
+translateMeta.char = function(length, lob, nullable, generated, characterset, collate) {
+  var result;
+  if (!lob) {
+    result = 'CHAR(' + length + ')' + pn(nullable);
+  } else {
+    // lob
+    result = 'TEXT(' + length + ')' + pn(nullable);
+  }
+  if (characterset !== undefined) {result += ' CHARACTER SET ' + characterset;}
+  if (collate !== undefined) {result += ' COLLATE ' + collate;}
+  return result;
+};
 translateMeta.date = function(nullable) {return 'DATE' +  pn(nullable);};
 translateMeta.datetime = function(fsp, nullable, generated) {
   var sql = 'DATETIME(' +  fsp + ')' + pn(nullable);
@@ -422,19 +433,25 @@ translateMeta.varbinary = function(length, lob, nullable) {
   }
   return 'VARBINARY(' + length + ')' + pn(nullable);
 };
-translateMeta.varchar = function(length, lob, nullable) {
+translateMeta.varchar = function(length, lob, nullable, characterset, collate) {
+  var result;
   if (lob) {
-    return 'TEXT(' + length + ')' + pn(nullable);
+    result = 'TEXT(' + length + ')';
+  } else {
+    result = 'VARCHAR(' + length + ')';
   }
-  return 'VARCHAR(' + length + ')' + pn(nullable);
+  result += pn(nullable);
+  if (characterset !== undefined) {result += ' CHARACTER SET ' + characterset;}
+  if (collate !== undefined) {result += ' COLLATE ' + collate;}
+  return result;
 };
 translateMeta.year = function(nullable) {return 'YEAR' + pn(nullable);};
 
 
 SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
-  udebug.log('sqlForTableCreation tableMapping', tableMapping, engine);
+  udebug.log_detail('sqlForTableCreation tableMapping', tableMapping, engine);
   var i, field, delimiter = '';
-  var meta, tableMeta, columnMeta;
+  var fieldMeta, tableMeta, columnMeta;
   var sql = 'CREATE TABLE ';
   sql += tableMapping.database;
   sql += '.';
@@ -446,20 +463,20 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
     field = tableMapping.fields[i];
     sql += field.columnName;
     sql += ' ';
-    meta = field.meta;
-    if (meta) {
-      columnMeta = meta.doit(translateMeta);
-      if(meta.defaultVal) {
-        columnMeta += ' DEFAULT "' + meta.defaultVal + '"';
+    fieldMeta = field.meta;
+    if (fieldMeta) {
+      columnMeta = fieldMeta.doit(translateMeta);
+      if(fieldMeta.defaultVal) {
+        columnMeta += ' DEFAULT "' + fieldMeta.defaultVal + '"';
       }
       sql += columnMeta;
-      if(meta.hasIndex) {
-        sql += meta.indexIsUnique ? ' UNIQUE' : '';
+      if(fieldMeta.hasIndex) {
+        sql += fieldMeta.isUnique ? ' UNIQUE' : '';
         sql += ' KEY ';
       } else {
-        sql += meta.isPrimaryKey? ' PRIMARY KEY' : '';
+        sql += fieldMeta.isPrimaryKey? ' PRIMARY KEY' : '';
       }
-      udebug.log('sqlForTableCreation field:', field.fieldName, 'column:', field.columnName, 'meta:', meta, 'columnMeta:', columnMeta);
+      udebug.log_detail('sqlForTableCreation field:', field.fieldName, 'column:', field.columnName, 'fieldMeta:', fieldMeta, 'columnMeta:', columnMeta);
     } else {
       sql += defaultFieldMeta(field);
     }
@@ -473,10 +490,10 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
       if(tableMeta.isPrimaryKey) {
         sql += ' PRIMARY KEY ';
       } else {
-        sql += (tableMeta.unique?' UNIQUE ': ' ') + 'INDEX ';
+        sql += (tableMeta.isUnique?' UNIQUE ': ' ') + 'INDEX ';
         sql += tableMeta.name || "";
       }
-      if(tableMeta.isHash) { sql += "USING HASH"; }
+      if(tableMeta.isHash) { sql += ' USING HASH'; }
       sql += ' ( ' + tableMeta.columns + ') ';
     }
   }

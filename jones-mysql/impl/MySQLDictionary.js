@@ -200,6 +200,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         index.columnNumbers = indexColumnNumbers;
 
         usingHash = false;
+        index.isOrdered = false;
         // get using statement
         if (++j < tokens.length) {
           // more tokens

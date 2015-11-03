@@ -41,6 +41,7 @@ more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "autoincrement"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "composition"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "freeform"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "issues"));
+more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "meta"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multipartkeys"));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
