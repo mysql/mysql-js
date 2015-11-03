@@ -358,13 +358,13 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
             }
             tableHandler = new DBTableHandler(tableMetadata, tableHandlerFactory.mapping,
                 tableHandlerFactory.ctor);
-            if (tableHandler.isValid && !tableHandlerFactory.ctor) {
+            if (tableHandler.isValid) {
               // cache the table handler for the table name case
               udebug.log('UserContext caching the table handler in the session factory for', tableKey);
               tableHandlerFactory.sessionFactory.tableHandlers[tableKey] = tableHandler;
             } else {
-              tableHandlerFactory.err = tableHandler.err;
-              udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages);          
+              tableHandlerFactory.err = new Error(tableHandler.errorMessages);
+              udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages);
             }
           } else {
             tableHandler = tableHandlerFactory.sessionFactory.tableHandlers[tableKey];
@@ -383,8 +383,8 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
                   udebug.log('UserContext caching the table handler in the prototype for constructor.');
                 }
               } else {
-                tableHandlerFactory.err = tableHandler.err;
-                if(udebug.is_detail()) { udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages); }
+                tableHandlerFactory.err = new Error(tableHandler.errorMessages);
+                udebug.log('UserContext got invalid tableHandler', tableHandler.errorMessages);
               }
             } else {
               tableHandler = tableHandlerFactory.ctor.prototype.jones.tableHandler;
@@ -2023,7 +2023,7 @@ exports.UserContext.prototype.load = function() {
       if(values.hasOwnProperty(property)) {
         userContext.user_arguments[0][property] = values[property];
       }
-    };
+    }
     userContext.applyCallback(null);
   }
 
