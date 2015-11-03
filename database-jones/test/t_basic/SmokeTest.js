@@ -53,6 +53,9 @@ test.run = function() {
   jones.openSession(global.test_conn_properties).
     then(function(s) {
       session = s;
+      session.sessionFactory.dropTable(tableMapping);
+    }).
+    then(function() {
       return session.sessionFactory.createTable(tableMapping);
     }).
     then(function() {

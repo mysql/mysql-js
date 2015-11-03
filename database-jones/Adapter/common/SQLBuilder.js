@@ -441,7 +441,7 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
     sql += delimiter;
     delimiter = ', ';
     field = tableMapping.fields[i];
-    sql += field.columnName;
+    sql += field.columnName || field.fieldName;
     sql += ' ';
     meta = field.meta;
     if (meta) {

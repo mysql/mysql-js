@@ -235,7 +235,7 @@ ReadWrite.prototype.setUp = function(callback) {
       rw.testCase.fail();
     } else {
       rw.tableMapping = tableMapping;
-      udebug.log('got mapping for ', rw.tableMapping.table);
+      udebug.log('got mapping for ', rw.tableMapping.table, tableMapping);
       // set up sql driver
       if (rw.sqlDriver === undefined) {
         rw.sqlDriver = new SQLDriver(global.test_conn_properties);
