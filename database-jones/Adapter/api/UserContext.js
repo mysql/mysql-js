@@ -2003,7 +2003,7 @@ exports.UserContext.prototype.load = function() {
 
   function loadOnResult(err, dbOperation) {
     udebug.log('load.loadOnResult');
-    var values;
+    var values, property;
     var error = checkOperation(err, dbOperation);
     if (error) {
       if (userContext.session.tx.isActive()) {
@@ -2013,9 +2013,18 @@ exports.UserContext.prototype.load = function() {
       return;
     }
     values = dbOperation.result.value;
-    // apply the values to the parameter domain object
-    userContext.dbTableHandler.setFields(userContext.user_arguments[0], values);
-    userContext.applyCallback(null);      
+    // FIXME: Result value is already a new domain object
+    /* At this point, dbOperation.result.value is a newly-created domain object,
+       but we need to modify the user's object as passed in to load().
+       For now we will copy fields back to the original object; a better
+       design would avoid creating the new object altogether.
+    */
+    for(property in values) {
+      if(values.hasOwnProperty(property)) {
+        userContext.user_arguments[0][property] = values[property];
+      }
+    };
+    userContext.applyCallback(null);
   }
 
   function loadOnTableHandler(err, dbTableHandler) {

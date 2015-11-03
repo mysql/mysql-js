@@ -527,6 +527,7 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
         op.result.value = rows[0];
         op.result.success = true;
         // convert the felix result into the user result
+        // FIXME DO NOT DO THIS ON session.load()
         op.result.value = dbTableHandler.newResultObject(op.result.value);
         if (typeof(op.callback) === 'function') {
           // call the UserContext callback
