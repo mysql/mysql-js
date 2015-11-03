@@ -183,7 +183,6 @@ function DBTableHandlerPrivate(dbTableHandler) {
   this.columns           = [];    // Array of DBT_Column
   this.columnMetadata    = [];    // Array of ColumnMetadata
   this.fields            = {};    // FieldName => DBT_Field
-  this.fieldMappings     = [];    // Array of FieldMapping
   this.reportError       = function(message)  {
     dbTableHandler.appendErrorMessage(message);
   };
@@ -234,7 +233,6 @@ DBTableHandlerPrivate.prototype.addField = function(mapping) {
   if(this.fields[mapping.fieldName]) {
     this.reportError("Attempt to map field " + mapping.fieldName + " more than once");
   } else {
-    this.fieldMappings.push(mapping);
     this.fields[mapping.fieldName] = new DBT_Field(mapping);
     this.mapFieldToColumns(mapping);
   }
@@ -332,6 +330,10 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.mapping.database = this.dbTable.database;
   }
 
+  /* Also build the "resolved" mapping */
+  this.resolvedMapping = new TableMapping(this.mapping);
+  this.resolvedMapping.mapAllColumns = false;  // all fields will be present
+
   /* Build an array of column names.  This will establish column order. */
   columnNames = [];
   if(this.mapping.mapAllColumns) {        // Use all columns from dictionary
@@ -374,8 +376,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   if(this.mapping.mapAllColumns) {
     for(i = 0 ; i < priv.columns.length ; i++) {
       if(! priv.columns[i].isMapped) {
-        field = new FieldMapping(priv.columnMetadata[i].name);
-        priv.addField(field);
+        field = priv.columnMetadata[i].name;
+        this.resolvedMapping.mapField({"fieldName":field,"columnName":field});
+        priv.addField(this.resolvedMapping.getFieldMapping(field));
       }
     }
   }
@@ -384,9 +387,11 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   */
   for(id = 0 ; id < columnNames.length ; id++) {
     col = columnNames[id];
-    if(dbtable.sparseContainer === col || this.mapping.sparseContainer === col) { // fixme mapping.sparseContainer
+    if(dbtable.sparseContainer === col ||
+       (this.mapping.sparseContainer && this.mapping.sparseContainer.columnName === col)) {
       this.sparseContainer = col;
       priv.setSparseColumn(id, this.mapping.excludedFieldNames);
+      this.resolvedMapping.mapSparseFields(col);
     }
     if(priv.columnMetadata[id].isAutoincrement) {
       this.autoIncColumnNumber = i;
@@ -397,6 +402,24 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     }
     if(priv.columns[id].isShared || priv.columns[id].isPartial) {
       this.is1to1 = false;
+    }
+  }
+
+  /* Attend to unresolved column names */
+  for(i = 0 ; i < this.resolvedMapping.fields.length ; i++) {
+    field = this.resolvedMapping.fields[i];
+    if(field.columnName) {
+      if(! this.getColumnMapping(field.columnName)) {
+        this.resolvedMapping.error += "Column " + field.columnName + " does not exist\n";
+      }
+    } else {
+      if(this.getColumnMapping(field.fieldName)) {
+        field.columnName = field.fieldName;
+      } else if(this.sparseContainer) {
+        field.columnName = this.sparseContainer;
+      } else {
+        this.resolvedMapping.error += "No column mapped for field " + field.Name + "\n";
+      }
     }
   }
 
@@ -429,9 +452,8 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   udebug.log_detail("DBTableHandler<ctor>:\n", this);
 }
 
-// FIXME: _private.resolvedMapping is not an actual TableMapping
 DBTableHandler.prototype.getResolvedMapping = function() {
-  return this._private.resolvedMapping;
+  return this.resolvedMapping;
 };
 
 DBTableHandler.prototype.getColumnMapping = function(idOrName) {
@@ -455,11 +477,11 @@ DBTableHandler.prototype.getFieldMapping = function(fieldName) {
 };
 
 DBTableHandler.prototype.getAllFieldMappings = function() {
-  return this._private.fieldMappings;
+  return this.resolvedMapping.fields;
 };
 
 DBTableHandler.prototype.getNumberOfFields = function() {
-  return this._private.fieldMappings.length;
+  return this.resolvedMapping.fields.length;
 };
 
 DBTableHandler.prototype.getColumnMaskForField = function(name) {
@@ -521,6 +543,7 @@ DBTableHandler.prototype.createResultObject = function() {
    Create a new object using the constructor function (if set).
 */
 DBTableHandler.prototype.newResultObject = function(values) {
+  udebug.log("newResultObject", values);
   var newDomainObj = this.createResultObject();
   if (typeof values === 'object') {
     this.setFields(newDomainObj, values);
@@ -573,7 +596,7 @@ DBTableHandler.prototype.newResultObjectFromRow = function(row, offset,
  */ 
 DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
   var value, convertedValue;
-  this._private.fieldMappings.forEach(function (fieldMapping) {
+  this.resolvedMapping.fields.forEach(function (fieldMapping) {
     if(fieldMapping.converter) {
       if(obj[fieldMapping.fieldName] !== undefined) {
         value = obj[fieldMapping.fieldName];
