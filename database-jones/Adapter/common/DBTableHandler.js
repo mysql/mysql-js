@@ -93,10 +93,13 @@ function getColumnByName(dbTable, colName) {
 function DBT_Column(columnMetadata) {
   this.columnName         = columnMetadata.name;
   this.fieldNames         = [];
+  this.fieldConverters    = [];
   this.isMapped           = false; // Has any field mapping
   this.isShared           = false; // Many fields to 1 column
   this.isPartial          = false; // 1 field to many columns
   this.excludedFieldNames = [];    // If column is a container for sparse fields
+  this.typeConverter      = columnMetadata.typeConverter ||
+                            columnMetadata.domainTypeConverter;
 }
 
 DBT_Column.prototype.addFieldMapping = function(mapping, reportError) {
@@ -104,6 +107,7 @@ DBT_Column.prototype.addFieldMapping = function(mapping, reportError) {
     this.isShared = true;
   }
   this.fieldNames.push(mapping.fieldName);
+  this.fieldConverters.push(mapping.converter);
   if(this.fieldNames.length > 1 && ! this.isShared) {
     reportError(
       "Column " + this.columnName + " is used by multiple fields but field "
@@ -126,20 +130,34 @@ DBT_Column.prototype.setSparse = function(excludedFields) {
   this.excludedFieldNames = excludedFields;
 };
 
-// FIXME: Apply converters here
 DBT_Column.prototype.getColumnValue = function(domainObject) {
+  var value;
   if(this.isShared) {
 
   } else {
-    return domainObject[this.fieldNames[0]];
+    value = domainObject[this.fieldNames[0]];
+    if(this.fieldConverters[0]) {
+      value = this.fieldConverters[0].toDB(value);
+    }
   }
+
+  if(this.typeConverter) {
+    value = this.typeConverter.toDB(value);
+  }
+  return value;
 };
 
-// FIXME: Apply converters here
 DBT_Column.prototype.setFieldValues = function(domainObject, columnValue) {
+  if(this.typeConverter) {
+    columnValue = this.typeConverter.fromDB(columnValue);
+  }
+
   if(this.isShared) {
 
   } else {
+    if(this.fieldConverters[0]) {
+      columnValue = this.fieldConverters[0].fromDB(columnValue);
+    }
     domainObject[this.fieldNames[0]] = columnValue;
   }
 };
@@ -302,7 +320,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   this._private               = priv;
   this.dbTable                = dbtable;
   this.ValueObject            = null;
-  this.errorMessages          = '\n';
+  this.errorMessages          = "";
   this.isValid                = true;
   this.autoIncFieldName       = null;
   this.autoIncColumnNumber    = null;
@@ -319,7 +337,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       stats.explicit_mappings++;
       this.mapping = tablemapping;
     } else {
-      this.err = new Error(tablemapping.error || "Invalid TableMapping");
+      this.errorMessages = tablemapping.error;
       this.isValid = false;
       return;
     }
@@ -435,10 +453,6 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.foreignKeyMap[foreignKey.name] = foreignKey;
   }
 
-  if (!this.isValid) {
-    this.err = new Error(this.errorMessages);
-  }
-  
   if (ctor) {
     // cache this in ctor.prototype.jones.dbTableHandler
     if (!ctor.prototype.jones) {

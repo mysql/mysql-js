@@ -80,14 +80,14 @@ t1.run = function() {
   fail_openSession(testCase, function(session) {
     session.persist(object, function(err) {
       if (err) {
-        testCase.fail(err);
+        testCase.fail(err.message || err);
         return;
       }
       // key and testCase are passed to fail_verify_t_basic as extra parameters
       session.find(global.converter, 4090, function(err, instance) {
         var id = 4090;
         if (err) {
-          testCase.fail(err);
+          testCase.fail(err.message || err);
         } else {
           if (typeof instance !== 'object') {
             testCase.appendErrorMessage('Result for id ' + id + ' is not an object; actual type: ' + typeof instance);

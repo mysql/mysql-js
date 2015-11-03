@@ -148,7 +148,20 @@ function keepIndexStatistics(dbTable, index) {
 	index_stats[dbTable.name][keyName]++;
 }  
 
-// FIXME: Use tableHandler.resultRecord or dbTable.record as appropriate
+
+function storeResultRecord(dbTableHandler) {
+  if(! dbTableHandler.resultRecord) {
+    // getRecordForMapping(table, ndb, nColumns, columnsArray)
+    dbTableHandler.resultRecord =
+      adapter.impl.DBDictionary.getRecordForMapping(
+        dbTableHandler.dbTable,
+        dbTableHandler.dbTable.per_table_ndb,
+        dbTableHandler.getNumberOfColumns(),
+        dbTableHandler.getAllColumnMetadata()
+      );
+  }
+  return dbTableHandler.resultRecord;
+}
 
 var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
   assert(tx);
@@ -170,6 +183,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
     this.tableHandler = tableHandler;
     this.index        = null;  
   }
+  storeResultRecord(this.tableHandler);
 
   /* NDB Impl-specific properties */
   this.encoderError = null;
@@ -204,8 +218,8 @@ function encodeColumnsInBuffer(fields, ncolumns, metadata,
   var i, column, value, encoderError, error;
   error = null;
 
-  function addError() {
-    udebug.log("encoderWrite error:", encoderError);
+  function addError(value) {
+    udebug.log("encoderWrite error:", encoderError, "for", value);
     if(error) {   // More than one column error, so use the generic code
       error.sqlstate = "22000"; 
       error.message += "; [" + column.name + "]";
@@ -226,11 +240,8 @@ function encodeColumnsInBuffer(fields, ncolumns, metadata,
         else                  {  encoderError = "23000"; addError();  }
       } 
       else {
-//        if(column.typeConverter) {
-//          value = column.typeConverter.toDB(value);
-//        }
         encoderError = record.encoderWrite(i, buffer, value);
-        if(encoderError) { addError(); }
+        if(encoderError) { addError(value); }
       }
     }
   }
@@ -265,7 +276,7 @@ function defineBlobs(ncolumns, metadata, values) {
 
 function allocateRowBuffer(op) {
   assert(op.buffers.row === null);
-  op.buffers.row = new Buffer(op.tableHandler.dbTable.record.getBufferSize());
+  op.buffers.row = new Buffer(op.tableHandler.resultRecord.getBufferSize());
 }  
 
 function releaseRowBuffer(op) {
@@ -285,7 +296,7 @@ function encodeRowBuffer(op) {
   return encodeColumnsInBuffer(valuesArray,
                               ncolumns,
                               columnMetadata,
-                              op.tableHandler.dbTable.record,
+                              op.tableHandler.resultRecord,
                               op.buffers.row,
                               op.columnMask);                    
 }
@@ -436,7 +447,7 @@ DBOperation.prototype.buildOpHelper = function(helper) {
   }  
   else {
     /* All non-VO operations get a row record */
-    helper[OpHelper.row_record] = this.tableHandler.dbTable.record;
+    helper[OpHelper.row_record] = this.tableHandler.resultRecord;
     
     /* All but delete get an allocated row buffer, and column mask */
     if(code !== 16) {
@@ -496,7 +507,7 @@ DBOperation.prototype.prepareScan = function(dbTransactionContext) {
   /* There is one global ScanHelperSpec */
   scanSpec.clear();
 
-  scanSpec[ScanHelper.table_record] = this.query.dbTableHandler.dbTable.record;
+  scanSpec[ScanHelper.table_record] = this.query.dbTableHandler.resultRecord;
 
   if(this.query.queryType == 2) {  /* Index Scan */
     dbIndex = this.query.dbIndexHandler.dbIndex;
@@ -549,7 +560,7 @@ DBOperation.prototype.isScanOperation = function() {
 function buildResultRow_nonVO(op, dbt, buffer, blobs) {
   udebug.log("buildResultRow");
   var i, value;
-  var record          = dbt.dbTable.record; // ??
+  var record          = dbt.resultRecord;
   var ncolumns        = dbt.getNumberOfColumns();
   var col             = dbt.getAllColumnMetadata();
   var resultRow       = dbt.newResultObject();
@@ -561,9 +572,6 @@ function buildResultRow_nonVO(op, dbt, buffer, blobs) {
       value = null;
     } else {
       value = record.encoderRead(i, buffer);
-//      if(col[i].typeConverter) {
-//        value = col[i].typeConverter.fromDB(value);
-//      }
     }
 
     dbt.set(resultRow, i, value);
@@ -629,7 +637,7 @@ function getScanResults(scanop, userCallback) {
     udebug.log("skip", nSkip, "+ limit", scanop.params.limit, "=", maxRow);
   }
 
-  recordSize = scanop.tableHandler.dbTable.record.getBufferSize();
+  recordSize = scanop.tableHandler.resultRecord.getBufferSize();
 
   function fetchResults(dbSession, ndb_scan_op, buffer) {
     var apiCall = new QueuedAsyncCall(dbSession.execQueue, null);
@@ -852,28 +860,17 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
   udebug.log("completeExecutedOps done");
 }
 
-
 storeNativeConstructorInMapping = function(dbTableHandler) {
   var i, ncolumns, record, fieldNames, proto;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
-  if(dbTableHandler.ValueObject && dbTableHandler.resultRecord) {
+  if(dbTableHandler.ValueObject) {
     return;
   }
-  /* Step 1: Create Record
-     getRecordForMapping(table, ndb, nColumns, columns array)
-  */
+  record = dbTableHandler.resultRecord || storeResultRecord(dbTableHandler);
   ncolumns = dbTableHandler.getNumberOfColumns();
-  record = adapter.impl.DBDictionary.getRecordForMapping(
-    dbTableHandler.dbTable,
-    dbTableHandler.dbTable.per_table_ndb,
-    ncolumns,
-    dbTableHandler.getAllColumnMetadata()
-  );
-
-  /* Step 2: Get NdbRecordObject Constructor
-    getValueObjectConstructor(record, fieldNames, prototype)
-  */
   fieldNames = {};
+
+  assert(dbTableHandler.is1to1);
   for(i = 0 ; i < ncolumns ; i++) {
     fieldNames[i] = dbTableHandler.getColumnMapping(i).fieldNames[0];
   }
@@ -882,12 +879,12 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   DOC = dbTableHandler.newObjectConstructor;
   proto = (DOC && DOC.prototype) ? DOC.prototype : null;
 
-  /* Get the Value Object Constructor */
+  /* Get the Value Object Constructor
+     getValueObjectConstructor(record, fieldNames, prototype)
+     Store it in the TableHandler
+  */
   VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, proto);
-
-  /* Store both the VOC and the Record in the mapping */
   dbTableHandler.ValueObject = VOC;
-  dbTableHandler.resultRecord = record;
 };
 
 function verifyIndexHandler(dbIndexHandler) {

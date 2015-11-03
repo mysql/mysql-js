@@ -68,24 +68,13 @@ stats_module.register(op_stats, "spi","mysql","DBOperation");
  * @return the value to be passed to the adapter from the driver
  */
 function driverTypeConverter(field, next) {
-  var type = field.type;
-  var value;
-  switch (type) {
+  switch (field.type) {
   case 'DATE':
-    value = field.string();
-    return value;
+    return field.string();
   case 'TIMESTAMP':
-    value = field.string();
-    if (value === null) {
-      return null;
-    }
-    return value;
+    return field.string();
   case 'DATETIME':
-    value = field.string();
-    if (value === null) {
-      return null;
-    }
-    return value;
+    return field.string();
   default:
     return next();
   }

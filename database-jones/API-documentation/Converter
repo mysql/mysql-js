@@ -5,8 +5,6 @@
    and can also be defined on the SessionFactory for all columns of a
    particular type.
 
-   
-
    When a Converter is defined for a column, the converter's toDB() method is
    called before writing a value to the database, and the converter's fromDB()
    method is called after reading a value from the database.
