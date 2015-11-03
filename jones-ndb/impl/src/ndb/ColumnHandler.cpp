@@ -26,23 +26,9 @@
 
 using namespace v8;
 
-class Keys {
-public:
-  Eternal<String> toDB;
-  Eternal<String> fromDB;
-  Keys() {
-    HandleScope scope(Isolate::GetCurrent());
-    toDB.Set(Isolate::GetCurrent(), NEW_SYMBOL("toDB"));
-    fromDB.Set(Isolate::GetCurrent(), NEW_SYMBOL("fromDB"));
-  }
-};
-
-Keys keys;
 
 ColumnHandler::ColumnHandler() :
   column(0), offset(0), 
-  converterClass(), converterReader(), converterWriter(),
-  hasConverterReader(false), hasConverterWriter(false),
   isLob(false), isText(false)
 {
 }
@@ -54,14 +40,10 @@ ColumnHandler::~ColumnHandler() {
 
 void ColumnHandler::init(v8::Isolate * isolate,
                          const NdbDictionary::Column *_column,
-                         size_t _offset,
-                         Handle<Value> typeConverter) {
-  EscapableHandleScope scope(isolate);
+                         size_t _offset) {
   column = _column;
   encoder = getEncoderForColumn(column);
   offset = _offset;
-  Local<Object> t;
-  Local<Object> converter;
 
   switch(column->getType()) {
     case NDB_TYPE_TEXT: 
@@ -71,27 +53,6 @@ void ColumnHandler::init(v8::Isolate * isolate,
       break;
     default:
       break;
-  }
-
-  if(typeConverter->IsObject()) {
-    converter = typeConverter->ToObject();
-    converterClass.Reset(isolate, converter);
-
-    if(converter->Has(keys.toDB.Get(isolate))) {
-      t = converter->Get(keys.toDB.Get(isolate))->ToObject();
-      if(t->IsFunction()) {
-        converterWriter.Reset(isolate, t);
-        hasConverterWriter = true;
-      }
-    }
-
-    if(converter->Has(keys.fromDB.Get(isolate))) {
-      t = converter->Get(keys.fromDB.Get(isolate))->ToObject();
-      if(t->IsFunction()) {
-        converterReader.Reset(isolate, t);
-        hasConverterReader = true;
-      }
-    }
   }
 }
 
@@ -108,34 +69,16 @@ Handle<Value> ColumnHandler::read(char * rowBuffer, Handle<Object> blobBuffer) c
   } else {
     val = encoder->read(column, rowBuffer, offset);
   }
-
-  if(hasConverterReader) {
-    TryCatch tc;
-    Handle<Value> arguments[1];
-    arguments[0] = val;
-    val = ToLocal(& converterReader)->CallAsFunction(ToLocal(& converterClass), 1, arguments);
-    if(tc.HasCaught()) tc.ReThrow();
-  }
   return val;
 }
 
+
 // If column is a blob, val is the blob buffer
 Handle<Value> ColumnHandler::write(Handle<Value> val, char *buffer) const {
-  Handle<Value> writeStatus;
-
   DEBUG_PRINT("write %s", column->getName());
-  if(hasConverterWriter) {
-    TryCatch tc;
-    Handle<Value> arguments[1];
-    arguments[0] = val;
-    val = ToLocal(& converterWriter)->CallAsFunction(ToLocal(& converterClass), 1, arguments);
-    if(tc.HasCaught())
-      return tc.Exception();
-   }
-  
-  writeStatus = encoder->write(column, val, buffer, offset);
-  return writeStatus;
+  return encoder->write(column, val, buffer, offset);
 }
+
 
 BlobWriteHandler * ColumnHandler::createBlobWriteHandle(Local<Value> val,
                                                         int fieldNo) const {

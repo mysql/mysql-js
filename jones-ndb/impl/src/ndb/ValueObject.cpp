@@ -61,7 +61,7 @@
   a Record over the set of mapped columns. 
 
  Step 2: call getValueObjectConstructor(), implemented here.  This takes as 
-  arguments the Record, the field names, and any needed typeConverters.  
+  arguments the Record, the field names, and the prototype for domain objects.
   It returns a constructor that can be used to create VOs (a VOC).  The VOC 
   itself takes two arguments: the buffer containing in-row data that has been 
   read, and an array of individual buffers for BLOB columns.
@@ -162,8 +162,7 @@ void nroConstructor(const Arguments &args) {
 
 /* arg0: Record constructed over the appropriate column list
    arg1: Array of field names
-   arg2: Array of typeConverters 
-   arg3: DOC Prototype
+   arg2: DOC Prototype
 
    Returns: a constructor function that can be used to create native-backed 
    objects
@@ -188,7 +187,7 @@ void getValueObjectConstructor(const Arguments &args) {
     const NdbDictionary::Column * col = record->getColumn(i);
     size_t offset = record->getColumnOffset(i);
     ColumnHandler * handler = columnHandlers->getHandler(i);
-    handler->init(args.GetIsolate(), col, offset, args[2]->ToObject()->Get(i));
+    handler->init(args.GetIsolate(), col, offset);
   }
   Local<Value> jsHandlerSet = columnHandlerSetEnvelope.wrap(columnHandlers);
   mapData->Set(1, jsHandlerSet);
@@ -199,7 +198,7 @@ void getValueObjectConstructor(const Arguments &args) {
   mapData->Set(2, envelopeEnvelope.wrap(nroEnvelope));
 
   /* Set the Prototype in the mapData */
-  mapData->Set(3, args[3]);
+  mapData->Set(3, args[2]);
 
   /* Create accessors for the mapped fields in the instance template.
      AccessorInfo.Data() for the accessor will hold the field number.

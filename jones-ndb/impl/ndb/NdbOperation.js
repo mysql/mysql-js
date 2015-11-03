@@ -226,9 +226,9 @@ function encodeColumnsInBuffer(fields, ncolumns, metadata,
         else                  {  encoderError = "23000"; addError();  }
       } 
       else {
-        if(column.typeConverter) {
-          value = column.typeConverter.toDB(value);
-        }
+//        if(column.typeConverter) {
+//          value = column.typeConverter.toDB(value);
+//        }
         encoderError = record.encoderWrite(i, buffer, value);
         if(encoderError) { addError(); }
       }
@@ -561,9 +561,9 @@ function buildResultRow_nonVO(op, dbt, buffer, blobs) {
       value = null;
     } else {
       value = record.encoderRead(i, buffer);
-      if(col[i].typeConverter) {
-        value = col[i].typeConverter.fromDB(value);
-      }
+//      if(col[i].typeConverter) {
+//        value = col[i].typeConverter.fromDB(value);
+//      }
     }
 
     dbt.set(resultRow, i, value);
@@ -581,8 +581,6 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
   if(VOC) {
     /* Turn the buffer into a Value Object */
     value = new VOC(buffer, blobs);
-
-    /* TODO: Apply type converters here, rather than in Column Handler??? */
 
     /* DBT may have some fieldConverters for this object */
     op.tableHandler.applyFieldConverters(value);
@@ -856,7 +854,7 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 
 
 storeNativeConstructorInMapping = function(dbTableHandler) {
-  var i, ncolumns, record, fieldNames, typeConverters, proto;
+  var i, ncolumns, record, fieldNames, proto;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
   if(dbTableHandler.ValueObject && dbTableHandler.resultRecord) {
     return;
@@ -873,13 +871,11 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   );
 
   /* Step 2: Get NdbRecordObject Constructor
-    getValueObjectConstructor(record, fieldNames, typeConverters)
+    getValueObjectConstructor(record, fieldNames, prototype)
   */
   fieldNames = {};
-  typeConverters = {};
   for(i = 0 ; i < ncolumns ; i++) {
     fieldNames[i] = dbTableHandler.getColumnMapping(i).fieldNames[0];
-    typeConverters[i] = dbTableHandler.getColumnMetadata(i).typeConverter;
   }
 
   /* The user's constructor and prototype */
@@ -887,7 +883,7 @@ storeNativeConstructorInMapping = function(dbTableHandler) {
   proto = (DOC && DOC.prototype) ? DOC.prototype : null;
 
   /* Get the Value Object Constructor */
-  VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, typeConverters, proto);
+  VOC = adapter.impl.getValueObjectConstructor(record, fieldNames, proto);
 
   /* Store both the VOC and the Record in the mapping */
   dbTableHandler.ValueObject = VOC;
