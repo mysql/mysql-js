@@ -985,7 +985,7 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
       // get this optional field mapping that corresponds to the parent field mapping
       // it may be needed to find the foreign key or join table
       parentTargetFieldName = parentFieldMapping.targetField;
-      parentTargetField = sector.tableHandler.getField(parentTargetFieldName);
+      parentTargetField = sector.tableHandler.getFieldMapping(parentTargetFieldName);
       if (parentFieldMapping.toMany && parentFieldMapping.manyTo) {
         // this is a many-to-many relationship using a join table
         joinTable = parentFieldMapping.joinTable;
@@ -995,7 +995,7 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
           joinTableHandler = parentFieldMapping.joinTableHandler;
         } else {
           // join table must be defined on this side
-          thisFieldMapping = tableHandler.getField(parentFieldMapping.targetField);
+          thisFieldMapping = tableHandler.getFieldMapping(parentFieldMapping.targetField);
           joinTable = thisFieldMapping.joinTable;
           if (!joinTable) {
             // error; neither side defined the join table
@@ -1042,7 +1042,7 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
         } else {
           // foreign key is defined on this side
           // get the fieldMapping for this relationship field
-          parentTargetField = sector.tableHandler.getField(parentTargetFieldName);
+          parentTargetField = sector.tableHandler.getFieldMapping(parentTargetFieldName);
           foreignKeyName = parentTargetField.foreignKey;
           if (foreignKeyName) {
           foreignKey = tableHandler.getForeignKey(foreignKeyName);
@@ -1104,7 +1104,7 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
     // is this field in key fields?
     if (sector.keyFieldNames.indexOf(fieldName) == -1) {
       // non-key field; add it to non-key fields
-      field = tableHandler.getField(fieldName);
+      field = tableHandler.getFieldMapping(fieldName);
       sector.nonKeyFields.push(field);
     }
   });
@@ -1282,7 +1282,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // validate all fields in projection are mapped
           if (projection.fields) { // field names
             projection.fields.forEach(function(fieldName) {
-              fieldMapping = dbTableHandler.getField(fieldName);
+              fieldMapping = dbTableHandler.getFieldMapping(fieldName);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
                   errors += '\nBad projection for ' +  domainObjectName + ': field' + fieldName + ' must not be a relationship';
@@ -1316,7 +1316,7 @@ exports.UserContext.prototype.validateProjection = function(callback) {
 //            console.log('relationships for', projection.domainObject.prototype.constructor.name, relationships);
             Object.keys(relationships).forEach(function(key) {
               // each key is the name of a relationship that must be a field in the table handler
-              fieldMapping = dbTableHandler.getField(key);
+              fieldMapping = dbTableHandler.getFieldMapping(key);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
 //                  console.log('adding relationship for', key);

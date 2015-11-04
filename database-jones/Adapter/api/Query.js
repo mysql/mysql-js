@@ -145,7 +145,7 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
   
   var fieldName, queryField;
   // add a property for each field in the table mapping
-  jones.dbTableHandler.getAllFieldMappings().forEach(function(field) {
+  jones.dbTableHandler.getAllQueryFields().forEach(function(field) {
     fieldName = field.fieldName;
     queryField = new QueryField(queryDomainType, field);
     if (keywords.indexOf(fieldName) === -1) {
@@ -723,8 +723,8 @@ var QueryHandler = function(dbTableHandler, predicate) {
 
     // Mark the usedColumnMask and equalColumnMask in each query node
     predicate.visit(theMaskMarkerVisitor);
-    candidateIndex = dbTableHandler.chooseUniqueIndexForPredicate(predicate);
 
+    candidateIndex = dbTableHandler.chooseUniqueIndexForPredicate(predicate);
     if(candidateIndex) {
       this.dbIndexHandler = candidateIndex;
       this.queryType = candidateIndex.dbIndex.isPrimaryKey ? 0 : 1;
@@ -750,7 +750,7 @@ var QueryHandler = function(dbTableHandler, predicate) {
     parameter object.
 */
 QueryHandler.prototype.getKeys = function(parameterValues) {
-  var indexColumns = this.dbIndexHandler.dbIndex.columnNumbers;
+  var indexColumns = this.dbIndexHandler.indexColumnNumbers;
   var predicate = this.predicate;
 
   function getParameterNameForColumn(node, columnNumber) {

@@ -73,7 +73,6 @@ stats_module.register(stats,"spi","DBTableHandler");
 /* getColumnByName() is a utility function used in the building of maps.
 */
 function getColumnByName(dbTable, colName) {
-  udebug.log_detail("getColumnByName", colName);
   var i, col;
   
   for(i = 0 ; i < dbTable.columns.length ; i++) {
@@ -173,25 +172,22 @@ DBT_Column.prototype.hasConverter = function() {
 
 function DBT_Field(mapping) {
   this.mapping       = mapping;
-  this.columnNumbers = [];
+  this.fieldName     = mapping.fieldName;
   this.columnMask    = new BitMask();
 }
 
 DBT_Field.prototype.mapToOneColumn = function(colNumber) {
   this.is1to1        = true;
-  this.columnNumbers = [ colNumber ];
   this.columnMask.set(colNumber);
 };
 
 DBT_Field.prototype.mapToManyColumns = function(colNumber) {
   this.is1to1 = false;
-  this.columnNumbers.push(colNumber);
   this.columnMask.set(colNumber);
 };
 
 DBT_Field.prototype.mapManyToOne = function(colNumber) {
   this.is1to1 = false;
-  this.columnNumbers = [ colNumber ];
   this.columnMask.set(colNumber);
 };
 
@@ -468,8 +464,7 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       ctor.prototype.jones.dbTableHandler = this;
     }
   }
-  udebug.log("new completed");
-  udebug.log_detail("DBTableHandler<ctor>:\n", this);
+  udebug.log("Constructor completed -- ", this);
 }
 
 DBTableHandler.prototype.getResolvedMapping = function() {
@@ -496,7 +491,7 @@ DBTableHandler.prototype.getFieldMapping = function(fieldName) {
   return this._private.fields[fieldName].mapping;
 };
 
-DBTableHandler.prototype.getAllFieldMappings = function() {
+DBTableHandler.prototype.getAllQueryFields = function() {
   return this.resolvedMapping.fields;
 };
 
@@ -511,7 +506,7 @@ DBTableHandler.prototype.getColumnMaskForField = function(name) {
 };
 
 
-DBTableHandler.prototype.describe = function() {
+DBTableHandler.prototype.inspect = function() {
   var s, fields, columns;
   if(this.isValid) {
     fields = this.getNumberOfFields() == 1 ? " field" : " fields";
@@ -701,6 +696,7 @@ DBTableHandler.prototype.chooseUniqueIndexForPredicate = function(predicate) {
 */
 DBTableHandler.prototype.chooseOrderedIndexForPredicate = function(predicate) {
   var i, idxs, indexHandler, score, highScore, highScorer;
+  udebug.log("ChooseOrderedIndexForPredicate", predicate, predicate.usedColumnMask);
   idxs = this.dbTable.indexes;
   highScore = 0;
   highScorer = null;
@@ -820,27 +816,38 @@ DBTableHandler.prototype.getForeignKeyNames = function() {
 //////// DBIndexHandler             /////////////////
 
 DBIndexHandler = function(parent, dbIndex) {
-  var i, colNo, colName;
-  udebug.log("DBIndexHandler constructor");
+  var i, tableColNo, handlerColNo, colName, allDbtFields, fieldMappings;
   stats.DBIndexHandler_created++;
 
   this.tableHandler = parent;
   this.dbIndex = dbIndex;
-  this.indexColumnNumbers = dbIndex.columnNumbers;
+  this.indexColumnNumbers = [];
   this.singleColumn = null;
   this._private = new DBTableHandlerPrivate(this);
   this.columnMask = new BitMask(parent.dbTable.columns.length);
 
   for(i = 0 ; i < dbIndex.columnNumbers.length ; i++) {
-    colNo = dbIndex.columnNumbers[i];
-    colName = parent.dbTable.columns[colNo].name;
-    this.columnMask.set(colNo);
+    tableColNo = dbIndex.columnNumbers[i];
+    colName = parent.dbTable.columns[tableColNo].name;
+    handlerColNo = parent._private.columnNameToIdMap[colName];
+    this.indexColumnNumbers.push(handlerColNo);
+    this.columnMask.set(handlerColNo);
     this._private.addColumnFromParent(parent._private, colName);
   }
+
+  fieldMappings = [];
+  allDbtFields = this._private.fields;
+  this._private.columns.forEach(function(dbtColumn) {
+    dbtColumn.fieldNames.forEach(function(fieldName) {
+      fieldMappings.push(allDbtFields[fieldName].mapping);
+    });
+  });
+  this.fieldMappings = fieldMappings;
 
   if(i === 1) {                                      // One-column index
     this.singleColumn = this.getColumnMetadata(0);
   }
+  udebug.log("Constructor completed:", this);
 };
 
 /* DBIndexHandler inherits some methods from DBTableHandler 
@@ -852,10 +859,23 @@ DBIndexHandler.prototype = {
   getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
   get                    : DBTableHandler.prototype.get,
   getColumns             : DBTableHandler.prototype.getColumns,
-  getNumberOfFields      : DBTableHandler.prototype.getNumberOfFields,
-  getField               : DBTableHandler.prototype.getField,
   appendErrorMessage     : DBTableHandler.prototype.appendErrorMessage,
-  getFieldMapping        : DBTableHandler.prototype.getFieldMapping
+};
+
+DBIndexHandler.prototype.inspect = function() {
+  return "DBIndexHandler for" +
+         (this.dbIndex.isUnique ? " unique" : "") +
+         (this.dbIndex.isOrdered ? " ordered" : "") +
+         " index " + this.dbIndex.name + " with " + this.fieldMappings.length +
+         " field(s) over column(s) " + this.indexColumnNumbers;
+};
+
+DBIndexHandler.prototype.getNumberOfFields = function() {
+  return this.fieldMappings.length;
+};
+
+DBIndexHandler.prototype.getField = function(n) {
+  return this.fieldMappings[n];
 };
 
 /* Determine whether index is usable for a particular Query predicate
