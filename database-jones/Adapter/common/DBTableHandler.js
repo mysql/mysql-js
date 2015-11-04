@@ -149,6 +149,7 @@ DBT_Column.prototype.getColumnValue = function(domainObject) {
 
 DBT_Column.prototype.setFieldValues = function(domainObject, columnValue) {
   if(this.typeConverter) {
+    udebug.log("Applying column type converter for", this.columnName);
     columnValue = this.typeConverter.fromDB(columnValue);
   }
 
@@ -162,6 +163,9 @@ DBT_Column.prototype.setFieldValues = function(domainObject, columnValue) {
   }
 };
 
+DBT_Column.prototype.hasConverter = function() {
+  return (this.typeConverter || this.fieldConverters[0]);
+};
 
 //////////////////
 /// DBT_Field represents a mapped field
@@ -606,25 +610,7 @@ DBTableHandler.prototype.newResultObjectFromRow = function(row, offset,
 };
 
 
-/** applyFieldConverters(object) 
- *  IMMEDIATE
- *  Apply the field converters to an existing object.
- */ 
-DBTableHandler.prototype.applyFieldConverters = function(obj, adapter) {
-  var value, convertedValue;
-  this.resolvedMapping.fields.forEach(function (fieldMapping) {
-    if(fieldMapping.converter) {
-      if(obj[fieldMapping.fieldName] !== undefined) {
-        value = obj[fieldMapping.fieldName];
-        convertedValue = fieldMapping.converter.fromDB(value);
-        obj[fieldMapping.fieldName] = convertedValue;
-      }
-    }
-  });
-};
-
-
-/* setAutoincrement(object, autoincrementValue) 
+/* setAutoincrement(object, autoincrementValue)
  * IMMEDIATE
  * Store autoincrement value into object
  */
@@ -788,6 +774,12 @@ DBTableHandler.prototype.setFields = function(obj, values) {
       this.set(obj, i, value);
     }
   }
+};
+
+/* Returns true if a column or field converter applies to a column value
+*/
+DBTableHandler.prototype.columnHasConverter = function(columnNumber) {
+  return this.getColumnMapping(columnNumber).hasConverter();
 };
 
 /* Functions to get IndexHandlers 

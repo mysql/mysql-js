@@ -40,21 +40,25 @@
       
 ************************/
 
-// TODO:  default values?  undefined?
-
-var path = require("path"),
-    MySQLTime = require(jones.common.MySQLTime),
+var MySQLTime = require(jones.common.MySQLTime),
     udebug = unified_debug.getLogger("NdbTimeConverter.js");
 
 exports.toDB = function(jsValue) {
-  var dbtime = null;
+  var dbtime;
   if(typeof jsValue === 'string') {
     dbtime = new MySQLTime().initializeFromTimeString(jsValue);
+  } else if(jsValue === null) {
+    dbtime = null;
   }
   return dbtime;
 };
 
 exports.fromDB = function(dbTime) {
-  return MySQLTime.initializeFromNdb(dbTime).toTimeString();
+  if(dbTime === null) {
+    return null;
+  }
+  if(typeof dbTime === 'object') {
+    return MySQLTime.initializeFromNdb(dbTime).toTimeString();
+  }
 };
 

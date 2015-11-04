@@ -43,20 +43,26 @@
 ************************/
 
 
-var path = require("path"),
-    MySQLTime = require(jones.common.MySQLTime),
+var MySQLTime = require(jones.common.MySQLTime),
     udebug = unified_debug.getLogger("NdbDatetimeConverter.js");
 
 
 exports.toDB = function(jsdate) {
-  var dbtime = null;
+  var dbtime;
   if(typeof jsdate === 'object') {
     dbtime = new MySQLTime().initializeFromJsDateLocal(jsdate);
+  } else if(jsdate === null) {
+    dbtime = null;
   }
   return dbtime;
 };
 
 exports.fromDB = function(dbTime) {
-  return MySQLTime.initializeFromNdb(dbTime).toJsDateLocal();
+  if(dbTime === null) {
+    return null;
+  }
+  if(typeof dbTime === 'object') {
+    return MySQLTime.initializeFromNdb(dbTime).toJsDateLocal();
+  }
 };
 

@@ -584,14 +584,18 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
   udebug.log("buildValueObject");
   var VOC = tableHandler.ValueObject; // NDB Value Object Constructor
   var DOC = tableHandler.newObjectConstructor;  // User's Domain Object Ctor
-  var nWritesPre, nWritesPost, value;
+  var nWritesPre, nWritesPost, value, i;
   
   if(VOC) {
     /* Turn the buffer into a Value Object */
     value = new VOC(buffer, blobs);
 
-    /* DBT may have some fieldConverters for this object */
-    op.tableHandler.applyFieldConverters(value);
+    /* Allow DBT to apply converters if it has them */
+    for(i = 0 ; i < op.tableHandler.getNumberOfColumns(); i++) {
+      if(op.tableHandler.columnHasConverter(i)) {
+        op.tableHandler.set(value, i, adapter.impl.getValueObjectFieldByNumber(value, i));
+      }
+    }
 
     /* Finally the user's constructor is called on the new value: */
     if(DOC) {

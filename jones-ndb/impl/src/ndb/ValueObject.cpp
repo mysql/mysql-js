@@ -121,6 +121,14 @@ void nroSetter(Local<String>, Local<Value> value, const SetterInfo& info)
   nro->setField(nField, value);
 }
 
+void nroGetFieldByNumber(const Arguments &args) {
+  DEBUG_MARKER(UDEB_DEBUG);
+
+  NdbRecordObject * nro =
+    static_cast<NdbRecordObject *>(args[0]->ToObject()->GetAlignedPointerFromInternalField(1));
+  int nField = args[1]->Int32Value();
+  args.GetReturnValue().Set(nro->getField(nField));
+}
 
 /* Generic constructor wrapper.
  * args[0]: row buffer
@@ -253,4 +261,5 @@ void ValueObject_initOnLoad(Handle<Object> target) {
   DEFINE_JS_FUNCTION(target, "isValueObject", isValueObject);
   DEFINE_JS_FUNCTION(target, "getValueObjectWriteCount", getValueObjectWriteCount);
   DEFINE_JS_FUNCTION(target, "prepareForUpdate", prepareForUpdate);
+  DEFINE_JS_FUNCTION(target, "getValueObjectFieldByNumber", nroGetFieldByNumber);
 }
