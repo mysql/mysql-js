@@ -280,9 +280,6 @@ ReadWrite.prototype.checkResult = function(err, result, rw, index) {
         rw.testCase.appendErrorMessage(
             'read with table name returned result with constructor: ' + result.constructor.name);
       }
-    } else {
-      // result constructor must match expected
-      rw.testCase.errorIfNotEqual('constructor mismatch', rw.resultTypeName, result.constructor.name);
     }
     var x;
     var data = rw.data[index];
