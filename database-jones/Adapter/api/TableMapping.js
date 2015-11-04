@@ -237,6 +237,7 @@ function BasicFieldVerifier() {
 /* A FieldMapping literal can have any of the basic properties, plus "meta" */
 var fieldMappingProperties =
   new BasicFieldVerifier().
+    set("toManyColumns", isArrayOf(isString)).
     set("meta", isMetaOrLiteral);
 
 function RelationshipVerifier(type, ctor) {
@@ -391,6 +392,8 @@ TableMapping.prototype.mapField = function(nameOrLiteral) {
               fieldMappingLiteral.meta = Meta.fromLiteralMeta(arg);
             } else if(isConverter(arg)) {
               fieldMappingLiteral.converter = arg;
+            } else if(isArrayOf(isString)(arg)) {
+              fieldMappingLiteral.toManyColumns = arg;
             } else {
               this.error += "mapField(): Invalid argument " + arg;
             }
