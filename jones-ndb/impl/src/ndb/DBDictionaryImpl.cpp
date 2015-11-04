@@ -453,16 +453,6 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
       js_indexes->Set(i+1, buildDBIndex(idx));
     }    
     table->ForceSet(SYMBOL(isolate, "indexes"), js_indexes, ReadOnly);
-  
-    // Table Record (implementation artifact; not part of spec)
-    DEBUG_PRINT("Creating Table Record");
-    Record * rec = new Record(dict, ndb_table->getNoOfColumns());
-    for(int i = 0 ; i < ndb_table->getNoOfColumns() ; i++) {
-      rec->addColumn(ndb_table->getColumn(i));
-    }
-    rec->completeTableRecord(ndb_table);
-
-    table->Set(SYMBOL(isolate, "record"), Record_Wrapper(rec));
 
     // foreign keys (only foreign keys for which this table is the child)
     // now create the javascript foreign key metadata objects for dictionary objects cached earlier
