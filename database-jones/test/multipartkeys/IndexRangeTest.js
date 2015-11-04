@@ -53,8 +53,12 @@ function runTest(name, buildPredicate, expectedBounds) {
         query.where(buildPredicate(query));
         handler = query.jones_query_domain_type.queryHandler;
         udebug.log(t.name);
-        bounds = getIndexBounds(handler, handler.dbIndexHandler.dbIndex, allParams);
-        t.errorIfNotEqual("Bounds", expectedBounds, util.inspect(bounds));
+        if(handler.dbIndexHandler) {
+          bounds = getIndexBounds(handler, handler.dbIndexHandler.dbIndex, allParams);
+          t.errorIfNotEqual("Bounds", expectedBounds, util.inspect(bounds));
+        } else {
+          t.error("No DBIndexHandler for query");
+        }
         session.close( function() {
           t.failOnError();
         });

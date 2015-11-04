@@ -370,7 +370,7 @@ TableMapping.prototype.getFieldMapping = function(fieldName) {
    Create FieldMapping for fieldName
 */
 TableMapping.prototype.mapField = function(nameOrLiteral) {
-  var i, arg, fieldMapping, fieldName, fieldMappingLiteral;
+  var i, arg, fieldMapping, fieldName, fieldMappingLiteral, errors;
 
   switch(typeof nameOrLiteral) {
     case 'string':
@@ -410,13 +410,15 @@ TableMapping.prototype.mapField = function(nameOrLiteral) {
       return this;
   }
 
-  this.error += fieldMappingProperties.getErrors(fieldMappingLiteral);
+  errors = fieldMappingProperties.getErrors(fieldMappingLiteral);
 
-  if(this.error.length) {
-    udebug.log("mapField() Errors: ", this.error);
+  if(errors.length) {
+    this.error += errors;
+    udebug.log("mapField() Errors: ", errors);
   } else {
     fieldName = fieldMappingLiteral.fieldName;
     if(this.getFieldMapping(fieldName)) {
+      udebug.log("mapField(): Duplicate fieldName error");
       this.error += '\nmapField(): "' + fieldName + '" is duplicated; it cannot replace an existing field.';
     } else {
       fieldMapping = new FieldMapping(fieldName);

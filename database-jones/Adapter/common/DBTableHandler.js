@@ -426,17 +426,19 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   /* Attend to unresolved column names */
   for(i = 0 ; i < this.resolvedMapping.fields.length ; i++) {
     field = this.resolvedMapping.fields[i];
-    if(field.columnName) {
-      if(! this.getColumnMapping(field.columnName)) {
-        this.resolvedMapping.error += "Column " + field.columnName + " does not exist\n";
-      }
-    } else {
-      if(this.getColumnMapping(field.fieldName)) {
-        field.columnName = field.fieldName;
-      } else if(this.sparseContainer) {
-        field.columnName = this.sparseContainer;
+    if(! field.relationship) {
+      if(field.columnName) {
+        if(! this.getColumnMapping(field.columnName)) {
+          this.resolvedMapping.error += "Column " + field.columnName + " does not exist\n";
+        }
       } else {
-        this.resolvedMapping.error += "No column mapped for field " + field.Name + "\n";
+        if(this.getColumnMapping(field.fieldName)) {
+          field.columnName = field.fieldName;
+        } else if(this.sparseContainer) {
+          field.columnName = this.sparseContainer;
+        } else {
+          this.resolvedMapping.error += "No column mapped for field " + field.Name + "\n";
+        }
       }
     }
   }

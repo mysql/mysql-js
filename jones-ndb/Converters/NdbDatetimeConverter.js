@@ -49,7 +49,11 @@ var path = require("path"),
 
 
 exports.toDB = function(jsdate) {
-  return new MySQLTime().initializeFromJsDateLocal(jsdate);
+  var dbtime = null;
+  if(typeof jsdate === 'object') {
+    dbtime = new MySQLTime().initializeFromJsDateLocal(jsdate);
+  }
+  return dbtime;
 };
 
 exports.fromDB = function(dbTime) {

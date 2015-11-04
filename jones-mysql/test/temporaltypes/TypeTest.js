@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
  */
 
 "use strict";
+
+var util = require("util");
 
 // Domain Object Constructor
 function TestData(id) {

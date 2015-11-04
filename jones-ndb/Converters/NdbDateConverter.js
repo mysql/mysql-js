@@ -25,8 +25,12 @@ var path = require("path"),
     udebug = unified_debug.getLogger("NdbDateConverter.js");
 
 
-exports.toDB = function(jsdate) {
-  return new MySQLTime().initializeFromDateString(jsdate);
+exports.toDB = function(dateString) {
+  var dbtime = null;
+  if(typeof dateString === 'string') {
+    dbtime = new MySQLTime().initializeFromDateString(dateString);
+  }
+  return dbtime;
 };
 
 exports.fromDB = function(dbTime) {
