@@ -99,11 +99,15 @@ function DBT_Column(columnMetadata) {
   this.excludedFieldNames = [];    // If column is a container for sparse fields
   this.typeConverter      = columnMetadata.typeConverter ||
                             columnMetadata.domainTypeConverter;
+  this.getColumnValue     = this.getColumnValue_1to1;
+  this.setFieldValues     = this.setFieldValues_1to1;
 }
 
 DBT_Column.prototype.addFieldMapping = function(mapping, reportError) {
   if(mapping.meta && mapping.meta.isShared) {
     this.isShared = true;
+    this.getColumnValue = this.getColumnValue_Shared;
+    this.setFieldValues = this.setFieldValues_Shared;
   }
   this.fieldNames.push(mapping.fieldName);
   this.fieldConverters.push(mapping.converter);
@@ -117,50 +121,140 @@ DBT_Column.prototype.addFieldMapping = function(mapping, reportError) {
   }
 };
 
-DBT_Column.prototype.setPartial = function() {
-  assert.equal(this.isShared, false);
+DBT_Column.prototype.mapPartial = function(mapping, n) {
+  this.isMapped = true;
   this.isPartial = true;
+  this.isFirst = (n === 0);
+  this.isLast  = (n === mapping.toManyColumns.length - 1);
+  this.fieldNames.push(mapping.fieldName);
+  this.fieldConverters.push(mapping.converter);
+  this.getColumnValue = this.getColumnValue_Partial;
+  this.setFieldValues = this.setFieldValues_Partial;
 };
 
 DBT_Column.prototype.setSparse = function(excludedFields) {
-  assert.equal(this.isPartial, false);
-  this.isShared = true;
   this.isMapped = true;
+  this.isShared = true;
   this.excludedFieldNames = excludedFields;
+  this.getColumnValue = this.getColumnValue_Sparse;
+  this.setFieldValues = this.setFieldValues_Sparse;
 };
 
-DBT_Column.prototype.getColumnValue = function(domainObject) {
-  var value;
-  if(this.isShared) {
+DBT_Column.prototype.setUnmappable = function() {
+  /* Column has no mapping, but cannot be implicitly mapped because a
+     Field mapping exists using the column name. */
+  this.getColumnValue = this.getColumnValue_Unmapped;
+  this.setFieldValues = this.setFieldValues_Unmapped;
+};
 
-  } else {
-    value = domainObject[this.fieldNames[0]];
-    if(this.fieldConverters[0]) {
-      value = this.fieldConverters[0].toDB(value);
+DBT_Column.prototype.toDB = function(value) {
+  return this.typeConverter ? this.typeConverter.toDB(value) : value;
+};
+
+DBT_Column.prototype.fromDB = function(value) {
+  return this.typeConverter ? this.typeConverter.fromDB(value) : value;
+};
+
+DBT_Column.prototype.getColumnValue_1to1 = function(domainObject) {
+  var value = domainObject[this.fieldNames[0]];
+  if(this.fieldConverters[0]) {
+    value = this.fieldConverters[0].toDB(value);
+  }
+  return this.toDB(value);
+};
+
+DBT_Column.prototype.setFieldValues_1to1 = function(domainObject, columnValue) {
+  columnValue = this.fromDB(columnValue);
+  if(this.fieldConverters[0]) {
+    columnValue = this.fieldConverters[0].fromDB(columnValue);
+  }
+  domainObject[this.fieldNames[0]] = columnValue;
+};
+
+DBT_Column.prototype.getColumnValue_Partial = function(domainObject) {
+  var fieldName, value;           // writing to db - one field to many columns
+  fieldName = this.fieldNames[0];                   // intermediate type is {}
+  if(this.isFirst && this.fieldConverters[0]) {
+    domainObject[fieldName] = this.fieldConverters[0].toDB(domainObject[fieldName]);
+  }
+  value = domainObject[fieldName];
+  if(typeof value === 'object') {
+    return this.toDB(value[this.columnName]);
+  }
+  // fallthrough; value not of proper intermediate type; return undefined.
+};
+
+DBT_Column.prototype.setFieldValues_Partial = function(domainObject, columnValue) {
+  var fieldName = this.fieldNames[0];                       // reading from db
+  if(this.isFirst) {
+    domainObject[fieldName] = {};  // intermediate type; column names are keys
+  }
+  domainObject[fieldName][this.columnName] = this.fromDB(columnValue);
+  if(this.isLast && this.fieldConverters[0]) {
+    domainObject[fieldName] = this.fieldConverters[0].fromDB(domainObject[fieldName]);
+  }
+};
+
+DBT_Column.prototype.getColumnValue_Shared = function(domainObject) {
+  var i, value, name;            // writing to db -- many fields to one column
+  value = {};                       // intermediate type; field names are keys
+
+  for(i = 0 ; i < this.fieldNames.length ; i++) {
+    name = this.fieldNames[i];
+    value[name] = domainObject[name];
+    if(this.fieldConverters[i]) {
+      value[name] = this.fieldConverters[i].toDB(value[name]);
     }
   }
-
-  if(this.typeConverter) {
-    value = this.typeConverter.toDB(value);
-  }
-  return value;
+  return this.toDB(value);
 };
 
-DBT_Column.prototype.setFieldValues = function(domainObject, columnValue) {
-  if(this.typeConverter) {
-    udebug.log("Applying column type converter for", this.columnName);
-    columnValue = this.typeConverter.fromDB(columnValue);
-  }
+DBT_Column.prototype.setFieldValues_Shared = function(domainObject, columnValue) {
+  var i, name, value;          // reading from db -- many fields to one column
+  columnValue = this.fromDB(columnValue);
 
-  if(this.isShared) {
-
-  } else {
-    if(this.fieldConverters[0]) {
-      columnValue = this.fieldConverters[0].fromDB(columnValue);
+  for(i = 0 ; i < this.fieldNames.length ; i++) {
+    name = this.fieldNames[i];
+    value = columnValue[name];
+    if(this.fieldConverters[i]) {
+      value = this.fieldConverters[i].fromDB(value);
     }
-    domainObject[this.fieldNames[0]] = columnValue;
+    domainObject[name] = value;
   }
 };
+
+DBT_Column.prototype.getColumnValue_Sparse = function(domainObject) {
+  var value, candidateField;       // writing to db -- all non-exculded fields
+  value = {};                       // intermediate type; field names are keys
+
+  if(typeof domainObject === 'object') {
+    for(candidateField in domainObject) {
+      if(domainObject.hasOwnProperty(candidateField)) {
+        if(this.excludedFieldNames.indexOf(candidateField) === -1) {
+          value[candidateField] = domainObject[candidateField];
+        }
+      }
+    }
+  }
+  return this.toDB(value);
+};
+
+DBT_Column.prototype.setFieldValues_Sparse = function(domainObject, columnValue) {
+  var candidateField;                      // reading serialized from database
+  columnValue = this.fromDB(columnValue);
+
+  if(typeof columnValue === 'object') {
+    for(candidateField in columnValue) {
+      if(columnValue.hasOwnProperty(candidateField)) {
+        domainObject[candidateField] = columnValue[candidateField];
+      }
+    }
+  }
+};
+
+DBT_Column.prototype.getColumnValue_Unmapped = function() {};
+
+DBT_Column.prototype.setFieldValues_Unmapped = function() {};
 
 DBT_Column.prototype.hasConverter = function() {
   return (this.typeConverter || this.fieldConverters[0]);
@@ -234,16 +328,30 @@ DBTableHandlerPrivate.prototype.addColumnFromParent = function(parent, colName) 
 };
 
 DBTableHandlerPrivate.prototype.mapFieldToColumns = function(mapping) {
-  // FIXME Does not currently support 1 field to many columns
-  var id = this.columnNameToIdMap[mapping.columnName || mapping.fieldName];
-  if(id >= 0) {
-    this.columns[id].addFieldMapping(mapping, this.reportError);
-    this.fields[mapping.fieldName].mapToOneColumn(id);
-  } else if(this.sparseColumnId >= 0) {
-    this.columns[this.sparseColumnId].addFieldMapping(mapping);
-    this.fields[mapping.fieldName].mapManyToOne(this.sparseColumnId);
-  } else {
-    this.reportError("No column for field " + mapping.fieldName);
+  var n, id;
+  if(mapping.toManyColumns) {
+    n = 0;
+    for(id = 0 ; id < this.columns.length ; id++) {  // work in column order
+      if(mapping.toManyColumns.indexOf(this.columns[id].columnName) !== -1) {
+        this.fields[mapping.fieldName].mapToManyColumns(id);
+        this.columns[id].mapPartial(mapping, n++);
+      }
+    }
+    if(mapping.toManyColumns.length !== n) {
+      this.reportError("Bad column list in field " + mapping.fieldName +
+                       ": " + mapping.toManyColumns + "(used " + n + ")");
+    }
+  } else {                                           // map to just one column
+    id = this.columnNameToIdMap[mapping.columnName || mapping.fieldName];
+    if(id >= 0) {
+      this.columns[id].addFieldMapping(mapping, this.reportError);
+      this.fields[mapping.fieldName].mapToOneColumn(id);
+    } else if(this.sparseColumnId >= 0) {
+      this.columns[this.sparseColumnId].addFieldMapping(mapping);
+      this.fields[mapping.fieldName].mapManyToOne(this.sparseColumnId);
+    } else {
+      this.reportError("No column for field " + mapping.fieldName);
+    }
   }
 };
 
@@ -354,6 +462,12 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
 
   /* Build an array of column names.  This will establish column order. */
   columnNames = [];
+  function addColumnName(name) {
+    if(name && getColumnByName(dbtable, name) && columnNames.indexOf(name) === -1) {
+      columnNames.push(name);
+    }
+  }
+
   if(this.mapping.mapAllColumns) {        // Use all columns from dictionary
     for(i = 0 ; i < dbtable.columns.length ; i++) {
       columnNames.push(dbtable.columns[i].name);
@@ -362,16 +476,14 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     for(i = 0 ; i < this.mapping.fields.length ; i++) {
       field = this.mapping.fields[i];
       if(field.persistent) {
-        col = field.columnName || field.fieldName;
-        if(getColumnByName(dbtable, col) && columnNames.indexOf(col) === -1) {
-          columnNames.push(col);
+        if(field.toManyColumns) {
+          field.toManyColumns.forEach(addColumnName);
+        } else {
+          addColumnName(field.columnName || field.fieldName);
         }
       }
     }
-    col = dbtable.sparseContainer;
-    if(col && getColumnByName(dbtable, col) && columnNames.indexOf(col) === -1) {
-      columnNames.push(col);
-    }
+    addColumnName(dbtable.sparseContainer);
   }
   udebug.log("DBTableHandler columns", columnNames);
 
@@ -395,8 +507,12 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     for(i = 0 ; i < priv.columns.length ; i++) {
       if(! priv.columns[i].isMapped) {
         field = priv.columnMetadata[i].name;
-        this.resolvedMapping.mapField({"fieldName":field,"columnName":field});
-        priv.addField(this.resolvedMapping.getFieldMapping(field));
+        if(priv.fields[field]) {
+          priv.columns[i].setUnmappable();
+        } else {
+          this.resolvedMapping.mapField({"fieldName":field,"columnName":field});
+          priv.addField(this.resolvedMapping.getFieldMapping(field));
+        }
       }
     }
   }
@@ -426,28 +542,29 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   /* Attend to unresolved column names */
   for(i = 0 ; i < this.resolvedMapping.fields.length ; i++) {
     field = this.resolvedMapping.fields[i];
-    if(! field.relationship) {
+    if(field.persistent && ! field.relationship) {
       if(field.columnName) {
         if(! this.getColumnMapping(field.columnName)) {
           this.resolvedMapping.error += "Column " + field.columnName + " does not exist\n";
         }
-      } else {
+      } else if(! field.toManyColumns) {
         if(this.getColumnMapping(field.fieldName)) {
           field.columnName = field.fieldName;
         } else if(this.sparseContainer) {
           field.columnName = this.sparseContainer;
         } else {
-          this.resolvedMapping.error += "No column mapped for field " + field.Name + "\n";
+          this.resolvedMapping.error += "No column mapped for field " + field.fieldName + "\n";
         }
       }
     }
   }
 
-  // build dbIndexHandlers; one for each dbIndex, starting with primary key index 0
+  // build a dbIndexHandler for each usable dbIndex
   for (i = 0; i < this.dbTable.indexes.length; ++i) {
     index = this.dbTable.indexes[i];
-     // make sure all index columns are mapped
-    this.dbIndexHandlers.push(new DBIndexHandler(this, index));
+    if(this.hasColumnsFromTable(index.columnNumbers)) {
+      this.dbIndexHandlers.push(new DBIndexHandler(this, index));
+    }
   }
   // build foreign key map
   for (i = 0; i < this.dbTable.foreignKeys.length; ++i) {
@@ -566,7 +683,6 @@ DBTableHandler.prototype.newResultObject = function(values) {
   return newDomainObj;
 };
 
-
 /* DBTableHandler.newResultObjectFromRow
  * IMMEDIATE
 
@@ -603,7 +719,6 @@ DBTableHandler.prototype.newResultObjectFromRow = function(row, offset,
   udebug.log("newResultObjectFromRow done", newDomainObj);
   return newDomainObj;
 };
-
 
 /* setAutoincrement(object, autoincrementValue)
  * IMMEDIATE
@@ -643,7 +758,7 @@ DBTableHandler.prototype.chooseIndex = function(keys, allowUnique, allowScan) {
 
   if((typeof keys === 'number' || typeof keys === 'string')) {
     /* A simple key value represents first column of primary key */
-    pkcol0 = this.dbTable.indexes[0].columnNumbers[0];
+    pkcol0 = this.dbIndexHandlers[0].indexColumnNumbers[0];
     predicate.usedColumnMask.set(pkcol0);
     predicate.equalColumnMask.set(pkcol0);
   }
@@ -680,10 +795,10 @@ DBTableHandler.prototype.chooseIndex = function(keys, allowUnique, allowScan) {
 DBTableHandler.prototype.chooseUniqueIndexForPredicate = function(predicate) {
   var i, idxs, indexHandler, columnMask;
   columnMask = predicate.equalColumnMask;
-  idxs = this.dbTable.indexes;
+  idxs = this.dbIndexHandlers;
   for(i = 0 ; i < idxs.length ; i++) {
-    if(idxs[i].isUnique) {
-      indexHandler = this.getHandlerForIndex(i);
+    if(idxs[i].dbIndex.isUnique) {
+      indexHandler = idxs[i];
       if(columnMask.and(indexHandler.columnMask).isEqualTo(indexHandler.columnMask)) {
         return indexHandler;
       }
@@ -697,12 +812,12 @@ DBTableHandler.prototype.chooseUniqueIndexForPredicate = function(predicate) {
 DBTableHandler.prototype.chooseOrderedIndexForPredicate = function(predicate) {
   var i, idxs, indexHandler, score, highScore, highScorer;
   udebug.log("ChooseOrderedIndexForPredicate", predicate, predicate.usedColumnMask);
-  idxs = this.dbTable.indexes;
+  idxs = this.dbIndexHandlers;
   highScore = 0;
   highScorer = null;
   for(i = 0 ; i < idxs.length ; i++) {
-    if(idxs[i].isOrdered) {
-      indexHandler = this.getHandlerForIndex(i);
+    if(idxs[i].dbIndex.isOrdered) {
+      indexHandler = idxs[i];
       score = indexHandler.score(predicate);
       udebug.log("Ordered index", i, "scored", score);
       if(score > highScore) {
@@ -778,12 +893,6 @@ DBTableHandler.prototype.columnHasConverter = function(columnNumber) {
   return this.getColumnMapping(columnNumber).hasConverter();
 };
 
-/* Functions to get IndexHandlers 
-*/
-DBTableHandler.prototype.getHandlerForIndex = function(n) {
-  return this.dbIndexHandlers[n];
-};
-
 
 /* DBTableHandler getIndexHandler(Object keys)
    IMMEDIATE
@@ -812,6 +921,16 @@ DBTableHandler.prototype.getForeignKeyNames = function() {
   return Object.keys(this.foreignKeyMap);
 };
 
+DBTableHandler.prototype.hasColumnsFromTable = function(columnNumbers) {
+  var usable = true;
+  columnNumbers.forEach(function(colNo) {
+    var colName = this.dbTable.columns[colNo].name;
+    if(this._private.columnNameToIdMap[colName] === undefined) {
+      usable = false;
+    }
+  }, this);
+  return usable;
+};
 
 //////// DBIndexHandler             /////////////////
 
@@ -859,7 +978,7 @@ DBIndexHandler.prototype = {
   getNumberOfColumns     : DBTableHandler.prototype.getNumberOfColumns,
   get                    : DBTableHandler.prototype.get,
   getColumns             : DBTableHandler.prototype.getColumns,
-  appendErrorMessage     : DBTableHandler.prototype.appendErrorMessage,
+  appendErrorMessage     : DBTableHandler.prototype.appendErrorMessage
 };
 
 DBIndexHandler.prototype.inspect = function() {

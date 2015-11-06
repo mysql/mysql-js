@@ -1171,16 +1171,15 @@ function createDeleteSQL(dbTableHandler, index) {
     deleteSQL = dbTableHandler.mysql.deleteTableScanSQL + ' WHERE ';
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    var indexMetadatas = dbTableHandler.dbTable.indexes;
+    var indexHandlers = dbTableHandler.dbIndexHandlers;
     var columns = dbTableHandler.getAllColumnMetadata();
     var separator = '';
-    var i, j, indexMetadata;
-    for (i = 0; i < indexMetadatas.length; ++i) {
-      if (indexMetadatas[i].name === index) {
-        indexMetadata = indexMetadatas[i];
-        udebug.log_detail('createDeleteSQL indexMetadata: ', indexMetadata);
-        for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
-          deleteSQL += separator + columns[indexMetadata.columnNumbers[j]].name + ' = ?';
+    var i, j, indexColumns;
+    for (i = 0; i < indexHandlers.length; ++i) {
+      if (indexHandlers[i].dbIndex.name === index) {
+        indexColumns = indexHandlers[i].indexColumnNumbers;
+        for (j = 0; j < indexColumns.length; ++j) {
+          deleteSQL += separator + columns[indexColumns[j]].name + ' = ?';
           separator = ' AND ';
         }
         // for unique btree indexes the first one is the unique index we are interested in
@@ -1197,7 +1196,7 @@ function createSelectSQL(dbTableHandler, index) {
   var whereSQL;
   var separator = '';
   var i, j, columns;
-  var indexMetadatas, indexMetadata;
+  var indexHandlers, indexColumns;
   columns = dbTableHandler.getAllColumnMetadata();
   if (!index) {
     selectSQL = 'SELECT ';
@@ -1216,13 +1215,13 @@ function createSelectSQL(dbTableHandler, index) {
     // loop over the index columns
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    indexMetadatas = dbTableHandler.dbTable.indexes;
+    indexHandlers = dbTableHandler.dbIndexHandlers;
     separator = '';
-    for (i = 0; i < indexMetadatas.length; ++i) {
-      if (indexMetadatas[i].name === index) {
-        indexMetadata = indexMetadatas[i];
-        for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
-          whereSQL += separator + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
+    for (i = 0; i < indexHandlers.length; ++i) {
+      if (indexHandlers[i].dbIndex.name === index) {
+        indexColumns = indexHandlers[i].indexColumnNumbers;
+        for (j = 0; j < indexColumns.length; ++j) {
+          whereSQL += separator + columns[indexColumns[j]].name + ' = ? ';
           separator = ' AND ';
         }
         // for unique btree indexes the first one is the unique index we are interested in
@@ -1239,7 +1238,7 @@ function createWhereSQL(dbTableHandler, index) {
   var whereSQL;
   var separator = '';
   var i, j, columns;
-  var indexMetadatas, indexMetadata;
+  var indexHandlers, indexColumns;
   columns = dbTableHandler.getAllColumnMetadata();
   if (index) {
     // create the where SQL clause from the table metadata for the named index
@@ -1248,13 +1247,13 @@ function createWhereSQL(dbTableHandler, index) {
     // loop over the index columns
     // find the index metadata from the dbTableHandler index section
     // loop over the columns in the index and extract the column name
-    indexMetadatas = dbTableHandler.dbTable.indexes;
+    indexHandlers = dbTableHandler.dbIndexHandlers;
     separator = '';
-    for (i = 0; i < indexMetadatas.length; ++i) {
-      if (indexMetadatas[i].name === index) {
-        indexMetadata = indexMetadatas[i];
-        for (j = 0; j < indexMetadata.columnNumbers.length; ++j) {
-          whereSQL += separator + 't0.' + columns[indexMetadata.columnNumbers[j]].name + ' = ? ';
+    for (i = 0; i < indexHandlers.length; ++i) {
+      if (indexHandlers[i].dbIndex.name === index) {
+        indexColumns = indexHandlers[i].indexColumnNumbers;
+        for (j = 0; j < indexColumns.length; ++j) {
+          whereSQL += separator + 't0.' + columns[indexColumns[j]].name + ' = ? ';
           separator = ' AND ';
         }
         // for unique btree indexes the first one is the unique index we are interested in

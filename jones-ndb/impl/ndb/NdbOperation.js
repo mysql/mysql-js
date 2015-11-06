@@ -867,14 +867,13 @@ function completeExecutedOps(dbTxHandler, execMode, operations) {
 storeNativeConstructorInMapping = function(dbTableHandler) {
   var i, ncolumns, record, fieldNames, proto;
   var VOC, DOC;  // Value Object Constructor, Domain Object Constructor
-  if(dbTableHandler.ValueObject) {
+  record = dbTableHandler.resultRecord || storeResultRecord(dbTableHandler);
+  if(dbTableHandler.ValueObject || ! dbTableHandler.is1to1) {
     return;
   }
-  record = dbTableHandler.resultRecord || storeResultRecord(dbTableHandler);
   ncolumns = dbTableHandler.getNumberOfColumns();
   fieldNames = {};
 
-  assert(dbTableHandler.is1to1);
   for(i = 0 ; i < ncolumns ; i++) {
     fieldNames[i] = dbTableHandler.getColumnMapping(i).fieldNames[0];
   }
