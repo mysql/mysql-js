@@ -539,7 +539,7 @@ exports.DBConnectionPool.prototype.dropTable = function(dbName, tableName, sessi
       user_callback(err);
     } else {
       connection = c;
-      connection.query("DROP TABLE " + qualifiedName, dropTableOnQuery);
+      connection.query("DROP TABLE IF EXISTS " + qualifiedName, dropTableOnQuery);
     }
   }
 

@@ -41,21 +41,35 @@ function mapCharacterTypes() {
   t.mapField('text1000none', meta.varchar(1000).charset('utf8').lob());
   t.mapField('text1000000none', meta.varchar(1000000).charset('utf8').lob());
   t.mapField('text100000000none', meta.varchar(100000000).charset('utf8').lob());
-//  t.applyToClass(CharTypes);
+  return t;
+}
+
+function mapDecimalTypes() {
+  var t = new jones.TableMapping('test.decimaltypes');
+  t.mapField('id', meta.int().primaryKey());
+  t.mapField('decimal_1_1', meta.decimal(1, 1));
+  t.mapField('decimal_65_30', meta.decimal(65, 30));
   return t;
 }
 
 test.run = function() {
-  var session, tableMapping;
-  tableMapping = mapCharacterTypes();
+  var session, chartypesMapping, decimaltypesMapping;
+  chartypesMapping = mapCharacterTypes();
+  decimaltypesMapping = mapDecimalTypes();
 
   jones.openSession(global.test_conn_properties).
     then(function(s) {
       session = s;
-      session.sessionFactory.dropTable(tableMapping);
+      session.sessionFactory.dropTable(chartypesMapping);
     }).
     then(function() {
-      return session.sessionFactory.createTable(tableMapping);
+      return session.sessionFactory.createTable(chartypesMapping);
+    }).
+    then(function() {
+      return session.sessionFactory.dropTable(decimaltypesMapping);
+    }).
+    then(function() {
+      return session.sessionFactory.createTable(decimaltypesMapping);
     }).
     then(function()    { return session.close(); }).
     then(function()    { test.pass();    },

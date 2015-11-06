@@ -84,6 +84,8 @@ metaLib.verifyMetadata = function verifyMetadata(testCase, expected, result) {
                 if (expectedElement.hasOwnProperty(expectedElementName)) {
                   resultValue = result[expectedFieldName] && result[expectedFieldName][expectedKey] &&
                       result[expectedFieldName][expectedKey][expectedElementName];
+                  udebug.log('meta/lib.js result', expectedFieldName, '[', expectedKey, '].', expectedElementName,
+                      ':', resultValue);
                   testCase.errorIfNotEqual('Metadata mismatch ' + expectedFieldName + '[' +
                       expectedKey + '].' + expectedElementName,
                       expectedMap[expectedKey][expectedElementName], resultValue);              

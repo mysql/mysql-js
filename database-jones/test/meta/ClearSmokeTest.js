@@ -26,7 +26,11 @@ var test = new harness.ClearSmokeTest("ClearSmokeTest");
 test.run = function() {
   jones.connect(global.test_conn_properties).
     then(function(sessionFactory) {
-      sessionFactory.dropTable("test.chartypes", function() { test.pass(); });
+      sessionFactory.dropTable("test.chartypes", function() {
+        sessionFactory.dropTable("test.decimaltypes", function() {
+          test.pass();
+        });
+      });
     });
 };
 

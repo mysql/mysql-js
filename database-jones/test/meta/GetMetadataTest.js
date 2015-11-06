@@ -90,7 +90,7 @@ var expectedMetadataFor_chartypes = {
       "PRIMARY_isOrdered_false"       : {
         "name"        : "PRIMARY",
         "isOrdered"    : false
-  },
+    },
       "idx_hash_char30_isOrdered_false"       : {
         "name"        : "idx_hash_char30",
         "isOrdered"    : false
@@ -110,7 +110,28 @@ var expectedMetadataFor_chartypes = {
   }
 };
 
-var t1 = new harness.SerialTest("getMetadataForTableName");
+var expectedMetadataFor_decimaltypes = {
+  "name" : "decimaltypes",
+  "database" : "test",
+  "columnMap" :
+    {
+      "id" : {
+        "name"          : "id"
+    },
+      "decimal_1_1" : {
+        "name"          : "decimal_1_1",
+        "precision"     : 1,
+        "scale"         : 1
+    },
+      "decimal_65_30" : {
+        "name"          : "decimal_65_30",
+        "precision"     : 65,
+        "scale"         : 30
+    }
+  }
+};
+
+var t1 = new harness.SerialTest("getMetadataForCharTypes");
 t1.run = function() {
   fail_openSession(t1, t1.testGetMetadata);
 };
@@ -126,4 +147,20 @@ t1.testGetMetadata = function(session, testCase) {
   });
 };
 
-module.exports.tests = [t1];
+var t2 = new harness.SerialTest("getMetadataForDecimalTypes");
+t2.run = function() {
+  fail_openSession(t2, t2.testGetMetadata);
+};
+
+t2.testGetMetadata = function(session, testCase) {
+  session.sessionFactory.getTableMetadata( 'test', 'decimaltypes',function(err, result) {
+    if (err) {
+      testCase.fail(err);
+      return;
+    }
+    lib.verifyMetadata(testCase, expectedMetadataFor_decimaltypes, result);
+    testCase.failOnError();
+  });
+};
+
+module.exports.tests = [t1, t2];
