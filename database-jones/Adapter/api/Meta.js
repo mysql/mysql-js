@@ -20,6 +20,7 @@
 
 "use strict";
 
+var util = require('util');
 
 /** Meta allow users to define the metadata of a field or table to create tables.
  *  meta is exported and functions return a new object of type Meta.
@@ -50,9 +51,9 @@ Meta.prototype.autoincrement = function() {
   return this;
 };
 
-Meta.prototype.charset = function(charset, collation) {
-  this.charset = charset;
-  this.collation = collation;
+Meta.prototype.charset = function(characterset, collate) {
+  if (characterset) {this.characterset = characterset;}
+  if (collate) {this.collate = collate;}
   return this;
 };
 
@@ -80,7 +81,7 @@ Meta.prototype.primary = Meta.prototype.primaryKey;
 
 Meta.prototype.uniqueKey = function() {
   this.hasIndex = true;
-  this.indexIsUnique = true;
+  this.isUnique = true;
   return this;
 };
 Meta.prototype.unique = Meta.prototype.uniqueKey;
@@ -117,7 +118,7 @@ meta.char = function(length) {
   var result = new Meta();
   result.length = length;
   result.doit = function(callback) {
-    return callback.char(this.length, this.isLob, this.isNullable, this.isGenerated);
+    return callback.char(this.length, this.isLob, this.isNullable, this.isGenerated, this.characterset, this.collate);
   };
   return result;
 };
@@ -172,17 +173,18 @@ meta.hashKey = function(columns, name) {
   var result = new Meta();
   result.name = name;
   result.isIndex = true;
-  result.hash = true;
+  result.isHash = true;
   result.columns = columns;
+  result.isUnique = true;
+  result.isOrdered = false;
   return result;
 };
-meta.hash = meta.hashKey;
 
 meta.index = function(columns, name) {
   var result = new Meta();
   result.name = name;
   result.isIndex = true;
-  result.unique = false;
+  result.isUnique = false;
   result.columns = columns;
   return result;
 };
@@ -264,7 +266,7 @@ meta.varchar = function(length) {
   var result = new Meta();
   result.length = length;
   result.doit = function(callback) {
-    return callback.varchar(this.length, this.isLob, this.isNullable);
+    return callback.varchar(this.length, this.isLob, this.isNullable, this.characterset, this.collate);
   };
   return result;
 };
