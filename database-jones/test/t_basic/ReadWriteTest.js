@@ -39,7 +39,7 @@ t1.run = function() {
   var tableNameOrConstructor = 't_basic';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'Object');
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
     rw.writeAdapterReadAdapter();
   });
 };
@@ -99,7 +99,7 @@ t6.run = function() {
   var tableNameOrConstructor = 't_basic';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'Object');
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
     rw.writeSQLReadAdapter();
   });
 };

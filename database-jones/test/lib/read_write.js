@@ -273,15 +273,8 @@ ReadWrite.prototype.checkResult = function(err, result, rw, index) {
   if (err) {
     rw.testCase.appendErrorMessage('checkResult err on read: ', err);
   } else {
-    // check the type of the return
-    if (rw.tableNameNotConstructor) {
-      // result of read with table name must not have a constructor
-      if (result.constructor) {
-        rw.testCase.appendErrorMessage(
-            'read with table name returned result with constructor: ' + result.constructor.name);
-      }
-    } else {
-      // result constructor must match expected
+    // check the type of the return if test case requires it
+    if (rw.resultTypeName !== undefined) {
       rw.testCase.errorIfNotEqual('constructor mismatch', rw.resultTypeName, result.constructor.name);
     }
     var x;
