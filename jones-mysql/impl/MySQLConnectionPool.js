@@ -134,7 +134,7 @@ var DatabaseTypeConverterDateTime = function() {
 };
 
 DatabaseTypeConverterDateTime.prototype.toDB = function toDB(mysqlTime) {
-  if (typeof mysqlTime !== 'object' || mysqlTime.constructor.name !== 'MySQLTime') {
+  if (typeof mysqlTime !== 'object' || mysqlTime === null) {
     return mysqlTime;
   }
   // convert to the string form of the mySQLTime object

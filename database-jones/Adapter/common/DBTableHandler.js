@@ -97,8 +97,7 @@ function DBT_Column(columnMetadata) {
   this.isShared           = false; // Many fields to 1 column
   this.isPartial          = false; // 1 field to many columns
   this.excludedFieldNames = [];    // If column is a container for sparse fields
-  this.typeConverter      = columnMetadata.typeConverter ||
-                            columnMetadata.domainTypeConverter;
+  this.typeConverter      = columnMetadata.typeConverter;
   this.getColumnValue     = this.getColumnValue_1to1;
   this.setFieldValues     = this.setFieldValues_1to1;
 }

@@ -58,6 +58,24 @@ exports.DataDictionary.prototype.listTables = function(databaseName, user_callba
 };
 
 
+function getChainedConverter(databaseTypeConverter, domainTypeConverter) {
+  var converter = {};
+  if(databaseTypeConverter === undefined) {
+    return domainTypeConverter;
+  }
+  if(domainTypeConverter === undefined) {
+    return databaseTypeConverter;
+  }
+  converter.fromDB = function(value) {
+    return domainTypeConverter.fromDB(databaseTypeConverter.fromDB(value));
+  };
+  converter.toDB = function(value) {
+    return databaseTypeConverter.toDB(domainTypeConverter.toDB(value));
+  };
+  return converter;
+}
+
+
 exports.DataDictionary.prototype.getTableMetadata = function(databaseName, tableName, user_callback) {
   var dbConnectionPool = this.dbConnectionPool;
 
@@ -325,17 +343,11 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
           break;
         }
         
-        // set the a database type converter for the column type
+        // set the type converter for the column type
         databaseTypeConverter = dbConnectionPool.getDatabaseTypeConverter(column.columnType);
-        if (databaseTypeConverter) {
-          column.typeConverter = databaseTypeConverter;
-        }
-
-        // set the default domain type converter for the column type
-        // this may be overridden by the user's domain type converter
         domainTypeConverter = dbConnectionPool.getDomainTypeConverter(column.columnType);
-        if (domainTypeConverter) {
-          column.domainTypeConverter = domainTypeConverter;
+        if (databaseTypeConverter || domainTypeConverter) {
+          column.typeConverter = getChainedConverter(databaseTypeConverter, domainTypeConverter);
         }
 
         // continue parsing the rest of the column definition line
