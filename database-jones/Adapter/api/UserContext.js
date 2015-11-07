@@ -1654,17 +1654,12 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
   // transform query result
   function executeQueryKeyOnResult(err, dbOperation) {
     udebug.log('executeQuery.executeQueryPKOnResult');
-    var result, values, resultList;
+    var result, resultList;
     var error = checkOperation(err, dbOperation);
     if (error) {
       userContext.applyCallback(error, null);
     } else {
-      if (userContext.queryDomainType.jones_query_domain_type.domainObject) {
-        values = dbOperation.result.value;
-        result = userContext.queryDomainType.jones_query_domain_type.dbTableHandler.newResultObject(values);
-      } else {
-        result = dbOperation.result.value;
-      }
+      result = dbOperation.result.value;
       if (result !== null) {
         // TODO: filter in memory if the adapter didn't filter all conditions
         resultList = [result];
