@@ -125,6 +125,11 @@ function isMetaOrLiteral(value) {
   return (isMeta(value) || isLiteralMeta(value));
 }
 
+function isMinimalField(value) {
+  return (typeof value === 'object' && value !== null
+          && typeof value.fieldName === 'string');
+}
+
 function isArrayOf(elementVerifier) {
   assert.equal(typeof elementVerifier, "function");
 
@@ -277,7 +282,7 @@ var tableMappingProperties =
     set("table",              isNonEmptyString).
     set("database",           isString).
     set("mapAllColumns",      isBool).
-    set("fields",             isArrayOf(getValidator(fieldMappingProperties))).
+    set("fields",             isArrayOf(isMinimalField)).
     set("excludedFieldNames", isArrayOf(isNonEmptyString)).
     set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
     set("sparseContainer",    getValidator(fieldMappingProperties)).
