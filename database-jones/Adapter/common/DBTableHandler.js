@@ -131,10 +131,13 @@ DBT_Column.prototype.mapPartial = function(mapping, n) {
   this.setFieldValues = this.setFieldValues_Partial;
 };
 
-DBT_Column.prototype.setSparse = function(excludedFields) {
+DBT_Column.prototype.setSparse = function(tableMapping) {
   this.isMapped = true;
   this.isShared = true;
-  this.excludedFieldNames = excludedFields;
+  this.excludedFieldNames = tableMapping.excludedFieldNames;
+  this.typeConverter = tableMapping.sparseContainer.converter ||
+                                           this.typeConverter ||
+                               jones.converters.JSONConverter;
   this.getColumnValue = this.getColumnValue_Sparse;
   this.setFieldValues = this.setFieldValues_Sparse;
 };
@@ -361,9 +364,9 @@ DBTableHandlerPrivate.prototype.addField = function(mapping) {
   }
 };
 
-DBTableHandlerPrivate.prototype.setSparseColumn = function(id, excludedFieldsList) {
+DBTableHandlerPrivate.prototype.setSparseColumn = function(id, tableMapping) {
   this.sparseColumnId = id;
-  this.columns[id].setSparse(excludedFieldsList);
+  this.columns[id].setSparse(tableMapping);
 };
 
 DBTableHandlerPrivate.prototype.getColumnMetadata = function(idOrName) {
@@ -386,6 +389,15 @@ DBTableHandlerPrivate.prototype.getColumnMapping = function(idOrName) {
   }
 };
 
+DBTableHandlerPrivate.prototype.getNumberOfMappedColumns = function() {
+  var total=0;
+  this.columns.forEach(function(col) {
+    if(col.isMapped && ! col.excludedFieldNames.length) {
+      total++;
+    }
+  });
+  return total;
+};
 
 /* DBTableHandler() constructor
    IMMEDIATE
@@ -518,11 +530,14 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   */
   for(id = 0 ; id < columnNames.length ; id++) {
     col = columnNames[id];
-    if(dbtable.sparseContainer === col ||
-       (tablemapping.sparseContainer && tablemapping.sparseContainer.columnName === col)) {
+    if(this.resolvedMapping.sparseContainer &&
+       this.resolvedMapping.sparseContainer.columnName === col) {
       this.sparseContainer = col;
-      priv.setSparseColumn(id, tablemapping.excludedFieldNames);
+      priv.setSparseColumn(id, this.resolvedMapping);
+    } else if(dbtable.sparseContainer === col && ! priv.columns[id].isMapped) {
       this.resolvedMapping.mapSparseFields(col);
+      this.sparseContainer = col;
+      priv.setSparseColumn(id, this.resolvedMapping);
     }
     if(priv.columnMetadata[id].isAutoincrement) {
       this.autoIncColumnNumber = i;
@@ -558,6 +573,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
           this.resolvedMapping.error += "No column mapped for field " + field.fieldName + "\n";
         }
       }
+    }
+    if(field.columnName !== this.sparseContainer) {
+      this.resolvedMapping.fieldIsNotSparse(field.fieldName);
     }
   }
 
@@ -628,13 +646,14 @@ DBTableHandler.prototype.getColumnMaskForField = function(name) {
 
 
 DBTableHandler.prototype.inspect = function() {
-  var s, fields, columns;
+  var s, fields, ncol, columns;
   if(this.isValid) {
     fields = this.getNumberOfFields() == 1 ? " field" : " fields";
-    columns = this.getNumberOfColumns() == 1 ? " column" : " columns";
+    ncol = this._private.getNumberOfMappedColumns();
+    columns =  (ncol == 1 ? " column" : " columns");
     s = "DBTableHandler for table " + this.dbTable.name +
         " with " + this.getNumberOfFields() + fields +
-        " mapped to " + this.getNumberOfColumns() + columns;
+        " mapped to " + ncol + columns;
     if(this.sparseContainer) {
       s += " and sparse column " + this.sparseContainer;
     }
@@ -679,11 +698,11 @@ DBTableHandler.prototype.createResultObject = function() {
    Create a new object using the constructor function (if set).
 */
 DBTableHandler.prototype.newResultObject = function(values) {
-  udebug.log("newResultObject", values);
   var newDomainObj = this.createResultObject();
   if (typeof values === 'object') {
     this.setFields(newDomainObj, values);
   }
+  udebug.log("newResultObject", newDomainObj);
   return newDomainObj;
 };
 

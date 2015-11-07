@@ -33,10 +33,17 @@
 var udebug = unified_debug.getLogger("JSONConverter.js");
 
 exports.toDB = function(jsValue) {
-  return JSON.stringify(jsValue);
-};
+  var result;
+  try {
+    result = JSON.stringify(jsValue);
+  } catch(ignore) {}
+  return result;
+}
 
 exports.fromDB = function(dbValue) {
-  return JSON.parse(dbValue);
+  var result;
+  try {
+    result = JSON.parse(dbValue);
+  } catch(ignore) {}
+  return result;
 };
-

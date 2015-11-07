@@ -550,7 +550,7 @@ TableMapping.prototype.excludeFields = function() {
 
 /* mapSparseFields(columnName, converter)
  * columnName: required
- * converter: optional converter function default Converters/JSONSparseFieldsConverter
+ * converter: optional converter function default Converters/JSONConverter
  */
 TableMapping.prototype.mapSparseFields = function(columnName) {
   var i, arg, fieldMapping;
@@ -578,8 +578,8 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
               util.inspect(arg) + "\"";
       }
     }
-    if (!fieldMapping.converter) {      // default sparse fields converter
-      fieldMapping.converter = jones.converters.JSONSparseConverter;
+    if (!fieldMapping.converter) {                   // default JSON converter
+      fieldMapping.converter = jones.converters.JSONConverter;
     }
     this.sparseContainer = fieldMapping;
   } else {
