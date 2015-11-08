@@ -83,31 +83,29 @@ db db(databaseName);
  */
 mapTable(tableMapping);
 
-/** getTableMetadata
- * Get a table's metadata from the DBServiceProvider.
- * ASYNC
- *
- * @param dbName name of database
- * @param tableName name of table
- * @param callback
- * @return promise
- */
-getTableMetadata(dbName, tableName, callback);
-
 /** Create table for a table mapping.
+ *  If the table exists, this is a no-op.
  * @param tableMapping
- * @param allowExistingTableFlag (default: false)
  * @param callback
  * @return promise
  */
-createTable(tableMapping, allowFlag, callback);
+createTable(tableMapping, callback);
 
-/** Drop table
- *  @param tableNameOrMapping: string name, or TableMapping
+/** Drop table.
+ *  If the table does not exist, this is a no-op.
+ *  @param tableNameOrMapping: string ([database.]table), or TableMapping
  *  @param callback
  *  @return promise
  */
 dropTable(tableNameOrMapping, callback);
+
+/** Drop and create table for a table mapping. If the table exists,
+ *  the table is dropped and a new table is created.
+ *  @param tableMapping
+ *  @param callback
+ *  @return promise
+ */
+dropAndCreateTable(tableMapping, callback);
 
 /** Capabilities  (Property)
  *

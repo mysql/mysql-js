@@ -437,7 +437,7 @@ DBConnectionPool.prototype.makeMasterCallback = function(key) {
 DBConnectionPool.prototype.getTableMetadata = function(dbname, tabname, 
                                                        dictSession, user_callback) {
   var key, arg;
-  assert(dbname && tabname && user_callback);
+  assert(dbname && tabname && dictSession && user_callback);
   stats.get_table_metadata++;
   key = dbname + "." + tabname;
   arg = { "impl"      : dictSession.impl,
@@ -490,7 +490,7 @@ DBConnectionPool.prototype.dropTable = function(dbName,
                                                 tableName,
                                                 session,
                                                 userCallback) {
-  this.metadataManager.execDDL("DROP TABLE " + dbName + "." + tableName,
+  this.metadataManager.execDDL("DROP TABLE IF EXISTS " + dbName + "." + tableName,
                                userCallback);
 };
 
