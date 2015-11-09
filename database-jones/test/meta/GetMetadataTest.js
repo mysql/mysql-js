@@ -137,7 +137,7 @@ t1.run = function() {
 };
 
 t1.testGetMetadata = function(session, testCase) {
-  session.sessionFactory.getTableMetadata( 'test', 'chartypes',function(err, result) {
+  session.getTableMetadata( 'test', 'chartypes',function(err, result) {
     if (err) {
       testCase.fail(err);
       return;
@@ -153,7 +153,7 @@ t2.run = function() {
 };
 
 t2.testGetMetadata = function(session, testCase) {
-  session.sessionFactory.getTableMetadata( 'test', 'decimaltypes',function(err, result) {
+  session.getTableMetadata( 'test', 'decimaltypes',function(err, result) {
     if (err) {
       testCase.fail(err);
       return;

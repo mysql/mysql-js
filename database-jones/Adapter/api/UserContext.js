@@ -103,19 +103,21 @@ exports.UserContext.prototype.appendErrorMessage = function(message) {
 exports.UserContext.prototype.getTableMetadata = function() {
   var userContext = this;
   var err, databaseName, tableName, dbSession;
-  var getTableMetadataOnTableMetadata = function(metadataErr, tableMetadata) {
+  function getTableMetadataOnTableMetadata(metadataErr, tableMetadata) {
     udebug.log('UserContext.getTableMetadata.getTableMetadataOnTableMetadata with err', metadataErr);
     userContext.applyCallback(metadataErr, tableMetadata);
-  };
+  }
+
+  // getTableMetadata starts here
   databaseName = userContext.user_arguments[0];
   tableName = userContext.user_arguments[1];
-  dbSession = (userContext.session)?userContext.session.dbSession:null;
   if (typeof databaseName !== 'string' || typeof tableName !== 'string') {
     err = new Error('getTableMetadata(databaseName, tableName) illegal argument types (' +
         typeof databaseName + ', ' + typeof tableName + ')');
     userContext.applyCallback(err, null);
   } else {
-    this.session_factory.dbConnectionPool.getTableMetadata(
+    dbSession = userContext.session.dbSession;
+    userContext.session_factory.dbConnectionPool.getTableMetadata(
         databaseName, tableName, dbSession, getTableMetadataOnTableMetadata);
   }
   return userContext.promise;
@@ -160,30 +162,12 @@ exports.UserContext.prototype.getOpenSessionFactories = function() {
 
 function createTable(tableMapping, sessionFactory, session, callback) {
   var connectionPool = sessionFactory.dbConnectionPool;
-//  var tableName = tableMapping.table;
-//
-//  function createTableOnTableMetadata(err, tableMetadata) {
-//    var qualifiedTableName = tableMapping.database + '.' + tableName;
-//    if(! err) {
-//      // create the table handler
-//      var tableHandler = new DBTableHandler(tableMetadata, tableMapping);
-//      // remember the table metadata in the session factory
-//      sessionFactory.tableMetadatas[qualifiedTableName] = tableMetadata;
-//      // remember the table handler in the session factory
-//      sessionFactory.tableHandlers[qualifiedTableName] = tableHandler;
-//    }
-//    callback(err);
-//  }
 
   function createTableOnTableCreated(err) {
     if (err) {
       callback(err);
     } else {
       stats.tables_created++;
-      // create the table metadata and table handler for the new table
-//      connectionPool.getTableMetadata(tableMapping.database, tableName,
-//                                      session?session.dbSession:null,
-//                                      createTableOnTableMetadata);
       callback();
     }
   }
@@ -192,21 +176,14 @@ function createTable(tableMapping, sessionFactory, session, callback) {
 }
 
 /** Create schema from a table mapping. 
- * promise = createTable(tableMapping, allowExistingTableFlag, callback);
+ * promise = createTable(tableMapping, callback);
  */
 exports.UserContext.prototype.createTable = function() {
-  var userContext, tableMapping, allowExisting;
+  var userContext, tableMapping;
   userContext = this;
-
-  /* Let the allowExistingTableFlag be optional */
   tableMapping = this.user_arguments[0];
-  allowExisting = (this.user_arguments[1] === true);
-  if(! this.user_callback && typeof this.user_arguments[1] === 'function') {
-    this.user_callback = this.user_arguments[1];
-  }
-
   createTable(tableMapping, this.session_factory, this.session, function(err) {
-    if(allowExisting && err && err.sqlstate == "42S02") {
+    if(err && err.sqlstate == "42S02") {
       userContext.applyCallback();
     } else {
       userContext.applyCallback(err);
@@ -244,6 +221,32 @@ exports.UserContext.prototype.dropTable = function() {
     userContext.applyCallback(err);
   });
   return this.promise;
+};
+
+
+/** Drop and create schema from a table mapping.
+ * promise = dropAndCreateTable(tableMapping, callback);
+ */
+exports.UserContext.prototype.dropAndCreateTable = function() {
+  var userContext, tableMapping, dbName, tableName;
+  userContext = this;
+
+  tableMapping = this.user_arguments[0];
+  if(tableMapping && tableMapping.table) {
+    dbName = tableMapping.database;
+    tableName = tableMapping.table;
+  } else {
+    this.applyCallback(new Error('dropAndCreateTable() illegal argument: must be TableMapping'));
+  }
+
+  function dropAndCreateTableOnDropTable(err) {
+    createTable(tableMapping, userContext.session_factory, userContext.session, function(err) {
+      userContext.applyCallback(err);
+    });
+
+  }
+  this.session_factory.dbConnectionPool.dropTable(dbName, tableName, this.session, dropAndCreateTableOnDropTable);
+  return userContext.promise;
 };
 
 

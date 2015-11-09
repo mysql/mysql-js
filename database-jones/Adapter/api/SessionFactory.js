@@ -82,27 +82,16 @@ SessionFactory.prototype.allocateSessionSlot = function() {
 };
 
 
-/** Get metadata for a table.
- * @param dbName the name of the database
- * @param tableName the name of the table
- * @param callback
- */
-SessionFactory.prototype.getTableMetadata = function() {
-  var context = new userContext.UserContext(arguments, 3, 2, null, this);
-  // delegate to context for execution
-  return context.getTableMetadata();
-};
-
-/** Create table for a table mapping.
+/** Create table ("IF NOT EXISTS") for a table mapping.
  * @param tableMapping
- * @param allowExistingTableFlag (default: false)
  * @param callback
  * @return promise
  */
-SessionFactory.prototype.createTable = function(tableMapping, allowFlag, callback) {
-  var context = new userContext.UserContext(arguments, 3, 1, null, this);
+SessionFactory.prototype.createTable = function(tableMapping, callback) {
+  var context = new userContext.UserContext(arguments, 2, 1, null, this);
   return context.createTable();
 };
+
 
 /** Drop table ("IF EXISTS")
  *  @param tableNameOrMapping
@@ -113,6 +102,18 @@ SessionFactory.prototype.dropTable = function(tableNameOrMapping, callback) {
   var context = new userContext.UserContext(arguments, 2, 1, null, this);
   return context.dropTable();
 };
+
+
+/** Drop and create table for a table mapping.
+ * @param tableMapping
+ * @param callback
+ * @return promise
+ */
+SessionFactory.prototype.dropAndCreateTable = function(tableMapping, callback) {
+  var context = new userContext.UserContext(arguments, 2, 1, null, this);
+  return context.dropAndCreateTable();
+};
+
 
 // FIXME: close() should return a promise.
 SessionFactory.prototype.close = function(user_callback) {
