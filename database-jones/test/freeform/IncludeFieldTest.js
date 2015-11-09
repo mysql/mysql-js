@@ -21,6 +21,7 @@
 "use strict";
 var util    = require("util");
 var udebug  = unified_debug.getLogger("IncludeFieldTest.js");
+var Meta    = require(jones.api.Meta);
 
 function Semistruct(id, name, number, a, c) {
   if (id !== undefined) {
@@ -32,6 +33,8 @@ function Semistruct(id, name, number, a, c) {
   }
 }
 
+// The problem here is that we have no way to define a converter on
+// the shared column
 var t2 = new harness.ConcurrentTest("WriteSemistructIncludeTest");
 t2.run = function() {
   var testCase = this;
@@ -39,7 +42,9 @@ t2.run = function() {
   semistructMapping.mapField('id');
   semistructMapping.mapField('name');
   semistructMapping.mapField('number');
-  semistructMapping.mapSparseFields('SPARSE_FIELDS', 'a', 'b');  // fixme
+  semistructMapping.mapField('a', 'SPARSE_FIELDS', Meta.shared());
+  semistructMapping.mapField('b', 'SPARSE_FIELDS', Meta.shared());
+
   semistructMapping.applyToClass(Semistruct);
 
   testCase.mappings = Semistruct;
