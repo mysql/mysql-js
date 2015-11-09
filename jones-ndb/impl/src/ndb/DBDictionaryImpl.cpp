@@ -701,11 +701,7 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
            ReadOnly);
    
   /* Group B: Non-numeric */
-  if(is_binary || is_char) {  
-    obj->ForceSet(SYMBOL(isolate, "length"),
-             v8::Int32::New(isolate, col->getLength()),
-             ReadOnly);
-
+  if(is_binary || is_char) {
     obj->ForceSet(SYMBOL(isolate, "isBinary"),
              Boolean::New(isolate, is_binary),
              ReadOnly);
@@ -713,9 +709,20 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
     obj->ForceSet(SYMBOL(isolate, "isLob"),
              Boolean::New(isolate, is_lob),
              ReadOnly);
-    
+
+    if(is_binary) {
+      obj->ForceSet(SYMBOL(isolate, "length"),
+               v8::Int32::New(isolate, col->getLength()),
+               ReadOnly);
+    }
+
     if(is_char) {
       const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
+
+      obj->ForceSet(SYMBOL(isolate, "length"),
+               v8::Int32::New(isolate, col->getLength() / csinfo->maxlen),
+               ReadOnly);
+
       obj->ForceSet(SYMBOL(isolate, "charsetName"),
                String::NewFromUtf8(isolate, csinfo->name),
                ReadOnly);
