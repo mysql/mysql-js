@@ -343,6 +343,10 @@ TableMapping.prototype.constructFromObject = function(literal) {
     literal.fields = [ literal.fields ];
   }
   this.error = tableMappingProperties.buildObjectFromLiteral(this, literal);
+  if(this.isValid()) {  // Build arrays that are independent from the original
+    this.fields = this.fields.slice();
+    this.excludedFieldNames = this.excludedFieldNames.slice();
+  }
 };
 
 TableMapping.prototype.constructFromTableName = function(tableName) {
