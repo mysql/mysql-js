@@ -109,6 +109,18 @@ function isConverter(converter) {
              && typeof converter.fromDB === 'function'));
 }
 
+function isConverterMap(obj) {
+  var property;
+  for(property in obj) {
+    if(obj.hasOwnProperty(property)) {
+      if(! isConverter(obj[property])) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function isFunction(value) {
   return (typeof value === 'function');
 }
@@ -287,6 +299,7 @@ var tableMappingProperties =
     set("meta",               isElementOrArrayOf(isMetaOrLiteral)).
     set("sparseContainer",    getValidator(fieldMappingProperties)).
     set("error",              isEmptyString).
+    set("columnConverterMap", isConverterMap).
     setRequired("table");
 
 
@@ -297,6 +310,7 @@ function TableMapping(tableNameOrLiteral) {
   this.fields             = [];
   this.excludedFieldNames = [];
   this.meta               = [];
+  this.columnConverterMap = {};
   this.error              = "";
 
   switch(typeof tableNameOrLiteral) {
@@ -588,6 +602,19 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
   return this;
 };
 
+/* registerColumnConverter(name, converter): register a Converter for a named column
+   IMMEDIATE
+*/
+TableMapping.prototype.registerColumnConverter = function(name, converter) {
+  var error;
+  if(isConverter(converter)) {
+    this.columnConverterMap[name] = converter;
+  } else {
+    error = "registerColumnConverter() for column " + name + ": not a converter";
+    this.error += error;
+  }
+  return error;
+};
 
 /* applyToClass(constructor) 
    IMMEDIATE

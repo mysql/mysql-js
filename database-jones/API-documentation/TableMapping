@@ -46,7 +46,7 @@ function TableMapping(tableName_or_tableMapping) {};
                             --------------------                      *****/
   
 /* @method mapField
-   mapField(fieldName, [columnName], [converter], [persistent])
+   mapField(fieldName, [columnName], [converter], [meta], [persistent])
    IMMEDIATE
    
    Create a fieldMapping for a named field of a mapped object. 
@@ -65,6 +65,9 @@ function TableMapping(tableName_or_tableMapping) {};
    converter can be used to supply an object to perform custom conversions
    between JavaScript values and database values.  It defaults to null.  If 
    supplied, it must conform to the description of a Converter.
+
+   @para meta {Meta}
+   Meta used for forward mapping of a database column from the field.
 
    @param persistent {Boolean=true}
    Persistent specifies whether the field will be persisted to the database.
@@ -103,6 +106,18 @@ function TableMapping(tableName_or_tableMapping) {};
 */
   function applyToClass(constructor) {};
 
+/* @method registerColumnConverter
+   registerColumnConverter(name, converter)
+   IMMEDIATE
+
+   Register a Converter for a named column.
+   Converters registered by column name in TableMapping take precedence over
+   those registered by column type on SessionFactory.  If both sorts of
+   converters are declared for a column, only the one registered by column
+   name will be used.
+*/
+  function registerColumnConverter(columnName, converter);
+  
 
 /* This file is a JavaScript module */
 exports.FieldMapping = FieldMapping;

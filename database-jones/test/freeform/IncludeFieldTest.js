@@ -44,6 +44,7 @@ t2.run = function() {
   semistructMapping.mapField('number');
   semistructMapping.mapField('a', 'SPARSE_FIELDS', Meta.shared());
   semistructMapping.mapField('b', 'SPARSE_FIELDS', Meta.shared());
+  semistructMapping.registerColumnConverter('SPARSE_FIELDS', jones.converters.JSONConverter);
 
   semistructMapping.applyToClass(Semistruct);
 

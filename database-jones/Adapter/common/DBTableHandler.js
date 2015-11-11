@@ -89,7 +89,7 @@ function getColumnByName(dbTable, colName) {
 /// DBT_Column represents a mapped column
 //////////////////
 
-function DBT_Column(columnMetadata) {
+function DBT_Column(columnMetadata, converter) {
   this.columnName         = columnMetadata.name;
   this.fieldNames         = [];
   this.fieldConverters    = [];
@@ -97,7 +97,7 @@ function DBT_Column(columnMetadata) {
   this.isShared           = false; // Many fields to 1 column
   this.isPartial          = false; // 1 field to many columns
   this.excludedFieldNames = [];    // If column is a container for sparse fields
-  this.typeConverter      = columnMetadata.typeConverter;
+  this.typeConverter      = converter || columnMetadata.typeConverter;
   this.getColumnValue     = this.getColumnValue_1to1;
   this.setFieldValues     = this.setFieldValues_1to1;
 }
@@ -301,10 +301,10 @@ DBTableHandlerPrivate.prototype.inspect = function() {
   return "";
 };
 
-DBTableHandlerPrivate.prototype.addColumn = function(columnMetadata) {
+DBTableHandlerPrivate.prototype.addColumn = function(columnMetadata, converterMap) {
   var n, col;
   n = this.columns.length;
-  col = new DBT_Column(columnMetadata);
+  col = new DBT_Column(columnMetadata, converterMap[columnMetadata.name]);
   this.columnNameToIdMap[columnMetadata.name] = n;
   this.columns[n] = col;
   this.columnMetadata[n] = columnMetadata;
@@ -503,7 +503,8 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   /* Build the array of columns.
   */
   for(id = 0 ; id < columnNames.length ; id++) {
-    priv.addColumn(getColumnByName(dbtable, columnNames[id]));
+    priv.addColumn(getColumnByName(dbtable, columnNames[id]),
+                   tablemapping.columnConverterMap);
   }
 
   /* Build the array of mapped fields. */
