@@ -516,7 +516,7 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
         op.result.value = rows[0];
         op.result.success = true;
         // convert the felix result into the user result
-        // FIXME DO NOT DO THIS ON session.load()
+        // FIXME: DO NOT DO THIS ON session.load()
         op.result.value = dbTableHandler.newResultObject(op.result.value);
         if (typeof(op.callback) === 'function') {
           // call the UserContext callback
@@ -1309,10 +1309,10 @@ exports.DBSession.prototype.buildInsertOperation = function(dbTableHandler, obje
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
   var fieldValues = dbTableHandler.getColumns(object, fieldValueDefinedListener);
-  if (fieldValueDefinedListener.err) {
-    // error during preparation of field values
-    udebug.log('MySQLConnection.buildInsertOperation error', fieldValueDefinedListener.err);
-    return new ErrorOperation(fieldValueDefinedListener.err, callback);
+  if (fieldValueDefinedListener.errors) {
+    // error during preparation of column values
+    udebug.log('MySQLConnection.buildInsertOperation error', fieldValueDefinedListener.errors[0]);
+    return new ErrorOperation(fieldValueDefinedListener.errors[0], callback);
   }
   var fieldValueDefinedKey = fieldValueDefinedListener.key;
   udebug.log_detail('MySQLConnection.buildWriteOperation', fieldValueDefinedKey);
@@ -1498,10 +1498,10 @@ exports.DBSession.prototype.buildWriteOperation = function(dbIndexHandler, value
   getMetadata(dbTableHandler);
   var fieldValueDefinedListener = new FieldValueDefinedListener();
   var fieldValues = dbTableHandler.getColumns(values, fieldValueDefinedListener);
-  if (fieldValueDefinedListener.err) {
+  if (fieldValueDefinedListener.errors) {
     // error during preparation of field values
-    udebug.log('MySQLConnection.buildWriteOperation error', fieldValueDefinedListener.err);
-    return new ErrorOperation(fieldValueDefinedListener.err, callback);
+    udebug.log('MySQLConnection.buildWriteOperation error', fieldValueDefinedListener.errors[0]);
+    return new ErrorOperation(fieldValueDefinedListener.errors[0], callback);
   }
   var fieldValueDefinedKey = fieldValueDefinedListener.key;
   if (fieldValueDefinedKey === undefined) {

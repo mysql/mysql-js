@@ -52,4 +52,14 @@ FieldValueDefinedListener.prototype.setUndefined = function(fieldNumber) {
   this.key += 'U';
 };
 
+FieldValueDefinedListener.prototype.setError = function(columnName, sqlState, message) {
+  var error = new Error(message);
+  error.columnName = columnName;
+  error.sqlstate = sqlState;
+  if(this.errors === undefined) {
+    this.errors = [];
+  }
+  this.errors.push(error);
+};
+
 module.exports = FieldValueDefinedListener;

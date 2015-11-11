@@ -862,7 +862,7 @@ DBTableHandler.prototype.chooseOrderedIndexForPredicate = function(predicate) {
  * If a valueDefinedListener is passed, notify it via setDefined or setUndefined.
  */
 DBTableHandler.prototype.get = function(domainObject, colNumber, valueDefinedListener) {
-  var result;
+  var result, columnMetadata;
 
   /* Handle the case where obj is a simple string or number value */
   if (typeof domainObject === 'string' || typeof domainObject === 'number') {
@@ -876,6 +876,12 @@ DBTableHandler.prototype.get = function(domainObject, colNumber, valueDefinedLi
       valueDefinedListener.setUndefined(colNumber);
     } else {
       valueDefinedListener.setDefined(colNumber);
+      columnMetadata = this._private.columnMetadata[colNumber];
+      if(columnMetadata.isBinary && result.constructor &&
+                  result.constructor.name !== 'Buffer'   ) {
+        valueDefinedListener.setError(columnMetadata.name, "22000",
+                                      "Value for binary column must be a Buffer");
+      }
     }
   }
 
