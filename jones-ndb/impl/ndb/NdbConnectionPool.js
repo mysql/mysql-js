@@ -413,7 +413,7 @@ DBConnectionPool.prototype.makeMasterCallback = function(key) {
     var error;
     if(err) {
       error = {
-        sqlState : "42S02",
+        sqlstate : "42S02",
         message  : "Table " + key + " not found in NDB data dictionary",
         cause    : err
       };

@@ -43,6 +43,7 @@ exports.DataDictionary.prototype.listTables = function(databaseName, user_callba
   var callback = user_callback;
   var showTables_callback = function(err, rows) {
     if (err) {
+      err.sqlstate = err.sqlState;
       callback(err);
     } else {
       var result = [];
@@ -431,6 +432,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
   var showCreateTable_callback = function(err, rows) {
     var result;
     if (err) {
+      err.sqlstate = err.sqlState;
       udebug.log_detail('MySQLDictonary error from SHOW CREATE TABLE: ' + err);
       callback(err);
     } else {

@@ -657,7 +657,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
             if (userContext.errorMessages) {
               err = new Error(userContext.errorMessages);
               // fill in the Error detail from the first error
-              err.sqlState =       firstError.sqlState;
+              err.sqlstate =       firstError.sqlstate;
               err.code =           firstError.code;
               err.classification = firstError.classification;
               err.status =         firstError.status;

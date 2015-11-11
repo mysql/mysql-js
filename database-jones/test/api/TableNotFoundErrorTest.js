@@ -44,7 +44,7 @@ function checkErrorMessage(tc, err) {
   if (!err) {
     tc.error('No error was reported for ' + tc.name);
   } else {
-    tc.errorIfNotEqual('sqlState mismatch', '42S02', err.sqlState);
+    tc.errorIfNotEqual('sqlState mismatch', '42S02', err.sqlstate);
   }
   tc.failOnError();
 }
