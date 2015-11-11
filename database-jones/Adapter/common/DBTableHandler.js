@@ -49,10 +49,10 @@ stats_module.register(stats,"spi","DBTableHandler");
 
    A DBT encapsulates:
      * A TableMetadata object, obtained from the data dictionary and passed to
-       the DBT constructor.
+       the DBT constructor.  This is immutable.
 
-     * An API TableMapping, either passed in explicitly to the constructor
-       or created by default using the table name.
+     * A resolved TableMapping, created from the TableMapping passed in to the
+       constrcutor (or created by default).
 
      * A list of columns, which contains the subset of a table's columns needed
        to fulfill the TableMapping. Columns are accessed by number.  The 
@@ -174,14 +174,17 @@ DBT_Column.prototype.setFieldValues_1to1 = function(domainObject, columnValue) {
 };
 
 DBT_Column.prototype.getColumnValue_Partial = function(domainObject) {
-  var fieldName, value;           // writing to db - one field to many columns
-  fieldName = this.fieldNames[0];                   // intermediate type is {}
+  var fieldName, intermediateValue; // writing to db - one field to many columns
+  fieldName = this.fieldNames[0];                     // intermediate type is {}
   if(this.isFirst && this.fieldConverters[0]) {
     domainObject[fieldName] = this.fieldConverters[0].toDB(domainObject[fieldName]);
   }
-  value = domainObject[fieldName];
-  if(typeof value === 'object') {
-    return this.toDB(value[this.columnName]);
+  intermediateValue = domainObject[fieldName];
+  if(this.isLast && this.fieldConverters[0]) {
+    domainObject[fieldName] = this.fieldConverters[0].fromDB(intermediateValue);
+  }
+  if(typeof intermediateValue === 'object') {
+    return this.toDB(intermediateValue[this.columnName]);
   }
   // fallthrough; value not of proper intermediate type; return undefined.
 };
@@ -226,15 +229,13 @@ DBT_Column.prototype.setFieldValues_Shared = function(domainObject, columnValue)
 };
 
 DBT_Column.prototype.getColumnValue_Sparse = function(domainObject) {
-  var value, candidateField;       // writing to db -- all non-exculded fields
+  var value, candidateField;       // writing to db -- all non-excluded fields
   value = {};                       // intermediate type; field names are keys
 
-  if(typeof domainObject === 'object') {
-    for(candidateField in domainObject) {
-      if(domainObject.hasOwnProperty(candidateField)) {
-        if(this.excludedFieldNames.indexOf(candidateField) === -1) {
-          value[candidateField] = domainObject[candidateField];
-        }
+  for(candidateField in domainObject) {
+    if(domainObject.hasOwnProperty(candidateField)) {
+      if(this.excludedFieldNames.indexOf(candidateField) === -1) {
+        value[candidateField] = domainObject[candidateField];
       }
     }
   }
@@ -379,11 +380,14 @@ DBTableHandlerPrivate.prototype.getColumnMetadata = function(idOrName) {
   }
 };
 
-DBTableHandlerPrivate.prototype.getColumnMapping = function(idOrName) {
-  var id = idOrName;
-  if(typeof idOrName === 'string') {
-    id = this.columnNameToIdMap[idOrName];
+DBTableHandlerPrivate.prototype.getColumnMapping = function(id) {
+  if(id !== undefined) {
+    return this.columns[id];
   }
+};
+
+DBTableHandlerPrivate.prototype.getColumnMappingByName = function(name) {
+  var id = this.columnNameToIdMap[name];
   if(id !== undefined) {
     return this.columns[id];
   }
@@ -561,11 +565,11 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       this.relationshipFields.push(field);
     } else if(field.persistent) {
       if(field.columnName) {
-        if(! this.getColumnMapping(field.columnName)) {
+        if(! this._private.getColumnMappingByName(field.columnName)) {
           this.resolvedMapping.error += "Column " + field.columnName + " does not exist\n";
         }
       } else if(! field.toManyColumns) {
-        if(this.getColumnMapping(field.fieldName)) {
+        if(this._private.getColumnMappingByName(field.fieldName)) {
           field.columnName = field.fieldName;
         } else if(this.sparseContainer) {
           field.columnName = this.sparseContainer;
@@ -608,8 +612,8 @@ DBTableHandler.prototype.getResolvedMapping = function() {
   return this.resolvedMapping;
 };
 
-DBTableHandler.prototype.getColumnMapping = function(idOrName) {
-  return this._private.getColumnMapping(idOrName);
+DBTableHandler.prototype.getColumnMapping = function(id) {
+  return this._private.getColumnMapping(id);
 };
 
 DBTableHandler.prototype.getColumnMetadata = function(idOrName) {
@@ -863,7 +867,7 @@ DBTableHandler.prototype.get = function(domainObject, colNumber, valueDefinedLi
   if (typeof domainObject === 'string' || typeof domainObject === 'number') {
     result = domainObject;
   } else {
-    result = this.getColumnMapping(colNumber).getColumnValue(domainObject);
+    result = this._private.columns[colNumber].getColumnValue(domainObject);
   }
 
   if(valueDefinedListener) {
