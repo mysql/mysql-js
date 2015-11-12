@@ -60,10 +60,10 @@ test.run = function() {
   jones.openSession(global.test_conn_properties).
     then(function(s) {
       session = s;
-      session.sessionFactory.dropAndCreateTable(chartypesMapping);
+      return session.sessionFactory.dropAndCreateTable(chartypesMapping);
     }).
     then(function() {
-      session.sessionFactory.dropAndCreateTable(decimaltypesMapping);
+      return session.sessionFactory.dropAndCreateTable(decimaltypesMapping);
     }).
     then(function()    { return session.close(); }).
     then(function()    { test.pass();    },

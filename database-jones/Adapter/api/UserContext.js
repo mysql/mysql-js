@@ -160,7 +160,7 @@ exports.UserContext.prototype.getOpenSessionFactories = function() {
 };
 
 
-function createTable(tableMapping, sessionFactory, session, callback) {
+function createTableInternal(tableMapping, sessionFactory, session, callback) {
   var connectionPool = sessionFactory.dbConnectionPool;
 
   function createTableOnTableCreated(err) {
@@ -182,7 +182,7 @@ exports.UserContext.prototype.createTable = function() {
   var userContext, tableMapping;
   userContext = this;
   tableMapping = this.user_arguments[0];
-  createTable(tableMapping, this.session_factory, this.session, function(err) {
+  createTableInternal(tableMapping, this.session_factory, this.session, function(err) {
     if(err && err.sqlstate == "42S02") {
       userContext.applyCallback();
     } else {
@@ -231,21 +231,30 @@ exports.UserContext.prototype.dropAndCreateTable = function() {
   var userContext, tableMapping, dbName, tableName;
   userContext = this;
 
+  function dropAndCreateTableOnCreateTable(createErr) {
+    udebug.log('UserContext.dropAndCreateTable error on create table:', createErr);
+    userContext.applyCallback(createErr);
+  }
+
+  function dropAndCreateTableOnDropTable(dropErr) {
+    udebug.log('UserContext.dropAndCreateTable error on drop table:', dropErr);
+    if(dropErr) {
+      userContext.applyCallback(dropErr);
+    } else {
+      createTableInternal(tableMapping, userContext.session_factory, userContext.session,
+          dropAndCreateTableOnCreateTable);
+    }
+  }
+
+  // dropAndCreateTable starts here
   tableMapping = this.user_arguments[0];
   if(tableMapping && tableMapping.table) {
     dbName = tableMapping.database;
     tableName = tableMapping.table;
+    this.session_factory.dbConnectionPool.dropTable(dbName, tableName, this.session, dropAndCreateTableOnDropTable);
   } else {
     this.applyCallback(new Error('dropAndCreateTable() illegal argument: must be TableMapping'));
   }
-
-  function dropAndCreateTableOnDropTable(err) {
-    createTable(tableMapping, userContext.session_factory, userContext.session, function(err) {
-      userContext.applyCallback(err);
-    });
-
-  }
-  this.session_factory.dbConnectionPool.dropTable(dbName, tableName, this.session, dropAndCreateTableOnDropTable);
   return userContext.promise;
 };
 
@@ -421,7 +430,7 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
             sessionFactory.tableMappings[tableSpecification.qualifiedTableName] = tableMapping;
           }
           if (tableMapping) {
-            createTable(tableMapping, sessionFactory, session,
+            createTableInternal(tableMapping, sessionFactory, session,
                         tableHandlerFactoryOnCreateTable);
             return;
           }
