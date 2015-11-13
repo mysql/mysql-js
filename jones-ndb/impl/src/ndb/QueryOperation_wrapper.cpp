@@ -216,23 +216,29 @@ void createQueryOperation(const Arguments & args) {
   Isolate * isolate = Isolate::GetCurrent();
 
   int size = args[2]->Int32Value();
+  int currentId = 0;
+  int parentId;
+  const NdbQueryOperationDef * current;
+  const NdbQueryOperationDef * all[size];
   QueryOperation * queryOperation = new QueryOperation(size);
-  const NdbQueryOperationDef * root, * current;
 
   Local<Value> v;
   Local<Object> spec = args[0]->ToObject();
+  Local<Object> parentSpec;
 
   setRowBuffers(queryOperation, spec);
-  current = root = createTopLevelQuery(queryOperation, spec,
-                                       args[1]->ToObject());
+  current = createTopLevelQuery(queryOperation, spec, args[1]->ToObject());
 
   while(! (v = spec->Get(GET_KEY(K_next)))->IsUndefined()) {
+    all[currentId++] = current;
     spec = v->ToObject();
-    current = createNextLevel(queryOperation, spec, current);
+    parentSpec = spec->Get(GET_KEY(K_parent))->ToObject();
+    parentId = parentSpec->Get(GET_KEY(K_serial))->Int32Value();
+    current = createNextLevel(queryOperation, spec, all[parentId]);
     assert(current->getOpNo() == spec->Get(GET_KEY(K_serial))->Uint32Value());
     setRowBuffers(queryOperation, spec);
   }
-  queryOperation->prepare(root);
+  queryOperation->prepare(all[0]);
   args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
 }
 
