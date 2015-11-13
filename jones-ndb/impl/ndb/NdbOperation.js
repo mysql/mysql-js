@@ -915,8 +915,7 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 
 
 function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
-  var op, ndbProjection, depth;
-  op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
+  var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
   op.keys = Array.isArray(keys) ? keys : indexHandler.getColumns(keys);
@@ -928,17 +927,14 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
     storeNativeConstructorInMapping(sector.tableHandler);
   });
 
-  /* Create an NdbProjection, then use it to create a QueryOperation */
-  ndbProjection = NdbProjection.initialize(projection.sectors, indexHandler);
-  if(ndbProjection.root.error) {
-    /* TODO: Report this error back to the user rather than attempting
-       to execute the operation */
-    op.result.error = new DBOperationError(ndbProjection.root.error);
+  /* Create NdbProjections from sectors, then create a QueryOperation */
+  op.query = NdbProjection.initialize(projection.sectors, indexHandler);
+  if(op.query.error) {   /* TODO: Report this error back to the user
+                            rather than attempting to execute the operation */
+    op.result.error = new DBOperationError(op.query.error);
     op.result.success = false;
   } else {
-    op.query = ndbProjection.root;
-    depth = ndbProjection.depth + 1;
-    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
+    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, op.query.size);
   }
   return op;
 }

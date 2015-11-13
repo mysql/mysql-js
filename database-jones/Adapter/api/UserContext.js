@@ -893,6 +893,9 @@ function Sector() {
 
 Sector.prototype.inspect = function() {
   var s = "Sector for " + this.tableHandler.dbTable.name;
+  if(this.joinTableHandler) {
+    s += " with join table " + this.joinTableHandler.dbTable.name;
+  }
   if(this.thisJoinColumns.length) {
     s += " where this." + this.thisJoinColumns.join(",") + "=" +
       this.parentTableHandler.dbTable.name + "." + this.otherJoinColumns.join(",");
@@ -900,7 +903,7 @@ Sector.prototype.inspect = function() {
     s+= " with keys [" + this.keyFieldNames.join(",") + "]";
   }
   s += " at offset " + this.offset;
-  s += " parent: " + util.inspect(this.parentFieldMapping);
+  s += " with parent sector " + this.parentSectorIndex;
   return s;
 };
 

@@ -75,7 +75,7 @@ protected:
   bool pushResultForTable(int);
 
 private:
-  int                           depth;
+  int                           size;
   int                           nullLevel;
   QueryBuffer * const           buffers;
   NdbQueryBuilder             * ndbQueryBuilder;

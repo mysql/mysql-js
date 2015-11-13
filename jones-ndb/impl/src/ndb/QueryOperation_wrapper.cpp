@@ -42,7 +42,8 @@ Eternal<String>    /* keys of NdbProjection */
   K_hasScan,
   K_keyFields,
   K_joinTo,
-  K_depth,
+  K_serial,
+  K_parent,
   K_tableHandler,
   K_rowRecord,
   K_indexHandler,
@@ -87,7 +88,7 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
   DEBUG_ENTER();
   Isolate * isolate = Isolate::GetCurrent();
   Record * record = 0;
-  int level = spec->Get(GET_KEY(K_depth))->Int32Value();
+  int level = spec->Get(GET_KEY(K_serial))->Int32Value();
   if(spec->Get(GET_KEY(K_rowRecord))->IsObject()) {
     record = unwrapPointer<Record *>(spec->Get(GET_KEY(K_rowRecord))->ToObject());
   }
@@ -103,7 +104,7 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
 const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
-  DEBUG_MARKER(UDEB_DEBUG);
+  DEBUG_MARKER(UDEB_DETAIL);
   Isolate * isolate = Isolate::GetCurrent();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
@@ -141,11 +142,13 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
   int nKeyParts = keyRecord->getNoOfColumns();
   const NdbQueryOperand * key_parts[nKeyParts+1];
 
+  DEBUG_PRINT("Creating root QueryOperationDef for table: %s", table->getName());
   for(int i = 0; i < nKeyParts ; i++) {
     size_t offset = keyRecord->getColumnOffset(i);
     size_t length = keyRecord->getValueLength(i, key_buffer + offset);
     offset += keyRecord->getValueOffset(i);  // accounts for length bytes
     key_parts[i] = builder->constValue(key_buffer + offset, length);
+    DEBUG_PRINT_DETAIL("Key part %d: %s", i, keyRecord->getColumn(i)->getName());
   }
   key_parts[nKeyParts] = 0;
 
@@ -163,7 +166,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
   Local<Value> v;
   const NdbDictionary::Table * table = 0;
   const NdbDictionary::Index * index = 0;
-  int depth = spec->Get(GET_KEY(K_depth))->Int32Value();
+  int depth = spec->Get(GET_KEY(K_serial))->Int32Value();
 
   v = spec->Get(GET_KEY(K_tableHandler));
   if(v->IsObject()) {
@@ -223,10 +226,10 @@ void createQueryOperation(const Arguments & args) {
   current = root = createTopLevelQuery(queryOperation, spec,
                                        args[1]->ToObject());
 
-  while(! (v = spec->Get(GET_KEY(K_next)))->IsNull()) {
+  while(! (v = spec->Get(GET_KEY(K_next)))->IsUndefined()) {
     spec = v->ToObject();
     current = createNextLevel(queryOperation, spec, current);
-    assert(current->getOpNo() == spec->Get(GET_KEY(K_depth))->Uint32Value());
+    assert(current->getOpNo() == spec->Get(GET_KEY(K_serial))->Uint32Value());
     setRowBuffers(queryOperation, spec);
   }
   queryOperation->prepare(root);
@@ -328,7 +331,8 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
   SET_KEY(K_hasScan, "hasScan");
   SET_KEY(K_keyFields, "keyFields");
   SET_KEY(K_joinTo, "joinTo");
-  SET_KEY(K_depth, "depth");
+  SET_KEY(K_serial, "serial");
+  SET_KEY(K_parent, "parent");
   SET_KEY(K_tableHandler, "tableHandler");
   SET_KEY(K_rowRecord, "rowRecord"),
   SET_KEY(K_indexHandler, "indexHandler");

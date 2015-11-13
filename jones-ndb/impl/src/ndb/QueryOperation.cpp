@@ -30,19 +30,20 @@
 #include "TransactionImpl.h"
 
 QueryOperation::QueryOperation(int sz) :
-  depth(sz),
+  size(sz),
   buffers(new QueryBuffer[sz]),
   operationTree(0),
   definedQuery(0),
   ndbQuery(0),
   transaction(0),
   results(0),
+  latest_error(0),
   nresults(0),
   nheaders(0),
   nextHeaderAllocationSize(1024)
 {
   ndbQueryBuilder = NdbQueryBuilder::create();
-  DEBUG_PRINT("Depth: %d", depth);
+  DEBUG_PRINT("Size: %d", size);
 }
 
 QueryOperation::~QueryOperation() {
@@ -79,7 +80,7 @@ bool QueryOperation::pushResultForTable(int level) {
 
   if(level == 0)
   {
-    nullLevel = depth;  // reset for new root result
+    nullLevel = size;  // reset for new root result
   }
 
   if(ndbQuery->getQueryOperation(level)->isRowNULL())
@@ -174,7 +175,7 @@ int QueryOperation::fetchAllResults() {
       case NdbQuery::NextResult_gotRow:
         /* New results at every level */
         DEBUG_PRINT_DETAIL("NextResult_gotRow");
-        for(int level = 0 ; level < depth ; level++) {
+        for(int level = 0 ; level < size ; level++) {
           if(! pushResultForTable(level)) return -1;
         }
         break;
@@ -242,8 +243,8 @@ const NdbQueryOperationDef *
   }
 
   if(rval == 0) {
-    const NdbError & err = ndbQueryBuilder->getNdbError();
-    DEBUG_PRINT("defineOperation: Error %d %s", err.code, err.message);
+    latest_error = & ndbQueryBuilder->getNdbError();
+    DEBUG_PRINT("defineOperation: Error %d %s", latest_error->code, latest_error->message);
   }
   return rval;
 }
@@ -256,7 +257,7 @@ bool QueryOperation::createNdbQuery(NdbTransaction *tx) {
     return false;
   }
 
-  for(int i = 0 ; i < depth ; i++) {
+  for(int i = 0 ; i < size ; i++) {
     NdbQueryOperation * qop = ndbQuery->getQueryOperation(i);
     if(! qop) {
       DEBUG_PRINT("No Query Operation at index %d", i);
