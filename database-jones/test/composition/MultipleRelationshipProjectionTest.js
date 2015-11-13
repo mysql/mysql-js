@@ -22,7 +22,6 @@
 
 var lib = require('./lib.js');
 var udebug = unified_debug.getLogger("MultipleProjectionTest.js");
-lib.mapShop();
 var t1 = new harness.ConcurrentTest('t1 ProjectionTest');
 var t2 = new harness.ConcurrentTest('t2 ProjectionTestDefaultNull');
 var t3 = new harness.ConcurrentTest('t3 ProjectionTestDefaultEmptyArray');

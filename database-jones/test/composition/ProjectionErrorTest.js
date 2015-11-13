@@ -54,7 +54,6 @@ t1.run = function() {
   var expectedErrorMessage = 'unmappedField is not mapped';
   var customerProjection = new mynode.Projection(lib.Customer);
   customerProjection.addFields('unmappedField');
-  lib.mapShop();
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -78,7 +77,6 @@ t2.run = function() {
   var customerProjection = new mynode.Projection(lib.Customer);
   var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
   customerProjection.addRelationship('unmappedRelationship', shoppingCartProjection);
-  lib.mapShop();
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -101,7 +99,6 @@ t3.run = function() {
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
   var customerProjection = new mynode.Projection(lib.Customer);
   customerProjection.addField('shoppingCart');
-  lib.mapShop();
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -124,7 +121,6 @@ t4.run = function() {
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
   var customerProjection = new mynode.Projection(lib.Customer);
   customerProjection.addField('shoppingCart');
-  lib.mapShop();
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -149,7 +145,6 @@ t5.run = function() {
   var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
   customerProjection.addRelationship('shoppingCart', shoppingCartProjection);
   shoppingCartProjection.addRelationship('customer', customerProjection);
-  lib.mapShop();
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -254,7 +249,6 @@ t8.run = function() {
 t9.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
   var expectedErrorMessage = 'field discount is not mapped';
   var badDiscountProjection = new mynode.Projection(lib.Discount);
   var badCustomerProjection = new mynode.Projection(lib.Customer);

@@ -55,7 +55,6 @@ discountProjection.name = 'discountProjection';
 t1.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var expectedCustomer = new lib.Customer(100, 'Craig', 'Walton');
   var expectedShoppingCart = new lib.ShoppingCart(1000);
@@ -93,7 +92,6 @@ t1.run = function() {
 t2.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var expectedCustomer = new lib.Customer(101, 'Sam', 'Burton');
   expectedCustomer.shoppingCart = null;
@@ -115,7 +113,6 @@ t2.run = function() {
 t3.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var expectedShoppingCart = new lib.ShoppingCart(1003);
   expectedShoppingCart.lineItems = [];
@@ -141,7 +138,6 @@ t3.run = function() {
 t4.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var t4customerProjection = new mynode.Projection(lib.Customer);
   t4customerProjection.addFields('id', 'firstName');
@@ -180,7 +176,6 @@ t4.run = function() {
 t5.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var customerProjection = new mynode.Projection(lib.Customer);
   customerProjection.addFields('id', 'firstName');
@@ -216,7 +211,6 @@ t5.run = function() {
 t6.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var expectedShoppingCart1003 = new lib.ShoppingCart(1003);
   expectedShoppingCart1003.lineItems = [];
@@ -245,7 +239,6 @@ t6.run = function() {
 t7.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var t7discountProjection = new mynode.Projection(lib.Discount);
   t7discountProjection.addFields('description');
@@ -277,7 +270,6 @@ t7.run = function() {
 t8.run = function() {
   var testCase = this;
   var session;
-  lib.mapShop();
 
   var t8expectedDiscount = null;
   fail_openSession(testCase, function(s) {
