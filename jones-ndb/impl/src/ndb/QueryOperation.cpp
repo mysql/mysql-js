@@ -75,10 +75,9 @@ int QueryOperation::prepareAndExecute() {
 }
 
 bool QueryOperation::pushResultForTable(int level) {
-  char * & temp_result = buffers[level].buffer;
-  size_t & buf_size = buffers[level].size;
-  int lastCopy = buffers[level].dupMatchHeader;
-  int parent = buffers[level].parent;
+  QueryBuffer & current = buffers[level];
+  QueryBuffer & parent = buffers[current.parent];
+  size_t lastCopy = current.dupMatchHeader;
 
   if(level == 0)
   {
@@ -86,10 +85,11 @@ bool QueryOperation::pushResultForTable(int level) {
       buffers[i].isNull = false;         // reset for new root result
   }
 
+  current.resultUsed = false;
   if(ndbQuery->getQueryOperation(level)->isRowNULL())
   {
-    buffers[level].isNull = true;
-    if(level > 0 && buffers[parent].isNull)
+    current.isNull = true;
+    if(level > 0 && parent.isNull)
     {
       DEBUG_PRINT("table %d SKIP -- parent is null", level);
       return true;   /* skip */
@@ -98,7 +98,8 @@ bool QueryOperation::pushResultForTable(int level) {
     return pushResultNull(level);
   }
 
-  if(lastCopy > 0 && (! (memcmp(results[lastCopy-1].data, temp_result, buf_size))))
+  if(lastCopy > 0 &&
+     (! (memcmp(results[lastCopy-1].data, current.buffer, current.size))))
   {
     DEBUG_PRINT("table %d SKIP duplicate", level);
     return true;    /* skip */
@@ -106,6 +107,9 @@ bool QueryOperation::pushResultForTable(int level) {
   else
   {
     DEBUG_PRINT("table %d USE RESULT", level);
+    current.resultUsed = true;
+    /* Record that this result has been copied out */
+    current.dupMatchHeader = nresults + 1;
     return pushResultValue(level);
   }
 }
@@ -148,9 +152,6 @@ bool QueryOperation::pushResultValue(int level) {
     /* Set the level and tag in the header */
     results[n].sector = level;
     results[n].tag = buffers[level].flags;
-
-    /* Record that this result has been copied out */
-    buffers[level].dupMatchHeader = nresults;
   }
   return ok;
 }
