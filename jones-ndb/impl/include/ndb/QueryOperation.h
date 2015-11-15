@@ -32,16 +32,21 @@ class NdbQueryOperand;
 
 class QueryBuffer {
 public:
+  /* Set at initialization time: */
   Record      * record;
   char        * buffer;
   size_t        size;
-  size_t        lastCopy;
   size_t        parent;
   uint16_t      flags;
+  /* Used in result construction: */
+  size_t        dupMatchHeader;
   bool          isNull;
-  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0),
-                  parent(0), flags(0), isNull(false)              {};
-  ~QueryBuffer()                       { if(size) delete[] buffer; };
+  bool          resultUsed;
+  bool          skipDuplicates;
+  QueryBuffer() : record(0), buffer(0), size(0), parent(0), flags(0),
+                  dupMatchHeader(0),
+                  isNull(false), resultUsed(false), skipDuplicates(false)   {};
+  ~QueryBuffer()  { if(size) delete[] buffer; };
 };
 
 class QueryResultHeader {

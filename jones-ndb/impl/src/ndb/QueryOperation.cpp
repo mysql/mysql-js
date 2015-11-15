@@ -77,7 +77,7 @@ int QueryOperation::prepareAndExecute() {
 bool QueryOperation::pushResultForTable(int level) {
   char * & temp_result = buffers[level].buffer;
   size_t & buf_size = buffers[level].size;
-  int lastCopy = buffers[level].lastCopy;
+  int lastCopy = buffers[level].dupMatchHeader;
   int parent = buffers[level].parent;
 
   if(level == 0)
@@ -150,7 +150,7 @@ bool QueryOperation::pushResultValue(int level) {
     results[n].tag = buffers[level].flags;
 
     /* Record that this result has been copied out */
-    buffers[level].lastCopy = nresults;
+    buffers[level].dupMatchHeader = nresults;
   }
   return ok;
 }
