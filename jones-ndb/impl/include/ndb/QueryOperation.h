@@ -36,15 +36,18 @@ public:
   char        * buffer;
   size_t        size;
   size_t        lastCopy;
+  size_t        parent;
   uint16_t      flags;
-  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0), flags(0) {};
+  bool          isNull;
+  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0),
+                  parent(0), flags(0), isNull(false)              {};
   ~QueryBuffer()                       { if(size) delete[] buffer; };
 };
 
 class QueryResultHeader {
 public:
   char        * data;
-  uint16_t      depth;
+  uint16_t      sector;
   uint16_t      tag;
 };
 
@@ -52,7 +55,7 @@ class QueryOperation {
 public:
   QueryOperation(int);
   ~QueryOperation();
-  void createRowBuffer(int level, Record *);
+  void createRowBuffer(int level, Record *, int parent);
   void levelIsJoinTable(int level);
   int prepareAndExecute();
   void setTransactionImpl(TransactionImpl *);
@@ -76,7 +79,6 @@ protected:
 
 private:
   int                           size;
-  int                           nullLevel;
   QueryBuffer * const           buffers;
   NdbQueryBuilder             * ndbQueryBuilder;
   const NdbQueryOperationDef  * operationTree;

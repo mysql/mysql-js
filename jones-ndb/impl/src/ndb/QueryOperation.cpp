@@ -52,10 +52,11 @@ QueryOperation::~QueryOperation() {
   free(results);
 }
 
-void QueryOperation::createRowBuffer(int level, Record *record) {
+void QueryOperation::createRowBuffer(int level, Record *record, int parent_table) {
   buffers[level].record = record;
   buffers[level].buffer = new char[record->getBufferSize()];
   buffers[level].size   = record->getBufferSize();
+  buffers[level].parent = parent_table;
 }
 
 void QueryOperation::levelIsJoinTable(int level) {
@@ -75,36 +76,41 @@ int QueryOperation::prepareAndExecute() {
 
 bool QueryOperation::pushResultForTable(int level) {
   char * & temp_result = buffers[level].buffer;
-  size_t & size = buffers[level].size;
+  size_t & buf_size = buffers[level].size;
   int lastCopy = buffers[level].lastCopy;
+  int parent = buffers[level].parent;
 
   if(level == 0)
   {
-    nullLevel = size;  // reset for new root result
+    for(int i = 0 ; i < this->size ; i++)
+      buffers[i].isNull = false;         // reset for new root result
   }
 
   if(ndbQuery->getQueryOperation(level)->isRowNULL())
   {
-    if(nullLevel < level)
+    buffers[level].isNull = true;
+    if(level > 0 && buffers[parent].isNull)
     {
+      DEBUG_PRINT("table %d SKIP -- parent is null", level);
       return true;   /* skip */
     }
-    nullLevel = level;
+    DEBUG_PRINT("table %d NULL", level);
     return pushResultNull(level);
   }
 
-  if(lastCopy > 0 && (! (memcmp(results[lastCopy-1].data, temp_result, size))))
+  if(lastCopy > 0 && (! (memcmp(results[lastCopy-1].data, temp_result, buf_size))))
   {
+    DEBUG_PRINT("table %d SKIP duplicate", level);
     return true;    /* skip */
   }
   else
   {
+    DEBUG_PRINT("table %d USE RESULT", level);
     return pushResultValue(level);
   }
 }
 
 bool QueryOperation::pushResultNull(int level) {
-  DEBUG_ENTER();
   bool ok = true;
   size_t n = nresults;
 
@@ -112,7 +118,7 @@ bool QueryOperation::pushResultNull(int level) {
     ok = growHeaderArray();
   }
   if(ok) {
-    results[n].depth = level;
+    results[n].sector = level;
     results[n].tag = 1 | buffers[level].flags;
     results[n].data = 0;
     nresults++;
@@ -121,7 +127,6 @@ bool QueryOperation::pushResultNull(int level) {
 }
 
 bool QueryOperation::pushResultValue(int level) {
-  DEBUG_ENTER();
   bool ok = true;
   size_t n = nresults;
   size_t & size = buffers[level].size;
@@ -141,7 +146,7 @@ bool QueryOperation::pushResultValue(int level) {
     memcpy(results[n].data, temp_result, size);
 
     /* Set the level and tag in the header */
-    results[n].depth = level;
+    results[n].sector = level;
     results[n].tag = buffers[level].flags;
 
     /* Record that this result has been copied out */

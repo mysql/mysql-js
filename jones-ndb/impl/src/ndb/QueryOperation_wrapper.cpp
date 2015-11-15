@@ -84,7 +84,7 @@ Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
 }
 
 
-void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
+void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec, int parentId) {
   DEBUG_ENTER();
   Isolate * isolate = Isolate::GetCurrent();
   Record * record = 0;
@@ -93,7 +93,7 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec) {
     record = unwrapPointer<Record *>(spec->Get(GET_KEY(K_rowRecord))->ToObject());
   }
   assert(record);
-  queryOp->createRowBuffer(level, record);
+  queryOp->createRowBuffer(level, record, parentId);
 
   if(spec->Get(GET_KEY(K_relatedField))->IsNull()) {
     queryOp->levelIsJoinTable(level);
@@ -226,7 +226,7 @@ void createQueryOperation(const Arguments & args) {
   Local<Object> spec = args[0]->ToObject();
   Local<Object> parentSpec;
 
-  setRowBuffers(queryOperation, spec);
+  setRowBuffers(queryOperation, spec, 0);
   current = createTopLevelQuery(queryOperation, spec, args[1]->ToObject());
 
   while(! (v = spec->Get(GET_KEY(K_next)))->IsUndefined()) {
@@ -236,7 +236,7 @@ void createQueryOperation(const Arguments & args) {
     parentId = parentSpec->Get(GET_KEY(K_serial))->Int32Value();
     current = createNextLevel(queryOperation, spec, all[parentId]);
     assert(current->getOpNo() == spec->Get(GET_KEY(K_serial))->Uint32Value());
-    setRowBuffers(queryOperation, spec);
+    setRowBuffers(queryOperation, spec, parentId);
   }
   queryOperation->prepare(all[0]);
   args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
@@ -302,12 +302,12 @@ void queryGetResult(const Arguments & args) {
     if(header->data) {
       wrapper->Set(GET_KEY(K_data),
         LOCAL_BUFFER(node::Buffer::New(isolate, header->data,
-                                       op->getResultRowSize(header->depth),
+                                       op->getResultRowSize(header->sector),
                                        doNotFreeQueryResultAtGC, 0)));
     } else {
       wrapper->Set(GET_KEY(K_data), Null(isolate));
     }
-    wrapper->Set(GET_KEY(K_level), v8::Uint32::New(isolate, header->depth));
+    wrapper->Set(GET_KEY(K_level), v8::Uint32::New(isolate, header->sector));
     wrapper->Set(GET_KEY(K_tag),   v8::Uint32::New(isolate, header->tag));
     args.GetReturnValue().Set(true);
   } else {
