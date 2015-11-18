@@ -39,7 +39,6 @@ using namespace v8;
 Eternal<String>    /* keys of NdbProjection */
   K_next,
   K_root,
-  K_hasScan,
   K_keyFields,
   K_joinTo,
   K_serial,
@@ -334,7 +333,6 @@ void QueryOperation_initOnLoad(Handle<Object> target) {
 
   SET_KEY(K_next, "next");
   SET_KEY(K_root, "root");
-  SET_KEY(K_hasScan, "hasScan");
   SET_KEY(K_keyFields, "keyFields");
   SET_KEY(K_joinTo, "joinTo");
   SET_KEY(K_serial, "serial");

@@ -757,6 +757,9 @@ function getQueryResults(op, userCallback) {
           setValueInRelatedTable(sectors[level].relatedField, null);
         }
       }
+      if(tag & 8) {
+        udebug.log_detail("Filtered - row is duplicate");
+      }
     }
 
     udebug.log("fetchAllResults returns", err, nresults);

@@ -35,23 +35,22 @@ public:
   /* Set at initialization time: */
   Record      * record;
   char        * buffer;
-  size_t        size;
-  size_t        parent;
-  uint16_t      flags;
+  size_t        size;          // size of buffer
+  size_t        parent;        // index of parent in all QueryBuffers
+  uint16_t      static_flags;
   /* Used in result construction: */
-  size_t        dupMatchHeader;
-  bool          isNull;
-  bool          resultUsed;
-  bool          skipDuplicates;
-  QueryBuffer() : record(0), buffer(0), size(0), parent(0), flags(0),
-                  dupMatchHeader(0),
-                  isNull(false), resultUsed(false), skipDuplicates(false)   {};
+  uint16_t      result_flags;
+  size_t        result;        // index of current result in all ResultHeaders
+  QueryBuffer() : record(0), buffer(0), size(0), parent(0),
+                  static_flags(0), result_flags(0), result(0)   {};
   ~QueryBuffer()  { if(size) delete[] buffer; };
 };
 
 class QueryResultHeader {
 public:
   char        * data;
+  size_t        parent;    // index of current ResultHeader for parent sector
+  size_t        previous;  // index of previous ResultHeader for this sector
   uint16_t      sector;
   uint16_t      tag;
 };
@@ -81,6 +80,11 @@ protected:
   bool pushResultValue(int);
   bool pushResultNull(int);
   bool pushResultForTable(int);
+  bool newResultForTable(int);
+  bool compareTwoResults(int, int, int);
+  bool compareFullRows(int, int, int);
+  bool isDuplicate(int);
+  bool compareRowToAllPrevious();
 
 private:
   int                           size;
