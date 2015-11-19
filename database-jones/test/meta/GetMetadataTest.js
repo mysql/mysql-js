@@ -83,32 +83,12 @@ var expectedMetadataFor_chartypes = {
   },
   "indexMap": 
     {
-      "PRIMARY_isOrdered_true"       : {
-        "name"        : "PRIMARY",
-        "isOrdered"    : true
-    },
-      "PRIMARY_isOrdered_false"       : {
-        "name"        : "PRIMARY",
-        "isOrdered"    : false
-    },
-      "idx_hash_char30_isOrdered_false"       : {
-        "name"        : "idx_hash_char30",
-        "isOrdered"    : false
-    },
-      "idx_both_char30_isOrdered_true"       : {
-        "name"        : "idx_both_char30",
-        "isOrdered"    : true
-    },
-      "idx_both_char30_isOrdered_false"       : {
-        "name"        : "idx_both_char30",
-        "isOrdered"    : false
-    },
-      "idx_btree_char30_isOrdered_true"       : {
-        "name"        : "idx_btree_char30",
-        "isOrdered"    : true
-  }
-  }
+      "pk"      : "id",
+      "unique"  : { "char30both" : 1, "char30hash" : 1, "id" : 1 },
+      "ordered" : { "char30both" : 1, "char30btree": 1, "id" : 1 }
+    }
 };
+
 
 var expectedMetadataFor_decimaltypes = {
   "name" : "decimaltypes",
