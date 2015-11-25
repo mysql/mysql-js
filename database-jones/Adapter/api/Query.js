@@ -815,27 +815,28 @@ QueryHandler.prototype.getKeys = function(parameterValues) {
   var predicate = this.predicate;
 
   function getValueForColumn(node, columnNumber, values) {
-    var i, name;
+    var i, value;
     if(node.equalColumnMask.bitIsSet(columnNumber)) {
       if(node.queryField && node.queryField.field.columnNumber == columnNumber) {
         udebug.log('QueryHandler.getKeys found column', node.queryField, 'parameter', node.parameter);
         if (isQueryParameter(node.parameter)) {
-          return values[node.parameter.name];
+          value = values[node.parameter.name];
         } else {
-          return getEscapedValue(node.parameter);
+          value = getEscapedValue(node.parameter);
         }
+        return value;
       }
       if(node.predicates) {
         for(i = 0 ; i < node.predicates.length ; i++) {
-          name = getValueForColumn(node, columnNumber, values);
-          if(name !== null) {return name;}
+          value = getValueForColumn(node, columnNumber, values);
+          if(value !== null) {return value;}
         }
       }
     }
     return null;
   }
 
-  var result = [], parameterLiteralOrName;
+  var result = [];
   indexColumns.forEach(function(columnNumber) {
     result.push(getValueForColumn(predicate, columnNumber, parameterValues));
   });
