@@ -21,6 +21,7 @@
 class EncoderCharset {
 public:
   const char * name;
+  const char * collationName;
   short minlen;
   short maxlen;
   bool isUtf16le;

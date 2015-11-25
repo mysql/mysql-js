@@ -65,6 +65,7 @@ EncoderCharset * createEncoderCharset(const NdbDictionary::Column *col) {
   EncoderCharset * csinfo = new EncoderCharset;
   
   csinfo->name = col->getCharset()->csname;
+  csinfo->collationName = col->getCharset()->name;
   csinfo->minlen = col->getCharset()->mbminlen;
   csinfo->maxlen = col->getCharset()->mbmaxlen;
   csinfo->isMultibyte = colIsMultibyte(col);

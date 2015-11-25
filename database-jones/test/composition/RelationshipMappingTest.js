@@ -25,7 +25,6 @@ var lib = require('./lib.js');
 var t1 = new harness.ConcurrentTest("RelationshipMappingTest");
 t1.run = function() {
   var testCase = this;
-  lib.mapShop();
   testCase.mappings = lib.shopDomainObjects;
   fail_openSession(testCase, function(session) {
     // get TableMetadata for all tables

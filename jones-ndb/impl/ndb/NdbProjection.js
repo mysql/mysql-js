@@ -55,26 +55,29 @@ function buildJoinTableResultRecord(dbTableHandler) {
   }
 }
 
-function NdbProjection(tableHandler, indexHandler, parent) {
-  this.root           = parent ? parent.root : this;    // root of chain
-  this.depth          = parent ? parent.depth + 1 : 0;
-  this.next           = null;                           // next in chain
+function NdbProjection(tableHandler, indexHandler, previous, parent) {
+  if(previous) {
+    this.root         = previous.root;
+    this.serial       = previous.serial + 1;
+    this.parent       = parent || previous;   // parent in tree structure
+    previous.next     = this;                 // next in linked list structure
+    this.root.size++;                         // number of in list
+  } else { 
+    this.root         = this;
+    this.serial       = 0;
+    this.size         = 1;
+  }
   this.error          = null;
   this.hasScan        = null;
   this.tableHandler   = tableHandler;
   this.rowRecord      = tableHandler.resultRecord;
   this.indexHandler   = indexHandler;
   this.keyRecord      = indexHandler.dbIndex.record;
-  this.isPrimaryKey   = indexHandler.dbIndex.isPrimaryKey || false;
+  this.isPrimaryKey   = indexHandler.dbIndex.isPrimaryKey;
   this.isUniqueKey    = indexHandler.dbIndex.isUnique;
-
-  if(parent) { parent.next = this; } 
 }
 
 
-// parentSectorIndex : index into sectors array of parent sector
-// childSectorIndexes:  array of ...
-// recommended: change relatedField to parentField
 function ndbRootProjection(sector, indexHandler) {
   var p;
 
@@ -89,7 +92,7 @@ function ndbRootProjection(sector, indexHandler) {
   return p;
 }
 
-function ndbProjectionToJoinTable(sector, parentProjection) {
+function ndbProjectionToJoinTable(sector, previousProjection, parentProjection) {
   var mock_keys, indexHandler, p;
   udebug.log("ToJoinTable:", sector);
 
@@ -98,7 +101,8 @@ function ndbProjectionToJoinTable(sector, parentProjection) {
 
   buildJoinTableResultRecord(sector.joinTableHandler);
 
-  p = new NdbProjection(sector.joinTableHandler, indexHandler, parentProjection);
+  p = new NdbProjection(sector.joinTableHandler, indexHandler,
+                        previousProjection, parentProjection);
   p.keyFields    = sector.parentFieldMapping.thisForeignKey.columnNames;
   p.joinTo       = sector.parentFieldMapping.thisForeignKey.targetColumnNames;
   p.relatedField = null;   // No result fields come from the join table
@@ -120,18 +124,23 @@ function ndbProjectionFromJoinTable(sector, parentProjection) {
   return p;
 }
 
-function createNdbProjection(sector, parentProjection) {
-  var indexHandler, p;
+function createNdbProjection(sectors, projections, id) {
+  var sector, previousProjection, parentProjection, indexHandler, p;
+
+  sector = sectors[id];
+  previousProjection = projections[id-1];
+  parentProjection = projections[sectors[id].parentSectorIndex];
+  assert(parentProjection);
 
   if(sector.joinTableHandler) {
-    p = ndbProjectionToJoinTable(sector, parentProjection);
+    p = ndbProjectionToJoinTable(sector, previousProjection, parentProjection);
     return ndbProjectionFromJoinTable(sector, p);
   }
 
   udebug.log(sector);
   indexHandler = sector.tableHandler.getIndexHandler(mockKeys(sector.thisJoinColumns));
-
-  p = new NdbProjection(sector.tableHandler, indexHandler, parentProjection);
+  p = new NdbProjection(sector.tableHandler, indexHandler,
+                        previousProjection, parentProjection);
   p.keyFields    = sector.thisJoinColumns;
   p.joinTo       = sector.otherJoinColumns;
   p.relatedField = sector.parentFieldMapping;
@@ -169,20 +178,21 @@ NdbProjection.prototype.rewriteAsScan = function(sector) {
 
 
 function initializeProjection(sectors, indexHandler) {
-  var projection, i;
-  projection = ndbRootProjection(sectors[0], indexHandler);
+  var projections, root, i;
+  projections = [];
+  projections[0] = root = ndbRootProjection(sectors[0], indexHandler);
+
   for (i = 1 ; i < sectors.length ; i++) {
-    projection = createNdbProjection(sectors[i], projection);
+    projections[i] = createNdbProjection(sectors, projections, i);
   }
 
-  if(projection.root.hasScan &&
-     (projection.root.isPrimaryKey || projection.root.isUniqueKey))
+  if(root.hasScan && (root.isPrimaryKey || root.isUniqueKey))
   {
     udebug.log("Rewriting to scan");
-    projection.root.rewriteAsScan(sectors[0]);
+    root.rewriteAsScan(sectors[0]);
   }
 
-  return projection;
+  return root;
 }
 
 exports.initialize = initializeProjection;

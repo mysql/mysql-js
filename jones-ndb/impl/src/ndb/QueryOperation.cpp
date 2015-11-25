@@ -29,20 +29,27 @@
 #include "QueryOperation.h"
 #include "TransactionImpl.h"
 
+enum {
+  flag_row_is_null          = 1,
+  flag_table_is_join_table  = 2,
+  flag_row_is_duplicate     = 8,
+};
+
 QueryOperation::QueryOperation(int sz) :
-  depth(sz),
+  size(sz),
   buffers(new QueryBuffer[sz]),
   operationTree(0),
   definedQuery(0),
   ndbQuery(0),
   transaction(0),
   results(0),
+  latest_error(0),
   nresults(0),
   nheaders(0),
   nextHeaderAllocationSize(1024)
 {
   ndbQueryBuilder = NdbQueryBuilder::create();
-  DEBUG_PRINT("Depth: %d", depth);
+  DEBUG_PRINT("Size: %d", size);
 }
 
 QueryOperation::~QueryOperation() {
@@ -51,15 +58,16 @@ QueryOperation::~QueryOperation() {
   free(results);
 }
 
-void QueryOperation::createRowBuffer(int level, Record *record) {
+void QueryOperation::createRowBuffer(int level, Record *record, int parent_table) {
   buffers[level].record = record;
   buffers[level].buffer = new char[record->getBufferSize()];
   buffers[level].size   = record->getBufferSize();
+  buffers[level].parent = parent_table;
 }
 
 void QueryOperation::levelIsJoinTable(int level) {
   DEBUG_PRINT("Level %d is join table", level);
-  buffers[level].flags |= 2;
+  buffers[level].static_flags |= flag_table_is_join_table;
 }
 
 void QueryOperation::prepare(const NdbQueryOperationDef * root) {
@@ -72,38 +80,122 @@ int QueryOperation::prepareAndExecute() {
   return transaction->prepareAndExecuteQuery(this);
 }
 
-bool QueryOperation::pushResultForTable(int level) {
-  char * & temp_result = buffers[level].buffer;
-  size_t & size = buffers[level].size;
-  int lastCopy = buffers[level].lastCopy;
 
-  if(level == 0)
+/* Check whether this row and its parent are duplicates,
+   assuming parent has already been tested and flagged.
+   An optimization here would be to scan only the key fields.
+*/
+bool QueryOperation::isDuplicate(int level) {
+  QueryBuffer & current = buffers[level];
+  QueryBuffer & parent  = buffers[current.parent];
+  char * & result       = current.buffer;
+  size_t & result_sz    = current.size;
+  int lastResult        = current.result;  // most recent result for this table
+
+  /* If the parent is a known duplicate, and the current value matches the
+     immediate previous value for this table, then it is a duplicate.
+  */
+  if((level == 0 || parent.result_flags & flag_row_is_duplicate) &&
+      nresults &&                   // this is not the first result for root
+      lastResult >= level &&       // and not the first result at this level
+     ! (memcmp(results[lastResult].data, result, result_sz)))
   {
-    nullLevel = depth;  // reset for new root result
+    current.result_flags |= flag_row_is_duplicate;
+    return true;
   }
 
+  return false;
+}
+
+/* takes sector number and two result header indexes
+   returns true if results are identical.
+*/
+bool QueryOperation::compareTwoResults(int level, int r1, int r2) {
+  if(r1 == r2) return true;
+//  DEBUG_PRINT_DETAIL("compareTwoResults for level %d: %d <=> %d", level, r2, r1);
+  assert(level == results[r1].sector);
+  assert(level == results[r2].sector);
+  return ! memcmp(results[r1].data, results[r2].data, buffers[level].size);
+}
+
+/* Takes number of leaf sector number and leaf result header indexes.
+   walks to root.  returns true if results are identical at all nodes.
+*/
+bool QueryOperation::compareFullRows(int level, int r1, int r2) {
+  bool didCompareRoot;
+  do {
+    if(! compareTwoResults(level, r1, r2)) return false;
+    didCompareRoot = (level == 0);
+    level = buffers[level].parent;
+    r1 = results[r1].parent;
+    r2 = results[r2].parent;
+  } while(! didCompareRoot);
+
+  return true;
+}
+
+/* Takes a leaf result header index and returns true if it matches any
+   previous row.
+*/
+bool QueryOperation::compareRowToAllPrevious() {
+  int r2 = nresults - 1;           // r2: the latest result
+  int r1 = results[r2].previous;   // r1: the earlier result
+  int level = results[r2].sector;  // sector
+//  DEBUG_PRINT_DETAIL("compareRowToAllPrevious %d %d %d", level, r2, r1);
+  while(r1 >= level) {
+    assert(r1 < r2);
+    if(compareFullRows(level, r1, r2)) {
+      return true;
+    }
+    r1 = results[r1].previous;
+  }
+  return false;
+}
+
+
+bool QueryOperation::pushResultForTable(int level) {
+  QueryBuffer & current = buffers[level];
+  QueryBuffer & parent = buffers[current.parent];
+
+  if(level == 0)                            // reset flags for new root result
+    for(int i = 0 ; i < this->size ; i++)
+      buffers[i].result_flags = buffers[i].static_flags;
+
+  /* Push NULL result, or skip if parent was also NULL */
   if(ndbQuery->getQueryOperation(level)->isRowNULL())
   {
-    if(nullLevel < level)
+    current.result_flags |= flag_row_is_null;
+    if(parent.result_flags & flag_row_is_null)
     {
+      DEBUG_PRINT("table %d SKIP -- parent is null", level);
       return true;   /* skip */
     }
-    nullLevel = level;
     return pushResultNull(level);
   }
 
-  if(lastCopy > 0 && (! (memcmp(results[lastCopy-1].data, temp_result, size))))
+  if(isDuplicate(level))
   {
-    return true;    /* skip */
+    DEBUG_PRINT("table %d SKIP DUPLICATE", level);
+    return true;  /* skip */
   }
-  else
-  {
-    return pushResultValue(level);
+
+  bool ok = pushResultValue(level);
+
+  /* Finally compare the entire row against all previous values,
+     unless it is the very first row.
+  */
+  if(ok && (int) nresults > size) {
+    if(compareRowToAllPrevious()) {
+      int r = nresults - 1;
+      DEBUG_PRINT("table %d PRUNE LAST RESULT", results[r].sector);
+      results[r].tag |= flag_row_is_duplicate;
+      free(results[r].data);
+    }
   }
+  return ok;
 }
 
-bool QueryOperation::pushResultNull(int level) {
-  DEBUG_ENTER();
+bool QueryOperation::newResultForTable(int level) {
   bool ok = true;
   size_t n = nresults;
 
@@ -111,26 +203,33 @@ bool QueryOperation::pushResultNull(int level) {
     ok = growHeaderArray();
   }
   if(ok) {
-    results[n].depth = level;
-    results[n].tag = 1 | buffers[level].flags;
-    results[n].data = 0;
     nresults++;
+    results[n].sector = level;
+    results[n].previous = buffers[level].result;  // index of previous result
+    buffers[level].result = n;                    // index of this result
+    results[n].parent = buffers[buffers[level].parent].result;  // current value
+    results[n].tag = buffers[level].result_flags;
+  }
+  return ok;
+}
+
+bool QueryOperation::pushResultNull(int level) {
+  size_t n = nresults;
+  bool ok = newResultForTable(level);
+  if(ok) {
+    DEBUG_PRINT("table %d NULL", level);
+    results[n].data = 0;
   }
   return ok;
 }
 
 bool QueryOperation::pushResultValue(int level) {
-  DEBUG_ENTER();
-  bool ok = true;
   size_t n = nresults;
   size_t & size = buffers[level].size;
   char * & temp_result = buffers[level].buffer;
-
-  if(n == nheaders) {
-    ok = growHeaderArray();
-  }
+  bool ok = newResultForTable(level);
   if(ok) {
-    nresults++;
+    DEBUG_PRINT("table %d USE RESULT", level);
 
     /* Allocate space for the new result */
     results[n].data = (char *) malloc(size);
@@ -138,18 +237,13 @@ bool QueryOperation::pushResultValue(int level) {
 
     /* Copy from the holding buffer to the new result */
     memcpy(results[n].data, temp_result, size);
-
-    /* Set the level and tag in the header */
-    results[n].depth = level;
-    results[n].tag = buffers[level].flags;
-
-    /* Record that this result has been copied out */
-    buffers[level].lastCopy = nresults;
   }
   return ok;
 }
 
 QueryResultHeader * QueryOperation::getResult(size_t id) {
+//  DEBUG_PRINT_DETAIL("R %d : TABLE %d TAG %d PARENT %d", id,
+//                     results[id].sector, results[id].tag, results[id].parent);
   return (id < nresults) ?  & results[id] : 0;
 }
 
@@ -174,7 +268,7 @@ int QueryOperation::fetchAllResults() {
       case NdbQuery::NextResult_gotRow:
         /* New results at every level */
         DEBUG_PRINT_DETAIL("NextResult_gotRow");
-        for(int level = 0 ; level < depth ; level++) {
+        for(int level = 0 ; level < size ; level++) {
           if(! pushResultForTable(level)) return -1;
         }
         break;
@@ -242,8 +336,8 @@ const NdbQueryOperationDef *
   }
 
   if(rval == 0) {
-    const NdbError & err = ndbQueryBuilder->getNdbError();
-    DEBUG_PRINT("defineOperation: Error %d %s", err.code, err.message);
+    latest_error = & ndbQueryBuilder->getNdbError();
+    DEBUG_PRINT("defineOperation: Error %d %s", latest_error->code, latest_error->message);
   }
   return rval;
 }
@@ -256,7 +350,7 @@ bool QueryOperation::createNdbQuery(NdbTransaction *tx) {
     return false;
   }
 
-  for(int i = 0 ; i < depth ; i++) {
+  for(int i = 0 ; i < size ; i++) {
     NdbQueryOperation * qop = ndbQuery->getQueryOperation(i);
     if(! qop) {
       DEBUG_PRINT("No Query Operation at index %d", i);

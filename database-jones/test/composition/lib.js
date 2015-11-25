@@ -388,6 +388,7 @@ function verifyProjection(tc, p, e, a) {
   verifyOneProjection();
 }
 
+mapShop();
 
 exports.Customer = Customer;
 exports.mapCustomer = mapCustomer;

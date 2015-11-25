@@ -726,6 +726,10 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
       obj->ForceSet(SYMBOL(isolate, "charsetName"),
                String::NewFromUtf8(isolate, csinfo->name),
                ReadOnly);
+
+      obj->ForceSet(SYMBOL(isolate, "collationName"),
+               String::NewFromUtf8(isolate, csinfo->collationName),
+               ReadOnly);
     }
   }
     

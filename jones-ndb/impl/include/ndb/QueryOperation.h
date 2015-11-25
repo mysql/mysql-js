@@ -32,19 +32,26 @@ class NdbQueryOperand;
 
 class QueryBuffer {
 public:
+  /* Set at initialization time: */
   Record      * record;
   char        * buffer;
-  size_t        size;
-  size_t        lastCopy;
-  uint16_t      flags;
-  QueryBuffer() : record(0), buffer(0), size(0) , lastCopy(0), flags(0) {};
-  ~QueryBuffer()                       { if(size) delete[] buffer; };
+  size_t        size;          // size of buffer
+  size_t        parent;        // index of parent in all QueryBuffers
+  uint16_t      static_flags;
+  /* Used in result construction: */
+  uint16_t      result_flags;
+  size_t        result;        // index of current result in all ResultHeaders
+  QueryBuffer() : record(0), buffer(0), size(0), parent(0),
+                  static_flags(0), result_flags(0), result(0)   {};
+  ~QueryBuffer()  { if(size) delete[] buffer; };
 };
 
 class QueryResultHeader {
 public:
   char        * data;
-  uint16_t      depth;
+  size_t        parent;    // index of current ResultHeader for parent sector
+  size_t        previous;  // index of previous ResultHeader for this sector
+  uint16_t      sector;
   uint16_t      tag;
 };
 
@@ -52,7 +59,7 @@ class QueryOperation {
 public:
   QueryOperation(int);
   ~QueryOperation();
-  void createRowBuffer(int level, Record *);
+  void createRowBuffer(int level, Record *, int parent);
   void levelIsJoinTable(int level);
   int prepareAndExecute();
   void setTransactionImpl(TransactionImpl *);
@@ -73,10 +80,14 @@ protected:
   bool pushResultValue(int);
   bool pushResultNull(int);
   bool pushResultForTable(int);
+  bool newResultForTable(int);
+  bool compareTwoResults(int, int, int);
+  bool compareFullRows(int, int, int);
+  bool isDuplicate(int);
+  bool compareRowToAllPrevious();
 
 private:
-  int                           depth;
-  int                           nullLevel;
+  int                           size;
   QueryBuffer * const           buffers;
   NdbQueryBuilder             * ndbQueryBuilder;
   const NdbQueryOperationDef  * operationTree;

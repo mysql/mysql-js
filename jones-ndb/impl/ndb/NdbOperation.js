@@ -720,43 +720,45 @@ function getQueryResults(op, userCallback) {
   }
 
   op.scanOp.fetchAllResults(function(err, nresults) {
-    var wrapper, level, current, resultObject, related;
+    var wrapper, level, current, parentLevel, resultObject;
     current = [];   // current values for each sector
     current[0] = null;
-    wrapper = {};
+    wrapper = {};  // the wrapper is reused in each call to getResult()
+
+    function setValueInRelatedTable(relatedField, resultValue) {
+      if(relatedField.toMany) {
+        if(current[parentLevel][relatedField.fieldName] === undefined) {
+          current[parentLevel][relatedField.fieldName] = [];
+        }
+        if(resultValue !== null) {
+          current[parentLevel][relatedField.fieldName].push(resultValue);
+        }
+      } else {  // toOne
+        current[parentLevel][relatedField.fieldName] = resultValue;
+      }
+    }
 
     function assemble() {
       current[level] = resultObject;
       if(level > 0) {
-        related = sectors[level].relatedField;
-        if(related.toMany && ! current[level-1][related.fieldName])
-        {
-          current[level-1][related.fieldName] = [];
-        }
-        if(related.toMany) {
-          current[level-1][related.fieldName].push(resultObject);
-        } else {
-          current[level-1][related.fieldName] = resultObject;
-        }
+        setValueInRelatedTable(sectors[level].relatedField, resultObject);
       }
     }
 
     function assembleSpecial(tag) {
+      udebug.log_detail("assembleSpecial table", level, "tag", tag);
       if(tag & 2) {   /* This row came from a many-to-many join table but
                          is not itself part of the user's result object.  */
-        current[level] = current[level - 1];  // will be parent sector index
+        current[level] = current[parentLevel];
       }
       if(tag & 1) {   /* Row is null */
         current[level] = null;
         if(level > 0) {
-          related = sectors[level].relatedField || sectors[level-1].relatedField;
-          if(related.toMany && ! current[level-1][related.fieldName]) {
-            current[level-1][related.fieldName] = [];
-          }
-          else {
-            current[level-1][related.fieldName] = null;
-          }
+          setValueInRelatedTable(sectors[level].relatedField, null);
         }
+      }
+      if(tag & 8) {
+        udebug.log_detail("Filtered - row is duplicate");
       }
     }
 
@@ -767,8 +769,12 @@ function getQueryResults(op, userCallback) {
     } else {
       for(i = 0 ; i < nresults ; i++) {
         op.scanOp.getResult(i, wrapper);
-        udebug.log("Wrapper",wrapper.level,wrapper.tag);
         level = wrapper.level;
+        if(level > 0) { parentLevel = sectors[level].parent.serial; }
+        if(udebug.is_detail) {
+          udebug.log("TABLE", level, sectors[level].tableHandler.dbTable.name,
+                     "PARENT TABLE", parentLevel);
+        }
         if(wrapper.tag) {
           assembleSpecial(wrapper.tag);
         } else {
@@ -915,8 +921,7 @@ function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
 
 
 function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection) {
-  var op, ndbProjection, depth;
-  op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
+  var op = new DBOperation(opcodes.OP_PROJ_READ, tx, indexHandler, null);
 
   /* Encode keys for operation */
   op.keys = Array.isArray(keys) ? keys : indexHandler.getColumns(keys);
@@ -928,17 +933,14 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
     storeNativeConstructorInMapping(sector.tableHandler);
   });
 
-  /* Create an NdbProjection, then use it to create a QueryOperation */
-  ndbProjection = NdbProjection.initialize(projection.sectors, indexHandler);
-  if(ndbProjection.root.error) {
-    /* TODO: Report this error back to the user rather than attempting
-       to execute the operation */
-    op.result.error = new DBOperationError(ndbProjection.root.error);
+  /* Create NdbProjections from sectors, then create a QueryOperation */
+  op.query = NdbProjection.initialize(projection.sectors, indexHandler);
+  if(op.query.error) {   /* TODO: Report this error back to the user
+                            rather than attempting to execute the operation */
+    op.result.error = new DBOperationError(op.query.error);
     op.result.success = false;
   } else {
-    op.query = ndbProjection.root;
-    depth = ndbProjection.depth + 1;
-    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, depth);
+    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, op.query.size);
   }
   return op;
 }
