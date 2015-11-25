@@ -119,6 +119,62 @@ QueryField.prototype.inspect = function() {
   return this.field.fieldName;
 };
 
+/** QueryProjectionDomainType represents a projection that can be used to create and execute queries.
+ * It encapsulates the Projection which contains references to the domain type, fields, and relationships.
+ * This object differs from QueryDomainType in that relationships are included in the fields of the object
+ * so that relationships can also be queried.
+ * @param session the user Session
+ * @param projection the Projection
+ */
+function QueryProjectionDomainType(session, projection) {
+  var dbTableHandler;
+  this.queryDomainType = null;
+  this.isQueryProjectionDomainType = true;
+  this.projection = projection;
+  if(udebug.is_detail()) {udebug.log_detail('QueryProjectionDomainType<ctor> for', projection.domainObject.name,
+      'projection', projection);}
+  // get the dbTableHandler for the list of query-able fields
+  dbTableHandler = projection.dbTableHandler;
+  // the projection also has query-able relationship fields
+  // avoid most name conflicts: put all implementation artifacts into the property jones_query_domain_type
+  this.jones_query_domain_type = {};
+  this.field = {};
+  this.prototype = {};
+  var jones = this.jones_query_domain_type;
+  jones.session = session;
+  jones.dbTableHandler = dbTableHandler;
+  jones.domainObject = true;
+  jones.queryType = 3; // default is table scan
+  var queryDomainType = this;
+  // initialize the functions (may be overridden below if a field has the name of a keyword)
+  queryDomainType.where = where;
+  queryDomainType.param = param;
+  queryDomainType.execute = execute;
+
+  var fieldName, queryField;
+  // add a property for each field in the table mapping
+  jones.dbTableHandler.getAllQueryFields().forEach(function(field) {
+    fieldName = field.fieldName;
+    queryField = new QueryField(queryDomainType, field);
+    if (keywords.indexOf(fieldName) === -1) {
+      // field name is not a keyword
+      queryDomainType[fieldName] = queryField;
+    } else {
+      if(udebug.is_detail()) {udebug.log_detail('QueryDomainType<ctor> field', fieldName, 'is a keyword.');}
+      // field name is a keyword
+      // allow e.g. qdt.where.id
+      if (fieldName !== 'field') {
+        // if field is a reserved word but not a function, skip setting the function
+        queryDomainType[fieldName] = queryDomainTypeFunctions[fieldName];
+        queryDomainType[fieldName].eq = QueryField.prototype.eq;
+        queryDomainType[fieldName].field = queryField.field;
+      }
+      // allow e.g. qdt.field.where
+      queryDomainType.field[fieldName] = queryField;
+    }
+  });
+}
+
 /** Query Domain Type represents a domain object that can be used to create and execute queries.
  * It encapsulates the dbTableHandler (obtained from the domain object or table name),
  * the session (required to execute the query), and the filter which limits the result.
@@ -166,6 +222,9 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
     }
   });
 };
+
+// give QueryProjectionDomainType the same behavior as QueryDomainType
+QueryProjectionDomainType.prototype = QueryDomainType.prototype;
 
 QueryDomainType.prototype.inspect = function() { 
   var jones = this.jones_query_domain_type;
@@ -743,25 +802,32 @@ var QueryHandler = function(dbTableHandler, predicate) {
   }
 };
 
-/** Get key values from candidate indexes and parameters 
+/** Get key values from candidate indexes and parameters.
+    The value is taken from either the query parameters by name
+    or the literal value in the QueryField.
     This is used in Primary Key & Unique Key queries.
     param parameterValues: the parameters object passed to query.execute()
     It returns an array, in key-column order, of the key values from the
-    parameter object.
+    parameter object or the QueryField literal.
 */
 QueryHandler.prototype.getKeys = function(parameterValues) {
   var indexColumns = this.dbIndexHandler.indexColumnNumbers;
   var predicate = this.predicate;
 
-  function getParameterNameForColumn(node, columnNumber) {
+  function getValueForColumn(node, columnNumber, values) {
     var i, name;
     if(node.equalColumnMask.bitIsSet(columnNumber)) {
       if(node.queryField && node.queryField.field.columnNumber == columnNumber) {
-        return node.parameter.name;
+        udebug.log('QueryHandler.getKeys found column', node.queryField, 'parameter', node.parameter);
+        if (isQueryParameter(node.parameter)) {
+          return values[node.parameter.name];
+        } else {
+          return getEscapedValue(node.parameter);
+        }
       }
       if(node.predicates) {
         for(i = 0 ; i < node.predicates.length ; i++) {
-          name = getParameterNameForColumn(node, columnNumber);
+          name = getValueForColumn(node, columnNumber, values);
           if(name !== null) {return name;}
         }
       }
@@ -769,13 +835,14 @@ QueryHandler.prototype.getKeys = function(parameterValues) {
     return null;
   }
 
-  var result = [];
+  var result = [], parameterLiteralOrName;
   indexColumns.forEach(function(columnNumber) {
-    result.push(parameterValues[getParameterNameForColumn(predicate, columnNumber)]);
+    result.push(getValueForColumn(predicate, columnNumber, parameterValues));
   });
   udebug.log_detail('getKeys parameters:', parameterValues, 'key:', result);
   return result;
 };
 
 exports.QueryDomainType = QueryDomainType;
+exports.QueryProjectionDomainType = QueryProjectionDomainType;
 exports.QueryHandler = QueryHandler;
