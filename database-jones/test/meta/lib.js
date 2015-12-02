@@ -45,12 +45,39 @@ var createMap = function createMap(inArray, selector, secondary) {
   return result;
 };
 
+/** For indexes, we do not rely on the index name, but construct a key 
+ *  that describes the column names of the index.
+ */
+function createIndexMap(indexes,columns) {
+  var result = { "ordered" : {}, "unique" : {} };
+  indexes.forEach(function(index) {
+    var indexKey = "";
+    index.columnNumbers.forEach(function(colNo, posInIdx) {
+      if(posInIdx > 0) {
+        indexKey += ".";
+      }
+      indexKey += columns[colNo].name;
+    });
+    if(index.isOrdered) {
+      result.ordered[indexKey] = 1;
+    }
+    if(index.isUnique) {
+      result.unique[indexKey] = 1;
+    }
+    if(index.isPrimaryKey) {
+      result.pk = indexKey;
+    }
+  });
+  return result;
+}
+
+
 metaLib.verifyMetadata = function verifyMetadata(testCase, expected, result) {
   var expectedFieldName, expectedMap, expectedKey, expectedValue, expectedElement, expectedElementName, resultValue, i, k;
   udebug.log('GetMetadataTest result: ', util.inspect(result));
   // convert result columns into hashmap
   result.columnMap = createMap(result.columns, 'name');
-  result.indexMap = createMap(result.indexes, 'name', 'isOrdered');
+  result.indexMap = createIndexMap(result.indexes, result.columns);
   result.foreignKeyMap = createMap(result.foreignKeys, 'name');
   // iterate the expected and make sure result matches
   for (expectedFieldName in expected) {
