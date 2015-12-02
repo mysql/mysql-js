@@ -71,7 +71,7 @@ test.run = function() {
   }).
     then(function()    { return session.close(); }).
     then(function()    { test.pass();    },
-         function(err) { test.fail(err.message || err); });
+         function(err) { test.fail(err); });
 };
 
 module.exports.tests = [test];

@@ -43,6 +43,7 @@ ColumnMetadata = {
   length           : 0    ,  //  CHAR or VARCHAR length in characters
   isBinary         : false,  //  true for BLOB/BINARY/VARBINARY
   charsetName      : ""   ,  //  name of charset
+  collationName    : ""   ,  //  name of collation
 };
 
 

@@ -19,8 +19,8 @@
 --  either the "ndb" or the "mysql" backend.  You can change this here to
 --  use InnDB tables.
 
-set storage_engine=ndbcluster;   # Use NDB
--- set storage_engine=innodb;    # Use InnoDB
+set default_storage_engine=ndbcluster;   # Use NDB
+-- set default_storage_engine=innodb;    # Use InnoDB
 
 use test;
 
