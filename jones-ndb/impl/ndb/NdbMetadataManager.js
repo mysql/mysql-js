@@ -73,7 +73,7 @@ NdbMetadataManager.prototype.execDDL = function(statement, callback) {
 NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
   assert(sqlPath);
   udebug.log("runSQL", sqlPath);
-  var statement = "set storage_engine=ndbcluster;\n";
+  var statement = "set default_storage_engine=ndbcluster;\n";
   statement += fs.readFileSync(sqlPath, "ASCII");
   this.execDDL(statement, callback);
 };

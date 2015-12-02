@@ -39,7 +39,7 @@ DBConnectionPool.prototype.connect = function(userCallback) {
   var self, errorNotImplemented;
   self = this;
   errorNotImplemented = new DBOperationError().fromSqlState("0A000");
-  this.getDbSession(function(err, dbSession) {
+  this.getDBSession(0, function(err, dbSession) {
     self.dictDbSession = dbSession;
     userCallback(errorNotImplemented);
   });
