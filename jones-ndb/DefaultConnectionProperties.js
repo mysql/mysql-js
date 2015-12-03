@@ -13,10 +13,10 @@ var NdbDefaultConnectionProperties = {
 
   /* This set of properties configures the use of a mysql server for 
      metadata operations (such as creating tables) */
-  "sql_user"            : "root",
-  "sql_password"        : "",
-  "sql_host"            : "localhost",
-  "sql_port"            : 3306,
+  "mysql_user"          : "root",
+  "mysql_password"      : "",
+  "mysql_host"          : "localhost",
+  "mysql_port"          : 3306,
 
   /* The next 3 properties control the behavior when opening a connection. */
   "ndb_connect_retries" : 4,         // if < 0, keep trying forever
