@@ -44,21 +44,29 @@ t1.run = function() {
 
 t2.run = function() {
   spi_lib.fail_openDBSession(t2, function(err, dbSession) {
-    dbSession.close(function() {
-      t2.pass();
-    });
+    if (err) {
+      t2.fail(err);
+    } else {
+      dbSession.close(function() {
+        t2.pass();
+      });
+    }
   });
 };
 
 
 t3.run = function() {
   spi_lib.fail_openDBSession(t3, function(err, dbSession) {
-    var dbConnPool = dbSession.getConnectionPool();
-    t3.addTestObject(dbConnPool);
-    t3.runDocsTest();
-    dbSession.close(function() {
-      t3.failOnError();
-    });
+    if (err) {
+      t3.fail(err);
+    } else {
+      var dbConnPool = dbSession.getConnectionPool();
+      t3.addTestObject(dbConnPool);
+      t3.runDocsTest();
+      dbSession.close(function() {
+        t3.failOnError();
+      });
+    }
    });
  };
 

@@ -68,20 +68,23 @@ function prepare(testCase, testObj) {
 
   function onSession(err, sess) {
     udebug.log("prepare onSession");
-    dbSession = sess; // set global
     if(err) {   testCase.fail(err);   }
     else    {   
-      dbSession.getConnectionPool().getTableMetadata("test", "tbl3", dbSession, onTable); 
+      dbSession = sess; // set global
+      dbSession.getConnectionPool().getTableMetadata("test", "tbl3", dbSession, onTable);
     }
   }
 
   function onConnect(err, conn) {
     udebug.log("prepare onConnect");
-    connection = conn;
-    if(dbSession) {
-      onSession(null, dbSession);
-    } else {
-      connection.getDBSession(spi_lib.allocateSessionSlot(), onSession);
+    if (err) {   testCase.fail(err);   }
+    else {
+      connection = conn;
+      if(dbSession) {
+        onSession(null, dbSession);
+      } else {
+        connection.getDBSession(spi_lib.allocateSessionSlot(), onSession);
+      }
     }
   }
   

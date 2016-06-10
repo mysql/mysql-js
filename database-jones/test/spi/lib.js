@@ -44,7 +44,11 @@ function getConnectionPool(userCallback) {
 
 function closeConnectionPool(callback) {
   if(spi_test_connection) {
-    spi_test_connection.close(callback);
+    spi_test_connection.close(function(err) {
+      spi_test_connection = null;
+      sessionSlot = 0;
+      callback(err);
+    });
   } else {
     callback("Not connected");
   }
@@ -60,7 +64,13 @@ function allocateSessionSlot() {
 function fail_openDBSession(testCase, callback) {
   getConnectionPool(function(error, dbConnectionPool) {
     if(dbConnectionPool && ! error) {
-      dbConnectionPool.getDBSession(allocateSessionSlot(), callback);
+      dbConnectionPool.getDBSession(allocateSessionSlot(), function(err, dbSession) {
+        if (err) {
+          testCase.fail(err);
+        } else {
+          callback(err, dbSession);
+        }
+      });
     } else {
       testCase.fail(error);
     }
