@@ -30,6 +30,7 @@ var path   = require("path"),
 var skipTests = false;
 var haveJsLint = false;
 var ignoredErrors = {};  // File-scope, for all tests
+var workingIgnoredErrors = {}; // working copy of ignored errors
 var lintModule, linter;
 
 var lintOptions = {
@@ -91,7 +92,7 @@ LintTest.prototype.fullName = function() {
 
 function LintSmokeTest() {
   this.phase = 0;
-  this.name = "LintSmokeTest";  
+  this.name = "LintSmokeTest";
 }
 
 LintSmokeTest.prototype = new Test.Test();
@@ -100,6 +101,18 @@ LintSmokeTest.prototype.run = function() {
   if(skipTests) {
     this.fail("linter is not available: " + jslintLoaderError);
   } else {
+    // there is one copy of workingIgnoredErrors for all lint tests
+    // so before each series of lint tests,
+    // deep copy ignoredErrors to workingIgnoredErrors
+    workingIgnoredErrors = {};
+    for (var propName in ignoredErrors) {
+      var fromProp = ignoredErrors[propName];
+      var toProp = [];
+      for (var i = 0; i < fromProp.length; ++i) {
+        toProp.push(fromProp[i]);
+      }
+      workingIgnoredErrors[propName] = toProp;
+    }
     this.pass();
   }
 };
@@ -107,7 +120,7 @@ LintSmokeTest.prototype.run = function() {
 function isIgnored(file, pos, msg) {
   var list;
   var ignoreAlways = "Expected \'{\' and instead saw";
-  list = ignoredErrors[file];
+  list = workingIgnoredErrors[file];
   if(list && list[0] && (list[0].pos === pos) && (msg.search(list[0].msg) > -1)) {
     list.shift();
     return true;
@@ -167,6 +180,7 @@ function ignore(file, pos, msg, count) {
   var list = ignoredErrors[file];
   if(! list) {
     list = []; ignoredErrors[file] = list;
+    workingIgnoredErrors[file] = list;
   }
   if(count === undefined) {
     list.push({ 'pos': pos, 'msg': msg});

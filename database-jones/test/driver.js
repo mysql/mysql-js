@@ -22,57 +22,74 @@
 
 var jones       = require("database-jones"),
     driver      = require(jones.fs.test_driver),
-    adapter     = "ndb",
+    index       = 0,
+    adapters    = ['ndb'],
+    adapter,
     extra,
     a_module,
     properties;
 
 
-driver.addCommandLineOption("-a", "--adapter", "only run on the named adapter",
+driver.addCommandLineOption("-a", "--adapter", "only run on the named comma-separated adapter/engine(s)",
   function(thisArg) {
-    var split;
     if(thisArg) {
-      split   = thisArg.split("/");
-      adapter = split[0];
-      extra   = split[1];
+      adapters   = thisArg.split(",");
       return 1;
     }
     return -1;  // adapter is required
   });
 
-driver.processCommandLineOptions();
+function runAllTests(exitStatus) {
+  if (exitStatus) {
+    process.exit(exitStatus);
+  }
+  if (index < adapters.length) {
+    console.log('driver run ' + index + ' using adapter ' + adapters[index]);
+  }
+  var adapterWithExtra = adapters[index++];
+  if (adapterWithExtra === undefined) {
+    // all adapters complete; exit
+    process.exit(0);
+  }
+  var split = adapterWithExtra.split('/');
+  adapter = split[0];
+  extra = split[1];
 
+  /* Reset driver.suites before each run */
+  driver.resetSuites();
 
-/* Add the standard Jones test suites */
-driver.addSuitesFromDirectory(jones.fs.suites_dir);
+  /* Start with the standard Jones test suites */
+  driver.addSuitesFromDirectory(jones.fs.suites_dir);
 
+  /* Add the test suite for the specified adapter, and
+   set the Connection Properties for the specified adapter.
+   */
+  a_module = require ("jones-" + adapter);
+  driver.addSuitesFromDirectory(a_module.config.suites_dir);
+  properties = driver.getConnectionProperties(adapter);
 
-/* Add the test suite for the specified adapter, and
-   set the Connection Properties for the specified adapter. */
-a_module = require ("jones-" + adapter);
-driver.addSuitesFromDirectory(a_module.config.suites_dir);
-properties = driver.getConnectionProperties(adapter);
+  /* Adapter-specific code goes here */
+  switch(adapter) {
+    case "ndb":           /* NDB also runs the MySQL Test suite */
+      a_module = require("jones-mysql");
+      driver.addSuitesFromDirectory(a_module.config.suites_dir);
+      break;
+    case "mysql":         /* MySQL uses the extra argument to set engine */
+      if(extra) { properties.mysql_storage_engine = extra; }
+      break;
+    default:
+      break;
+  }
 
+  /* Set globals */
+  global.mynode               = jones;
+  global.adapter              = adapter;
+  global.test_conn_properties = properties;
 
-/* Adapter-specific code goes here */
-switch(adapter) {
-  case "ndb":           /* NDB also runs the MySQL Test suite */
-    a_module = require("jones-mysql");
-    driver.addSuitesFromDirectory(a_module.config.suites_dir);
-    break;
-  case "mysql":         /* MySQL uses the extra argument to set engine */
-    if(extra) { properties.mysql_storage_engine = extra; }
-    break;
-  default:
-    break;
+  /* Run all tests for this adapter/extra and call back when done */
+  driver.runAllTests(runAllTests);
 }
 
-
-/* Set globals */
-global.mynode               = jones;
-global.adapter              = adapter;
-global.test_conn_properties = properties;
-
-
-/* Run all tests */
-driver.runAllTests();
+/* iterate over the adapters; each adapter has optional /extra */
+driver.processCommandLineOptions();
+runAllTests();

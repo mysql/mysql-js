@@ -62,6 +62,7 @@ Suite.prototype.addTest = function(filename, test) {
   udebug.log(this.name, "adding test", test.name);
   test.filename = path.resolve(this.path, filename);
   test.suite = this;
+  test.reset();
   this.tests.push(test);  // should check if test has been disabled
 };
 

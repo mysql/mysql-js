@@ -55,6 +55,8 @@ function Driver(baseDirectory) {
   this.setCommandLineFlags();
 }
 
+Driver.prototype.resetSuites = function() {this.suites = [];}
+
 Driver.prototype.addCommandLineOption = function(shortForm, longForm, helpText, callback) {
   this.flagHandler.addOption(new CommandLine.Option(shortForm, longForm, helpText, callback));
 };
@@ -176,14 +178,20 @@ Driver.prototype.closeResources = function(callback) {
 };
 
 Driver.prototype.reportResultsAndExit = function() {
+  var allTestsCallback = this.allTestsCallback;
   var exitStatus = this.result.report();
   this.onReportCallback();
   this.closeResources(function exit() {
-    process.exit(exitStatus);
+    if (allTestsCallback) {
+      allTestsCallback(exitStatus);
+    } else {
+      process.exit(exitStatus);
+    }
   });
 };
 
-Driver.prototype.runAllTests = function() {
+Driver.prototype.runAllTests = function(allTestsCallback) {
+  this.allTestsCallback = allTestsCallback;
   var i;
   var driver = this;
 

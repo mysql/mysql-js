@@ -248,6 +248,11 @@ Test.prototype.hasNoErrors = function() {
   return this.errorMessages.length === 0;
 };
 
+/* Reset this test so it can be called again (with a different adapter) */
+Test.prototype.reset = function() {
+  this.failed = null;
+  this.result = null;
+}
 
 /* Derived Classes */
 
