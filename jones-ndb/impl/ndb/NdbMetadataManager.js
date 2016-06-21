@@ -67,7 +67,7 @@ NdbMetadataManager.prototype.execDDL = function(statement, callback) {
       session.close();
       callback(err);
     });
-  });
+  }, function(err) { callback(err); });
 };
 
 NdbMetadataManager.prototype.runSQL = function(sqlPath, callback) {
