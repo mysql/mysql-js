@@ -61,6 +61,7 @@ function invalidateAll(toBeInvalidated) {
 
 Projection.prototype.addSparseFields = function() {
   this.fetchSparseFields = true;
+  return this;
 };
 
 Projection.prototype.addFields = function() {
