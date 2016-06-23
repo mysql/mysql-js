@@ -1625,6 +1625,7 @@ exports.UserContext.prototype.find = function() {
  */
 exports.UserContext.prototype.createQuery = function() {
   var userContext = this;
+  var p0 = userContext.user_arguments[0];
   var queryDomainType;
 
   function createQueryOnTableHandler(err, dbTableHandler) {
@@ -1638,8 +1639,26 @@ exports.UserContext.prototype.createQuery = function() {
     }
   }
 
+  function createQueryOnValidateProjection(err) {
+    udebug.log('UserContext.createQueryOnValidateProjection for projection', p0.name, 'returned error', err);
+    if (err) {
+      userContext.applyCallback(err, null);
+    } else {
+      queryDomainType = new query.QueryProjectionDomainType(userContext.session, p0);
+      userContext.applyCallback(null, queryDomainType);
+    }
+  }
+
   // createQuery starts here
-  // session.createQuery(constructorOrTableName, callback)
+  // session.createQuery(constructorOrProjectionOrTableName, callback)
+
+  // if the first parameter is a projection, resolve it
+  if (p0.constructor && p0.constructor.name === 'Projection' && p0.domainObject && p0.validated !== undefined) {
+    // we probably have a projection; validate it
+    udebug.log('UserContext.createQuery for projection', p0.name);
+    userContext.validateProjection(createQueryOnValidateProjection);
+    return userContext.promise;
+  }
   // if the first parameter is a query object then copy the interesting bits and create a new object
   if (this.user_arguments[0].jones_query_domain_type) {
     // TODO make sure this sessionFactory === other.sessionFactory
@@ -1683,6 +1702,19 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
       }
       userContext.applyCallback(null, resultList);      
     }
+  }
+
+  function executeQueryKeyProjectionOnResult(err, dbOperation) {
+    var result, resultList = [];
+    if(udebug.is_detail()) { udebug.log(
+        'UserContext.executeQuery.executeKeyProjectionQueryOnResult err:', err, 'dbOperation:', dbOperation); }
+    if (!err) {
+      result = dbOperation.result.value;
+      if (result) {
+        resultList = [result];
+      }
+    }
+    userContext.applyCallback(err, resultList);
   }
 
   // transform query result
@@ -1754,15 +1786,22 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
 //}    
   };    
 
-  // executeKeyQuery is used by both primary key and unique key
+  // executeKeyQuery is used by both primary key and unique key for projections and find operations
   var executeKeyQuery = function() {
     // create the find operation and execute it
     dbSession = userContext.session.dbSession;
     transactionHandler = dbSession.getTransactionHandler();
     var dbIndexHandler = queryDomainType.jones_query_domain_type.queryHandler.dbIndexHandler;
     var keys = queryDomainType.jones_query_domain_type.queryHandler.getKeys(userContext.user_arguments[0]);
-    userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys, transactionHandler,
-        executeQueryKeyOnResult);
+    if (queryDomainType.isQueryProjectionDomainType) {
+      if(udebug.is_detail()) { udebug.log('UserContext.executeQuery.executeQueryKeyProjection indexHandler:',
+          dbIndexHandler, 'keys:', keys); }
+      userContext.operation = dbSession.buildReadProjectionOperation(dbIndexHandler, keys,
+          queryDomainType.projection, transactionHandler, executeQueryKeyProjectionOnResult);
+    } else {
+      userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys,
+          transactionHandler, executeQueryKeyOnResult);
+    }
     // TODO: this currently does not support batching
     transactionHandler.execute([userContext.operation], function() {
       if(udebug.is_detail()) { udebug.log('executeQueryPK transactionHandler.execute callback.'); }
@@ -1778,10 +1817,10 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
   
   // executeQuery starts here
   // query.execute(parameters, callback)
-  udebug.log('QueryDomainType.execute', queryDomainType.jones_query_domain_type.predicate, 
-      'with parameters', userContext.user_arguments[0]);
-  // execute the query and call back user
   queryType = queryDomainType.jones_query_domain_type.queryType;
+  udebug.log('QueryDomainType.execute', queryDomainType.jones_query_domain_type.predicate, 
+      'with queryType', queryType, 'with parameters', userContext.user_arguments[0]);
+  // execute the query and call back user
   switch(queryType) {
   case 0: // primary key
     executeKeyQuery();

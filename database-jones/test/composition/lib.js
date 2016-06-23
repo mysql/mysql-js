@@ -100,7 +100,7 @@ function mapShipment() {
   shipmentMapping.mapField('value');
   shipmentMapping.mapManyToOne( {
     fieldName:  'customer',
-    foreignKey: 'fkcustomerid',
+    foreignKey: 'fkshipmentcustomerid',
     target:     Customer
   });
 
@@ -114,7 +114,7 @@ function mapShoppingCart() {
 
   shoppingCartMapping.mapOneToOne( { 
     fieldName:  'customer', 
-    foreignKey: 'fkcustomerid', 
+    foreignKey: 'fkshoppingcartcustomerid',
     target:     Customer
   } );
 
@@ -137,13 +137,13 @@ function mapLineItem() {
   
   lineItemMapping.mapManyToOne( {
     fieldName:  'shoppingCart',
-    foreignKey: 'fkshoppingcartid',
+    foreignKey: 'fklineitemshoppingcartid',
     target:     ShoppingCart
   });
 
   lineItemMapping.mapManyToOne( {
     fieldName:  'item',
-    foreignKey: 'fkitemid',
+    foreignKey: 'fklineitemitemid',
     target:     Item
   });
 

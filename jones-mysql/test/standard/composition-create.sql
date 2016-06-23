@@ -27,7 +27,7 @@ create table shoppingcart (
   id int not null,
   customerid int not null,
   created datetime not null default now(),
-  foreign key fkcustomerid(customerid) references customer(id),
+  constraint fkshoppingcartcustomerid foreign key (customerid) references customer(id),
   primary key(id)
 );
 
@@ -46,8 +46,8 @@ create table lineitem (
   quantity int not null,
   itemid int not null,
   primary key(shoppingcartid, line),
-  foreign key fkitemid(itemid) references item(id),
-  foreign key fkshoppingcartid(shoppingcartid) references shoppingcart(id)
+  constraint fklineitemitemid foreign key (itemid) references item(id),
+  constraint fklineitemshoppingcartid foreign key (shoppingcartid) references shoppingcart(id)
 );
 
 # Discount has a manyToMany relationship to Customer via table customerdiscount
@@ -62,8 +62,8 @@ create table discount(
 create table customerdiscount(
   customerid int not null,
   discountid int not null,
-  foreign key fkcustomerid(customerid) references customer(id),
-  foreign key fkdiscountid(discountid) references discount(id),
+  constraint fkcustomerdiscountcustomerid foreign key (customerid) references customer(id),
+  constraint fkcustomerdiscountdiscountid foreign key (discountid) references discount(id),
   primary key (customerid, discountid)
 );
 
@@ -71,7 +71,7 @@ create table customerdiscount(
 create table shipment(
   id int not null primary key,
   customerid int not null,
-  foreign key fkcustomerid(customerid) references customer(id),
+  constraint fkshipmentcustomerid foreign key (customerid) references customer(id),
   value decimal(30, 2)
 );
 
@@ -134,6 +134,6 @@ insert into customerdiscount(customerid, discountid) values(103, 3);
 
 create table testfk.fkdifferentdb (
   id int not null primary key,
-  foreign key fkcustomerid(id) references test.customer(id)
+  constraint fkdifferentdbcustomerid foreign key(id) references test.customer(id)
 );
 

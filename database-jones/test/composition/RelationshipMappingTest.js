@@ -33,13 +33,13 @@ t1.run = function() {
       return session.getTableMetadata('test', 'shoppingcart');}).
     then(function(shoppingCartMetadata){
       lib.verifyFK(testCase, shoppingCartMetadata, 
-        [{name:'fkcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['customerid'],targetColumnNames:['id']}
+        [{name:'fkshoppingcartcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['customerid'],targetColumnNames:['id']}
         ]);
       return session.getTableMetadata('test', 'lineitem');}).
     then(function(lineItemMetadata){
       lib.verifyFK(testCase, lineItemMetadata, 
-          [{name:'fkitemid',targetTable:'item',targetDatabase:'test', columnNames:['itemid'],targetColumnNames:['id']},
-          {name:'fkshoppingcartid',targetTable:'shoppingcart',targetDatabase:'test', columnNames:['shoppingcartid'],targetColumnNames:['id']}
+          [{name:'fklineitemitemid',targetTable:'item',targetDatabase:'test', columnNames:['itemid'],targetColumnNames:['id']},
+          {name:'fklineitemshoppingcartid',targetTable:'shoppingcart',targetDatabase:'test', columnNames:['shoppingcartid'],targetColumnNames:['id']}
           ]);
       return session.getTableMetadata('test', 'item');}).
     then(function(itemMetadata){
@@ -48,8 +48,8 @@ t1.run = function() {
       return session.getTableMetadata('test', 'customerdiscount');}).
     then(function(customerDiscountMetadata){
       lib.verifyFK(testCase, customerDiscountMetadata, 
-          [{name:'fkcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['customerid'],targetColumnNames:['id']},
-          {name:'fkdiscountid',targetTable:'discount',targetDatabase:'test', columnNames:['discountid'],targetColumnNames:['id']}
+          [{name:'fkcustomerdiscountcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['customerid'],targetColumnNames:['id']},
+          {name:'fkcustomerdiscountdiscountid',targetTable:'discount',targetDatabase:'test', columnNames:['discountid'],targetColumnNames:['id']}
           ]);
       return session.close();}).
     then(function() {testCase.failOnError();}, function(err) {testCase.fail(err);});
@@ -67,7 +67,7 @@ t2.run = function() {
     session.getTableMetadata('testfk', 'fkdifferentdb').
     then(function(t1Metadata){
       lib.verifyFK(testCase, t1Metadata,
-          [{name:'fkcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['id'],targetColumnNames:['id']}
+          [{name:'fkdifferentdbcustomerid',targetTable:'customer',targetDatabase:'test', columnNames:['id'],targetColumnNames:['id']}
           ]);
       return session.close();}).
     then(function() {testCase.failOnError();}, function(err) {testCase.fail(err);});
