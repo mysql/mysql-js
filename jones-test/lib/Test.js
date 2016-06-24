@@ -22,7 +22,9 @@
 
 var assert = require("assert"),
     path   = require("path"),
-    util   = require("util");
+    util   = require("util"),
+    udebug = require("unified_debug").getLogger("Test.js");
+
 
 function Test() {
   this.filename = "";
@@ -42,6 +44,7 @@ Test.prototype.test = function(result) {
   this.result = result;
   result.startTest(this);
 
+  udebug.log("Starting test", this.name);
   try {
     runReturnCode = this.run();
   }

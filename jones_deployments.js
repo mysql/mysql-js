@@ -12,6 +12,13 @@ deployments.test = function(properties) {
   }
 };
 
+/* This deployment uses an environment set up by mysql-test-run:
+     ./mtr --debug --start ndb.ndb_basic
+*/
+deployments.mtr = function(properties) {
+  properties.mysql_port = 13001;
+  properties.ndb_connectstring = "localhost:13000";
+};
 
 /* Example of a deployment function defining a production environment.
    This function would be invoked from the code:
