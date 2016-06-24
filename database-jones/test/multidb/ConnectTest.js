@@ -25,30 +25,6 @@ var mindb = 1;
 var maxdb = 8;
 var numberOfDBs = maxdb - mindb + 1;
 
-var tbl3 = function(i, j) {
-  this.i = i;
-  this.j = j;
-};
-new mynode.TableMapping('mysqljs_multidb_test3.tbl3').applyToClass(tbl3);
-
-var tbl4 = function(i, j) {
-  this.i = i;
-  this.j = j;
-};
-new mynode.TableMapping('mysqljs_multidb_test4.tbl4').applyToClass(tbl4);
-
-var tbl7 = function(i, j) {
-  this.i = i;
-  this.j = j;
-};
-new mynode.TableMapping('tbl7').applyToClass(tbl7);
-
-var tbl8 = function(i, j) {
-  this.i = i;
-  this.j = j;
-};
-new mynode.TableMapping('tbl8').applyToClass(tbl8);
-
 // badtbl8 is mapped to a table that only exists in database test8
 var badtbl8 = function(i, j) {
   this.i = i;
@@ -152,6 +128,11 @@ t2.run = function() {
 var t3 = new harness.ConcurrentTest('testOpenSessionExplicitConstructor');
 t3.run = function() {
   var testCase = this;
+  var tbl3 = function(i, j) {
+    this.i = i;
+    this.j = j;
+  };
+  new mynode.TableMapping('mysqljs_multidb_test3.tbl3').applyToClass(tbl3);
   mynode.openSession(propertiesList[3], tbl3, function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t3 error on openSession with mysqljs_multidb_test3.tbl3');
@@ -166,6 +147,11 @@ t3.run = function() {
 var t4 = new harness.ConcurrentTest('testConnectExplicitConstructor');
 t4.run = function() {
   var testCase = this;
+  var tbl4 = function(i, j) {
+    this.i = i;
+    this.j = j;
+  };
+  new mynode.TableMapping('mysqljs_multidb_test4.tbl4').applyToClass(tbl4);
   mynode.connect(propertiesList[4], tbl4, function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t4 error on connect with mysqljs_multidb_test4.tbl4 ' + err);
@@ -208,6 +194,11 @@ t6.run = function() {
 var t7 = new harness.ConcurrentTest('testOpenSessionImplicitConstructor');
 t7.run = function() {
   var testCase = this;
+  var tbl7 = function(i, j) {
+    this.i = i;
+    this.j = j;
+  };
+  new mynode.TableMapping('tbl7').applyToClass(tbl7);
   mynode.openSession(propertiesList[7], tbl7, function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t7 error on openSession with tbl7 with properties ' + 
@@ -223,6 +214,11 @@ t7.run = function() {
 var t8 = new harness.ConcurrentTest('testConnectImplicitConstructor');
 t8.run = function() {
   var testCase = this;
+  var tbl8 = function(i, j) {
+    this.i = i;
+    this.j = j;
+  };
+  new mynode.TableMapping('tbl8').applyToClass(tbl8);
   mynode.connect(propertiesList[8], tbl8, function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t8 error on connect with tbl8 ' + err);
