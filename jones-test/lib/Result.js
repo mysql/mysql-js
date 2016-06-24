@@ -25,13 +25,17 @@
 function Result(driver) {
   this.driver = driver;
   this.listener = null;
-  this.passed  = [];
+  this.reset();
+}
+
+Result.prototype.reset = function() {
+  this.passed = [];
   this.failed  = [];
   this.skipped = [];
   this.started = 0;
   this.ended   = 0;
   this.runningTests = {};
-}
+};
 
 Result.prototype.startTest = function(t) {
   this.started++;
