@@ -771,7 +771,6 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
       // notify all others that the connection is now ready (or an error was signaled)
       for (i = 0; i < connection.waitingForConnection.length; ++i) {
         if(udebug.is_detail()) { udebug.log('dbConnectionPoolCreated_callback notifying...'); }
-        udebug.log('dbConnectionPoolCreated', error, dbConnectionPool);
         connection.waitingForConnection[i](error, dbConnectionPool);
       }
     } else {
@@ -2384,6 +2383,7 @@ exports.UserContext.prototype.closeSession = function() {
  *
  */
 exports.UserContext.prototype.closeAllOpenSessionFactories = function() {
+  udebug.log('UserContext.closeAllOpenSessionFactories');
   var userContext, openFactories, nToClose;
 
   userContext   = this;

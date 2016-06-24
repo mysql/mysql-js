@@ -35,8 +35,9 @@ var stats_server_port = 15301;
 
 test.run = function() {
   var t = this;
+  var response;
 
-  function onResult(response) {
+  function onClose() {
     if(response.statusCode === 200) {
       t.pass();
     }
@@ -46,7 +47,12 @@ test.run = function() {
     /* To go an extra step here, use response.on('data') to validate the 
        response body */
   }
-  
+
+  function onResult(resp) {
+    response = resp;
+    stats_module.stopStatsServers(onClose);
+  }
+
   function statsQuery() {
     var requestParams = {
       host: 'localhost',

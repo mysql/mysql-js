@@ -114,6 +114,7 @@ exports.peek = function(query) {
 
 exports.startStatsServer = function(port, host, callback) {
   var key = host + ":" + port;
+  udebug.log_detail('startStatsServer', key);
   var server;
 
   function onStatsRequest(req, res) {
@@ -139,11 +140,22 @@ exports.startStatsServer = function(port, host, callback) {
 };
 
 
-exports.stopStatsServers = function() {
+exports.stopStatsServers = function(userCallback) {
+  var serverCount = 0;
+
+  function stopCallback() {
+    if (--serverCount == 0) {
+      running_servers = {};
+      userCallback();
+    }
+  }
+
   var key;
   for(key in running_servers) {
     if(running_servers.hasOwnProperty(key)) {
-      running_servers[key].close();
+      udebug.log_detail('stopStatsServers closing ', key);
+      serverCount++;
+      running_servers[key].close(stopCallback);
     }
   }
 };

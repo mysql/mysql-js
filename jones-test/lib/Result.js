@@ -36,6 +36,8 @@ Result.prototype.reset = function() {
   this.started = 0;
   this.ended   = 0;
   this.runningTests = {};
+  this.startTime = process.hrtime();
+  this.elapsed = 0;
 };
 
 Result.prototype.startTest = function(t) {
@@ -74,11 +76,14 @@ Result.prototype.skipNotStarted = function(t, reason) {
 };
 
 /* Returns exit status:
-   1 if any tests failed or timed out.
-   0 if no tests failed and no tests timed out.
+   1 if any tests failed
+   2 if any tests timed out
+   0 if no tests failed and no tests timed out
  */
 Result.prototype.report = function() {
+  var hrend = process.hrtime(this.startTime);
   console.log(this.driver.name);
+  console.info("Elapsed:  %d.%d sec.", hrend[0], (hrend[1]/1000000).toFixed(0));
   var nwait, tests, exitStatus;
   nwait = this.started - this.ended;
   if(nwait > 0) {
@@ -86,10 +91,12 @@ Result.prototype.report = function() {
     console.log("Still waiting for", nwait, tests);
     console.log(this.runningTests);
   }
-  if(this.failed.length == 0 && nwait == 0) {
-    exitStatus = 0;
+  if(nwait > 0) {
+    exitStatus = 2; // timed out
+  } else if(this.failed.length > 0) {
+    exitStatus = 1; // failed
   } else {
-    exitStatus = 1;
+    exitStatus = 0;    
   }
 
   this.listener.reportResult(this);

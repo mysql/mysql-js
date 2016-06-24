@@ -41,6 +41,7 @@ driver.addCommandLineOption("-a", "--adapter", "only run on the named comma-sepa
 
 function runAllTests(exitStatus) {
   if (exitStatus) {
+    console.log('Abnormal exit:', exitStatus);
     process.exit(exitStatus);
   }
   if (index < adapters.length) {
@@ -87,7 +88,7 @@ function runAllTests(exitStatus) {
   global.test_conn_properties = properties;
 
   /* Run all tests for this adapter/extra and call back when done */
-  driver.name = 'Adapter: ' + adapterWithExtra;
+  driver.name = 'Adapter:  ' + adapterWithExtra;
   driver.runAllTests(runAllTests);
 }
 
