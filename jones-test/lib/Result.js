@@ -29,6 +29,7 @@ function Result(driver) {
 }
 
 Result.prototype.reset = function() {
+  this.name = 'Result:';
   this.passed = [];
   this.failed  = [];
   this.skipped = [];
@@ -77,6 +78,7 @@ Result.prototype.skipNotStarted = function(t, reason) {
    0 if no tests failed and no tests timed out.
  */
 Result.prototype.report = function() {
+  console.log(this.driver.name);
   var nwait, tests, exitStatus;
   nwait = this.started - this.ended;
   if(nwait > 0) {
