@@ -164,6 +164,7 @@ Driver.prototype.testCompleted = function(testCase) {
     // this suite is done; remove it from the list of running suites
     if (--this.numberOfRunningSuites === 0) {
       // no more running suites; report and exit
+      clearTimeout(this.timerId);
       this.reportResultsAndExit();
     }
   } 
@@ -219,7 +220,7 @@ Driver.prototype.runAllTests = function(allTestsCallback) {
   }
 
   if(this.timeoutMillis > 0) {
-    setTimeout(onTimeout, this.timeoutMillis);
+    this.timerId = setTimeout(onTimeout, this.timeoutMillis);
   }
 
   /* Now start running tests */
