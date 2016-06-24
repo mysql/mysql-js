@@ -121,6 +121,7 @@ t2.run = function() {
 var close = new harness.SerialTest("CloseSession");
 close.run = function() {
   dbSession.close(function(err) {
+    dbSession = null;
     if (err) {
       close.fail("Close got error: " + err);
     } else {

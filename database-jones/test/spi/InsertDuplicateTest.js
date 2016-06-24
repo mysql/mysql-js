@@ -240,6 +240,7 @@ t7.checkResult = function(err, tx) {
  */
 close.run = function() {
   dbSession.close(function(err) {
+    dbSession = null;
     if (err) {
       close.fail("Close got error: " + err);
     } else {
