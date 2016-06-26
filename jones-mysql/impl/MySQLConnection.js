@@ -750,6 +750,76 @@ function initializeProjection(projection) {
   if (udebug.is_debug()) {udebug.log_detail('initializeProjection', select, from);}
 }
 
+/** Is the key of the sector in this row null? */
+function isRowSectorKeyNull(row, sector) {
+  var keyRowIndex;
+  var offset = sector.offset;
+  for (keyRowIndex = 0; keyRowIndex < sector.keyFields.length; ++keyRowIndex) {
+    if (row[offset + keyRowIndex] !== null) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** Is the key of the sector in this row equal to the key of the tuple? */
+function isRowSectorKeyEqual(row, sector, tuple) {
+  var keyRowIndex;
+  var offset = sector.offset;
+  var rowValue;
+  var tupleValue;
+  if (tuple) {
+    for (keyRowIndex = 0; keyRowIndex < sector.keyFields.length; ++keyRowIndex) {
+      rowValue = row[offset + keyRowIndex];
+      tupleValue = tuple[sector.keyFields[keyRowIndex].fieldName];
+      if (rowValue !== tupleValue) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+/** Find the tuple corresponding to this row in the parent field. For each candidate
+ * object in the parent field, compare keys in the row with key fields in the object.
+ * Return null if none of the parent field elements matches this row.
+ */
+function findResultTupleInParent(op, row, sector) {
+  var result = null;
+  var parent = op.sectors[sector.parentSectorIndex];
+  if (udebug.is_detail()) {udebug.log_detail('onResult.findResultTupleInParent parent', parent);}
+  var candidates = op.tuples[sector.parentSectorIndex][sector.parentFieldMapping.fieldName];
+  var i, candidate;
+  if (candidates) {
+    for (i = 0; i < candidates.length; ++i) {
+      candidate = candidates[i];
+      if (isRowSectorKeyEqual(row, sector, candidate)) {
+        result = candidate;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+/** Set to null the children of this sector recursively */
+function resetTuples(op, sectorIndex) {
+  op.sectors[sectorIndex].childSectorIndexes.forEach(
+    function(childSectorIndex) {
+      op.tuples[childSectorIndex] = null;
+      resetTuples(op, childSectorIndex);
+  });
+}
+
+/** Process this sector (recursively) [experimental] */
+function processSector(op, sector, row) {
+  // process this sector with data from the row
+  op.sectors[sector].childSectorIndexes.forEach(function(sectorIndex) {
+    processSector(op, sectorIndex, row);
+  });
+}
+
 
 /** Read projection executes sql with parameters and creates results according to the projection.
  * Each row returned from felix contains results for possibly many objects.
@@ -778,75 +848,6 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
   this.rows = 0;
   op_stats.read++;
 
-  /** Is the key of the sector in this row null? */
-  function isRowSectorKeyNull(row, sector) {
-    var keyRowIndex;
-    var offset = sector.offset;
-    for (keyRowIndex = 0; keyRowIndex < sector.keyFields.length; ++keyRowIndex) {
-      if (row[offset + keyRowIndex] !== null) {
-        return false;
-      }
-    }
-    return true;
-  }
-  
-  /** Is the key of the sector in this row equal to the key of the tuple? */
-  function isRowSectorKeyEqual(row, sector, tuple) {
-    var keyRowIndex;
-    var offset = sector.offset;
-    var rowValue;
-    var tupleValue;
-    if (tuple) {
-      for (keyRowIndex = 0; keyRowIndex < sector.keyFields.length; ++keyRowIndex) {
-        rowValue = row[offset + keyRowIndex];
-        tupleValue = tuple[sector.keyFields[keyRowIndex].fieldName];
-        if (rowValue !== tupleValue) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-  
-  /** Set to null the children of this sector recursively */
-  function resetTuples(sectorIndex) {
-    op.sectors[sectorIndex].childSectorIndexes.forEach(function(childSectorIndex) {
-      op.tuples[childSectorIndex] = null;
-      resetTuples(childSectorIndex);
-    });
-  }
-
-  /** Process this sector (recursively) [experimental] */
-  function processSector(sector, row) {
-    // process this sector with data from the row
-    op.sectors[sector].childSectorIndexes.forEach(function(sectorIndex) {
-      processSector(sectorIndex, row);
-    });
-  }
-
-  /** Find the tuple corresponding to this row in the parent field. For each candidate
-   * object in the parent field, compare keys in the row with key fields in the object.
-   * Return null if none of the parent field elements matches this row.
-   */
-  function findResultTupleInParent(row, sector) {
-    var result = null;
-    var parent = op.sectors[sector.parentSectorIndex];
-    if (udebug.is_detail()) {udebug.log_detail('onResult.findResultTupleInParent parent', parent);}
-    var candidates = op.tuples[sector.parentSectorIndex][sector.parentFieldMapping.fieldName];
-    var i, candidate;
-    if (candidates) {
-      for (i = 0; i < candidates.length; ++i) {
-        candidate = candidates[i];
-        if (isRowSectorKeyEqual(row, sector, candidate)) {
-          result = candidate;
-          break;
-        }
-      }
-    }
-    return result;
-  }
-
   function onResult(row) {
     var i;
     var sector;
@@ -857,7 +858,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     op.rows++;
     // process the row by sector, left to right
     if (udebug.is_detail()) {udebug.log_detail('onResult processing row with', op.sectors.length, 'sectors:\n', row);}
-    processSector(0, row); // experimental for now
+    processSector(op, 0, row); // experimental for now
     // do each sector in turn; the parent sector will always be processed before any of its children
     for (i = 0; i < op.sectors.length; ++i) {
       sector = op.sectors[i];
@@ -871,7 +872,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
               sector.offset, sector.keyFields, sector.nonKeyFields,
               sector.toManyRelationships, sector.toOneRelationships);
           // the child tuples belong to the previous tuple
-          resetTuples(0);
+          resetTuples(op, 0);
         }
         // we are done with this (root) sector
         continue;
@@ -891,7 +892,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
         }
         // reset the children of this tuple since they belong to the previous value
         op.tuples[i] = null;
-        resetTuples(i);
+        resetTuples(op, i);
         // and we are done with this sector
         continue;
       }
@@ -902,7 +903,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
       }
       // keys do not match the current object; see if it matches one of the parent objects
       if (sector.parentFieldMapping.toMany) {
-        tuple = findResultTupleInParent(row, sector);
+        tuple = findResultTupleInParent(op, row, sector);
       } else {
         tuple = op.tuples[parentSectorIndex][sector.parentFieldMapping.fieldName];
       }
@@ -926,7 +927,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
         }
       }
       op.tuples[i] = tuple;
-      resetTuples(i);
+      resetTuples(op, i);
     }
   }
 
