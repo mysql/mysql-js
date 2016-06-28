@@ -54,7 +54,7 @@ function runAllTests(exitStatus) {
   }
   var split = adapterWithExtra.split('/');
   adapter = split[0];
-  extra = split[1];
+  extra = split[1] || '';
 
   /* Reset driver.suites before each run */
   driver.resetSuites();
@@ -74,6 +74,8 @@ function runAllTests(exitStatus) {
     case "ndb":           /* NDB also runs the MySQL Test suite */
       a_module = require("jones-mysql");
       driver.addSuitesFromDirectory(a_module.config.suites_dir);
+      if (extra.includes('async')) { properties.use_ndb_async_api = true; }
+      if (extra.includes('nomap')) { properties.use_mapped_ndb_record = false; }
       break;
     case "mysql":         /* MySQL uses the extra argument to set engine */
       if(extra) { properties.mysql_storage_engine = extra; }
