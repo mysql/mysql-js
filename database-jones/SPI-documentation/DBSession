@@ -124,7 +124,7 @@
   
    RETURNS a DBOperation 
 */
-  buildScanOperation(queryHandler, properties, projection, transaction, callback);
+  buildScanProjectionOperation(queryHandler, properties, projection, transaction, callback);
 
 
 /* buildDeleteOperation(DBIndexHandler dbIndexHandler, 
