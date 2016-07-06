@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -212,6 +212,19 @@ t6.run = function() {
   var testCase = this;
   var session;
 
+  var t6lineItemProjection = new mynode.Projection(lib.LineItem)
+    .addField('line');
+  var t6shoppingCartProjection = new mynode.Projection(lib.ShoppingCart)
+    .addField('id')
+    .addRelationship('lineItems', t6lineItemProjection);
+  var t6customerProjection = new mynode.Projection(lib.Customer)
+    .addField('id', 'lastName', 'firstName')
+    .addRelationship('shoppingCart', t6shoppingCartProjection);
+
+  var t6discountProjection = new mynode.Projection(lib.Discount)
+    .addField('id', 'description', 'percent')
+    .addRelationship('customers', t6customerProjection);
+
   var expectedShoppingCart1003 = new lib.ShoppingCart(1003);
   expectedShoppingCart1003.lineItems = [];
   var expectedCustomer103 = new lib.Customer(103, 'Burn', 'Sexton');
@@ -224,7 +237,7 @@ t6.run = function() {
     session = s;
     // customer 103 has shopping cart 1003 which has no line items
     // customer 101 has no shopping cart
-    session.find(discountProjection, '3').
+    session.find(t6discountProjection, '3').
     then(function(actualDiscount) {
       lib.verifyProjection(testCase, discountProjection, expectedDiscount, actualDiscount);
       testCase.failOnError();}).

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ var util = require("util");
 function Customer(id, first, last) {
   if (id !== undefined) {
     this.id = id;
+    this.unikey = id;
     this.firstName = first;
     this.lastName = last;
   }
@@ -73,6 +74,7 @@ function mapCustomer() {
   // map customer
   var customerMapping = new mynode.TableMapping('customer');
   customerMapping.mapField('id');
+  customerMapping.mapField('unikey');
   customerMapping.mapField('firstName', 'firstname');
   customerMapping.mapField('lastName', 'lastname');
   customerMapping.mapOneToOne( {
@@ -298,7 +300,7 @@ function verifyProjection(tc, p, e, a) {
     function verifyProjectionField(fieldName) {
       expectedField = expected[fieldName];
       actualField = actual[fieldName];
-      if (expectedField != actualField) {
+      if (expectedField !== actualField) {
         testCase.appendErrorMessage('\n' + testCase.name +
             ' VerifyProjection failure for ' + domainObjectName + ' field ' + fieldName +
             '\nexpected: ' + expectedField + '\nactual: ' + actualField);

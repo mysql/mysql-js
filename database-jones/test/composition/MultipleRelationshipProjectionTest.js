@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ var udebug = unified_debug.getLogger("MultipleProjectionTest.js");
 var t1 = new harness.ConcurrentTest('t1 ProjectionTest');
 var t2 = new harness.ConcurrentTest('t2 ProjectionTestDefaultNull');
 var t3 = new harness.ConcurrentTest('t3 ProjectionTestDefaultEmptyArray');
+var t4 = new harness.ConcurrentTest('t4 UKProjectionTest');
+var t5 = new harness.ConcurrentTest('t5 UKProjectionTestDefaultNull');
 var t6 = new harness.ConcurrentTest('t6 ProjectionTestManyToMany');
 var t7 = new harness.ConcurrentTest('t7 ProjectionTestManyToManyOtherSide');
 var t9 = new harness.ConcurrentTest('t9 ProjectionTestMultipleRelationships');
@@ -158,7 +160,67 @@ t3.run = function() {
   });
 };
 
+/** UKProjectionTest uses unique key to find Customer
+ */
+t4.run = function() {
+	  var testCase = this;
+	  var session;
 
+	  var expectedCustomer = new lib.Customer(100, 'Craig', 'Walton');
+	  var expectedShoppingCart = new lib.ShoppingCart(1000);
+	  var expectedLineItem0 = lib.createLineItem(0, 1, 10000);
+	  var expectedLineItem1 = lib.createLineItem(1, 5, 10014);
+	  var expectedLineItem2 = lib.createLineItem(2, 2, 10011);
+	  var expectedLineItems = [expectedLineItem0,
+	                           expectedLineItem1,
+	                           expectedLineItem2
+	                         ];
+	  expectedLineItem0.item = expectedItem10000;
+	  expectedLineItem1.item = expectedItem10014;
+	  expectedLineItem2.item = expectedItem10011;
+	  expectedShoppingCart.lineItems = expectedLineItems;
+	  expectedCustomer.shoppingCart = expectedShoppingCart;
+	  expectedCustomer.discounts = [expectedDiscount0];
+	  expectedCustomer.shipments = [expectedShipment10000, expectedShipment10001];
+
+	  fail_openSession(testCase, function(s) {
+	    session = s;
+	    // find with projection for customer
+	    // Customer -> ShoppingCart -> LineItem -> Item
+	    session.find(complexCustomerProjection, {'unikey': '100'}).
+	    then(function(actualCustomer) {
+	      lib.verifyProjection(testCase, complexCustomerProjection, expectedCustomer, actualCustomer);
+	      testCase.failOnError();}).
+	    then(null, function(err) {
+	      testCase.fail(err);
+	    });
+	  });
+	};
+
+
+	/** Projection test default null mapping. Find uses UK to find customer.
+	 * Customer 101 has no shopping cart. */
+	t5.run = function() {
+	  var testCase = this;
+	  var session;
+
+	  var expectedCustomer = new lib.Customer(101, 'Sam', 'Burton');
+	  expectedCustomer.shoppingCart = null;
+	  expectedCustomer.shipments = [expectedShipment10100, expectedShipment10102];
+	  expectedCustomer.discounts = [expectedDiscount1, expectedDiscount3, expectedDiscount4];
+	  fail_openSession(testCase, function(s) {
+	    session = s;
+	    // find with projection with default null value for shoppingCart
+	    // Customer -> ShoppingCart -> LineItem -> Item
+	    session.find(complexCustomerProjection, {'unikey': '101'}).
+	    then(function(actualCustomer) {
+	      lib.verifyProjection(testCase, complexCustomerProjection, expectedCustomer, actualCustomer);
+	      testCase.failOnError();}).
+	    then(null, function(err) {
+	      testCase.fail(err);
+	    });
+	  });
+	};
 
 /** Projection test many to many with join table defined on "left side".
  * Shopping cart 1003 has no line items.
@@ -262,4 +324,4 @@ t9.run = function() {
 
 
 
-exports.tests = [t1, t2, t3, t6, t7, t9];
+exports.tests = [t1, t2, t3, t4, t5, t6, t7, t9];

@@ -15,27 +15,26 @@ drop table if exists discount;
 # Customer has a manyToMany relationship to Discount via table customerdiscount
 # Customer has a oneToZeroOrOne relationship to Shipment
 create table customer (
-  id int not null,
+  id int not null primary key,
+  unikey int not null unique default 0,
   firstname varchar(32),
   lastname varchar(32),
-  primary key(id)
+  index keylastnamefirstname (lastname, firstname)
 );
 
 # ShoppingCart has a oneToOne relationship to Customer
 # ShoppingCart has a oneToMany relationship to LineItem
 create table shoppingcart (
-  id int not null,
+  id int not null primary key,
   customerid int not null,
   created datetime not null default now(),
-  constraint fkshoppingcartcustomerid foreign key (customerid) references customer(id),
-  primary key(id)
+  constraint fkshoppingcartcustomerid foreign key (customerid) references customer(id)
 );
 
 # Item has a oneToMany relationship to LineItem
 create table item(
-  id int not null,
-  description varchar(99),
-  primary key(id)
+  id int not null primary key,
+  description varchar(99)
 );
 
 # LineItem has a manyToOne relationship to ShoppingCart
@@ -52,10 +51,10 @@ create table lineitem (
 
 # Discount has a manyToMany relationship to Customer via table customerdiscount
 create table discount(
-  id int not null,
+  id int not null primary key,
   description varchar(32) not null,
   percent int not null,
-  primary key(id)
+  index keypercent(percent)
 );
 
 # customerdiscount is a simple join table
@@ -75,10 +74,10 @@ create table shipment(
   value decimal(30, 2)
 );
 
-insert into customer(id, firstname, lastname) values (100, 'Craig', 'Walton');
-insert into customer(id, firstname, lastname) values (101, 'Sam', 'Burton');
-insert into customer(id, firstname, lastname) values (102, 'Wal', 'Greeton');
-insert into customer(id, firstname, lastname) values (103, 'Burn', 'Sexton');
+insert into customer(id, unikey, firstname, lastname) values (100, 100, 'Craig', 'Walton');
+insert into customer(id, unikey, firstname, lastname) values (101, 101, 'Sam', 'Burton');
+insert into customer(id, unikey, firstname, lastname) values (102, 102, 'Wal', 'Greeton');
+insert into customer(id, unikey, firstname, lastname) values (103, 103, 'Burn', 'Sexton');
 
 insert into shipment(id, customerid, value) values (10000, 100, 120.99);
 insert into shipment(id, customerid, value) values (10001, 100, 130);

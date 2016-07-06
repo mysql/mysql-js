@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -459,7 +459,9 @@ var getTableHandler = function(domainObjectTableNameOrConstructor, session, onTa
   };
     
   // start of getTableHandler 
-  var err, jones, tableHandler, tableMapping, tableHandlerFactory, tableIndicatorType, tableSpecification, databaseDotTable;
+  var err, jones;
+  var tableHandler, tableMapping, tableHandlerFactory, tableIndicatorType, tableSpecification;
+  var databaseDotTable;
 
   function tableIndicatorTypeString() {
     if(udebug.is_detail()) {
@@ -1299,7 +1301,8 @@ exports.UserContext.prototype.validateProjection = function(callback) {
               fieldMapping = dbTableHandler.getFieldMapping(fieldName);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
-                  errors += '\nBad projection for ' +  domainObjectName + ': field' + fieldName + ' must not be a relationship';
+                  errors += '\nBad projection for ' +  domainObjectName + ': field' + fieldName +
+                      ' must not be a relationship';
                 }
               } else {
                 // error: fields must be mapped
@@ -1347,7 +1350,8 @@ exports.UserContext.prototype.validateProjection = function(callback) {
 //                  }
                 } else {
                   // error: field is not a relationship
-                  errors += '\nBad relationship for ' +  domainObjectName + ': field ' + key + ' is not a relationship.';
+                  errors += '\nBad relationship for ' +  domainObjectName + ': field ' + key +
+                      ' is not a relationship.';
                 }
               } else {
                 // error: relationships must be mapped
@@ -1388,16 +1392,18 @@ exports.UserContext.prototype.validateProjection = function(callback) {
         errors += projection.error;
         // go on to the next projection
         continueValidation();
-      }
-      // do the next projection; see if the domain object already has its table handler
-      if (projections[index].domainObject.prototype.jones.dbTableHandler) {
-        udebug.log('continueValidation with cached tableHandler for', projections[index].domainObject.name);
-        validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.jones.dbTableHandler);
       } else {
-        // get the table handler the hard way (asynchronously)
-        udebug.log('continueValidation with no cached tableHandler for', projections[index].domainObject.name);
-        getTableHandler(projections[index].domainObject, session, validateProjectionOnTableHandler);
+        // do the next projection; see if the domain object already has its table handler
+        if (projections[index].domainObject.prototype.jones.dbTableHandler) {
+          udebug.log('continueValidation with cached tableHandler for', projections[index].domainObject.name);
+          validateProjectionOnTableHandler(null, projections[index].domainObject.prototype.jones.dbTableHandler);
+        } else {
+          // get the table handler the hard way (asynchronously)
+          udebug.log('continueValidation with no cached tableHandler for', projections[index].domainObject.name);
+          getTableHandler(projections[index].domainObject, session, validateProjectionOnTableHandler);
+        }
       }
+
     } else {
       // there are no more projections to validate -- did another user finish table handling first?
       if (!userContext.user_arguments[0].validated) {
@@ -1512,7 +1518,7 @@ exports.UserContext.prototype.findWithProjection = function() {
 
   function onValidatedProjection(err) {
     if (err) {
-      udebug.log('UserContext.onValidProjection err: ', err);
+      udebug.log('UserContext.onValidatedProjection err: ', err);
       userContext.applyCallback(err, null);
     } else {
       dbTableHandler = projection.dbTableHandler;
@@ -1687,7 +1693,7 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
   // transform query result
   function executeQueryKeyOnResult(err, dbOperation) {
     udebug.log('executeQuery.executeQueryPKOnResult');
-    var result, resultList;
+    var result, resultList = [];
     var error = checkOperation(err, dbOperation);
     if (error) {
       userContext.applyCallback(error, null);
@@ -1696,13 +1702,12 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
       if (result !== null) {
         // TODO: filter in memory if the adapter didn't filter all conditions
         resultList = [result];
-      } else {
-        resultList = [];
       }
       userContext.applyCallback(null, resultList);      
     }
   }
 
+  // TODO: may be able to combine this with executeQueryKeyOnResult after looking at filter in memory
   function executeQueryKeyProjectionOnResult(err, dbOperation) {
     var result, resultList = [];
     if(udebug.is_detail()) { udebug.log(
@@ -1710,6 +1715,7 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     if (!err) {
       result = dbOperation.result.value;
       if (result) {
+        // TODO: filter in memory if the adapter didn't filter all conditions
         resultList = [result];
       }
     }
@@ -1725,11 +1731,11 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     } else {
       if(udebug.is_detail()) { udebug.log('executeQuery.executeQueryScanOnResult', dbOperation.result.value); }
       // TODO: filter in memory if the adapter didn't filter all conditions
-      userContext.applyCallback(null, dbOperation.result.value);      
+      userContext.applyCallback(null, dbOperation.result.value);
     }
   }
 
-  // executeScanQuery is used by both index scan and table scan
+  // executeScanQuery is used by index scan and table scans for domain objects and projections
   var executeScanQuery = function() {
     // validate order, skip, and limit parameters
     var params = userContext.user_arguments[0];
@@ -1749,7 +1755,7 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
       } else {
         if (!order) {
           // skip is in range but order is not specified
-          error = new Error('Bad skip parameter \'' + skip + '\'; if skip is specified, then order must be specified.');
+          error = new Error('Bad skip parameter \'' + skip + '\'; if skip is specified, order must be specified.');
         }
       }
     }
@@ -1768,14 +1774,14 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     } else {
       dbSession = userContext.session.dbSession;
       transactionHandler = dbSession.getTransactionHandler();
+      // TODO: should this also collect other pending operations?
       userContext.operation = dbSession.buildScanOperation(
-          queryDomainType, userContext.user_arguments[0], transactionHandler,
-          executeQueryScanOnResult);
-      // TODO: this currently does not support batching
+          queryDomainType, userContext.user_arguments[0], transactionHandler, executeQueryScanOnResult);
       transactionHandler.execute([userContext.operation], function() {
-        if(udebug.is_detail()) { udebug.log('executeQueryPK transactionHandler.execute callback.'); }
+        if(udebug.is_detail()) { udebug.log('executeScanQuery transactionHandler.execute callback.'); }
       });
     }
+// TODO: this currently does not support batching
 //  if (userContext.execute) {
 //  transactionHandler.execute([userContext.operation], function() {
 //    if(udebug.is_detail()) udebug.log('find transactionHandler.execute callback.');
@@ -1801,10 +1807,10 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
       userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys,
           transactionHandler, executeQueryKeyOnResult);
     }
-    // TODO: this currently does not support batching
     transactionHandler.execute([userContext.operation], function() {
       if(udebug.is_detail()) { udebug.log('executeQueryPK transactionHandler.execute callback.'); }
     });
+// TODO: this currently does not support batching
 //    if (userContext.execute) {
 //      transactionHandler.execute([userContext.operation], function() {
 //        if(udebug.is_detail()) udebug.log('find transactionHandler.execute callback.');
@@ -2419,7 +2425,7 @@ exports.UserContext.prototype.closeAllOpenSessionFactories = function() {
 exports.UserContext.prototype.applyCallback = function(err, result) {
   if (arguments.length !== this.returned_parameter_count) {
     throw new Error(
-        'Fatal internal exception: wrong parameter count ' + arguments.length +' for UserContext applyCallback' + 
+        'Fatal internal exception: wrong parameter count ' + arguments.length +' for UserContext applyCallback' +
         '; expected ' + this.returned_parameter_count);
   }
   // notify (either fulfill or reject) the promise
