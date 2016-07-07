@@ -25,7 +25,6 @@ var jones       = require("database-jones"),
     index       = 0,
     adapters    = ['ndb'],
     adapter,
-    extra,
     a_module,
     properties;
 
@@ -40,19 +39,22 @@ driver.addCommandLineOption("-a", "--adapter", "only run on the named comma-sepa
   });
 
 function runAllTests(exitStatus) {
-  if (exitStatus) {
+  var adapterWithExtra, split;
+  var extra = '';
+
+   if (exitStatus) {
     console.log('Abnormal exit:', exitStatus);
     process.exit(exitStatus);
   }
   if (index < adapters.length) {
     console.log('driver run ' + index + ' using adapter ' + adapters[index]);
   }
-  var adapterWithExtra = adapters[index++];
+  adapterWithExtra = adapters[index++];
   if (adapterWithExtra === undefined) {
     // all adapters complete; exit
     process.exit(0);
   }
-  var split = adapterWithExtra.split('/');
+  split = adapterWithExtra.split('/');
   adapter = split[0];
   extra = split[1] || '';
 
