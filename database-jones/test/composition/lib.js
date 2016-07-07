@@ -300,7 +300,7 @@ function verifyProjection(tc, p, e, a) {
     function verifyProjectionField(fieldName) {
       expectedField = expected[fieldName];
       actualField = actual[fieldName];
-      if (expectedField !== actualField) {
+      if (expectedField != actualField) {
         testCase.appendErrorMessage('\n' + testCase.name +
             ' VerifyProjection failure for ' + domainObjectName + ' field ' + fieldName +
             '\nexpected: ' + expectedField + '\nactual: ' + actualField);
