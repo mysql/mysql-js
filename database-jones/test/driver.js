@@ -74,8 +74,8 @@ function runAllTests(exitStatus) {
     case "ndb":           /* NDB also runs the MySQL Test suite */
       a_module = require("jones-mysql");
       driver.addSuitesFromDirectory(a_module.config.suites_dir);
-      if (extra.includes('async')) { properties.use_ndb_async_api = true; }
-      if (extra.includes('nomap')) { properties.use_mapped_ndb_record = false; }
+      if (extra.indexOf('async') !== -1) { properties.use_ndb_async_api = true; }
+      if (extra.indexOf('nomap') !== -1) { properties.use_mapped_ndb_record = false; }
       break;
     case "mysql":         /* MySQL uses the extra argument to set engine */
       if(extra) { properties.mysql_storage_engine = extra; }
