@@ -2,13 +2,13 @@
 {
   "name"        : "unified_debug"
   ,
-  "version"     : "1.0.1"
+  "version"     : "1.1.0"
   ,  
   "description" : "Unified Trace Debugging for Native Code and JavaScript"
   ,
   "keywords"    : ["printf" , "debug" , "trace" , "dbug"]
   ,
-  "homepage"    : "http://github.com/jdduncan/unified_debug/"
+  "homepage"    : "http://github.com/mysql/mysql-js/"
   ,
   "bugs"        : { "url" : "http://github.com/jdduncan/unified_debug/issues"}
   ,
@@ -19,7 +19,7 @@
   "main"        : "unified_debug"
   ,
   "repository"  : {  "type" : "git",
-                     "url": "https://github.com/jdduncan/unified_debug.git"
+                     "url": "https://github.com/mysql/mysql-js.git"
                   }
 }
 

@@ -1,14 +1,14 @@
 
 {
-  "name"        : "jones-promise"
+  "name"        : "jones-promises"
   ,
-  "version"     : "1.0.2"
+  "version"     : "1.1.0"
   ,  
   "description" : "Promises Library"
   ,
   "keywords"    : ["promise" , "promises" , "promises/a+" ]
   ,
-  "homepage"    : "http://github.com/jdduncan/jones-promise/"
+  "homepage"    : "http://github.com/mysql/mysql-js/"
   ,
   "bugs"        : { "url" : "http://github.com/jdduncan/jones-promise/issues"}
   ,
@@ -20,15 +20,17 @@
   "main"        : "lib/Promise.js"
   ,
   "repository"  : {  "type" : "git",
-                     "url": "https://github.com/jdduncan/jones-promise.git"
+                     "url": "https://github.com/mysql/mysql-js.git"
                   }
   ,
   "readmeFilename": "README.md"
   ,
   "dependencies" : {  "unified_debug" : "",
-                      "jones-test" : "" ,
-                      "promises-aplus-tests" : ""
+                      "jones-test" : "" 
                    }
+  ,
+  "devDependencies" : { "promises-aplus-tests" : "" }
+
 }
 
 

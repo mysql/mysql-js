@@ -1,8 +1,8 @@
 
 {
-  "name"        : "Database-Jones"
+  "name"        : "database-jones"
   ,
-  "version"     : "1.0.0"
+  "version"     : "1.1.0"
   ,  
   "description" : "Lightweight database mapping"
   ,
@@ -21,6 +21,11 @@
   ,
   "repository"  : {  "type" : "git",
                      "url": "https://github.com/mysql/mysql-js.git"
+                  }
+  ,
+  "dependencies": {  "jones-test" : "*",
+                     "jones-promises" : "*",
+                     "unified_debug" : "*"
                   }
 }
 
