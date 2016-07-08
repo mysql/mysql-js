@@ -99,7 +99,7 @@ function mapCustomer() {
 function mapShipment() {
   var shipmentMapping = new mynode.TableMapping('shipment');
   shipmentMapping.mapField('id');
-  shipmentMapping.mapField('value');
+  shipmentMapping.mapField('value', mynode.converters.NumericConverter);
   shipmentMapping.mapManyToOne( {
     fieldName:  'customer',
     foreignKey: 'fkshipmentcustomerid',
@@ -300,7 +300,7 @@ function verifyProjection(tc, p, e, a) {
     function verifyProjectionField(fieldName) {
       expectedField = expected[fieldName];
       actualField = actual[fieldName];
-      if (expectedField != actualField) {
+      if (expectedField !== actualField) {
         testCase.appendErrorMessage('\n' + testCase.name +
             ' VerifyProjection failure for ' + domainObjectName + ' field ' + fieldName +
             '\nexpected: ' + expectedField + '\nactual: ' + actualField);
