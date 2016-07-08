@@ -16,6 +16,7 @@ deployments.test = function(properties) {
      ./mtr --debug --start ndb.ndb_basic
 */
 deployments.mtr = function(properties) {
+  properties.mysql_host = "127.0.0.1";
   properties.mysql_port = 13001;
   properties.ndb_connectstring = "localhost:13000";
 };
