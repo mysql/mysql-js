@@ -591,9 +591,9 @@ function buildValueObject(op, tableHandler, buffer, blobs) {
     value = new VOC(buffer, blobs);
 
     /* Allow DBT to apply converters if it has them */
-    for(i = 0 ; i < op.tableHandler.getNumberOfColumns(); i++) {
-      if(op.tableHandler.columnHasConverter(i)) {
-        op.tableHandler.set(value, i, adapter.impl.getValueObjectFieldByNumber(value, i));
+    for(i = 0 ; i < tableHandler.getNumberOfColumns(); i++) {
+      if(tableHandler.columnHasConverter(i)) {
+        tableHandler.set(value, i, adapter.impl.getValueObjectFieldByNumber(value, i));
       }
     }
 
