@@ -267,11 +267,12 @@ function mapShop() {
 
 var shopDomainObjects = [Customer, ShoppingCart, LineItem, Item, Discount, CustomerDiscount, Shipment];
 
-function createLineItem(line, quantity, itemid) {
+function createLineItem(line, quantity, itemid, item) {
   var result = new LineItem();
   result.line = line;
   result.quantity = quantity;
   result.itemid = itemid;
+  if (item) { result.item = item; }
   return result;
 }
 
@@ -412,3 +413,4 @@ exports.verifyProjection = verifyProjection;
 exports.shopDomainObjects = shopDomainObjects;
 exports.createLineItem = createLineItem;
 exports.Shipment = Shipment;
+exports.sortFunction = sortFunction;

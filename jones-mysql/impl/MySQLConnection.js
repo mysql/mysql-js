@@ -741,7 +741,7 @@ function initializeProjection(projection) {
   mysql.from = from;
   mysql.sectors = projection.sectors;
   if (order) {
-    mysql.order = 'ORDER BY ' + order;
+    mysql.order = ' ORDER BY ' + order;
   } else {
     mysql.order = '';
   }
@@ -833,8 +833,11 @@ function processSector(op, sector, row) {
  * [Processing the last tuple in the row will always create a new object.]
  * Once the last sector is processed, the function returns and the next row will be processed.
  * At the end of the last row, the callback is called, which will return the result.value to the user.
+ * This function is used for primary and unique key operations and index and table scan operations.
+ * If used for scans, multiple root objects can be returned. If used for read, zero or one object will be returned.
+ * Scans will set the isScan flag to true.
  */
-function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, keys, callback) {
+function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, keys, isScan, callback) {
   var op = this;
   this.selectSQL = projection.mysql.select + projection.mysql.from + where + projection.mysql.order;
   var query;
@@ -846,6 +849,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
   this.tuples = [];
   this.sectors = projection.mysql.sectors;
   this.rows = 0;
+  this.roots = [];
   op_stats.read++;
 
   function onResult(row) {
@@ -868,6 +872,10 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
         // root object handling; root will never be null
         if (!isRowSectorKeyEqual(row, sector, tuple)) {
           // create a new domain object from this row
+          if (op.tuples[0] !== undefined) {
+            // collect the current root object before creating a new root object
+            op.roots.push(op.tuples[0]);
+          }
           op.tuples[0] = sector.tableHandler.newResultObjectFromRow(row,
               sector.offset, sector.keyFields, sector.nonKeyFields,
               sector.toManyRelationships, sector.toOneRelationships);
@@ -942,6 +950,7 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     // done processing all the rows
     if (op.tuples.length !== 0) {
       // we had a result
+      op.roots.push(op.tuples[0]);
       op.result.value = op.tuples[0];
       op.result.success = true;
     } else if (!op.result.error) {
@@ -955,16 +964,21 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
       op.result.error.code = 1032;
       op.result.error.sqlstate = "02000";
     }
+    // if this was a scan, return the roots object instead of the single value
+    if (isScan) {
+      op.result.value = op.roots;
+    }
     if (typeof(op.callback) === 'function') {
     // call the UserContext callback
     op.callback(op.result.error, op);
     }
     // now call the transaction operation complete callback
     op.operationCompleteCallback(op);
+    udebug.log_detail('ReadProjectionOperation.onEnd rows processed:', op.rows);
   }
   
   this.execute = function(connection, operationCompleteCallback) {
-    udebug.log_detail('ReadProjectionOperation.execute with SQL:\n ', this.selectSQL, '\nkeys: ', this.keys);
+    udebug.log('ReadProjectionOperation.execute with SQL:\n ', op.selectSQL, '\nkeys: ', op.keys);
     op.operationCompleteCallback = operationCompleteCallback;
     // we have to format the query string ourselves because the variant of connection.query
     // with no callback does not allow formatting parameters
@@ -976,67 +990,6 @@ function ReadProjectionOperation(dbSession, dbTableHandler, projection, where, k
     query.
     on('end', onEnd).
     on('error', onError).
-    on('result', onResult);
-  };
-}
-
-/** Scan projection executes sql with parameters and creates results according to the projection.
- * Each row returned from felix contains results for possibly many objects. 
- * The results are kept in a tuple in which each object is contained in the object to its left.
- * When analyzing rows, starting with the leftmost object in the tuple, the key values in each tuple
- * are compared to the corresponding key values in the row. If the keys are the same, processing
- * continues with the next object in the tuple. If the keys are different, or no object exists,
- * a new object is created and processing continues with the next object in the tuple. 
- * Processing the last tuple in the row will always create a new object.
- * Once the last tuple is processed, the function returns and the next row will be processed.
- * At the end of the last row, the callback is called, which will return the result.value to the user.
- */
-function ScanProjectionOperation(dbSession, dbTableHandler, sql, parameters, projection, callback) {
-  udebug.log('dbSession.ScanOperation with sql\n', sql, '\nparameters', parameters);
-  var op = this;
-  var query;
-  this.type = 'scan';
-  this.sql = sql;
-  this.parameters = parameters;
-  this.callback = callback;
-  this.result = {};
-  this.err = null;
-  op_stats.incr( [ "created","scan" ]);
-
-  function onResult(row) {
-    // process the row by tuple, left to right
-//    console.log('ScanProjectionOperation.onResult', row);
-//    projectionHandler.onResult(op, row);
-  }
-  function onFields(fields) {
-    // we don't need this because we already know what to expect
-//    console.log('ScanProjectionOperation.onFields', fields);
-  }
-  function onError(e) {
-    // just remember the error
-    // the error will be returned at onEnd
-    op.result.error = e;
-  }
-  function onEnd() {
-    if (typeof(op.callback) === 'function') {
-    // call the UserContext callback
-    op.callback(op.result.error, op);
-    }
-    // now call the transaction operation complete callback
-    op.operationCompleteCallback(op);
-  }
-  
-  this.execute = function(connection, operationCompleteCallback) {
-    op.operationCompleteCallback = operationCompleteCallback;
-    var formattedSQL = connection.format(this.sql, this.keys);
-    query = connection.query(
-        {sql: formattedSQL, 
-          typeCast: driverTypeConverter
-        });
-    query.
-    on('end', onEnd).
-    on('error', onError).
-    on('fields', onFields).
     on('result', onResult);
   };
 }
@@ -1376,15 +1329,16 @@ exports.DBSession.prototype.buildReadProjectionOperation =
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   var whereSQL = dbTableHandler.mysql.whereSQL[dbIndexHandler.dbIndex.name];
-  return new ReadProjectionOperation(this, dbTableHandler, projection, whereSQL, keysArray, callback);
+  return new ReadProjectionOperation(this, dbTableHandler, projection, whereSQL, keysArray, false, callback);
 };
 
 /** maximum limit parameter is some large number */
 var MAX_LIMIT = Math.pow(2, 52);
 exports.DBSession.prototype.buildScanOperation = function(queryDomainType, parameterValues, transaction, callback) {
-  udebug.log_detail('dbSession.buildScanOperation with queryDomainType:', queryDomainType,
-      'parameterValues', parameterValues);
+	if (udebug.is_debug()) { udebug.log_detail('dbSession.buildScanOperation with queryDomainType:\n', queryDomainType,
+      '\nparameterValues:', parameterValues); }
   var dbTableHandler = queryDomainType.jones_query_domain_type.dbTableHandler;
+  var projection;
   var order = parameterValues.order;
   var skip = parameterValues.skip;
   var limit = parameterValues.limit;
@@ -1392,24 +1346,39 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   var err;
   var parameterName, value;
   getMetadata(dbTableHandler);
+  var scanSQL = '';
   var whereSQL = '';
-  var scanSQL = dbTableHandler.mysql.selectTableScanSQL;
   var sqlParameters = [];
+  // resolve parameters
+  var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
+  var formalParameters = sql.formalParameters;
+  udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
+  var i;
+  for (i = 0; i < formalParameters.length; ++i) {
+    parameterName = formalParameters[i].name;
+    value = parameterValues[parameterName];
+    sqlParameters.push(value);
+  }
+  // projection scans use SELECT and FROM from Projection and construct WHERE differently
+  if (queryDomainType.isQueryProjectionDomainType) {
+    projection = queryDomainType.projection;
+    if (queryDomainType.jones_query_domain_type.predicate !== undefined) {
+      // process the projection object if it has not been processed since it was last changed
+      if (!projection.mysql || (projection.mysql.id !== projection.id)) {
+        // we need to (re-)initialize the projection object for use with mysql adapter
+        initializeProjection(projection);
+      }
+    }
+    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL('t0.').sqlText;
+    return new ReadProjectionOperation(this, dbTableHandler, projection, whereSQL, sqlParameters, true, callback);
+  }
+  // non-projection scan
+  scanSQL = dbTableHandler.mysql.selectTableScanSQL;
   // add the WHERE clause to the sql if the user specified a predicate
   if (queryDomainType.jones_query_domain_type.predicate !== undefined) {
     whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
     scanSQL += whereSQL;
-    udebug.log_detail('dbSession.buildScanOperation sql', scanSQL, 'parameter values', parameterValues);
-    // resolve parameters
-    var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
-    var formalParameters = sql.formalParameters;
-    udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
-    var i;
-    for (i = 0; i < formalParameters.length; ++i) {
-      parameterName = formalParameters[i].name;
-      value = parameterValues[parameterName];
-      sqlParameters.push(value);
-    }
+    udebug.log_detail('dbSession.buildScanOperation sql:', scanSQL, '\nparameter values:', parameterValues);
     // handle order: must be an index scan and specify ignoreCase 'Asc' or 'Desc'
     if (order) {
       // validate this is an index scan

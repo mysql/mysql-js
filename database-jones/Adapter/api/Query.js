@@ -257,7 +257,8 @@ QueryParameter.prototype.inspect = function() {
 /******************************************************************************
  *                 SQL VISITOR
  *****************************************************************************/
-var SQLVisitor = function(rootPredicateNode) {
+var SQLVisitor = function(rootPredicateNode, alias) {
+	this.alias = alias || '';
   this.rootPredicateNode = rootPredicateNode;
   rootPredicateNode.sql = {};
   rootPredicateNode.sql.formalParameters = [];
@@ -282,7 +283,7 @@ function getEscapedValue(literal) {
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
-  var columnName = node.queryField.field.fieldName;
+  var columnName = this.alias + node.queryField.field.fieldName;
   var value = '?';
   if(node.constants) {
     // the parameter is a literal (String, number, or object with a toString method)
@@ -476,8 +477,8 @@ AbstractQueryPredicate.prototype.getTopLevelPredicates = function() {
   return [this];
 };
 
-AbstractQueryPredicate.prototype.getSQL = function() {
-  var visitor = new SQLVisitor(this);
+AbstractQueryPredicate.prototype.getSQL = function(alias) {
+  var visitor = new SQLVisitor(this, alias);
   this.visit(visitor);
   return this.sql;
 };
