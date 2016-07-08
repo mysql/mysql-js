@@ -113,7 +113,8 @@ function getDBServiceProvider(impl_name) {
 exports.getDBServiceProvider = getDBServiceProvider;
 
 exports.converters = {
-  "JSONConverter" : require(path.join(conf.converters_dir, "JSONConverter"))
+  "JSONConverter" : require(path.join(conf.converters_dir, "JSONConverter")),
+  "NumericConverter" : require(path.join(conf.converters_dir, "NumericConverter"))
 };
 
 
