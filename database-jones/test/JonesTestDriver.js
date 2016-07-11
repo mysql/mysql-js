@@ -87,6 +87,10 @@ driver.onReportCallback = function() {
   }
 };
 
+driver.onAllTestsCompleteCallback = function(callback) {
+  jones.closeAllOpenSessionFactories(callback);
+};
+
 /* 
 */
 driver.getConnectionProperties = function(adapter) {

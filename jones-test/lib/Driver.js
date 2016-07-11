@@ -174,9 +174,13 @@ Driver.prototype.onReportCallback = function() {
   return;
 };
 
+Driver.prototype.onAllTestsCompleteCallback = function(userCallback) {
+  userCallback();
+};
+
 Driver.prototype.closeResources = function(callback) {
   this.result.reset();
-  jones.closeAllOpenSessionFactories(callback);
+  this.onAllTestsCompleteCallback(callback);
 };
 
 Driver.prototype.reportResultsAndExit = function() {

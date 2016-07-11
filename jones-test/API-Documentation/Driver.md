@@ -57,6 +57,28 @@ function processCommandLineOptions();
 function runAllTests();
 ```
 
+### Driver callbacks
+```JavaScript
+/* The Driver provides several standard callbacks that can be overridden by
+   the user.
+
+   Set driver.onAllTestsCompleteCallback() to an async function that will
+   be called after all tests have run (but before results are reported).
+*/
+Driver.prototype.onAllTestsCompleteCallback = function(userCallback) {
+  userCallback();
+};
+
+/*  Set driver.onReportCallback to an immediate, synchronous function that
+    will be called after all tests are complete and results have been
+    reported.
+*/
+Driver.prototype.onReportCallback = function() {
+  return;
+};
+
+```
+
 ### Adding functional test
 ```JavaScript
 /* Create a test suite named *suitename* containing the test in *filename*.
