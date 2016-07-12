@@ -304,8 +304,8 @@ function verifyProjection(tc, p, e, a) {
       if (expectedField !== actualField) {
         testCase.appendErrorMessage('\n' + testCase.name +
             ' VerifyProjection failure for ' + domainObjectName + ' field ' + fieldName +
-            '\nexpected: (' + typeof(expectedField) + ') ' + expectedField +
-            '\nactual: (' + typeof(actualField) + ') ' + actualField);
+            '\nexpected: (' + typeof expectedField + ') ' + expectedField +
+            '\nactual: (' + typeof actualField + ') ' + actualField);
         }
     }
 
