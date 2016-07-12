@@ -304,8 +304,9 @@ function verifyProjection(tc, p, e, a) {
       if (expectedField !== actualField) {
         testCase.appendErrorMessage('\n' + testCase.name +
             ' VerifyProjection failure for ' + domainObjectName + ' field ' + fieldName +
-            '\nexpected: ' + expectedField + '\nactual: ' + actualField);
-      }
+            '\nexpected: (' + typeof(expectedField) + ') ' + expectedField +
+            '\nactual: (' + typeof(actualField) + ') ' + actualField);
+        }
     }
 
     function verifyProjectionRelationships(relationshipName) {
