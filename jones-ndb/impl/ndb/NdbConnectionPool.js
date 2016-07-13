@@ -152,8 +152,14 @@ function closeNdb(execQueue, ndb, callbackOnClose) {
 exports.closeNdbSession = function(ndbSession, userCallback) {
   var ndbPool = ndbSession.parentPool;
   var ndbConn = ndbPool.ndbConnection;
+  var ndbSessionImpl;
 
-  if(! ndbConn.isConnected) 
+  if(ndbSession.isOpenNdbSession === false)
+  {
+    /* The session is already closed */
+    userCallback();
+  }
+  else if(! ndbConn.isConnected)
   {
     /* The parent connection is already gone. */
     userCallback();
@@ -164,11 +170,14 @@ exports.closeNdbSession = function(ndbSession, userCallback) {
   {
     /* (A) The connection is going to close, or (B) The freelist is full. 
        Either way, enqueue a close call. */
-    closeDbSessionImpl(ndbConn.execQueue, ndbSession.impl, userCallback);    
+    ndbSessionImpl = ndbSession.impl;
+    ndbSession.impl = null;
+    closeDbSessionImpl(ndbConn.execQueue, ndbSessionImpl, userCallback);
   }
   else 
   { 
-    /* Do not actually close; just put the session on the freelist */
+    /* Mark the session as closed and put it on the freelist */
+    ndbSession.isOpenNdbSession = false;
     ndbPool.ndbSessionFreeList.push(ndbSession);
     userCallback();
   }
@@ -313,14 +322,16 @@ DBConnectionPool.prototype.close = function(userCallback) {
   }
   
   /* Close the NDB on open tables */
+  udebug.log(" - Closing", this.openTables.length, "per-table Ndb object(s)");
   while(table = this.openTables.pop()) {
     closeNdb(this.ndbConnection.execQueue, table.per_table_ndb , onNdbClose);
   }
 
   /* Close the SessionImpls from the session pool */
+  udebug.log(" - Closing", this.ndbSessionFreeList.length, "NdbSessionImpls from free list");
   while(session = this.ndbSessionFreeList.pop()) {
     closeDbSessionImpl(this.ndbConnection.execQueue, session.impl, onNdbClose);
-  }  
+  }
 };
 
 
@@ -332,12 +343,14 @@ DBConnectionPool.prototype.close = function(userCallback) {
 DBConnectionPool.prototype.getDBSession = function(index, user_callback) {
   var user_session = this.ndbSessionFreeList.pop();
   if(user_session) {
+    user_session.isOpenNdbSession = true;
     stats.ndb_session_pool.hits++;
     user_callback(null, user_session);
   }
   else {
     stats.ndb_session_pool.misses++;
     user_session = new ndbsession.DBSession(this);
+    user_session.isOpenNdbSession = true;
     user_session.fetchImpl(user_callback);
   }
 };

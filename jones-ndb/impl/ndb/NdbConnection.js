@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -21,11 +21,17 @@
 "use strict";
 
 var stats = {
-	"wait_until_ready_timeouts" : 0 ,
+  "wait_until_ready_timeouts" : 0 ,
   "node_ids"                  : [],
-  "connections"               : { "successful" : 0, "failed" : 0 },
-  "connect"                   : { "join" : 0, "connect" : 0, "queued" : 0 },
-	"simultaneous_disconnects"  : 0  // this should always be zero
+  "connections"               : { "successful" : 0,
+                                  "failed"     : 0,
+                                  "closed"     : 0
+                                },
+  "connect"                   : { "join"    : 0,
+                                  "connect" : 0,
+                                  "queued"  : 0
+                                },
+  "simultaneous_disconnects"  : 0  // this should always be zero
 };
 
 var conf             = require("./path_config"),
@@ -155,7 +161,8 @@ NdbConnection.prototype.close = function(userCallback) {
   var apiCall;
 
   function disconnect() {
-    if(self.asyncNdbContext) { 
+    stats.connections.closed++;
+    if(self.asyncNdbContext) {
       self.asyncNdbContext["delete"]();  // C++ Destructor
       self.asyncNdbContext = null;    
     }

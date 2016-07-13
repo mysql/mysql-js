@@ -40,6 +40,7 @@ public:
 
   /* Method */
   void run() {
+    DEBUG_PRINT_DETAIL("NativeDestructorCall: Async destructor %p", NativeVoidMethodCall<C>::native_obj);
     delete NativeVoidMethodCall<C>::native_obj;
   }
 };

@@ -63,7 +63,7 @@ require(jones.api.stats).register(stats, "spi","ndb","DBSession");
 /* DBSession Constructor. Undocumented - private to NdbConnectionPool.
 */
 NdbSession = function(pool) {
-  stats.created++;
+  this.serial                =  stats.created++;
   this.parentPool            = pool;
   this.impl                  = null;
   this.tx                    = null;
@@ -71,7 +71,7 @@ NdbSession = function(pool) {
   this.seizeTxQueue          = null;
   this.maxTxContexts         = pool.properties.ndb_session_concurrency;  
   this.openTxContexts        = 0;  // currently opened
-  this.isNdbSession          = true;
+  this.isOpenNdbSession      = false;
 };
 
 /* fetch SessionImpl. Undocumented - private to NdbConnectionPool. 
