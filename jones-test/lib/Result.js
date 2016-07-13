@@ -76,15 +76,17 @@ Result.prototype.skipNotStarted = function(t, reason) {
 };
 
 /* Returns exit status:
+   0 (success) if no tests failed or timed out
    1 if any tests failed
    2 if any tests timed out
-   0 if no tests failed and no tests timed out
+   3 if some test failed *and* some test timed out
  */
 Result.prototype.report = function() {
-  var hrend = process.hrtime(this.startTime);
+  var nwait, tests, exitStatus, hrend;
+  exitStatus = 0;
+  hrend = process.hrtime(this.startTime);
   console.log(this.driver.name);
   console.info("Elapsed:  %d.%d sec.", hrend[0], (hrend[1]/1000000).toFixed(0));
-  var nwait, tests, exitStatus;
   nwait = this.started - this.ended;
   if(nwait > 0) {
     tests = (nwait === 1 ? "test:" : "tests:");
@@ -93,10 +95,9 @@ Result.prototype.report = function() {
   }
   if(nwait > 0) {
     exitStatus = 2; // timed out
-  } else if(this.failed.length > 0) {
-    exitStatus = 1; // failed
-  } else {
-    exitStatus = 0;    
+  }
+  if(this.failed.length > 0) {
+    exitStatus += 1; // failed
   }
 
   this.listener.reportResult(this);

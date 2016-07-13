@@ -48,6 +48,7 @@ function Driver(baseDirectory) {
   this.abortAndExit          = false;   // --help option
   this.timeoutMillis         = 0;       // no timeout
   this.numberOfRunningSuites = 0;
+  this.exitStatus            = 0;
 
   if(! baseDirectory) {
     this.baseDirectory = path.dirname(module.parent.parent.filename);
@@ -165,7 +166,7 @@ Driver.prototype.testCompleted = function(testCase) {
     if (--this.numberOfRunningSuites === 0) {
       // no more running suites; report and exit
       clearTimeout(this.timerId);
-      this.reportResultsAndExit();
+      this.allTestsCompleted();
     }
   } 
 };
@@ -178,22 +179,23 @@ Driver.prototype.onAllTestsCompleteCallback = function(userCallback) {
   userCallback();
 };
 
-Driver.prototype.closeResources = function(callback) {
-  this.result.reset();
-  this.onAllTestsCompleteCallback(callback);
+Driver.prototype.allTestsCompleted = function() {
+  var driver = this;
+  driver.onAllTestsCompleteCallback(function() {
+    driver.reportResultsAndExit();
+  });
 };
 
 Driver.prototype.reportResultsAndExit = function() {
-  var allTestsCallback = this.allTestsCallback;
-  var exitStatus = this.result.report();
+  var driver = this;
+  driver.exitStatus |= driver.result.report();
   this.onReportCallback();
-  this.closeResources(function exit() {
-    if (allTestsCallback) {
-      allTestsCallback(exitStatus);
-    } else {
-      process.exit(exitStatus);
-    }
-  });
+  this.result.reset();
+  if (driver.allTestsCallback) {
+    driver.allTestsCallback(driver.exitStatus);
+  } else {
+    process.exit(driver.exitStatus);
+  }
 };
 
 Driver.prototype.runAllTests = function(allTestsCallback) {
