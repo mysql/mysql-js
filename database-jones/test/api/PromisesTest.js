@@ -27,12 +27,11 @@ var assert = require("assert");
 var good_properties = global.test_conn_properties;
 
 var bad_properties = {
+  // TCP port 17 is assigned to Quote of the Day & expected to reject connections
   "implementation"    : global.test_conn_properties.implementation,
-  "mysql_host"        : "localhost",
-  "mysql_port"        : "3306",
-  "mysql_user"        : "_BAD_USER_",
-  "mysql_password"    : "_NOT_A_REAL_PASSWORD!_", 
-  "ndb_connectstring" : "this_host_does_not_exist"
+  "mysql_host"        : "127.0.0.1",
+  "mysql_port"        : "17",
+  "ndb_connectstring" : "127.0.0.1:17"
 };
 
 var tests = [];
