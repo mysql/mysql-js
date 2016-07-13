@@ -42,6 +42,7 @@
  * udebug.log_debug(<message>)       // write message at DEBUG level
  * udebug.log_detail(<message>)      // write message at DETAIL level
  * udebug.set_file_level(level)      // override output level for this file
+ * udebug.is_debug()                 // returns TRUE if debug level is enabled
  *
  *
  * unified_debug.on()                // turn debugging on
