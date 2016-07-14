@@ -143,6 +143,8 @@ function build_prompt(candidates) {
 
 function finish() {
   console.log("");
+  // The -d in the following line configures a debug build
+  // It is strictly necessary only on Windows platforms
   console.log("Now run this command:\n\tnode-gyp configure build -d");
   process.exit(0);
 }
@@ -155,8 +157,12 @@ function testPath(mysqlPath) {
 
 function configure(mysql, layout) {
   if(mysql) {
+    var gyp = {};
     layout = "";  // fixme
-    var gyp = { "variables" : {"mysql_path":mysql, "mysql_layout":layout}};
+    gyp.variables = { "mysql_path" : mysql,
+                      "mysql_layout" : layout,
+                      "node_version" : process.versions.node
+                    };
     fs.writeFileSync("config.gypi", JSON.stringify(gyp) + "\n", "ascii");
     finish();
   }
