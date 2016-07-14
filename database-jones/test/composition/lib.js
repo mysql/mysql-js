@@ -394,6 +394,123 @@ function verifyProjection(tc, p, e, a) {
 
 mapShop();
 
+// Complex Customer projection
+var itemProjection = new mynode.Projection(Item)
+.addFields('id', 'description');
+//LineItem -> Item
+var lineItemProjection = new mynode.Projection(LineItem)
+.addFields('line', ['quantity', 'itemid'])
+.addRelationship('item', itemProjection);
+//ShoppingCart -> LineItem -> Item
+var shoppingCartProjection = new mynode.Projection(ShoppingCart)
+.addFields('id')
+.addRelationship('lineItems', lineItemProjection);
+//Discount
+var discountProjection = new mynode.Projection(Discount)
+.addField('id', 'description');
+//Shipment
+var shipmentProjection = new mynode.Projection(Shipment)
+.addField('id', 'value');
+//Customer -> ShoppingCart -> LineItem -> Item
+//        \-> Discount
+//        \-> Shipment
+var complexCustomerProjection = new mynode.Projection(Customer)
+.addFields('id', 'firstName', 'lastName')
+.addRelationship('shoppingCart', shoppingCartProjection)
+.addRelationship('discounts', discountProjection)
+.addRelationship('shipments', shipmentProjection);
+
+// Complex Discount projection
+var discountCustomerProjection = new mynode.Projection(Customer)
+.addField('id', 'firstName', 'lastName')
+.addRelationship('shoppingCart', shoppingCartProjection);
+
+var complexDiscountProjection = new mynode.Projection(Discount)
+.addField('id', 'description', 'percent')
+.addRelationship('customers',discountCustomerProjection);
+
+// Expected results from complex customer queries
+var expectedDiscount0 = new Discount(0, 'new customer', 10);
+var expectedDiscount1 = new Discount(1, 'good customer', 15);
+var expectedDiscount2 = new Discount(2, 'spring sale', 10);
+var expectedDiscount3 = new Discount(3, 'internet special', 20);
+var expectedDiscount4 = new Discount(4, 'closeout', 50);
+
+var expectedItem10000 = new Item(10000, 'toothpaste');
+var expectedItem10001 = new Item(10001, 'razor blade 10 pack');
+var expectedItem10002 = new Item(10002, 'deodorant');
+var expectedItem10003 = new Item(10003, 'hatchet');
+var expectedItem10004 = new Item(10004, 'weed-b-gon');
+var expectedItem10005 = new Item(10005, 'cola 24 pack');
+var expectedItem10006 = new Item(10006, 'diet cola 24 pack');
+var expectedItem10007 = new Item(10007, 'diet root beer 12 pack');
+var expectedItem10008 = new Item(10008, 'whole wheat bread');
+var expectedItem10009 = new Item(10009, 'raisin bran');
+var expectedItem10010 = new Item(10010, 'milk gallon');
+var expectedItem10011 = new Item(10011, 'half and half');
+var expectedItem10012 = new Item(10012, 'tongue depressor');
+var expectedItem10013 = new Item(10013, 'smelling salt');
+var expectedItem10014 = new Item(10014, 'holy bible');
+
+var expectedShoppingCart1000 = new ShoppingCart(1000, 100);
+expectedShoppingCart1000.lineItems = [
+  createLineItem(0, 1, 10000, expectedItem10000),
+  createLineItem(1, 5, 10014, expectedItem10014),
+  createLineItem(2, 2, 10011, expectedItem10011)
+  ];
+var expectedShoppingCart1002 = new ShoppingCart(1002, 102);
+expectedShoppingCart1002.lineItems = [
+	createLineItem(0, 10, 10008, expectedItem10008),
+	createLineItem(1, 4, 10010, expectedItem10010),
+	createLineItem(2, 40, 10002, expectedItem10002),
+	createLineItem(3, 100, 10011, expectedItem10011),
+	createLineItem(4, 1, 10013, expectedItem10013),
+	createLineItem(5, 8, 10005, expectedItem10005)
+	];
+var expectedShoppingCart1003 = new ShoppingCart(1003, 103);
+expectedShoppingCart1003.lineItems = [];
+
+var expectedShipment10000 = new Shipment(10000, undefined, 120.99);
+var expectedShipment10001 = new Shipment(10001, undefined, 130);
+var expectedShipment10100 = new Shipment(10100, undefined, 1320.87);
+var expectedShipment10102 = new Shipment(10102, undefined, 144.44);
+var expectedShipment10200 = new Shipment(10200, undefined, 45.87);
+var expectedShipment10201 = new Shipment(10201, undefined, 67.44);
+var expectedShipment10202 = new Shipment(10202, undefined, 80.89);
+var expectedShipment10203 = new Shipment(10203, undefined, 1045.87);
+
+// expected Customer using complex projection
+// Customer -> ShoppingCart -> LineItem -> Item
+//          \-> Discount
+//          \-> Shipment
+var expectedCustomer100 = new Customer(100, 'Craig', 'Walton');
+expectedCustomer100.shoppingCart = expectedShoppingCart1000;
+expectedCustomer100.shipments = [expectedShipment10000, expectedShipment10001];
+expectedCustomer100.discounts = [expectedDiscount0];
+
+var expectedCustomer101 = new Customer(101, 'Sam', 'Burton');
+expectedCustomer101.shoppingCart = null;
+expectedCustomer101.shipments = [expectedShipment10100, expectedShipment10102];
+expectedCustomer101.discounts = [expectedDiscount1, expectedDiscount3, expectedDiscount4];
+
+var expectedCustomer102 = new Customer(102, 'Wal', 'Greeton');
+expectedCustomer102.shoppingCart = expectedShoppingCart1002;
+expectedCustomer102.shipments = 
+	  [expectedShipment10200, expectedShipment10201, expectedShipment10202, expectedShipment10203];
+expectedCustomer102.discounts = [expectedDiscount2];
+
+var expectedCustomer103 = new Customer(103, 'Burn', 'Sexton');
+expectedCustomer103.shoppingCart = expectedShoppingCart1003;
+expectedCustomer103.shipments = [];
+expectedCustomer103.discounts = [expectedDiscount3];
+
+var expectedCustomers = 
+  {'100': expectedCustomer100,'101': expectedCustomer101,'102': expectedCustomer102,'103': expectedCustomer103};
+
+var expectedShipments =
+	{ '10000': expectedShipment10000, '10001': expectedShipment10001,
+    '10100': expectedShipment10100, '10102': expectedShipment10102,
+    '10200': expectedShipment10200, '10201': expectedShipment10201,'10202': expectedShipment10202, '10203': expectedShipment10203};
 exports.Customer = Customer;
 exports.mapCustomer = mapCustomer;
 exports.ShoppingCart = ShoppingCart;
@@ -415,3 +532,7 @@ exports.shopDomainObjects = shopDomainObjects;
 exports.createLineItem = createLineItem;
 exports.Shipment = Shipment;
 exports.sortFunction = sortFunction;
+exports.complexCustomerProjection = complexCustomerProjection;
+exports.complexDiscountProjection = complexDiscountProjection;
+exports.expectedCustomers = expectedCustomers;
+exports.expectedShipments = expectedShipments;
