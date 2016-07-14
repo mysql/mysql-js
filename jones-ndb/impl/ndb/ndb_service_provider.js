@@ -30,6 +30,7 @@ var TimeConverter = require(path.join(conf.converters_dir, "NdbTimeConverter"));
 var DateConverter = require(path.join(conf.converters_dir, "NdbDateConverter"));
 var propertiesDocFile = path.join(conf.root_dir, "DefaultConnectionProperties");
 var udebug  = unified_debug.getLogger("ndb_service_provider.js");
+var gypConfigFile = path.join(conf.root_dir, "config.gypi");
 
 
 /* Let unmet module dependencies be caught by loadRequiredModules() */
@@ -44,7 +45,7 @@ try {
 
 
 exports.loadRequiredModules = function() {
-  var err, ldp, msg;
+  var err, ldp, msg, jsonconfig, libpath;
   var existsSync = fs.existsSync || path.existsSync;
 
   /* Load the binary */
@@ -55,17 +56,26 @@ exports.loadRequiredModules = function() {
     msg = "\n\n" +
       "  The ndb adapter cannot load the compiled module ndb_adapter.node.\n";
     if(existsSync(conf.binary)) {
-      msg += 
+      msg +=
       "  This module has been built, but was not succesfully loaded.  Perhaps \n" +
       "  setting " + ldp + " to the mysql lib directory (containing \n" +
       "  libndbclient) will resolve the problem.\n\n";
+      if(existsSync(gypConfigFile)) {
+        try {
+          jsonconfig = fs.readFileSync(gypConfigFile, 'utf8');
+          jsonconfig = JSON.parse(jsonconfig);
+          libpath = path.join(jsonconfig.variables.mysql_path, "lib");
+          msg += "  e.g.:\n";
+          msg += "  export " + ldp + "=" + libpath + "\n\n";
+        }
+        catch(ignore) {}
+      }
     }
     else {
-      msg += 
-      "  For help building the module, run " + 
-      "\"setup/build.sh\" or \"npm install .\"\n\n";
+      msg +=
+      "  For help building jones-ndb, run \"node configure\" \n\n";
     }
-    msg += "Original error: " + e.message;
+    msg += "Original error: \n--------------- \n" + e.message;
     err = new Error(msg);
     err.cause = e;
     throw err;
