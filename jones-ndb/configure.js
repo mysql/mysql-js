@@ -24,6 +24,7 @@
 //    Write mysql pathname into config.gypi
 
 // TODO: Auto-detect mysql layout here, and write about it in config.gypi
+// TODO: Run in a non-interactive mode taking pathname on command line
 
 "use strict";
 
