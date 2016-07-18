@@ -19,12 +19,15 @@ Building Jones-NDB
 ------------------
 The C++ native code component of Jones-NDB must be built before it can be used
 by JavaScript.  This component shared library file object file is named
-ndb_adapter.node.  
+ndb_adapter.node.  Jones-NDB is built with node-gyp, the Node.JS build tool.
+You can download and install node-gyp via npm:
+  + `npm install -g node-gyp`
 
-You can build it by running the following commands from the top-level 
-"jones-ndb" directory:
+You can build the adapter by running the following commands.
+  + Change to the top-level "jones-ndb" directory:
+    + `cd path-to/jones/jones-ndb`
 
-+ The configure script is an interactive program that will prompt you to enter the path to an installed version of MySQL Cluster that includes NDB API header files and shared libraries.  It supports tab-completion for pathname entry. The product of the configure script is a config.gypi file for use by node-gyp, the Node.JS build tool.
++ The configure script is an interactive program that will prompt you to enter the path to an installed version of MySQL Cluster that includes NDB API header files and shared libraries.  It supports tab-completion for pathname entry. Choose the path that includes subdirectories: bin, docs, include, and lib. The product of the configure script is a config.gypi file for use by node-gyp.
     + `node configure`
 +  In the next step, node-gyp will create the build environment.
     + `node-gyp configure`
@@ -39,7 +42,7 @@ Running and Testing Jones-NDB
 The NDB adapter has a run-time dependency on the NDB API library, libndbclient. 
 On some platforms this dependency can only be satisfied when an environment
 variable points to the appropriate directory: LD_LIBRARY_PATH on most Unix
-derivatives, but DYLD_LIBRARY_PATH on Mac OS X.
+derivatives, but DYLD_LIBRARY_PATH on Mac OS X. This is the path that ends with: /lib.
 
 ### Configuring a simple MySQL Cluster
 
