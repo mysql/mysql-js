@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 "use strict";
 
-/** This is the smoke test for the freeform suite.
+/** This is the smoke test for the json suite.
  */
 
 var test = new harness.SmokeTest("SmokeTest");
@@ -28,13 +28,13 @@ test.run = function() {
   var t = this;
   sqlCreate(this.suite, function(error) {
     if (error) {
-      t.fail('createSQL failed: ' + error);
+      t.skip('createSQL failed: ' + error);
     } else {
       global.fail_openSession(t, function(session) {
         if (session) {
           t.pass();
         } else {
-          t.fail();
+          t.fail('json SmokeTest openSession failed.');
         }
       });
     }
