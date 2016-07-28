@@ -36,7 +36,11 @@ exports.toDB = function(jsValue) {
   var result;
   try {
     result = JSON.stringify(jsValue);
-  } catch(ignore) {}
+  } catch(ignore) {
+    // if any errors, leave undefined which does not send anything to the database
+  }
+  if (udebug.is_detail())
+    udebug.log_detail('JSONConverter toDB jsValue:', jsValue, 'result: (', typeof result, ')', result);
   return result;
 }
 
@@ -44,6 +48,10 @@ exports.fromDB = function(dbValue) {
   var result;
   try {
     result = JSON.parse(dbValue);
-  } catch(ignore) {}
+  } catch(ignore) {
+    // if any errors, pass through as undefined
+  }
+  if (udebug.is_detail())
+    udebug.log_detail('JSONConverter fromDB dbValue:', dbValue, 'result: (', typeof result, ')', result);
   return result;
 };
