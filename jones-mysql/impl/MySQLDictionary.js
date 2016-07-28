@@ -322,7 +322,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         case 'mediumint': column.intSize = 3; column.isIntegral = true; break;
         case 'int':       column.intSize = 4; column.isIntegral = true; break;
         case 'bigint':    column.intSize = 8; column.isIntegral = true; break;
-
+        case 'json':      break;
         case 'decimal' :
           column.precision = getPrecision(columnSize); 
           column.scale = getScale(columnSize); 
@@ -343,6 +343,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
           column.length = parseInt(columnSize, 10);
           column.isIntegral = true;
           break;
+        default: udebug.log('unknown column type', columnType, '\n', column);
         }
         
         // set the type converter for the column type

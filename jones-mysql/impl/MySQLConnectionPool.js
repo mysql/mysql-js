@@ -484,7 +484,7 @@ exports.DBConnectionPool.prototype.listTables = function(databaseName, dbSession
  * to the default database
  */
 exports.DBConnectionPool.prototype.createTable = function(tableMapping, session, user_callback) {
-  var engine = this.props.engine;
+  var engine = this.props.mysql_storage_engine;
   var connectionPool = this;
   var connection;
 

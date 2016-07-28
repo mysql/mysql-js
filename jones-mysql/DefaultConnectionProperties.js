@@ -4,8 +4,8 @@
 */ 
 
 var MysqlDefaultConnectionProperties = {
+  "mysql_storage_engine" : "ndb",
   "implementation" : "mysql",
-  "engine"         : "ndb",
   "database"       : "test",
   
   "mysql_host"     : "localhost",
