@@ -38,8 +38,11 @@ driver.addCommandLineOption("-e", "--engine", "use named mysql storage engine",
 driver.processCommandLineOptions();
 properties = driver.getConnectionProperties("mysql");
 
+// driver.name is used in summary of results (see jones-test/lib/Result.js)
+driver.name = 'mysql';
 if(storageEngine) {
    properties.mysql_storage_engine = storageEngine;
+   driver.name += '/' + storageEngine;
 }
 
 /* Set globals */

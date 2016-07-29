@@ -85,7 +85,7 @@ Result.prototype.report = function() {
   var nwait, tests, exitStatus, hrend;
   exitStatus = 0;
   hrend = process.hrtime(this.startTime);
-  console.log(this.driver.name);
+  console.info("Adapter:  " + this.driver.name);
   console.info("Elapsed:  %d.%d sec.", hrend[0], (hrend[1]/1000000).toFixed(0));
   nwait = this.started - this.ended;
   if(nwait > 0) {

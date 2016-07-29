@@ -29,6 +29,9 @@ var jones       = require("database-jones"),
 driver.processCommandLineOptions();
 properties = driver.getConnectionProperties("ndb");
 
+//driver.name is used in summary of results (see jones-test/lib/Result.js)
+driver.name = "ndb";
+
 // Setup globals:
 global.test_conn_properties = properties;
 global.mynode               = jones;
