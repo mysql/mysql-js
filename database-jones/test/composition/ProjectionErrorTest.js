@@ -47,6 +47,7 @@ var t8 = new harness.ConcurrentTest('t8 ProjectionManyToManyNoJoinTableSpecified
 var t9 = new harness.ConcurrentTest('t9 ProjectionManyToManyRelationshipFieldNotMapped');
 var t10 = new harness.ConcurrentTest('t10 ProjectionManyToManyRelationshipNoJoinTable');
 var t11 = new harness.ConcurrentTest('t11 ProjectionOneToOneRelationshipNoForeignKey');
+var t12 = new harness.ConcurrentTest('t12 ProjectionReuseProjection');
 
 t1.run = function() {
   var testCase = this;
@@ -353,5 +354,35 @@ t11.run = function() {
   });
 };
 
+t12.run = function() {
+  var testCase = this;
+  var session;
+  var expectedErrorMessage = 'in use by a different projection';
 
-exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11];
+  var badShoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
+  var badCustomerProjection1 = new mynode.Projection(lib.Customer);
+  var badCustomerProjection2 = new mynode.Projection(lib.Customer);
+  badCustomerProjection1.addRelationship('shoppingCart', badShoppingCartProjection);
+  badCustomerProjection2.addRelationship('shoppingCart', badShoppingCartProjection);
+
+  fail_openSession(testCase, function(s) {
+    session = s;
+    return session.find(badCustomerProjection1, '100').
+    then(function(actualCustomer) {
+      // should succeed, but not the second projection that uses the same shopping cart projection
+      return session.find(badCustomerProjection2, '101');
+    }).
+    then(function(actualCustomer) {
+      testCase.fail('t12 Unexpected success of find with error projection.' + util.inspect(actualCustomer));
+    }, function(err) {
+      if (err.message.indexOf(expectedErrorMessage) === -1) {
+        testCase.fail('t12 Wrong error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
+      } else {
+        testCase.pass();
+      }
+    });
+  });
+};
+
+
+exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12];

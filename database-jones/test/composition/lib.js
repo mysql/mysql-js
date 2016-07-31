@@ -421,9 +421,21 @@ var complexCustomerProjection = new mynode.Projection(Customer)
 .addRelationship('shipments', shipmentProjection);
 
 // Complex Discount projection
+var discountItemProjection = new mynode.Projection(Item)
+.addFields('id', 'description');
+//LineItem -> Item
+var discountLineItemProjection = new mynode.Projection(LineItem)
+.addFields('line', ['quantity', 'itemid'])
+.addRelationship('item', discountItemProjection);
+//ShoppingCart -> LineItem -> Item
+var discountShoppingCartProjection = new mynode.Projection(ShoppingCart)
+.addFields('id')
+.addRelationship('lineItems', discountLineItemProjection);
+//Customer -> ShoppingCart -> LineItem -> Item
 var discountCustomerProjection = new mynode.Projection(Customer)
 .addField('id', 'firstName', 'lastName')
-.addRelationship('shoppingCart', shoppingCartProjection);
+.addRelationship('shoppingCart', discountShoppingCartProjection);
+//Discount -> Customer -> ShoppingCart -> LineItem -> Item
 
 var complexDiscountProjection = new mynode.Projection(Discount)
 .addField('id', 'description', 'percent')

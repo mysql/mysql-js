@@ -1330,24 +1330,25 @@ exports.UserContext.prototype.validateProjection = function(callback) {
           // add relationship domain objects to the list of domain objects
           relationships = projection.relationships;
           if (relationships) {
-//            console.log('relationships for', projection.domainObject.prototype.constructor.name, relationships);
             Object.keys(relationships).forEach(function(key) {
               // each key is the name of a relationship that must be a field in the table handler
               fieldMapping = dbTableHandler.getFieldMapping(key);
               if (fieldMapping) {
                 if (fieldMapping.relationship) {
-//                  console.log('adding relationship for', key);
                   childProjection = relationships[key];
-                  childProjection.parentTableHandler = dbTableHandler;
-                  childProjection.parentFieldMapping = fieldMapping;
-                  childProjection.parentProjection = projection;
-                  // add each relationship to the current list of projections to be validated
-                  projections.push(childProjection);
-                  projection.childProjections.push(childProjection);
-                  // record the first projection that is nested in this projection
-//                  if (!projection.firstNestedProjection) {
-//                    projection.firstNestedProjection = childProjection;
-//                  }
+                  if (childProjection.parentProjection && childProjection.parentProjection !== projection) {
+                    // this child projection is already being used by a different projection
+                    errors += '\nBad relationship for ' +  domainObjectName + ': field ' + key +
+                        ' of type ' + childProjection.domainObject.name +
+                        ' is already in use by a different projection.';
+                  } else {
+                    childProjection.parentTableHandler = dbTableHandler;
+                    childProjection.parentFieldMapping = fieldMapping;
+                    childProjection.parentProjection = projection;
+                    // add each relationship to the current list of projections to be validated
+                    projections.push(childProjection);
+                    projection.childProjections.push(childProjection);
+                  }
                 } else {
                   // error: field is not a relationship
                   errors += '\nBad relationship for ' +  domainObjectName + ': field ' + key +
