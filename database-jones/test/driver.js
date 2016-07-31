@@ -92,7 +92,7 @@ function runAllTests(exitStatus) {
   global.test_conn_properties = properties;
 
   /* Run all tests for this adapter/extra and call back when done */
-  driver.name = 'Adapter:  ' + adapterWithExtra;
+  driver.name = adapterWithExtra;
   driver.runAllTests(runAllTests);
 }
 
