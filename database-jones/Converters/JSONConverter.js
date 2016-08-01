@@ -45,7 +45,7 @@ exports.toDB = function(jsValue) {
     udebug.log_detail('JSONConverter toDB jsValue:', jsValue, 'result: (', typeof result, ')', result);
   }
   return result;
-}
+};
 
 exports.fromDB = function(dbValue) {
   var result;
