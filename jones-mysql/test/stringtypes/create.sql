@@ -1,5 +1,6 @@
 use test;
-create table if not exists charset_test (
+drop table if exists charset_test;
+create table charset_test (
   id int not null PRIMARY KEY,
   str_fix_latin1 CHAR(20) character set latin1,
   str_var_latin1 VARCHAR(20) character set latin1,
@@ -15,7 +16,8 @@ create table if not exists charset_test (
   str_var_utf32 VARCHAR(20) character set utf32  
 );
 
-create table if not exists binary_test (
+drop table if exists binary_test;
+create table binary_test (
   id int not null PRIMARY KEY,
   bin_fix BINARY(20),
   bin_var VARBINARY(200),
@@ -23,13 +25,15 @@ create table if not exists binary_test (
   bin_lob BLOB
 );
 
-create table if not exists text_blob_test ( 
+drop table if exists text_blob_test;
+create table text_blob_test (
   id int not null primary key,
   blob_col BLOB,
   text_col TEXT character set utf8
 );
 
-create table if not exists text_charset_test (
+drop table if exists text_charset_test;
+create table text_charset_test (
   id int not null primary key,
   ascii_text TEXT character set ascii,
   latin1_text TEXT character set latin1,
