@@ -27,6 +27,8 @@
   No conversion is performed when writing to the database.
 ************************/
 
+"use strict";
+
 exports.toDB = function(jsValue) {
   return jsValue;
 };

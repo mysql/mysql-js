@@ -30,6 +30,8 @@
   
 ************************/
 
+"use strict";
+
 var udebug = unified_debug.getLogger("JSONConverter.js");
 
 exports.toDB = function(jsValue) {
@@ -39,8 +41,9 @@ exports.toDB = function(jsValue) {
   } catch(ignore) {
     // if any errors, leave undefined which does not send anything to the database
   }
-  if (udebug.is_detail())
+  if (udebug.is_detail()) {
     udebug.log_detail('JSONConverter toDB jsValue:', jsValue, 'result: (', typeof result, ')', result);
+  }
   return result;
 }
 
@@ -51,7 +54,8 @@ exports.fromDB = function(dbValue) {
   } catch(ignore) {
     // if any errors, pass through as undefined
   }
-  if (udebug.is_detail())
+  if (udebug.is_detail()) {
     udebug.log_detail('JSONConverter fromDB dbValue:', dbValue, 'result: (', typeof result, ')', result);
+  }
   return result;
 };

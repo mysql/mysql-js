@@ -34,6 +34,9 @@ harness.predefineLint(["unified_debug", "harness", "mynode", "adapter", "jones",
 more(harness.getLintTestsForDirectory(mynode.fs.api_dir));
 more(harness.getLintTestsForDirectory(mynode.fs.spi_common_dir));
 
+/* Standard Converters */
+more(harness.getLintTestsForDirectory(mynode.fs.converters_dir));
+
 /* Files in database-jones/test */
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir));
 more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "api"));
