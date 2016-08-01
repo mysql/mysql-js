@@ -52,12 +52,17 @@ var assert = require("assert"),
     binaryUndefined,
 
     inlineBufsize,
+    keyEntrySizeArray,
+    valueEntrySizeArray,
     serialize;
 
 inlineBufsize = {
   TYPE_LITERAL : 1, TYPE_INT16   : 2, TYPE_UINT16  : 2,
   TYPE_INT32   : 4, TYPE_UINT32  : 4
 };
+
+keyEntrySizeArray = [ 4,6 ];   // small object, large object
+valueEntrySizeArray = [ 3,5,3,5 ];  // small obj, large obj, sm array, lg array
 
 function Binary(type, jsValue, buffer) {
   assert.notStrictEqual(type, undefined);
@@ -66,6 +71,8 @@ function Binary(type, jsValue, buffer) {
   this.buffer  = buffer || null;
   this.isLarge = (type == TYPE_LARGE_OBJ || type == TYPE_LARGE_ARRAY);
   this.isUndefined = (type === TYPE_LITERAL && jsValue === undefined);
+  this.keyEntrySize = keyEntrySizeArray[this.type];
+  this.valueEntrySize = valueEntrySizeArray[this.type];
 }
 
 /* element-count ::= uint16 | uint32 
@@ -105,13 +112,15 @@ Binary.prototype.writeInline = function(writeBuffer, offset) {
   return this.buffer.copy(writeBuffer, offset);
 };
 
-Binary.prototype.readInline = function(sourceBuffer, offset, isLarge) {
+Binary.prototype.readInline = function(sourceBuffer, offset) {
   this.buffer = sourceBuffer.slice(offset, offset + inlineBufsize[this.type]);
 };
 
 Binary.prototype.setLarge = function() {
   this.type += 1;      // e.g. from TYPE_SMALL_OBJ to TYPE_LARGE_OBJ
   this.isLarge = true;
+  this.keyEntrySize = keyEntrySizeArray[this.type];
+  this.valueEntrySize = valueEntrySizeArray[this.type];
 };
 
 Binary.prototype.write = function() {
@@ -246,10 +255,6 @@ function ValueEntry(binary, offset) {
   this.offset = offset;
 }
 
-ValueEntry.prototype.getSize = function(isLarge) {
-  return (isLarge ? 5 : 3);
-};
-
 /* value-entry ::= type offset-or-inlined-value */
 ValueEntry.prototype.write = function(buffer, cursor, isLarge) {
   buffer[cursor++] = this.binary.type;
@@ -277,8 +282,10 @@ ValueEntry.prototype.parse = function() {
   return this.binary.parse();
 };
 
-function List(binary, itemConstructor) {
+function List(binary, itemSizeArray, itemConstructor) {
   this.parent = binary;
+  this.itemSizeArray = itemSizeArray;
+  this.itemSize = itemSizeArray[this.parent.type];
   this.ItemConstructor = itemConstructor;
   this.list = [];
   this.buffer = new Buffer("");
@@ -293,7 +300,7 @@ List.prototype.push = function(binaryForm) {
 List.prototype.writeEntries = function() {
   var buffer, elemSize, cursor, isLarge;
 
-  elemSize = this.getSerializedSize();
+  elemSize = this.itemSize;
   buffer = new Buffer(this.list.length * elemSize);
   cursor = 0;
   isLarge = this.parent.isLarge;
@@ -307,23 +314,19 @@ List.prototype.writeEntries = function() {
 };
 
 List.prototype.readEntries = function(offset, count) {
-  var elemSize, index;
-  elemSize = this.getSerializedSize();
+  var index;
   for(index = 0; index < count ; index++) {
     this.list[index] = new this.ItemConstructor();
     this.list[index].read(this.parent.buffer,
-                          offset + (index * elemSize),
+                          offset + (index * this.itemSize),
                           this.buffer, this.parent.isLarge);
   }
 };
 
-List.prototype.getSerializedSize = function() {
-  return new this.ItemConstructor().getSize(this.parent.isLarge);
-};
-
 List.prototype.getTotalSize = function() {
+  this.itemSize = this.itemSizeArray[this.parent.type];  // reset
   if(this.list.length) {
-    return this.buffer.length + (this.getSerializedSize() * this.list.length);
+    return this.buffer.length + (this.itemSize * this.list.length);
   }
   return 0;
 };
@@ -342,12 +345,12 @@ List.prototype.parse = function() {
 */
 function serializeArray(jsArray) {
   var binary = new Binary(TYPE_SMALL_ARRAY, jsArray);
-  var valueList = new List(binary, ValueEntry);
-  var size, i;
+  var valueList = new List(binary, valueEntrySizeArray, ValueEntry);
+  var size;
 
   jsArray.forEach(function(item) {
     var bin = serialize(item);
-    if(bin.isUndefined) bin = binaryNull;
+    if(bin.isUndefined) { bin = binaryNull; }
     valueList.push(bin);
   });
 
@@ -374,10 +377,6 @@ function KeyEntry(binary, offset) {
   this.length = 0;
   this.key = "";
 }
-
-KeyEntry.prototype.getSize = function(isLarge) {
-  return (isLarge ? 6 : 4);
-};
 
 /* key-entry ::= key-offset key-length */
 KeyEntry.prototype.write = function(buffer, cursor, isLarge) {
@@ -422,8 +421,8 @@ function serializeKey(jsString) {
 
 function serializeObject(jsObject) {
   var binary = new Binary(TYPE_SMALL_OBJ, jsObject);
-  var keyList = new List(binary, KeyEntry);
-  var valueList = new List(binary, ValueEntry);
+  var keyList = new List(binary, keyEntrySizeArray, KeyEntry);
+  var valueList = new List(binary, valueEntrySizeArray, ValueEntry);
   var sortedKeys;
   var sortedValues = [];
   var validityCheck = [];
@@ -457,7 +456,7 @@ function serializeObject(jsObject) {
   size = valueList.getTotalSize() + keyList.getTotalSize();
   if(size > 65535) {
     binary.setLarge();
-    size = valueList.getTotalSize() + keyList.getTotalSize();
+    size = valueList.getTotalSize() + keyList.getTotalSize();   // recalculate
   }
 
   /* object ::=  element-count size key-entries value-entries keys values */
