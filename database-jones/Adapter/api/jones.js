@@ -37,6 +37,7 @@ function common(file) { return path.join(conf.spi_common_dir, file); }
 function api_dir(file) { return path.join(conf.api_dir, file); }
 function api_doc_dir(file) { return path.join(conf.api_doc_dir, file); }
 function spi_doc_dir(file) { return path.join(conf.spi_doc_dir, file); }
+function converter(file) { return path.join(conf.converters_dir, file); }
 
 exports.common = {
   "BitMask"                   : common("BitMask"),
@@ -47,7 +48,8 @@ exports.common = {
   "SQLBuilder"                : common("SQLBuilder"),
   "SQLTransactionHandler"     : common("SQLTransactionHandler"),
   "FieldValueDefinedListener" : common("FieldValueDefinedListener"),
-  "DictionaryCall"            : common("DictionaryCall")
+  "DictionaryCall"            : common("DictionaryCall"),
+  "MySQLSerialize"            : common("MySQLSerialize")
 };
 
 exports.api = {
@@ -113,8 +115,9 @@ function getDBServiceProvider(impl_name) {
 exports.getDBServiceProvider = getDBServiceProvider;
 
 exports.converters = {
-  "JSONConverter" : require(path.join(conf.converters_dir, "JSONConverter")),
-  "NumericConverter" : require(path.join(conf.converters_dir, "NumericConverter"))
+  "JSONConverter"             : require(converter("JSONConverter")),
+  "NumericConverter"          : require(converter("NumericConverter")),
+  "SerializedObjectConverter" : require(converter("SerializedObjectConverter"))
 };
 
 
