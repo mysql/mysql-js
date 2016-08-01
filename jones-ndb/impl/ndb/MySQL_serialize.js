@@ -20,7 +20,9 @@
 
 "use strict";
 
-/* wl#8132 JSON binary encoding */
+/* wl#8132 JSON binary encoding 
+   https://dev.mysql.com/worklog/task/?id=8132
+*/
 
 var assert = require("assert"),
     unified_debug = require("unified_debug"),
@@ -88,19 +90,6 @@ Binary.prototype.writeElementCountAndSize = function(count, size) {
     buffer.writeUInt16LE(size, 2);
   }
   return buffer;
-};
-
-Binary.prototype.readElementCount = function() {
-  return this.isLarge ?
-    this.buffer.readUInt32LE(0) : this.buffer.readUInt16LE(0);
-};
-
-Binary.prototype.readSizeAndTruncateBuffer = function() {
-  var size = this.isLarge ?
-    this.buffer.readUInt32LE(4) : this.buffer.readUInt16LE(2);
-  var offset = this.isLarge ? 8 : 4;
-  this.buffer = this.buffer.slice(0, offset + size);
-  return size;
 };
 
 Binary.prototype.isInline = function(isLarge) {
@@ -399,7 +388,9 @@ KeyEntry.prototype.read = function(entryBuffer, cursor, valueBuffer, isLarge) {
     cursor += 2;
   }
   this.length = entryBuffer.readUInt16LE(cursor);
-  this.key = valueBuffer.toString('utf8', this.offset, this.offset + this.length);
+  if(Buffer.isBuffer(valueBuffer)) {
+    this.key = valueBuffer.toString('utf8', this.offset, this.offset + this.length);
+  }
 };
 
 /* When serializing an object, keys are sorted on length, and keys 
@@ -592,56 +583,104 @@ Binary.prototype.parseString = function() {
   return this.buffer.toString('utf8', len.nBytes, len.nBytes + len.length);
 };
 
-/* array ::= element-count size value-entries values */
-Binary.prototype.parseArray = function() {
-  var elementCount, valueList, valueEntryStart, valueEntryLen;
+/* Set up parser for serialized arrays and objects.
+   array ::= element-count size value-entries values
+   object ::=  element-count size key-entries value-entries keys values
+*/
+Binary.prototype.setupParser = function() {
+  var recSize, keyEntriesLength, valEntriesLength, headerSize;
+  var finalKey;
 
-  elementCount = this.readElementCount();
-  this.readSizeAndTruncateBuffer();
-  valueList = new List(this, ValueEntry);
-  valueEntryStart = this.isLarge ? 8 : 4;
-  valueEntryLen = valueList.getSerializedSize() * elementCount;
-  valueList.buffer = this.buffer.slice(valueEntryStart + valueEntryLen);
-  valueList.readEntries(valueEntryStart, elementCount);
+  if((this.elementCount !== undefined)  // Parser has already been initialized
+     || (this.type > TYPE_LARGE_ARRAY))  // Value is a scalar
+  {
+    return;
+  }
+
+  if(this.isLarge) {
+    this.elementCount = this.buffer.readUInt32LE(0);
+    recSize = this.buffer.readUInt32LE(4);
+    headerSize = 8;
+  } else {
+    this.elementCount = this.buffer.readUInt16LE(0);
+    recSize = this.buffer.readUInt16LE(2);
+    headerSize = 4;
+  }
+
+  valEntriesLength = this.valueEntrySize * this.elementCount;
+  this.buffer = this.buffer.slice(0, headerSize + recSize); // truncate buffer
+  if(this.type <= TYPE_LARGE_OBJ) {                         /* Object */
+    this.keyEntryStartPos = headerSize;
+    keyEntriesLength = this.keyEntrySize * this.elementCount;
+    this.valueEntryStartPos = headerSize + keyEntriesLength;
+    this.keyDataStartPos = this.valueEntryStartPos + valEntriesLength;
+    finalKey = new KeyEntry();
+    finalKey.read(this.buffer,
+                  this.valueEntryStartPos - this.keyEntrySize,
+                  null, this.isLarge);
+    this.valueDataStartPos = this.keyDataStartPos + finalKey.offset + finalKey.length;
+  } else {                                                  /* Array */
+    this.valueEntryStartPos = headerSize;
+    this.valueDataStartPos = headerSize + valEntriesLength;
+  }
+};
+
+Binary.prototype.parseArray = function() {
+  var valueList;
+
+  this.setupParser();
+  valueList = new List(this, valueEntrySizeArray, ValueEntry);
+  valueList.buffer = this.buffer.slice(this.valueDataStartPos);
+  valueList.readEntries(this.valueEntryStartPos, this.elementCount);
   return valueList.parse();
 };
 
-
-/* object ::=  element-count size key-entries value-entries keys values */
 Binary.prototype.parseObject = function() {
-  var elementCount;
-  var keyList, keyEntryStart, keyEntryLen, keyStart;
-  var valueList, valueEntryStart, valueEntryLen, valueStart;
-  var finalKey, result, i;
+  var keyList, valueList, result, i;
 
-  elementCount = this.readElementCount();
-  this.readSizeAndTruncateBuffer();
-  result = {};
+  this.setupParser();
+  valueList = new List(this, valueEntrySizeArray, ValueEntry);
+  keyList = new List(this, keyEntrySizeArray, KeyEntry);
 
-  keyEntryStart = this.isLarge ? 8 : 4;
-  keyList = new List(this, KeyEntry);
-  keyEntryLen = keyList.getSerializedSize() * elementCount;
-
-  valueEntryStart = keyEntryStart + keyEntryLen;
-  valueList = new List(this, ValueEntry);
-  valueEntryLen = valueList.getSerializedSize() * elementCount;
-
-  keyStart = valueEntryStart + valueEntryLen;
-  keyList.buffer = this.buffer.slice(keyStart);
-  keyList.readEntries(keyEntryStart, elementCount);
-
-  if(elementCount > 0) {
-    finalKey = keyList.list[elementCount - 1];
-    valueStart = keyStart + finalKey.offset + finalKey.length;
-    valueList.buffer = this.buffer.slice(valueStart);
-    valueList.readEntries(valueEntryStart, elementCount);
+  if(this.elementCount > 0) {
+    keyList.buffer = this.buffer.slice(this.keyDataStartPos);
+    keyList.readEntries(this.keyEntryStartPos, this.elementCount);
+    valueList.buffer = this.buffer.slice(this.valueDataStartPos);
+    valueList.readEntries(this.valueEntryStartPos, this.elementCount);
   }
 
-  for(i = 0 ; i < elementCount ; i++) {
+  result = {};
+  for(i = 0 ; i < this.elementCount ; i++) {
     result[keyList.list[i].key] = valueList.list[i].parse();
   }
-
   return result;
+};
+
+Binary.prototype.getValueForKey = function(key) {
+  this.setupParser();
+  if(this.type <= TYPE_LARGE_OBJ) {
+    return this.getNamedValue(key);
+  }
+  return this.getIndexedValue(key);
+};
+
+Binary.prototype.getIndexedValue = function(key) {
+  var valueEntry, offset, valueBuffer;
+  valueEntry = new ValueEntry();
+  offset = this.valueEntryStartPos + (key * this.valueEntrySize);
+  valueBuffer = this.buffer.slice(this.valueDataStartPos);
+  valueEntry.read(this.buffer, offset, valueBuffer, this.isLarge);
+  return valueEntry.binary;
+};
+
+/* getNamedValue(): 
+   Keys are sorted by length, and then key string.
+   TODO: First conduct a binary search of the key space to find all keys of the
+   appropriate length; then search that set for the actual key string.
+*/
+Binary.prototype.getNamedValue = function(key) {
+  var index=0;
+  return this.getIndexedValue(index);
 };
 
 /* public serialize()
@@ -651,25 +690,26 @@ exports.serialize = function(jsValue) {
   return serialize(jsValue).write();
 };
 
-/* parseBlob() takes a buffer, returns a Binary
-*/
-function parseBlob(sourceBuffer) {
+function getBinaryForBuffer(sourceBuffer) {
   return new Binary(sourceBuffer[0], undefined, sourceBuffer.slice(1));
 }
-exports.parseBlob = parseBlob;
 
 /* public parse()
    takes a buffer
    returns a JS object
 */
 exports.parse = function(sourceBuffer) {
-  return parseBlob(sourceBuffer).parse();
+  return getBinaryForBuffer(sourceBuffer).parse();
 };
 
-exports.getSmallTestValues = function() {
+exports.getUnitTestValues = function() {
+  var longValue = "abc".repeat(10000);
+  var largeObject = { "a" : longValue, "b" : longValue, "c" : longValue };
+  var largeArray = [ 1, longValue, 2, longValue, 3 , longValue , 4];
+  var longString = "abcd_".repeat(40);  // variable length is two bytes
   function TestItem() {
     this.a = 1;
-  };
+  }
   TestItem.prototype.b = 2;
 
   return [
@@ -688,6 +728,8 @@ exports.getSmallTestValues = function() {
     { },
     { "a" : 1 },
     [ {}, {"b" : 2 }, null, 4, "george" ],
+    [ "Peter" , true , "Paul" ,
+      false, 1, 90000, 1 ],           // mix inlined and non-inlined values
     50000,                            // 16-bit unsigned number
     70000,                            // 32-bit number
     2147500000,                       // 32-bit unsigned number
@@ -699,31 +741,29 @@ exports.getSmallTestValues = function() {
     [ null, true, undefined, 4],      // replace array gap with null
     function() {},                    // undefined
     new TestItem(),                   // omit prototype properties
-    Math                              // language-defined object
+    Math,                             // language-defined object
+    largeObject,
+    largeArray,
+    longString
   ];
 };
 
-exports.getLargeTestValues = function() {
-  var longValue = "abc".repeat(10000);
-  var largeObject = { "a" : longValue, "b" : longValue, "c" : longValue };
-  var largeArray = [ 1, longValue, 2, longValue, 3 , longValue , 4];
-  return [ largeObject, largeArray ];
-};
 
-exports.runUnitTests = function() {
-  var s;
-
-  exports.getSmallTestValues().forEach(function(t) {
+function runUnitTests() {
+  exports.getUnitTestValues().forEach(function(t) {
+    var t1, r, s, r1;
+    t1 = JSON.stringify(t);
     s = serialize(t);
-    console.log(t, s.parse());
+    r = s.parse();
+    r1 = JSON.stringify(r);
+    if(t1 === undefined || t1.length < 40) {
+      console.log(t, r);
+    } else {
+      console.log(s.type, s.buffer.length);
+    }
+    assert.equal(t1, r1);
   });
+}
 
-  exports.getLargeTestValues().forEach(function(t) {
-    s = serialize(t);
-    console.log(s.type, s.buffer.length);
-    s.parse();
-  });
-};
-
-// exports.runUnitTests();
+// runUnitTests();
 
