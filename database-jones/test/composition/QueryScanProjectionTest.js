@@ -29,6 +29,7 @@ var t3 = new harness.ConcurrentTest('t3 Query TableScanProjectionTestDefaultEmpt
 var t4 = new harness.ConcurrentTest('t4 Query IndexScanProjectionTestMultipleResults');
 var t6 = new harness.ConcurrentTest('t6 Query IndexScanProjectionTestManyToMany');
 var t7 = new harness.ConcurrentTest('t7 Query TableScanProjectionTestManyToMany');
+var t8 = new harness.ConcurrentTest('t7 Query TableScanProjectionTestNoResults');
 
 
 /** All key columns specified for index on lastname, firstname.
@@ -235,6 +236,32 @@ t7.run = function() {
   });
 };
 
+/** Primary key index scan on id with no objects returned.
+ * Customer -> ShoppingCart -> LineItem -> Item
+ *         \-> Discount
+ *         \-> Shipment
+ */
+t8.run = function() {
+  var testCase = this;
+  var session;
+
+  fail_openSession(testCase, function(s) {
+    session = s;
+    session.createQuery(lib.complexCustomerProjection).
+    then(function(q) {
+      q.where(q.id.ge(q.param('p1')).and(q.id.le(q.param('p2'))));
+      return q.execute({"p1": 55, "p2": 99});
+    }).
+    then(function(actualCustomers) {
+      testCase.errorIfNotEqual('result length', 0, actualCustomers.length);
+      // sort the results
+      testCase.failOnError();}).
+    then(null, function(err) {
+      testCase.fail(err);
+    });
+  });
+};
 
 
-exports.tests = [t1, t2, t3, t4, t6, t7];
+
+exports.tests = [t1, t2, t3, t4, t6, t7, t8];
