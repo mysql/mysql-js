@@ -82,7 +82,7 @@ t2.run = function() {
   function Sparse(id) {}
 
   var sparseMapping = new mynode.TableMapping('json_semistruct');
-  sparseMapping.mapField({fieldName: 'sparse', columnName: 'SPARSE_FIELDS', converter: mynode.converters.JSONConverter});
+  sparseMapping.mapField({fieldName: 'sparse', columnName: 'SPARSE_FIELDS'});
   sparseMapping.applyToClass(Sparse);
   
   testCase.mappings = Semistruct;

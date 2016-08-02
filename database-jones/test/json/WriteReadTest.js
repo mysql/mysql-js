@@ -59,7 +59,7 @@ t1.run = function() {
   var testCase = this;
   var hybridMapping = new mynode.TableMapping('json_hybrid');
   hybridMapping.mapField('id');
-  hybridMapping.mapField('unstruct_json', mynode.converters.JSONConverter);
+  hybridMapping.mapField('unstruct_json');
   hybridMapping.mapField('unstruct_varchar', mynode.converters.JSONConverter);
   hybridMapping.mapSparseFields('SPARSE_FIELDS');
   hybridMapping.applyToClass(Hybrid);

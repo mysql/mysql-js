@@ -166,6 +166,7 @@ exports.DBConnectionPool = function(props) {
   this.databaseTypeConverterMap = {};
   this.databaseTypeConverterMap.TIMESTAMP = new DatabaseTypeConverterDateTime();
   this.databaseTypeConverterMap.DATETIME = new DatabaseTypeConverterDateTime();
+  this.databaseTypeConverterMap.JSON = jones.converters.JSONConverter;
   // create domain type converter map
   this.domainTypeConverterMap = {};
   this.domainTypeConverterMap.TIMESTAMP = new DomainTypeConverterDateTime();
