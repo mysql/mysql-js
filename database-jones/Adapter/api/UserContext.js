@@ -1693,18 +1693,23 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
 
   // transform query result
   function executeQueryKeyOnResult(err, dbOperation) {
-    udebug.log('executeQuery.executeQueryPKOnResult');
+    udebug.log('executeQuery.executeQueryKeyOnResult');
     var result, resultList = [];
     var error = checkOperation(err, dbOperation);
     if (error) {
-      userContext.applyCallback(error, null);
+      if (error.sqlstate === '02000')  {
+        // not found in the database
+        userContext.applyCallback(null, []);
+      } else {
+        userContext.applyCallback(error, null);
+      }
     } else {
       result = dbOperation.result.value;
       if (result !== null) {
         // TODO: filter in memory if the adapter didn't filter all conditions
         resultList = [result];
       }
-      userContext.applyCallback(null, resultList);      
+      userContext.applyCallback(null, resultList);
     }
   }
 
@@ -1713,14 +1718,20 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     var result, resultList = [];
     if(udebug.is_detail()) { udebug.log(
         'UserContext.executeQuery.executeKeyProjectionQueryOnResult err:', err, 'dbOperation:', dbOperation); }
-    if (!err) {
+    if (err) {
+      if (err.sqlstate === '02000') {
+        userContext.applyCallback(null, []);
+      } else {
+        userContext.applyCallback(err, null);
+      }
+    } else {
       result = dbOperation.result.value;
       if (result) {
         // TODO: filter in memory if the adapter didn't filter all conditions
         resultList = [result];
+        userContext.applyCallback(null, resultList);
       }
     }
-    userContext.applyCallback(err, resultList);
   }
 
   // transform query result
@@ -1728,7 +1739,11 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
     if(udebug.is_detail()) { udebug.log('executeQuery.executeQueryScanOnResult'); }
     var error = checkOperation(err, dbOperation);
     if (error) {
-      userContext.applyCallback(error, null);
+      if (err.sqlstate === '02000') {
+        userContext.applyCallback(null, []);
+      } else {
+        userContext.applyCallback(err, null);
+      }
     } else {
       if(udebug.is_detail()) { udebug.log('executeQuery.executeQueryScanOnResult', dbOperation.result.value); }
       // TODO: filter in memory if the adapter didn't filter all conditions

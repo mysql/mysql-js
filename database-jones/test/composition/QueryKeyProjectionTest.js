@@ -21,7 +21,7 @@
 "use strict";
 
 var lib = require('./lib.js');
-var udebug = unified_debug.getLogger("QueryIdProjectionTest.js");
+var udebug = unified_debug.getLogger("QueryKeyProjectionTest.js");
 lib.mapShop();
 var t1 = new harness.ConcurrentTest('t1 Query IdProjectionTest');
 var t2 = new harness.ConcurrentTest('t2 Query IdProjectionTestDefaultNull');
@@ -30,6 +30,7 @@ var t4 = new harness.ConcurrentTest('t4 Query UKProjectionTest');
 var t5 = new harness.ConcurrentTest('t5 Query UKProjectionTestDefaultNull');
 var t6 = new harness.ConcurrentTest('t6 Query IdProjectionTestManyToMany');
 var t7 = new harness.ConcurrentTest('t7 Query IdProjectionTestManyToManyOtherSide');
+var t8 = new harness.ConcurrentTest('t8 Query IdProjectionTestNoCustomer');
 var t9 = new harness.ConcurrentTest('t9 Query IdProjectionTestMultipleRelationships');
 
 /** query with projection for complex customer by primary key
@@ -234,6 +235,31 @@ t7.run = function() {
   });
 };
 
+/** query with projection for complex customer by primary key
+ * Customer does not exist
+ * Customer -> ShoppingCart -> LineItem -> Item
+ *         \-> Discount
+ *         \-> Shipment */
+t8.run = function() {
+  var testCase = this;
+  var session;
+
+  fail_openSession(testCase, function(s) {
+    session = s;
+    session.createQuery(lib.complexCustomerProjection).
+    then(function(q) {
+      q.where(q.id.eq(q.param('p1')));
+      return q.execute({"p1": 99});
+    }).
+    then(function(actualCustomers) {
+      testCase.errorIfNotEqual('result length', 0, actualCustomers.length);
+      testCase.failOnError();}).
+      then(null, function(err) {
+        testCase.fail(err);
+    });
+  });
+};
+
 /** Projection test multiple relationships with string key
  */
 t9.run = function() {
@@ -259,4 +285,4 @@ t9.run = function() {
 
 
 
-exports.tests = [t1, t2, t3, t4, t5, t6, t7, t9];
+exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9];
