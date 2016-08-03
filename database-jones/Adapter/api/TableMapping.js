@@ -568,7 +568,7 @@ TableMapping.prototype.excludeFields = function() {
 
 /* mapSparseFields(columnName, converter)
  * columnName: required
- * converter: optional converter function default Converters/JSONConverter
+ * converter: optional converter function
  */
 TableMapping.prototype.mapSparseFields = function(columnName) {
   var i, arg, fieldMapping;
@@ -595,9 +595,6 @@ TableMapping.prototype.mapSparseFields = function(columnName) {
           this.error += "\nmapSparseFields: Argument must be a meta or converter object: \"" +
               util.inspect(arg) + "\"";
       }
-    }
-    if (!fieldMapping.converter) {                   // default JSON converter
-      fieldMapping.converter = jones.converters.JSONConverter;
     }
     this.sparseContainer = fieldMapping;
   } else {
