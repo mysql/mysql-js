@@ -41,12 +41,15 @@ var jones = require("database-jones"),
    returns a node Buffer containing the value serialized to binary form.
 */
 exports.toDB = function(jsValue) {
-  return wl8132.serialize(jsValue);
+  udebug.log_detail("wl8132 toDB");
+  var s = wl8132.serialize(jsValue);
+  return s;
 };
 
 /* Takes a buffer read from a binary database column,
    returns a JavaScript value
 */
 exports.fromDB = function(binaryBuffer) {
+  udebug.log_detail("wl8132 fromDB");
   return wl8132.parse(binaryBuffer);
 };

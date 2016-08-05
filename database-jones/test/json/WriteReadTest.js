@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ t1.run = function() {
   .then(function() {
     return testCase.session.close();
   })
-  .then(function() {testCase.failOnError();}, function(err) {console.log(err);testCase.fail(err);}
+  .then(function() {testCase.failOnError();}, function(err) {testCase.fail(err.stack);}
   );
 };
 
