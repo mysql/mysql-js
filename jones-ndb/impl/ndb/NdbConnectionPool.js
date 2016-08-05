@@ -53,7 +53,7 @@ var conf             = require("./path_config"),
 var ColumnTypes =  [
   "TINYINT",  "SMALLINT",  "MEDIUMINT",  "INT",  "BIGINT",
   "FLOAT",  "DOUBLE",  "DECIMAL",
-  "CHAR",  "VARCHAR",  "BLOB",  "TEXT",
+  "CHAR",  "VARCHAR",  "BLOB",  "TEXT", "JSON",
   "DATE",  "TIME",  "DATETIME",  "YEAR",  "TIMESTAMP",
   "BIT",  "BINARY",  "VARBINARY"
 ];

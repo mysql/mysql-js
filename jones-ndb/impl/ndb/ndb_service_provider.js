@@ -103,6 +103,7 @@ function registerDefaultTypeConverters(dbConnectionPool) {
   dbConnectionPool.registerTypeConverter("DATETIME", DatetimeConverter);
   dbConnectionPool.registerTypeConverter("TIME", TimeConverter);
   dbConnectionPool.registerTypeConverter("DATE", DateConverter);
+  dbConnectionPool.registerTypeConverter("JSON", jones.converters.SerializedObjectConverter);
   // TODO: converter for Timestamp microseconds <==> JS Date 
 }
 

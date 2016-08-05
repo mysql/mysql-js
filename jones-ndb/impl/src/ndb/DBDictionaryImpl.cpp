@@ -436,7 +436,8 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
       if(     ! strcmp(ndb_col->getName(), "SPARSE_FIELDS")
           && ( (! strncmp(getColumnType(ndb_col), "VARCHAR", 7)
                   && (getEncoderCharsetForColumn(ndb_col)->isUnicode))
-              || ! strncmp(getColumnType(ndb_col), "VARBINARY", 9)))
+              || (   ! strncmp(getColumnType(ndb_col), "VARBINARY", 9)
+                  || ! strncmp(getColumnType(ndb_col), "JSON", 4))))
       {
         table->Set(SYMBOL(isolate,"sparseContainer"),
                    String::NewFromUtf8(isolate, ndb_col->getName()));
@@ -671,7 +672,18 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
   obj->ForceSet(SYMBOL(isolate, "ndbRawDefaultValue"),
            getDefaultValue(isolate, col),
            ReadOnly);
-  
+
+  if(is_lob) {
+    obj->ForceSet(SYMBOL(isolate, "ndbInlineSize"),
+            v8::Int32::New(isolate, col->getInlineSize()),
+            ReadOnly);
+
+    obj->ForceSet(SYMBOL(isolate, "ndbPartSize"),
+            v8::Int32::New(isolate, col->getPartSize()),
+            ReadOnly);
+  }
+
+
   /* Optional Properties, depending on columnType */
   /* Group A: Numeric */
   if(is_int || is_dec) {
@@ -795,6 +807,12 @@ const char * getColumnType(const NdbDictionary::Column * col) {
     "TIMESTAMP",     // 33 TIMESTAMP2
 #endif
   };
+
+  if(    (col->getType() == 20) && (col->getInlineSize() == 4000)
+      && (col->getPartSize() == 8100))
+  {
+    return "JSON";
+  }
 
   return typenames[col->getType()];
 }
