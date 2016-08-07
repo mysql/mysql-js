@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ queryDomainTypeFunctions.execute = execute;
  * @return
  */
 var QueryField = function(queryDomainType, field) {
-  if(udebug.is_detail()) {udebug.log_detail('QueryField<ctor>', field.fieldName);}
+  udebug.log('QueryField<ctor>', field.fieldName);
 //  this.class = 'QueryField';        // useful for debugging
 //  this.fieldName = field.fieldName; // useful for debugging
   this.queryDomainType = queryDomainType;
@@ -131,8 +131,8 @@ function QueryProjectionDomainType(session, projection) {
   this.queryDomainType = null;
   this.isQueryProjectionDomainType = true;
   this.projection = projection;
-  if(udebug.is_detail()) {udebug.log_detail('QueryProjectionDomainType<ctor> for', projection.domainObject.name,
-      'projection', projection);}
+  udebug.log('QueryProjectionDomainType<ctor> for', projection.domainObject.name);
+  if(udebug.is_detail()) {udebug.log_detail('projection', projection);}
   // get the dbTableHandler for the list of query-able fields
   dbTableHandler = projection.dbTableHandler;
   // the projection also has query-able relationship fields
@@ -155,6 +155,7 @@ function QueryProjectionDomainType(session, projection) {
   // add a property for each field in the table mapping
   jones.dbTableHandler.getAllQueryFields().forEach(function(field) {
     fieldName = field.fieldName;
+    if(udebug.is_detail()) {udebug.log_detail('QueryDomainType<ctor> for field', fieldName, '\n', field);}
     queryField = new QueryField(queryDomainType, field);
     if (keywords.indexOf(fieldName) === -1) {
       // field name is not a keyword
@@ -283,7 +284,7 @@ function getEscapedValue(literal) {
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
-  var columnName = this.alias + node.queryField.field.fieldName;
+  var columnName = this.alias + node.queryField.field.columnName;
   var value = '?';
   if(node.constants) {
     // the parameter is a literal (String, number, or object with a toString method)
@@ -292,6 +293,8 @@ SQLVisitor.prototype.visitQueryComparator = function(node) {
     this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.parameter;
   }
   node.sql.sqlText = columnName + node.comparator + value;
+  udebug.log('SQLVisitor for', node.queryField.field.fieldName + node.comparator);
+  if(udebug.is_detail()) {udebug.log_detail(node.sql.sqlText);}
   // assign ordered list of parameters to the top node
 };
 
@@ -316,13 +319,15 @@ SQLVisitor.prototype.visitQueryUnaryPredicate = function(node) {
 
 /** Handle nodes QueryIsNull, QueryIsNotNull */
 SQLVisitor.prototype.visitQueryUnaryOperator = function(node) {
-  var columnName = node.queryField.field.fieldName;
+  var columnName = this.alias + node.queryField.field.columnName;
   node.sql.sqlText = columnName + node.operator;
+  udebug.log('SQLVisitor for', node.queryField.field.fieldName + node.operator);
+  if(udebug.is_detail()) {udebug.log_detail(node.sql.sqlText);}
 };
 
 /** Handle node QueryBetween */
 SQLVisitor.prototype.visitQueryBetweenOperator = function(node) {
-  var columnName = node.queryField.field.fieldName;
+  var columnName = this.alias + node.queryField.field.columnName;
   var leftValue = '?';
   var rightValue = '?';
   if (node.constants & 1) {
@@ -336,6 +341,8 @@ SQLVisitor.prototype.visitQueryBetweenOperator = function(node) {
     this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
   }
   node.sql.sqlText = columnName + ' BETWEEN ' + leftValue + ' AND ' + rightValue;
+  udebug.log('SQLVisitor for', node.queryField.field.fieldName + node.comparator);
+  if(udebug.is_detail()) {udebug.log_detail(node.sql.sqlText);}
 };
 
 /******************************************************************************
