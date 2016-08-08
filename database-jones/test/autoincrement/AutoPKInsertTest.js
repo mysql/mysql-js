@@ -223,8 +223,8 @@ t11.run = function() {
       object.magic += 1; // don't fail due to duplicate unique key
       session2.persist('autopk', object, function(err) {
         if (err) {
-//          console.log('testPersistDuplicateExplicitPK', err);
-          testCase.pass();
+          testCase.errorIfNotEqual("sqlstate", "23000", err.sqlstate);
+          testCase.failOnError();
         } else {
           testCase.fail('failed to detect duplicate key.');
         }
