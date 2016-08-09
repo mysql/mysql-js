@@ -35,10 +35,11 @@ const char * modes[4] = { "Prepare ","NoCommit","Commit  ","Rollback" };
 // TODO: verify that caller has HandleScope
 TransactionImpl::TransactionImpl(SessionImpl *impl) :
   token(0),
-  parent(impl),
+  parentSessionImpl(impl),
   next(0),
   ndbTransaction(0),
-  tcNodeId(0)
+  tcNodeId(0),
+  openOperationSet(0)
 {
   setJsWrapper(this);
   emptyOpSet = new BatchImpl(this, 0);
@@ -53,11 +54,15 @@ TransactionImpl::~TransactionImpl() {
 
 
 const NdbError & TransactionImpl::getNdbError() {
-  return ndbTransaction ? ndbTransaction->getNdbError() : parent->getNdbError();
+  if(ndbTransaction) {           // transaction is open
+    return ndbTransaction->getNdbError();
+  } else {                       // startTransaction() failed
+    return parentSessionImpl->getNdbError();
+  }
 }
 
 bool TransactionImpl::tryImmediateStartTransaction(KeyOperation * op) {
-  token = parent->registerIntentToOpen();
+  token = parentSessionImpl->registerIntentToOpen();
   if(token == -1) {
     startTransaction(op);
     return true;
@@ -71,11 +76,11 @@ void TransactionImpl::startTransaction(KeyOperation * op) {
 
   if(startWithHint) {
     char hash_buffer[512];        
-    ndbTransaction = 
-      parent->ndb->startTransaction(op->key_record->getNdbRecord(), 
-                                    op->key_buffer, hash_buffer, 512);
+    ndbTransaction = parentSessionImpl->ndb->
+      startTransaction(op->key_record->getNdbRecord(),
+                       op->key_buffer, hash_buffer, 512);
   } else {
-    ndbTransaction = parent->ndb->startTransaction();
+    ndbTransaction = parentSessionImpl->ndb->startTransaction();
   }
 
   tcNodeId = ndbTransaction ? ndbTransaction->getConnectedNodeId() : 0;
@@ -103,18 +108,21 @@ int TransactionImpl::prepareAndExecuteQuery(QueryOperation *query) {
 }
 
 void TransactionImpl::closeTransaction() {
+  openOperationSet->saveNdbErrors();
   ndbTransaction->close();
 }
 
 void TransactionImpl::registerClose() {
   ndbTransaction = 0;
-  parent->registerTxClosed(token, tcNodeId);
+  openOperationSet->transactionIsClosed();
+  parentSessionImpl->registerTxClosed(token, tcNodeId);
 }
 
 int TransactionImpl::execute(BatchImpl *operations, 
                              int _execType, int _abortOption, int force) {
   int rval;
   int opListSize = operations->size;
+  openOperationSet = operations;
   NdbTransaction::ExecType execType = static_cast<NdbTransaction::ExecType>(_execType);
   NdbOperation::AbortOption abortOption = static_cast<NdbOperation::AbortOption>(_abortOption);
   bool doClose = (execType != NdbTransaction::NoCommit);
@@ -139,7 +147,8 @@ int TransactionImpl::execute(BatchImpl *operations,
               ndbTransaction->getNdbError().code);
   if(doClose) {
     closeTransaction();
-  }	
+    operations->transactionIsClosed();
+  }
   return rval;
 }
 
@@ -148,12 +157,12 @@ int TransactionImpl::executeAsynch(BatchImpl *operations,
                                    v8::Handle<v8::Function> callback) {
   assert(ndbTransaction);
   operations->prepare(ndbTransaction);
+  openOperationSet = operations;
   int opListSize = operations->size;
   DEBUG_PRINT("EXECUTE async: %s %d operation%s", modes[execType], 
               opListSize, (opListSize == 1 ? "" : "s"));
-  return parent->asyncContext->executeAsynch(this, ndbTransaction, 
-                                             execType, abortOption, forceSend, 
-                                             callback);
+  return parentSessionImpl->asyncContext->
+    executeAsynch(this, ndbTransaction, execType, abortOption, forceSend,callback);
 }                    
 
 // THESE WERE ORIGINALLY INLINED --- MOVE THEM BACK AFTER FIXED

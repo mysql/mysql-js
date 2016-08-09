@@ -31,10 +31,11 @@
 BatchImpl::BatchImpl(TransactionImpl * ctx, int _sz) :
   keyOperations(new KeyOperation[_sz]),
   ops(new const NdbOperation *[_sz]),
-  errors(new const NdbError *[_sz]),
+  errors(new NdbError[_sz]),
   size(_sz),
   doesReadBlobs(false),
-  transactionImpl(ctx)
+  transactionImpl(ctx),
+  transactionNdbError(0)
 {};
 
 
@@ -43,26 +44,35 @@ BatchImpl::~BatchImpl() {
   delete[] keyOperations;
   delete[] ops;
   delete[] errors;
+  delete transactionNdbError;
 }
 
-
-void BatchImpl::prepare(NdbTransaction *ndbtx) {
-  for(int i = 0 ; i < size ; i++) {
-    if(keyOperations[i].opcode > 0) {
-      const NdbOperation *op = keyOperations[i].prepare(ndbtx);
-      ops[i] = op;
-      if(! op) errors[i] = & ndbtx->getNdbError();
-      DEBUG_PRINT("prepare %s [%s]", keyOperations[i].getOperationName(),
-                  op ? "ok" : errors[i]->message);
-      if(keyOperations[i].isBlobReadOperation()) doesReadBlobs = true;
-    }
-    else {
-      errors[i] = 0;
-      ops[i] = 0;
-    }
+void BatchImpl::setOperationNdbError(int i, const NdbError & err) {
+  if(err.code > 0) {
+    errors[i].status = err.status;
+    errors[i].classification = err.classification;
+    errors[i].code = err.code;
+    errors[i].mysql_code = err.mysql_code;
+    errors[i].message = err.message;
   }
 }
 
+void BatchImpl::prepare(NdbTransaction *ndbtx) {
+  for(int i = 0 ; i < size ; i++) {
+    ops[i] = 0;
+    if(keyOperations[i].opcode > 0) {
+      const NdbOperation *op = keyOperations[i].prepare(ndbtx);
+      if(op) {
+        ops[i] = op;
+      } else {
+        setOperationNdbError(i, ndbtx->getNdbError());
+      }
+      DEBUG_PRINT("prepare %s [%s]", keyOperations[i].getOperationName(),
+                  op ? "ok" : errors[i].message);
+      if(keyOperations[i].isBlobReadOperation()) doesReadBlobs = true;
+    }
+  }
+}
 
 bool BatchImpl::tryImmediateStartTransaction() {
   if(doesReadBlobs) {
@@ -71,4 +81,26 @@ bool BatchImpl::tryImmediateStartTransaction() {
   return transactionImpl->tryImmediateStartTransaction(& keyOperations[0]);
 }
 
+void BatchImpl::saveNdbErrors() {
+  transactionNdbError = new NdbError(transactionImpl->getNdbError());
+  for(int i = 0 ; i < size ; i++)
+    if(ops[i])
+      setOperationNdbError(i, ops[i]->getNdbError());
+}
 
+const NdbError * BatchImpl::getError(int n) {
+  if(n < size) {  // If operation is not open, use saved error
+    return ops[n] ? & ops[n]->getNdbError() : & errors[n];
+  }
+  return 0;  // This becomes JavaScript "true"
+}
+
+const NdbError & BatchImpl::getNdbError() {
+  return transactionNdbError ?
+    * transactionNdbError : transactionImpl->getNdbError();
+}
+
+void BatchImpl::transactionIsClosed() {
+  for(int i = 0 ; i < size ; i++)
+    ops[i] = 0;
+}

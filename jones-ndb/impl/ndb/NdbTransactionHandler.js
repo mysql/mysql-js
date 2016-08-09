@@ -173,14 +173,14 @@ function onExecute(dbTxHandler, execMode, err, execId, userCallback) {
                 "success:", dbTxHandler.success);
   }
 
+  /* Attach results to their operations */
+  ndboperation.completeExecutedOps(dbTxHandler, execMode, pendingOpsList);
+
   // If we just executed with Commit or Rollback, release TransactionImpl.
   if(execMode !== NOCOMMIT) {
     dbTxHandler.dbSession.releaseTransactionContext(dbTxHandler.impl);
     dbTxHandler.impl = null;
   }
-
-  /* Attach results to their operations */
-  ndboperation.completeExecutedOps(dbTxHandler, execMode, pendingOpsList);
 
   /* Next callback */
   if(typeof userCallback === 'function') {

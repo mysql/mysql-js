@@ -161,7 +161,7 @@ TransactionImpl * SessionImpl::seizeTransaction() {
 
 
 bool SessionImpl::releaseTransaction(TransactionImpl *ctx) {
-  assert(ctx->parent == this);
+  assert(ctx->parentSessionImpl == this);
   bool status = ctx->isClosed();
   DEBUG_PRINT("releaseTransaction status: %s", status ? "closed" : "open");
   if(status) {

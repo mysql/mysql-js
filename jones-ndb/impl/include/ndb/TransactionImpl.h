@@ -123,10 +123,11 @@ private:
   v8::Persistent<v8::Object> jsWrapper;
   v8::Persistent<v8::Object> emptyOpSetWrapper;
   BatchImpl *                emptyOpSet;
-  SessionImpl * const        parent;
+  SessionImpl * const        parentSessionImpl;
   TransactionImpl *          next;
   NdbTransaction *           ndbTransaction;
   int                        tcNodeId;
+  BatchImpl *                openOperationSet;
 };
 
 inline bool TransactionImpl::isClosed() const {

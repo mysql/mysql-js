@@ -30,39 +30,32 @@ friend class TransactionImpl;
 public:
   BatchImpl(TransactionImpl *, int size);
   ~BatchImpl();
-  void setError(int n, const NdbError &);
   const NdbError * getError(int n);
   KeyOperation * getKeyOperation(int n);
   bool tryImmediateStartTransaction();
   int execute(int execType, int abortOption, int forceSend);
   int executeAsynch(int execType, int abortOption, int forceSend,
                     v8::Handle<v8::Function> execCompleteCallback);
-  void prepare(NdbTransaction *);
-  const NdbError & getNdbError();
+  const NdbError & getNdbError();   // get NdbError from TransactionImpl
   void registerClosedTransaction();
+
+protected:
+  void prepare(NdbTransaction *);
+  void saveNdbErrors();
   BlobHandler * getBlobHandler(int);
   bool hasBlobReadOperations();
+  void setOperationNdbError(int, const NdbError &);
+  void transactionIsClosed();
 
 private:
   KeyOperation * keyOperations;
   const NdbOperation ** const ops;
-  const NdbError ** const errors;
+  NdbError * const errors;
   int size;
   bool doesReadBlobs;
   TransactionImpl *transactionImpl;
+  NdbError * transactionNdbError;
 };
-
-inline void BatchImpl::setError(int n, const NdbError & err) {
-  errors[n] = & err;
-  ops[n] = NULL;
-}
-
-inline const NdbError * BatchImpl::getError(int n) {
-  if(size > n) {
-    return (ops[n] ? & ops[n]->getNdbError() : errors[n]);
-  }
-  return 0;
-}
 
 inline KeyOperation * BatchImpl::getKeyOperation(int n) {
   return & keyOperations[n];
@@ -75,10 +68,6 @@ inline int BatchImpl::execute(int execType, int abortOption, int forceSend) {
 inline int BatchImpl::executeAsynch(int execType, int abortOption, int forceSend,
                                    v8::Handle<v8::Function> callback) {
   return transactionImpl->executeAsynch(this, execType, abortOption, forceSend, callback);
-}
-
-inline const NdbError & BatchImpl::getNdbError() {
-  return transactionImpl->getNdbError();
 }
 
 inline void BatchImpl::registerClosedTransaction() {

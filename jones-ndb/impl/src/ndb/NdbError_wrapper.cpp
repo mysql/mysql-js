@@ -18,6 +18,15 @@
  02110-1301  USA
 */
 
+/* NOTE
+
+  JavaScript accessor methods are used to get properties from an NdbError;
+  the NdbError must remain valid while accessed from JavaScript.
+
+  After an NdbTransaction is closed, any reference to an NdbError from the
+  NdbTransaction or its NdbOperations becomes invalid.
+
+*/
 
 #include <NdbApi.hpp>
 
