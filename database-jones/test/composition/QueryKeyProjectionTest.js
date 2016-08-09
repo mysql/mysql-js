@@ -254,9 +254,7 @@ t8.run = function() {
     then(function(actualCustomers) {
       testCase.errorIfNotEqual('result length', 0, actualCustomers.length);
       testCase.failOnError();}).
-      then(null, function(err) {
-        testCase.fail(err);
-    });
+    then(null, function(err) { testCase.fail(err); });
   });
 };
 
