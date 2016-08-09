@@ -182,7 +182,7 @@ function onExecute(dbTxHandler, execMode, err, execId, userCallback) {
     dbTxHandler.impl = null;
   }
 
-  /* Next callback */
+  /* Optional transaction callback */
   if(typeof userCallback === 'function') {
     userCallback(dbTxHandler.error, dbTxHandler);
   }
