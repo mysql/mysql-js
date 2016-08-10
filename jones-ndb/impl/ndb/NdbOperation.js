@@ -767,7 +767,7 @@ function getQueryResults(op, userCallback) {
       op.result.success = false;
       op.result.error = new DBOperationError().fromNdbError(err);
     } else if (nresults == 0) {
-      op.result.succees = false;
+      op.result.success = false;
       op.result.error = new DBOperationError().fromSqlState("02000");
     } else {
       for(i = 0 ; i < nresults ; i++) {
