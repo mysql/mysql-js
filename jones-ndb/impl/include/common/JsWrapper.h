@@ -59,9 +59,13 @@ inline Local<T> ToLocal(const Persistent<T>* p_) {
 #define BUFFER_HANDLE v8::MaybeLocal
 #define LOCAL_BUFFER(B) B.ToLocalChecked()
 #define IsExternalAscii IsExternalOneByte
+#define COPY_TO_BUFFER(Iso,Data,Len) node::Buffer::Copy(Iso,Data,Len).ToLocalChecked()
+#define USE_FOR_BUFFER(Iso,Data,Len) node::Buffer::New(Iso,Data,Len).ToLocalChecked()
 #else
 #define BUFFER_HANDLE v8::Local
 #define LOCAL_BUFFER(B) B
+#define COPY_TO_BUFFER(Iso,Data,Len) node::Buffer::New(Iso,Data,Len)
+#define USE_FOR_BUFFER(Iso,Data,Len) node::Buffer::Use(Iso,Data,Len)
 #endif
 
 /* Signature of a V8 function wrapper

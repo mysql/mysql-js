@@ -838,7 +838,7 @@ Local<Value> getDefaultValue(v8::Isolate *isolate, const NdbDictionary::Column *
   
   const void* dictDefaultBuff = col->getDefaultValue(& defaultLen);
   if(defaultLen) {
-    v = LOCAL_BUFFER(node::Buffer::New(isolate, (char *) dictDefaultBuff, defaultLen));
+    v = COPY_TO_BUFFER(isolate, (char *) dictDefaultBuff, defaultLen);
   }
   return v;
 }
