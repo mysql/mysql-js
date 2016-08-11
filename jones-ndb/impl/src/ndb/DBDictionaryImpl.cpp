@@ -516,7 +516,7 @@ Handle<Object> GetTableCall::buildDBIndex_PK() {
   */  
   int ncol = ndb_table->getNoOfPrimaryKeys();
   DEBUG_PRINT("Creating Primary Key Record");
-  Record * pk_record = new Record(dict, ncol, true);
+  Record * pk_record = new Record(dict, ncol);
   Local<Array> idx_columns = Array::New(isolate, ncol);
   for(int i = 0 ; i < ncol ; i++) {
     const char * col_name = ndb_table->getPrimaryKey(i);

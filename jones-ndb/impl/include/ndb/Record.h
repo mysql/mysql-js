@@ -43,13 +43,13 @@ private:
     unsigned char array[4];
     Uint32 value;
   } pkColumnMask, allColumnMask;
-  bool isPrimaryKey;
+  bool isPartitionKey;
 
   void build_null_bitmap();
   void pad_offset_for_alignment();
 
 public:
-  Record(NdbDictionary::Dictionary *, int, bool isPK=false);
+  Record(NdbDictionary::Dictionary *, int);
   ~Record();
   void addColumn(const NdbDictionary::Column *);
   bool completeTableRecord(const NdbDictionary::Table *);
@@ -69,7 +69,7 @@ public:
   void setNull(int idx, char *data) const;
   void setNotNull(int idx, char *data) const;
   Uint32 isNull(int idx, char * data) const;
-  bool isPK() const;
+  bool partitionKey() const;
 };
 
 
@@ -119,8 +119,8 @@ inline Uint32 Record::isNull(int idx, char * data) const {
   else return 0;
 }
 
-inline bool Record::isPK() const {
-  return isPrimaryKey;
+inline bool Record::partitionKey() const {
+  return isPartitionKey;
 }
 
 inline Uint32 Record::getPkColumnMask() const {

@@ -72,7 +72,7 @@ bool TransactionImpl::tryImmediateStartTransaction(KeyOperation * op) {
 
 void TransactionImpl::startTransaction(KeyOperation * op) {
   assert(ndbTransaction == 0);
-  bool startWithHint = (op && op->key_buffer && op->key_record->isPK()); 
+  bool startWithHint = (op && op->key_buffer && op->key_record->partitionKey());
 
   if(startWithHint) {
     char hash_buffer[512];        

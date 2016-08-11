@@ -25,7 +25,7 @@
 #include "unified_debug.h"
 #include "Record.h"
 
-Record::Record(NdbDictionary::Dictionary *d, int ncol, bool isPK) : 
+Record::Record(NdbDictionary::Dictionary *d, int ncol) :
   dict(d),
   ncolumns(ncol),
   n_nullable(0),
@@ -38,7 +38,7 @@ Record::Record(NdbDictionary::Dictionary *d, int ncol, bool isPK) :
   specs(new NdbDictionary::RecordSpecification[ncol]),
   pkColumnMask(),
   allColumnMask(),
-  isPrimaryKey(isPK)                                                       {};
+  isPartitionKey(true)                                                     {};
 
 Record::~Record() {
   // dict->releaseRecord(ndb_record);  // causes crashes due to dict==0. ??
@@ -84,6 +84,9 @@ void Record::addColumn(const NdbDictionary::Column *column) {
   {
     nblobs++;
   }
+
+  /* The record is the partition key only if every column is */
+  isPartitionKey &= column->getPartitionKey();
 
   /* Increment the counter and record size */
   index += 1;
