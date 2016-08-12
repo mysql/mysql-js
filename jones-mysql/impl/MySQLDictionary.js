@@ -280,15 +280,20 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         break;
 
       default:
-        // found column definition
+        // found column definition?
+        columnName = (token.split('`'))[1];
+        if (columnName === undefined) {
+          // not a column; might be e.g. /*!50100 PARTITION BY KEY(i) */
+          udebug.log_detail('parseCreateTable ignoring token', token);
+          break;
+        }
+        udebug.log_detail('parseCreateTable: columnName:', columnName);
         nullable = true; // default if no 'NOT NULL' clause
         unsigned = false; // default if no 'unsigned' clause
         column = {};
 
         column.columnNumber = columnNumber++;
         // decode the column name
-        columnName = (token.split('`'))[1];
-        udebug.log_detail('parseCreateTable: columnName:', columnName);
         column.name = columnName;
         if(columnName === "SPARSE_FIELDS") {
           // Note: NDB also requires (VARCHAR + UNICODE) or (VARBINARY)

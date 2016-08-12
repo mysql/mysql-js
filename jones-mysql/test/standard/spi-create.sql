@@ -1,6 +1,6 @@
 use test;
 drop table if exists tbl1;
-create table IF NOT EXISTS tbl1 (i int primary key not null, j int);
+create table IF NOT EXISTS tbl1 (i int primary key not null, j int) PARTITION BY KEY(i);
 
 drop table if exists tbl2;
 create table IF NOT EXISTS tbl2 (
