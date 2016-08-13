@@ -873,6 +873,7 @@ function checkOperation(err, dbOperation) {
 /** Create a sector object for a domain object in a projection.
  */
 function Sector() {
+	this.index = -1;         // will be filled by createSector
   this.keyFields = [];      // array of FieldMapping
   this.keyFieldNames = [];
   this.keyFieldCount = 0;
@@ -893,7 +894,7 @@ function Sector() {
 }
 
 Sector.prototype.inspect = function() {
-  var s = "Sector for " + this.tableHandler.dbTable.name;
+  var s = "Sector " + this.index + " for " + this.tableHandler.dbTable.name;
   if(this.joinTableHandler) {
     s += " with join table " + this.joinTableHandler.dbTable.name;
   }
@@ -955,6 +956,7 @@ function createSector(outerLoopProjections, innerLoopProjections, sectors, index
       ' inner: ' + innerLoopProjections[0].name + ' for ' + innerLoopProjections[0].domainObject.name +
       ' index: ' + index + ' offset: ' + offset);}
   var sector = new Sector();
+  sector.index = index;
 
   var projection = innerLoopProjections.shift();
   var outerNestedProjection;

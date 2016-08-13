@@ -60,19 +60,22 @@ queryDomainTypeFunctions.param = param;
 queryDomainTypeFunctions.execute = execute;
 
 /**
- * QueryField represents a mapped field in a domain object. QueryField is used to build
- * QueryPredicates by comparing the field to parameters.
- * @param queryDomainType
- * @param field
- * @return
+ * QueryField represents a mapped field in a domain object. It encapsulates a FieldMapping
+ * and the table alias used to generate SQL based on which sector the field is in.
+ * QueryField is used to build QueryPredicates by comparing the field to parameters.
+ * @param queryDomainType the query domain type returned by session.createQuery callback
+ * @param field the FieldMapping (component of TableMapping) for the field
+ * @param aliasIndex the sector number where this field is defined
  */
-var QueryField = function(queryDomainType, field) {
-  udebug.log('QueryField<ctor>', field.fieldName);
+function QueryField (queryDomainType, field, aliasIndex) {
+  udebug.log('QueryField<ctor>', field.fieldName, 'aliasIndex', aliasIndex);
 //  this.class = 'QueryField';        // useful for debugging
 //  this.fieldName = field.fieldName; // useful for debugging
   this.queryDomainType = queryDomainType;
   this.field = field;
-};
+  this.columnName = field.columnName;
+  this.alias = aliasIndex !== undefined ?('t' + aliasIndex + '.'): '';
+}
 
 QueryField.prototype.eq = function(queryParameter) {
   return new QueryEq(this, queryParameter);
@@ -119,6 +122,100 @@ QueryField.prototype.inspect = function() {
   return this.field.fieldName;
 };
 
+/** Make the field queryable even if the name of the field is a reserved word.
+ * @param qdt the QueryDomainType or QueryRelationship to assign the queryableField
+ * @param name the name of the field
+ * @param queryableField the QueryField or QueryRelationship to assign qdt[name]
+ */
+function makeQueryable(qdt, name, queryableField) {
+  if (keywords.indexOf(name) === -1) {
+    // field name is not a keyword
+    qdt[name] = queryableField;
+  } else {
+    if(udebug.is_detail()) {udebug.log_detail('QueryProjectionDomainType<ctor> field', name, 'is a keyword.');}
+    // field name is a keyword
+    // allow e.g. qdt.where.id
+    if (name !== 'field') {
+      // if field is a reserved word but not a function, skip setting the function
+      qdt[name] = queryDomainTypeFunctions[name];
+      qdt[name].eq = QueryField.prototype.eq;
+      qdt[name].field = queryableField.field;
+    }
+    // allow e.g. qdt.field.where
+    qdt.field[name] = queryableField;
+  }
+}
+
+
+/**
+ * QueryRelationship represents a mapped relationship in a domain object.
+ * QueryRelationship is used to build QueryPredicates by navigating the
+ * relationship to fields.
+ * @param sectors the sector array from the top level projection
+ * @param childSectorIndex the index into sectors for this relationship
+ * @param childRelationshipName the name of the field in the parent
+ */
+function QueryRelationship(sectors, childSectorIndex, childRelationshipName) {
+	var projection = sectors[childSectorIndex].projection;
+  udebug.log('QueryRelationship<ctor> for ', childRelationshipName, 'index', childSectorIndex);
+  if(udebug.is_detail()) { udebug.log_detail('with projection', projection); }
+  this.alias = 't' + childSectorIndex + '.';
+  this.columnName = childRelationshipName;
+  // get the name of the first primary key field for isNull and isNotNull operations
+  var dbTableHandler = projection.dbTableHandler;
+  var dbTable = projection.dbTableHandler.dbTable;
+  var primaryKeyIndex = projection.dbTableHandler.dbTable.indexes[0];
+  var primaryKeyIndexColumnNumber = primaryKeyIndex.columnNumbers[0];
+  var primaryKeyName = dbTable.columns[primaryKeyIndexColumnNumber].name;
+  // get FieldMapping for the first primary key field
+  this.field = dbTableHandler.getFieldMapping(primaryKeyName);
+}
+
+QueryRelationship.prototype.isNull = function() {
+  return new QueryIsNull(this);
+};
+
+QueryRelationship.prototype.isNotNull = function() {
+  return new QueryIsNotNull(this);
+};
+
+QueryRelationship.prototype.eq = function() {
+  throw new Error('illegal operation eq for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.le = function() {
+  throw new Error('illegal operation le for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.ge = function() {
+  throw new Error('illegal operation ge for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.lt = function() {
+  throw new Error('illegal operation lt for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.gt = function() {
+  throw new Error('illegal operation gt for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.ne = function() {
+  throw new Error('illegal operation ne for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.between = function() {
+  throw new Error('illegal operation between for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype['in'] = function() {
+  throw new Error('illegal operation in for relationship ' + this.field.fieldName);
+};
+
+QueryRelationship.prototype.inspect = function() {
+  return this.field.fieldName;
+};
+
+
 /** QueryProjectionDomainType represents a projection that can be used to create and execute queries.
  * It encapsulates the Projection which contains references to the domain type, fields, and relationships.
  * This object differs from QueryDomainType in that relationships are included in the fields of the object
@@ -131,7 +228,7 @@ function QueryProjectionDomainType(session, projection) {
   this.queryDomainType = null;
   this.isQueryProjectionDomainType = true;
   this.projection = projection;
-  udebug.log('QueryProjectionDomainType<ctor> for', projection.domainObject.name);
+  udebug.log('QueryProjectionDomainType<ctor> for', projection.domainObject.name,'\nsectors:', projection.sectors);
   if(udebug.is_detail()) {udebug.log_detail('projection', projection);}
   // get the dbTableHandler for the list of query-able fields
   dbTableHandler = projection.dbTableHandler;
@@ -151,29 +248,72 @@ function QueryProjectionDomainType(session, projection) {
   queryDomainType.param = param;
   queryDomainType.execute = execute;
 
-  var fieldName, queryField;
-  // add a property for each field in the table mapping
-  jones.dbTableHandler.getAllQueryFields().forEach(function(field) {
-    fieldName = field.fieldName;
-    if(udebug.is_detail()) {udebug.log_detail('QueryDomainType<ctor> for field', fieldName, '\n', field);}
-    queryField = new QueryField(queryDomainType, field);
-    if (keywords.indexOf(fieldName) === -1) {
+  /** Make the field queryable even if the name of the field is a reserved word.
+   * @param qdt the QueryDomainType or QueryField to assign the queryableField
+   * @param name the name of the field
+   * @param queryableField the QueryField (or QueryRelationship) to assign to qdt[name]
+   */
+  function makeQueryable(qdt, name, queryableField) {
+    if (keywords.indexOf(name) === -1) {
       // field name is not a keyword
-      queryDomainType[fieldName] = queryField;
+      qdt[name] = queryableField;
     } else {
-      if(udebug.is_detail()) {udebug.log_detail('QueryDomainType<ctor> field', fieldName, 'is a keyword.');}
+      if(udebug.is_detail()) {udebug.log_detail('QueryProjectionDomainType<ctor> field', name, 'is a keyword.');}
       // field name is a keyword
       // allow e.g. qdt.where.id
-      if (fieldName !== 'field') {
+      if (name !== 'field') {
         // if field is a reserved word but not a function, skip setting the function
-        queryDomainType[fieldName] = queryDomainTypeFunctions[fieldName];
-        queryDomainType[fieldName].eq = QueryField.prototype.eq;
-        queryDomainType[fieldName].field = queryField.field;
+        qdt[name] = queryDomainTypeFunctions[name];
+        qdt[name].eq = QueryField.prototype.eq;
+        qdt[name].field = queryableField.field;
       }
       // allow e.g. qdt.field.where
-      queryDomainType.field[fieldName] = queryField;
+      qdt.field[name] = queryableField;
     }
-  });
+  }
+
+  /** Create a QueryField for a Sector. For each projection field at the top level,
+   * a QueryField is created, using the sector index as a parameter for the QueryField.
+   * For each relationship at the top level, a QueryRelationship is created.
+   * The QueryRelationship then creates QueryFields and recursively, QueryRelationships
+   * for its own relationships.
+   * @param qdt the QueryDomainType or QueryRelationship to assign the QueryFields and QueryRelationships
+   * @param sectors the array of sectors at the top level
+   * @param index the index into the sectors for which to create the QueryFields
+   */
+  function createQueryFieldsAndRelationships(qdt, sectors, index) {
+    var sector, sectorProjection, sectorDBTableHandler, sectorFieldMapping, queryField;
+    var childSector, childRelationshipName;
+    // get the sector
+    sector = sectors[index];
+    // get the projection for this sector
+    sectorProjection = sector.projection;
+    // get the dbTableHandler for this sector
+    sectorDBTableHandler = sectorProjection.dbTableHandler;
+    udebug.log('createQueryFieldsAndRelationships for sector', index, 'name', sectorProjection.domainObject.name);
+    // for each projected field, assign the QueryField to this QueryDomainType
+    sectorProjection.fields.forEach(function(name) {
+      // get the field mapping for each field name
+      sectorFieldMapping = sectorDBTableHandler.getFieldMapping(name);
+      // create the QueryField for the field in this sector
+      queryField = new QueryField(qdt, sectorFieldMapping, index);
+      makeQueryable(qdt, name, queryField);
+    });
+    // for each projected relationship, create the QueryRelationship and assign it to this QueryDomainType or QueryRelationship
+    sector.childSectorIndexes.forEach(function(childSectorIndex) {
+      // get the relationship name
+      childSector = sectors[childSectorIndex];
+      childRelationshipName = childSector.parentFieldMapping.fieldName;
+      queryField = new QueryRelationship(sectors, childSectorIndex, childRelationshipName);
+      makeQueryable(qdt, childRelationshipName, queryField);
+      // recursively create QueryRelationships and their QueryFields
+      createQueryFieldsAndRelationships(queryField, projection.sectors, childSectorIndex);
+    });
+  }
+
+  // create the top QueryFields and QueryRelationships
+  createQueryFieldsAndRelationships(queryDomainType, projection.sectors, 0);
+
 }
 
 /** Query Domain Type represents a domain object that can be used to create and execute queries.
@@ -258,8 +398,7 @@ QueryParameter.prototype.inspect = function() {
 /******************************************************************************
  *                 SQL VISITOR
  *****************************************************************************/
-var SQLVisitor = function(rootPredicateNode, alias) {
-	this.alias = alias || '';
+var SQLVisitor = function(rootPredicateNode) {
   this.rootPredicateNode = rootPredicateNode;
   rootPredicateNode.sql = {};
   rootPredicateNode.sql.formalParameters = [];
@@ -284,7 +423,7 @@ function getEscapedValue(literal) {
 /** Handle nodes QueryEq, QueryNe, QueryLt, QueryLe, QueryGt, QueryGe */
 SQLVisitor.prototype.visitQueryComparator = function(node) {
   // set up the sql text in the node
-  var columnName = this.alias + node.queryField.field.columnName;
+  var columnName = node.queryField.alias + node.queryField.columnName;
   var value = '?';
   if(node.constants) {
     // the parameter is a literal (String, number, or object with a toString method)
@@ -319,7 +458,7 @@ SQLVisitor.prototype.visitQueryUnaryPredicate = function(node) {
 
 /** Handle nodes QueryIsNull, QueryIsNotNull */
 SQLVisitor.prototype.visitQueryUnaryOperator = function(node) {
-  var columnName = this.alias + node.queryField.field.columnName;
+  var columnName = node.queryField.alias + node.queryField.field.columnName;
   node.sql.sqlText = columnName + node.operator;
   udebug.log('SQLVisitor for', node.queryField.field.fieldName + node.operator);
   if(udebug.is_detail()) {udebug.log_detail(node.sql.sqlText);}
@@ -327,16 +466,16 @@ SQLVisitor.prototype.visitQueryUnaryOperator = function(node) {
 
 /** Handle node QueryBetween */
 SQLVisitor.prototype.visitQueryBetweenOperator = function(node) {
-  var columnName = this.alias + node.queryField.field.columnName;
+  var columnName = node.queryField.alias + node.queryField.field.columnName;
   var leftValue = '?';
   var rightValue = '?';
   if (node.constants & 1) {
-    leftValue = node.parameter1;
+    leftValue = getEscapedValue(node.parameter1);
   } else {
     this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[0];
   }
   if (node.constants & 2) {
-    rightValue = node.parameter2;
+    rightValue = getEscapedValue(node.parameter2);
   } else {
     this.rootPredicateNode.sql.formalParameters[this.parameterIndex++] = node.formalParameters[1];
   }
@@ -484,8 +623,8 @@ AbstractQueryPredicate.prototype.getTopLevelPredicates = function() {
   return [this];
 };
 
-AbstractQueryPredicate.prototype.getSQL = function(alias) {
-  var visitor = new SQLVisitor(this, alias);
+AbstractQueryPredicate.prototype.getSQL = function() {
+  var visitor = new SQLVisitor(this);
   this.visit(visitor);
   return this.sql;
 };

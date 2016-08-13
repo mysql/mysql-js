@@ -394,6 +394,14 @@ function verifyProjection(tc, p, e, a) {
 
 mapShop();
 
+// Simple Customer projection
+var simpleShoppingCartProjection = new mynode.Projection(ShoppingCart).
+  addField('id');
+var simpleCustomerProjection = new mynode.Projection(Customer).
+  addFields('id', 'unikey', 'firstName', 'lastName').
+  addRelationship('shoppingCart', simpleShoppingCartProjection);
+
+
 // Complex Customer projection
 var itemProjection = new mynode.Projection(Item)
 .addFields('id', 'description');
@@ -415,7 +423,7 @@ var shipmentProjection = new mynode.Projection(Shipment)
 //        \-> Discount
 //        \-> Shipment
 var complexCustomerProjection = new mynode.Projection(Customer)
-.addFields('id', 'firstName', 'lastName')
+.addFields('id', 'unikey', 'firstName', 'lastName')
 .addRelationship('shoppingCart', shoppingCartProjection)
 .addRelationship('discounts', discountProjection)
 .addRelationship('shipments', shipmentProjection);
@@ -548,3 +556,4 @@ exports.complexCustomerProjection = complexCustomerProjection;
 exports.complexDiscountProjection = complexDiscountProjection;
 exports.expectedCustomers = expectedCustomers;
 exports.expectedShipments = expectedShipments;
+exports.simpleCustomerProjection = simpleCustomerProjection;

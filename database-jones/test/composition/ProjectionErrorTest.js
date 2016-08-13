@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -35,6 +35,14 @@ var lib = require('./lib.js');
  * t9 many-to-many relationship is not mapped
  * t10 many-to-many relationship neither side defines joinTable
  * t11 one-to-one relationship neither side defined foreignKey
+ * t12 reuse projection in two different projections
+ * t13 projection query relationship with illegal operation eq
+ * t14 projection query relationship with illegal operation ne
+ * t15 projection query relationship with illegal operation lt
+ * t16 projection query relationship with illegal operation le
+ * t17 projection query relationship with illegal operation gt
+ * t18 projection query relationship with illegal operation ge
+ * t19 projection query relationship with illegal operation between
  */
 var t1 = new harness.ConcurrentTest('t1 ProjectionFieldNotMapped');
 var t2 = new harness.ConcurrentTest('t2 ProjectionRelationshipNotMapped');
@@ -48,6 +56,13 @@ var t9 = new harness.ConcurrentTest('t9 ProjectionManyToManyRelationshipFieldNot
 var t10 = new harness.ConcurrentTest('t10 ProjectionManyToManyRelationshipNoJoinTable');
 var t11 = new harness.ConcurrentTest('t11 ProjectionOneToOneRelationshipNoForeignKey');
 var t12 = new harness.ConcurrentTest('t12 ProjectionReuseProjection');
+var t13 = new harness.ConcurrentTest('t13 ProjectionQueryRelationshipIllegalOpEQ');
+var t14 = new harness.ConcurrentTest('t14 ProjectionQueryRelationshipIllegalOpNE');
+var t15 = new harness.ConcurrentTest('t15 ProjectionQueryRelationshipIllegalOpLT');
+var t16 = new harness.ConcurrentTest('t16 ProjectionQueryRelationshipIllegalOpLE');
+var t17 = new harness.ConcurrentTest('t17 ProjectionQueryRelationshipIllegalOpGT');
+var t18 = new harness.ConcurrentTest('t18 ProjectionQueryRelationshipIllegalOpGE');
+var t19 = new harness.ConcurrentTest('t19 ProjectionQueryRelationshipIllegalOpBetween');
 
 t1.run = function() {
   var testCase = this;
@@ -384,5 +399,69 @@ t12.run = function() {
   });
 };
 
+function illegalOperation(testCase, domainObject, expectedErrorMessage, whereFunction) {
+	var session;
+	fail_openSession(testCase, function(s) {
+		session = s;
+		session.createQuery(domainObject).
+    then(function(q) {
+      // illegal operation eq for relationship shoppingCart
+      q.where(whereFunction(q));
+    }).
+    then(function() {
+      testCase.fail('Unexpected success of bad operation on relationship; expected error containing  ' + expectedErrorMessage);
+    },
+	  function(err) {
+      if(err.message.indexOf(expectedErrorMessage) === -1) {
+        testCase.fail('t13 Unexpected error message; does not include ' + expectedErrorMessage + ' in ' + err.message);
+      } else {
+        testCase.pass();
+      }
+    });
+  });
+}
 
-exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12];
+t13.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation eq', function(qdt) {
+		return qdt.where(qdt.shoppingCart.eq(qdt.param('p1')));
+	});
+};
+
+t14.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation ne', function(qdt) {
+		return qdt.where(qdt.shoppingCart.ne(qdt.param('p1')));
+	});
+};
+
+t15.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation lt', function(qdt) {
+		return qdt.where(qdt.shoppingCart.lt(qdt.param('p1')));
+	});
+};
+
+t16.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation le', function(qdt) {
+		return qdt.where(qdt.shoppingCart.le(qdt.param('p1')));
+	});
+};
+
+t17.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation gt', function(qdt) {
+		return qdt.where(qdt.shoppingCart.gt(qdt.param('p1')));
+	});
+};
+
+t18.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation ge', function(qdt) {
+		return qdt.where(qdt.shoppingCart.ge(qdt.param('p1')));
+	});
+};
+
+t19.run = function() {
+	illegalOperation(this, lib.simpleCustomerProjection, 'illegal operation between', function(qdt) {
+		return qdt.where(qdt.shoppingCart.between(qdt.param('p1'),qdt.param('p2')));
+	});
+};
+
+
+exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19];

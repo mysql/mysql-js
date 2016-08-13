@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -1351,8 +1351,9 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   var sqlParameters = [];
   // resolve parameters
   var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
+  udebug.log_detail('buildScanOperation with sql:', sql.formalParameters, '\n',
+      queryDomainType.jones_query_domain_type.predicate);
   var formalParameters = sql.formalParameters;
-  udebug.log_detail('MySQLConnection.DBSession.buildScanOperation formalParameters:', formalParameters);
   var i;
   for (i = 0; i < formalParameters.length; ++i) {
     parameterName = formalParameters[i].name;
@@ -1369,7 +1370,7 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
         initializeProjection(projection);
       }
     }
-    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL('t0.').sqlText;
+    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
     return new ReadProjectionOperation(this, dbTableHandler, projection, whereSQL, sqlParameters, true, callback);
   }
   // non-projection scan
