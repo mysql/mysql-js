@@ -29,7 +29,8 @@ var t3 = new harness.ConcurrentTest('t3 Query TableScanProjectionTestDefaultEmpt
 var t4 = new harness.ConcurrentTest('t4 Query IndexScanProjectionTestMultipleResults');
 var t6 = new harness.ConcurrentTest('t6 Query IndexScanProjectionTestManyToMany');
 var t7 = new harness.ConcurrentTest('t7 Query TableScanProjectionTestManyToMany');
-var t8 = new harness.ConcurrentTest('t7 Query TableScanProjectionTestNoResults');
+var t8 = new harness.ConcurrentTest('t8 Query TableScanProjectionTestNoResults');
+var t9 = new harness.ConcurrentTest('t9 Query TableScanProjectionTestManyToManyRelationshipFilter');
 
 
 /** All key columns specified for index on lastname, firstname.
@@ -262,6 +263,62 @@ t8.run = function() {
   });
 };
 
+/** Projection test many to many with join table defined on "left side".
+ * Table scan on discount name (not indexed).
+ * Filter on item 10014.
+ * customer 103 has shopping cart 1003 which has no line item
+ * customer 101 has no shopping cart
+ * Discount -> Customer -> ShoppingCart -> LineItem -> Item
+ */
+t9.run = function() {
+  var testCase = this;
+  var session;
+
+  var t9itemProjection = new mynode.Projection(lib.Item)
+  .addField('id');
+  var t9lineItemProjection = new mynode.Projection(lib.LineItem)
+  .addField('line')
+  .addRelationship('item', t9itemProjection);
+var t9shoppingCartProjection = new mynode.Projection(lib.ShoppingCart)
+  .addField('id')
+  .addRelationship('lineItems', t9lineItemProjection);
+var t9customerProjection = new mynode.Projection(lib.Customer)
+  .addField('id', 'lastName', 'firstName')
+  .addRelationship('shoppingCart', t9shoppingCartProjection);
+var t9discountProjection = new mynode.Projection(lib.Discount)
+  .addField('id', 'description', 'percent')
+  .addRelationship('customers', t9customerProjection);
+
+  var expectedItem10014 = new lib.Item(10014);
+  var expectedShoppingCart1000 = new lib.ShoppingCart(1000, 100);
+  expectedShoppingCart1000.lineItems = [lib.createLineItem(1, 5, 10014, expectedItem10014)];
+  var expectedCustomer100 = new lib.Customer(100, 'Craig', 'Walton');
+  expectedCustomer100.shoppingCart = expectedShoppingCart1000;
+  var expectedDiscount = new lib.Discount(0, 'new customer');
+  expectedDiscount.percent = 10;
+  expectedDiscount.customers = [expectedCustomer100];
+  fail_openSession(testCase, function(s) {
+    session = s;
+    session.createQuery(t9discountProjection).
+    then(function(q) {
+      q.where(q.description.eq('new customer').
+        and(q.customers.shoppingCart.lineItems.item.id.eq(10014)));
+      return q.execute({});
+    }).
+    then(function(actualDiscounts) {
+      var actualDiscount = actualDiscounts[0];
+      var actualShoppingCart = actualDiscount.customers[0].shoppingCart;
+      var actualItem = actualShoppingCart.lineItems[0].item;
+      udebug.log(actualDiscounts[0], actualShoppingCart, actualItem);
+      testCase.errorIfNotEqual('result length', 1, actualDiscounts.length);
+      lib.verifyProjection(testCase, t9discountProjection, expectedDiscount, actualDiscounts[0]);
+      testCase.failOnError();}).
+    then(null, function(err) {
+      testCase.fail(err);
+    });
+  });
+};
 
 
-exports.tests = [t1, t2, t3, t4, t6, t7, t8];
+
+exports.tests = [t1, t2, t3, t4, t6, t7, t8, t9];
