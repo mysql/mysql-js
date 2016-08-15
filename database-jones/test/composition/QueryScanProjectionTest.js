@@ -31,6 +31,7 @@ var t6 = new harness.ConcurrentTest('t6 Query IndexScanProjectionTestManyToMany'
 var t7 = new harness.ConcurrentTest('t7 Query TableScanProjectionTestManyToMany');
 var t8 = new harness.ConcurrentTest('t8 Query TableScanProjectionTestNoResults');
 var t9 = new harness.ConcurrentTest('t9 Query TableScanProjectionTestManyToManyRelationshipFilter');
+var t10 = new harness.ConcurrentTest('t9 Query TableScanProjectionTestManyToManyRelationshipFilterOnlyOnRelationshipField');
 
 
 /** All key columns specified for index on lastname, firstname.
@@ -319,6 +320,57 @@ var t9discountProjection = new mynode.Projection(lib.Discount)
   });
 };
 
+/** Projection test many to many with join table defined on "left side".
+ * Table scan on discount name (not indexed). All discounts are expected.
+ * Discount -> Customer -> ShoppingCart -> LineItem -> Item
+ */
+t10.run = function() {
+  var testCase = this;
+  var session;
+
+  var expectedCustomer100 = new lib.Customer(100, 'Craig', 'Walton');
+  expectedCustomer100.shoppingCart = lib.expectedShoppingCart1000;
+
+  var expectedCustomer101 = new lib.Customer(101, 'Sam', 'Burton');
+  expectedCustomer101.shoppingCart = null;
+
+  var expectedCustomer102 = new lib.Customer(102, 'Wal', 'Greeton');
+  expectedCustomer102.shoppingCart = lib.expectedShoppingCart1002;
+
+  var expectedCustomer103 = new lib.Customer(103, 'Burn', 'Sexton');
+  expectedCustomer103.shoppingCart = lib.expectedShoppingCart1003;
+
+  var expectedDiscount0 = new lib.Discount(0, 'new customer', 10);
+  expectedDiscount0.customers = [expectedCustomer100];
+  var expectedDiscount1 = new lib.Discount(1, 'good customer', 15);
+  expectedDiscount1.customers = [expectedCustomer101];
+  var expectedDiscount2 = new lib.Discount(2, 'spring sale', 10);
+  expectedDiscount2.customers = [expectedCustomer102];
+  var expectedDiscount3 = new lib.Discount(3, 'internet special', 20);
+  expectedDiscount3.customers = [expectedCustomer101, expectedCustomer103];
+  var expectedDiscount4 = new lib.Discount(4, 'closeout', 50);
+  expectedDiscount4.customers = [expectedCustomer101];
+  var expectedDiscounts = [expectedDiscount0, expectedDiscount1, expectedDiscount2, expectedDiscount3, expectedDiscount4];
+
+  fail_openSession(testCase, function(s) {
+    session = s;
+    session.createQuery(lib.complexDiscountProjection).
+    then(function(q) {
+      return q.execute();
+    }).
+    then(function(actualDiscounts) {
+//      console.log(actualDiscounts);
+      testCase.errorIfNotEqual('result length', 5, actualDiscounts.length);
+      lib.verifyProjection(testCase, lib.complexDiscountProjection, expectedDiscounts, actualDiscounts);
+//      console.log('comparing customer 101 from discounts', actualDiscounts[1].customers[0], actualDiscounts[3].customers[0],
+//      		actualDiscounts[1].customers[0] === actualDiscounts[3].customers[0]);
+      testCase.failOnError();}).
+    then(null, function(err) {
+      testCase.fail(err);
+    });
+  });
+};
 
 
-exports.tests = [t1, t2, t3, t4, t6, t7, t8, t9];
+
+exports.tests = [t1, t2, t3, t4, t6, t7, t8, t9, t10];

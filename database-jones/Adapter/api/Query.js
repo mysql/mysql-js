@@ -47,9 +47,11 @@ var where = function(predicate) {
 };
 
 /** QueryDomainType function execute */
-var execute = function() {
+var execute = function(queryParameters, callback) {
   var session = this.jones_query_domain_type.session;
   var context = new userContext.UserContext(arguments, 2, 2, session, session.sessionFactory);
+  // if the user did not specify any arguments, default queryParameters to {}
+  context.user_arguments[0] = queryParameters || {};
   // delegate to context's execute for execution
   return context.executeQuery(this);
 };

@@ -649,6 +649,8 @@ function initializeProjection(projection) {
   alias = 0;
   offset = 0;
 
+  // always order by first table primary key to avoid duplicates in scan results
+
   for (i = 0; i < projection.sectors.length; ++i) {
     sector = projection.sectors[i];
     udebug.log_detail('initializeProjection for sector\n', sector);
@@ -663,7 +665,6 @@ function initializeProjection(projection) {
     joinType = '';
     on = '';
     if (sector.parentFieldMapping && i > 0) {
-//      sector.relatedTableName = sector.parentTableHandler.dbTable.database + '.' + sector.parentTableHandler.dbTable.name;
       if (sector.parentFieldMapping.toMany && sector.parentFieldMapping.manyTo) {
         // join table mapping
         // create a join table reference based on current table name
@@ -695,7 +696,7 @@ function initializeProjection(projection) {
           and = ' AND ';
         }
         from += fromDelimiter + joinType + sector.tableName + ' AS ' + sectorName + otherOn;
-        
+
       } else {
         // foreign key mapping for one-to-one, one-to-many, and many-to-one relationships
         joinType = ' LEFT OUTER JOIN ';
@@ -706,21 +707,21 @@ function initializeProjection(projection) {
                 sectorName + '.' + sector.thisJoinColumns[joinIndex];
           and = ' AND ';
         }
-        if (sector.parentFieldMapping.toMany) {
-          // order by key columns that can have multiple values (toMany relationships)
-          for (j = 0; j < sector.keyFields.length; ++j) {
-            keyField = sector.keyFields[j];
-            columnName = keyField.columnName;
-            order += orderDelimiter + sectorName + '.' + columnName;
-            orderDelimiter = ', ';
-          }
-        }
         from += fromDelimiter + joinType + sector.tableName + ' AS ' + sectorName + on;
       }
     } else {
       // first table is always t0
       from += sector.tableName + ' AS ' + sectorName;
       fromDelimiter = ' ';
+    }
+    if (i == 0 || sector.parentFieldMapping.toMany) {
+      // order by key columns that can have multiple values (toMany relationships and first sector)
+      for (j = 0; j < sector.keyFields.length; ++j) {
+        keyField = sector.keyFields[j];
+        columnName = keyField.columnName;
+        order += orderDelimiter + sectorName + '.' + columnName;
+        orderDelimiter = ', ';
+      }
     }
     // add key column names to SELECT clause
     for (j = 0; j < sector.keyFields.length; ++j) {
@@ -1348,36 +1349,39 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   getMetadata(dbTableHandler);
   var scanSQL = '';
   var whereSQL = '';
+  var sql = {};
   var sqlParameters = [];
-  // resolve parameters
-  var sql = queryDomainType.jones_query_domain_type.predicate.getSQL();
-  udebug.log_detail('buildScanOperation with sql:', sql.formalParameters, '\n',
-      queryDomainType.jones_query_domain_type.predicate);
-  var formalParameters = sql.formalParameters;
-  var i;
-  for (i = 0; i < formalParameters.length; ++i) {
-    parameterName = formalParameters[i].name;
-    value = parameterValues[parameterName];
-    sqlParameters.push(value);
+  var predicate = queryDomainType.jones_query_domain_type.predicate;
+  // resolve parameters if predicate is specified
+  if (predicate !== undefined) {
+    sql = predicate.getSQL();
+    udebug.log_detail('buildScanOperation with sql:', sql.formalParameters, '\n', predicate);
+    var formalParameters = sql.formalParameters;
+    var i;
+    for (i = 0; i < formalParameters.length; ++i) {
+      parameterName = formalParameters[i].name;
+      value = parameterValues[parameterName];
+      sqlParameters.push(value);
+    }
   }
   // projection scans use SELECT and FROM from Projection and construct WHERE differently
   if (queryDomainType.isQueryProjectionDomainType) {
     projection = queryDomainType.projection;
-    if (queryDomainType.jones_query_domain_type.predicate !== undefined) {
-      // process the projection object if it has not been processed since it was last changed
-      if (!projection.mysql || (projection.mysql.id !== projection.id)) {
-        // we need to (re-)initialize the projection object for use with mysql adapter
-        initializeProjection(projection);
-      }
+    // process the projection object if it has not been processed since it was last changed
+    if (!projection.mysql || (projection.mysql.id !== projection.id)) {
+      // we need to (re-)initialize the projection object for use with mysql adapter
+      initializeProjection(projection);
     }
-    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
+    if (predicate !== undefined) {
+      whereSQL = ' WHERE ' + sql.sqlText;
+    }
     return new ReadProjectionOperation(this, dbTableHandler, projection, whereSQL, sqlParameters, true, callback);
   }
   // non-projection scan
   scanSQL = dbTableHandler.mysql.selectTableScanSQL;
   // add the WHERE clause to the sql if the user specified a predicate
   if (queryDomainType.jones_query_domain_type.predicate !== undefined) {
-    whereSQL = ' WHERE ' + queryDomainType.jones_query_domain_type.predicate.getSQL().sqlText;
+    whereSQL = ' WHERE ' + sql.sqlText;
     scanSQL += whereSQL;
     udebug.log_detail('dbSession.buildScanOperation sql:', scanSQL, '\nparameter values:', parameterValues);
     // handle order: must be an index scan and specify ignoreCase 'Asc' or 'Desc'
