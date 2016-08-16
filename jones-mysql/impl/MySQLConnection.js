@@ -1339,11 +1339,12 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
 	if (udebug.is_debug()) { udebug.log_detail('dbSession.buildScanOperation with queryDomainType:\n', queryDomainType,
       '\nparameterValues:', parameterValues); }
   var dbTableHandler = queryDomainType.jones_query_domain_type.dbTableHandler;
+  var queryHandler = queryDomainType.jones_query_domain_type.queryHandler;
+  var predicate = queryDomainType.jones_query_domain_type.predicate;
   var projection;
   var order = parameterValues.order;
   var skip = parameterValues.skip;
   var limit = parameterValues.limit;
-  var queryHandler = queryDomainType.jones_query_domain_type.queryHandler;
   var err;
   var parameterName, value;
   getMetadata(dbTableHandler);
@@ -1351,7 +1352,6 @@ exports.DBSession.prototype.buildScanOperation = function(queryDomainType, param
   var whereSQL = '';
   var sql = {};
   var sqlParameters = [];
-  var predicate = queryDomainType.jones_query_domain_type.predicate;
   // resolve parameters if predicate is specified
   if (predicate !== undefined) {
     sql = predicate.getSQL();
