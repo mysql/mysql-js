@@ -36,6 +36,7 @@
 /* buildReadOperation(DBIndexHandler dbIndexHandler, 
                       Object keys,
                       DBTransactionHandler transaction,
+                      Bool loadResultIntoKeys,
                       function(error, DBOperation) userCallback)
    IMMEDIATE
    Define an operation which when executed will fetch a row.

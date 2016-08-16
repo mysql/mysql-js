@@ -113,7 +113,7 @@ implementation.prototype.find = function(parameters, callback) {
   var dbt = parameters.object.constructor.dbt;
   var tx = this.dbSession.getTransactionHandler();
   var index = dbt.getUniqueIndexHandler(parameters.key);
-  var op = this.dbSession.buildReadOperation(index, parameters.key, tx, callback);
+  var op = this.dbSession.buildReadOperation(index, parameters.key, tx, 0, callback);
   this.execOneOperation(op, tx, callback);
 };
 

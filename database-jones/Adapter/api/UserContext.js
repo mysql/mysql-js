@@ -1597,7 +1597,7 @@ exports.UserContext.prototype.find = function() {
         dbSession = userContext.session.dbSession;
         transactionHandler = dbSession.getTransactionHandler();
         userContext.operation = dbSession.buildReadOperation(index, keys,
-            transactionHandler, findOnResult);
+            transactionHandler, false, findOnResult);
         if (userContext.execute) {
           transactionHandler.execute([userContext.operation], function() {
             if(udebug.is_detail()) { udebug.log('find transactionHandler.execute callback.'); }
@@ -1823,7 +1823,7 @@ exports.UserContext.prototype.executeQuery = function(queryDomainType) {
           queryDomainType.projection, transactionHandler, executeQueryKeyProjectionOnResult);
     } else {
       userContext.operation = dbSession.buildReadOperation(dbIndexHandler, keys,
-          transactionHandler, executeQueryKeyOnResult);
+          transactionHandler, false, executeQueryKeyOnResult);
     }
     transactionHandler.execute([userContext.operation], function() {
       if(udebug.is_detail()) { udebug.log('executeQueryPK transactionHandler.execute callback.'); }
@@ -2075,7 +2075,6 @@ exports.UserContext.prototype.load = function() {
 
   function loadOnResult(err, dbOperation) {
     udebug.log('load.loadOnResult');
-    var values, property;
     var error = checkOperation(err, dbOperation);
     if (error) {
       if (userContext.session.tx.isActive()) {
@@ -2083,18 +2082,6 @@ exports.UserContext.prototype.load = function() {
       }
       userContext.applyCallback(err);
       return;
-    }
-    values = dbOperation.result.value;
-    // FIXME: Result value is already a new domain object
-    /* At this point, dbOperation.result.value is a newly-created domain object,
-       but we need to modify the user's object as passed in to load().
-       For now we will copy fields back to the original object; a better
-       design would avoid creating the new object altogether.
-    */
-    for(property in values) {
-      if(values.hasOwnProperty(property)) {
-        userContext.user_arguments[0][property] = values[property];
-      }
     }
     userContext.applyCallback(null);
   }
@@ -2119,8 +2106,8 @@ exports.UserContext.prototype.load = function() {
         // create the load operation and execute it
         dbSession = userContext.session.dbSession;
         transactionHandler = dbSession.getTransactionHandler();
-        userContext.operation = dbSession.buildReadOperation(index, keys, transactionHandler,
-            loadOnResult);
+        userContext.operation = dbSession.buildReadOperation(index, keys,
+            transactionHandler, true, loadOnResult);
         if (userContext.execute) {
           transactionHandler.execute([userContext.operation], function() {
             if(udebug.is_detail()) { udebug.log('load transactionHandler.execute callback.'); }

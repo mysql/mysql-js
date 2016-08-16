@@ -484,7 +484,7 @@ function DeleteOperation(sql, keys, callback) {
   };
 }
 
-function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
+function ReadOperation(dbSession, dbTableHandler, sql, keys, loadObject, callback) {
   udebug.log('dbSession.ReadOperation with', sql, keys);
   var op = this;
   this.type = 'read';
@@ -492,13 +492,16 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
   this.keys = keys;
   this.callback = callback;
   this.result = {};
+  if (typeof loadObject == 'object') {
+    this.result.value = loadObject;  // operation is "load" rather than "find"
+  }
   op_stats.read++;
 
   function onRead(err, rows) {
+    var property;
     if (err) {
       udebug.log('dbSession.ReadOperation err callback:', err);
       op.result.error = new DBOperationError(err);
-      op.result.value = null;
       op.result.success = false;
       if (typeof(op.callback) === 'function') {
         // call the UserContext callback
@@ -513,11 +516,18 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, callback) {
         }
       } else if (rows.length === 1) {
         udebug.log('dbSession.ReadOperation ONE RESULT callback:', rows[0]);
-        op.result.value = rows[0];
         op.result.success = true;
-        // convert the felix result into the user result
-        // FIXME: DO NOT DO THIS ON session.load()
-        op.result.value = dbTableHandler.newResultObject(op.result.value);
+        if(op.result.value === undefined) {
+          // convert the felix result into the user result
+          op.result.value = dbTableHandler.newResultObject(rows[0]);
+        } else {
+          // load the result into the user's supplied object
+          for(property in rows[0]) {
+            if(rows[0].hasOwnProperty(property)) {
+              op.result.value[property] = rows[0][property];
+            }
+          }
+        }
         if (typeof(op.callback) === 'function') {
           // call the UserContext callback
           op.callback(null, op);
@@ -1294,7 +1304,7 @@ exports.DBSession.prototype.buildDeleteOperation = function(dbIndexHandler, keys
 };
 
 
-exports.DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys, transaction, callback) {
+exports.DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys, transaction, isLoad, callback) {
   udebug.log_detail('dbSession.buildReadOperation with indexHandler:', dbIndexHandler.dbIndex.name, 'keys:', keys);
   var keysArray;
   if (!Array.isArray(keys)) {
@@ -1306,7 +1316,8 @@ exports.DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys, 
   var dbTableHandler = dbIndexHandler.tableHandler;
   getMetadata(dbTableHandler);
   var selectSQL = dbTableHandler.mysql.selectSQL[dbIndexHandler.dbIndex.name];
-  return new ReadOperation(this, dbTableHandler, selectSQL, keysArray, callback);
+  return new ReadOperation(this, dbTableHandler, selectSQL, keysArray,
+                           isLoad && keys, callback);
 };
 
 exports.DBSession.prototype.buildReadProjectionOperation = 

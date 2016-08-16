@@ -121,4 +121,29 @@ t6.run = function() {
   });
 };
 
-module.exports.tests = [t1, t2, t3, t4, t5, t6];
+/***** Test that Load does not call the user's constructor ***/
+var t7 = new harness.ConcurrentTest("testNoConstructorCall");
+t7.run = function() {
+  var testCase = this;
+  var ctorCount = 0;
+  function T7Ctor(id) {
+    ctorCount++;
+    this.id = id;
+    this.unMappedField = 44;  // this should be unchanged in the result
+  }
+  var object = new T7Ctor(7);
+  new jones.TableMapping("t_basic").applyToClass(T7Ctor);
+
+  fail_openSession(testCase, function(session) {
+    session.load(object, function(err) {
+      testCase.errorIfError(err);
+      testCase.errorIfNotEqual("age", 7, object.age);  // property was loaded
+      testCase.errorIfNotEqual("ctorCount", 1, ctorCount);  // called only once
+      testCase.errorIfNotEqual("unMappedField", 44, object.unMappedField);
+      testCase.failOnError();
+    });
+  });
+};
+
+
+module.exports.tests = [t1, t2, t3, t4, t5, t6, t7];

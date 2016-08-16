@@ -167,6 +167,7 @@ NdbSession.prototype.close = function(callback) {
 /* buildReadOperation(DBIndexHandler dbIndexHandler, 
                       Object keys,
                       DBTransactionHandler transaction,
+                      Bool loadResultIntoKeys,
                       function(error, DBOperation) userCallback)
    IMMEDIATE
    Define an operation which when executed will fetch a row.
@@ -174,14 +175,14 @@ NdbSession.prototype.close = function(callback) {
    RETURNS a DBOperation 
 */
 NdbSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
-                                                   tx, callback) {
+                                                   tx, isLoad, callback) {
   if(udebug.is_debug()) {
     udebug.log("Read",
                dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
   var lockMode = "SHARED";
-  var op = ndboperation.newReadOperation(tx, dbIndexHandler, keys, lockMode);
+  var op = ndboperation.newReadOperation(tx, dbIndexHandler, keys, lockMode, isLoad);
   op.userCallback = callback;
   return op;
 };
@@ -298,7 +299,7 @@ NdbSession.prototype.buildReadProjectionOperation = function(dbIndexHandler,
      it as a ReadOperation */
   if(projection.sectors.length == 1) {
     stats.oneTableProjections++;
-    return this.buildReadOperation(dbIndexHandler, keys, tx, callback);
+    return this.buildReadOperation(dbIndexHandler, keys, tx, false, callback);
   }
 
   if(udebug.is_debug()) {

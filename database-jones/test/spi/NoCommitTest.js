@@ -76,7 +76,7 @@ t1.run = function() {
 
       function onDeleteThenRead(err) {
         t1.errorIfError(err);
-        op3 = dbSession.buildReadOperation(index, key, tx, onReadThenCommit);
+        op3 = dbSession.buildReadOperation(index, key, tx, false, onReadThenCommit);
         tx.execute( [ op3 ] );
       }
       

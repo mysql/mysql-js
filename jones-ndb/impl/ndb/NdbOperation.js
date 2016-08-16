@@ -563,7 +563,7 @@ function buildResultRow_nonVO(op, dbt, buffer, blobs) {
   var record          = dbt.resultRecord;
   var ncolumns        = dbt.getNumberOfColumns();
   var col             = dbt.getAllColumnMetadata();
-  var resultRow       = dbt.newResultObject();
+  var resultRow       = op.result.value || dbt.newResultObject();
   
   for(i = 0 ; i < ncolumns ; i++) {
     if(col[i].isLob) {
@@ -616,7 +616,8 @@ function getResultValue(op, tableHandler, buffer, blobs) {
   // workaround: currently NdbRecordObject will not correctly hide
   // the sparse field container from the user
   var use_nro = (op.connProperties.use_mapped_ndb_record &&
-                 tableHandler.is1to1);
+                 tableHandler.is1to1 &&
+                 op.result.value === null);
 
   return use_nro ? buildValueObject(op, tableHandler, buffer, blobs) :
                    buildResultRow_nonVO(op, tableHandler, buffer, blobs);
@@ -903,12 +904,14 @@ function verifyIndexHandler(dbIndexHandler) {
   if(! dbIndexHandler.tableHandler) { throw ("Invalid dbIndexHandler"); }
 }
 
-function newReadOperation(tx, dbIndexHandler, keys, lockMode) {
+function newReadOperation(tx, dbIndexHandler, keys, lockMode, isLoad) {
   verifyIndexHandler(dbIndexHandler);
   var op = new DBOperation(opcodes.OP_READ, tx, dbIndexHandler, null);
   op.keys = Array.isArray(keys) ? keys : dbIndexHandler.getColumns(keys);
 
-  if(! dbIndexHandler.tableHandler.ValueObject) {
+  if (isLoad === true && typeof keys === 'object') {
+    op.result.value = keys;  // Reuse keys as result for session.load()
+  } else if(! dbIndexHandler.tableHandler.ValueObject) {
     storeNativeConstructorInMapping(dbIndexHandler.tableHandler);
   }
 

@@ -44,6 +44,7 @@ DBSession.prototype.close = function(callback) {
 /* buildReadOperation(DBIndexHandler dbIndexHandler, 
                       Object keys,
                       DBTransactionHandler transaction,
+                      Bool loadResultIntoKeys,
                       function(error, DBOperation) userCallback)
    IMMEDIATE
    Define an operation which when executed will fetch a row.
@@ -51,7 +52,7 @@ DBSession.prototype.close = function(callback) {
    RETURNS a DBOperation 
 */
 DBSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
-                                                  tx, callback) {
+                                                  tx, isLoad, callback) {
   if(udebug.is_debug()) {
     udebug.log("Read", dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
