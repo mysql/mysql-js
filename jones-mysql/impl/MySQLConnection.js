@@ -498,7 +498,6 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, loadObject, callbac
   op_stats.read++;
 
   function onRead(err, rows) {
-    var property;
     if (err) {
       udebug.log('dbSession.ReadOperation err callback:', err);
       op.result.error = new DBOperationError(err);
@@ -522,11 +521,7 @@ function ReadOperation(dbSession, dbTableHandler, sql, keys, loadObject, callbac
           op.result.value = dbTableHandler.newResultObject(rows[0]);
         } else {
           // load the result into the user's supplied object
-          for(property in rows[0]) {
-            if(rows[0].hasOwnProperty(property)) {
-              op.result.value[property] = rows[0][property];
-            }
-          }
+          dbTableHandler.setFields(op.result.value, rows[0]);
         }
         if (typeof(op.callback) === 'function') {
           // call the UserContext callback
