@@ -1,6 +1,7 @@
 /** Query is returned from Session.createQuery().
  *
  * Query is created based on a mapped domain object, a mapped constructor,
+ * a projection,
  * or a table name. It contains properties, one for each persistent property
  * in the domain object. If created based on a table name, the properties
  * correspond exactly to columns in the table. These properties
@@ -8,7 +9,10 @@
  * Query also contains a reference to the Session that created it.
  * Query can be executed, passing a parameters object that governs how the
  * query will be executed.
- * 
+ * For projections, the query contains properties corresponding to each
+ * projected field and each projected relationship. Fields corresponding
+ * to projected relationships themselves contain properties for each
+ * field and relationship. This allows for chaining query terms.
  */
 
 /** Specify the filter for this query. Where returns the Query to allow
@@ -38,9 +42,12 @@
  * autocommit if a transaction has not been started;
  * default lock mode;
  * the partition key.
+ * @param queryParameters (optional) if not provided, return all values
+ * @param callback (optional) if not provided, no callback will be made
+ * (use the promise to get values after execution)
  * @return promise
  */
- execute(queryParameters, [callback], [...]);
+ execute([queryParameters], [callback], [...]);
 
 /** Count the number of instances filtered by this query.
  * XXX Not implemented in this version. XXX
@@ -82,7 +89,7 @@
  */
  function QueryParameter();
 
-/** QueryField represents a property in the domain object that is used
+/** QueryField represents a property in the domain object or relationship that is used
  * in a filter. Each persistent property in the domain object has a 
  * corresponding QueryField in the Query object.
  * The QueryField can be accessed directly from the Query, e.g. 
@@ -97,47 +104,67 @@
  * For example, whereField1 and whereField2 represent the same query field.
  *   var whereField1 = query.where; // 'where' is the name of the column
  *   var whereField2 = query.field.where;
+ * A QueryField can also be obtained from a QueryRelationship where the
+ * field name corresponds to a projected field in a projected relationship.
  * IMMEDIATE
  */
  function QueryField();
 
-/** eq represents equal comparison of a property and a parameter.
+/** QueryRelationship represents a property in the domain object or relationship that is used
+ * in a filter. Each relationship in the domain object and projected relationship has a
+ * corresponding QueryRelationship in the Query object and relationship.
+ * The QueryRelationship can be accessed directly from the Query, e.g.
+ * session.createQuery(t_basic, function(err, query) {
+ *   // qShoppingCart is a QueryRelationship corresponding to
+ *   // projection.addRelationship('shoppingCart', ShoppingCartProjection)
+ *   var qShoppingCart = query.shoppingCart;
+ *   // predicate is a QueryPredicate with properties from fields in ShoppingCartProjection
+ *   // plus operators isNull and isNotNull
+ *   var predicate = qShoppingCart.id(query.param('p_id');
+ * }
+ * Valid operators on QueryRelationship are isNull and isNotNull.
+ * IMMEDIATE
+ */
+ function QueryRelationship();
+
+/** eq represents equal comparison of a property and a parameter or literal.
  * @return QueryPredicate
  */
  function eq(Object parameterOrLiteral);
 
-/** ne represents not equal comparison of a property and a parameter.
+/** ne represents not equal comparison of a property and a parameter or literal.
  * @return QueryPredicate
  * IMMEDIATE
  */
  function ne(Object parameterOrLiteral);
 
-/** gt represents greater than comparison of a property and a parameter.
+/** gt represents greater than comparison of a property and a parameter or literal.
  * @return QueryPredicate
  * IMMEDIATE
  */
  function gt(Object parameterOrLiteral);
 
-/** ge represents greater than or equal comparison of a property and parameter.
+/** ge represents greater than or equal comparison of a property and parameter or literal.
  * @return QueryPredicate
  * IMMEDIATE
  */
  function ge(Object parameterOrLiteral);
 
-/** lt represents less than comparison of a property and a parameter.
+/** lt represents less than comparison of a property and a parameter or literal.
  * @return QueryPredicate
  * IMMEDIATE
  */
  function lt(Object parameterOrLiteral);
 
-/** le represents less than or equal comparison of a property and a parameter.
+/** le represents less than or equal comparison of a property and a parameter or literal.
  * @return QueryPredicate
  * IMMEDIATE
  */
  function le(Object parameterOrLiteral);
 
 /** between represents between comparison of a property and a lower bound 
- * and an upper bound parameter using greater equal and less equal semantics.
+ * and an upper bound parameter or literal using greater equal and less equal
+ * (inclusive bound) semantics.
  * @return QueryPredicate
  * IMMEDIATE
  */

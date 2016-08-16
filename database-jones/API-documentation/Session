@@ -368,7 +368,8 @@ getMapping(domainObjectTableNameOrConstructor, [callback], [...]);
 /** Create a query object that can be used to query the database.
  * The first parameter is:
  *    an object of a type whose constructor has been annotated, or
- *    a constructor that has been annotated, or 
+ *    a constructor that has been annotated, or
+ *    a Projection, or
  *    the name of a table.
  * The created query object implements the behavior of Query. 
  * 
@@ -379,18 +380,18 @@ getMapping(domainObjectTableNameOrConstructor, [callback], [...]);
  * following the Query.
  *
  * @method createQuery
- * @param table name, mapped instance, or constructor of a mapped class
+ * @param table name, mapped instance, projection, or constructor of a mapped class
  * @return promise
  * ASYNC
  */
-createQuery(domainObjectTableNameOrConstructor, [callback], [...]);
+createQuery(domainObjectTableNameProjectionOrConstructor, [callback(err, query)], [...]);
 
 /** Create an empty batch.
  *
  * The batch is used to collect multiple operations to be executed together. 
  *
  *
- * @method createQuery
+ * @method createBatch
  * @return Batch
  * IMMEDIATE
  */ 
@@ -429,7 +430,7 @@ boolean isClosed();
 
 /** Set the partition key for the next transaction.
  *
- * Normally, this is not needed. Mysql-js will automatically set
+ * Normally, this is not needed. Jones will automatically set
  * the partition key based on the first operation in the transaction.
  * If the user needs explicit control over the partition key,
  * this is the way to do it.
