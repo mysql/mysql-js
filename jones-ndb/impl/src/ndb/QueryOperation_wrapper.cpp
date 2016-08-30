@@ -83,9 +83,11 @@ Local<Value> QueryOperation_Wrapper(QueryOperation *queryOp) {
 }
 
 
-void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec, int parentId) {
+void setRowBuffers(Isolate * isolate,
+                   QueryOperation *queryOp,
+                   Handle<Object> spec,
+                   int parentId) {
   DEBUG_ENTER();
-  Isolate * isolate = Isolate::GetCurrent();
   Record * record = 0;
   int level = spec->Get(GET_KEY(K_serial))->Int32Value();
   if(spec->Get(GET_KEY(K_rowRecord))->IsObject()) {
@@ -100,11 +102,11 @@ void setRowBuffers(QueryOperation *queryOp, Handle<Object> spec, int parentId) {
 }
 
 
-const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
+const NdbQueryOperationDef * createTopLevelQuery(Isolate * isolate,
+                                                 QueryOperation *queryOp,
                                                  Handle<Object> spec,
                                                  Handle<Object> keyBuffer) {
   DEBUG_MARKER(UDEB_DETAIL);
-  Isolate * isolate = Isolate::GetCurrent();
   NdbQueryBuilder *builder = queryOp->getBuilder();
 
   /* Pull values out of the JavaScript object */
@@ -154,12 +156,12 @@ const NdbQueryOperationDef * createTopLevelQuery(QueryOperation *queryOp,
   return queryOp->defineOperation(index, table, key_parts);
 }
 
-const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
+const NdbQueryOperationDef * createNextLevel(Isolate * isolate,
+                                             QueryOperation *queryOp,
                                              Handle<Object> spec,
                                              const NdbQueryOperationDef * parent) {
   DEBUG_MARKER(UDEB_DEBUG);
   NdbQueryBuilder *builder = queryOp->getBuilder();
-  Isolate * isolate = Isolate::GetCurrent();
 
   /* Pull values out of the JavaScript object */
   Local<Value> v;
@@ -212,7 +214,7 @@ const NdbQueryOperationDef * createNextLevel(QueryOperation *queryOp,
 void createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
   REQUIRE_ARGS_LENGTH(3);
-  Isolate * isolate = Isolate::GetCurrent();
+  Isolate * isolate = args.GetIsolate();
 
   int size = args[2]->Int32Value();
   int currentId = 0;
@@ -225,17 +227,17 @@ void createQueryOperation(const Arguments & args) {
   Local<Object> spec = args[0]->ToObject();
   Local<Object> parentSpec;
 
-  setRowBuffers(queryOperation, spec, 0);
-  current = createTopLevelQuery(queryOperation, spec, args[1]->ToObject());
+  setRowBuffers(isolate, queryOperation, spec, 0);
+  current = createTopLevelQuery(isolate, queryOperation, spec, args[1]->ToObject());
 
   while(! (v = spec->Get(GET_KEY(K_next)))->IsUndefined()) {
     all[currentId++] = current;
     spec = v->ToObject();
     parentSpec = spec->Get(GET_KEY(K_parent))->ToObject();
     parentId = parentSpec->Get(GET_KEY(K_serial))->Int32Value();
-    current = createNextLevel(queryOperation, spec, all[parentId]);
+    current = createNextLevel(isolate, queryOperation, spec, all[parentId]);
     assert(current->getOpNo() == spec->Get(GET_KEY(K_serial))->Uint32Value());
-    setRowBuffers(queryOperation, spec, parentId);
+    setRowBuffers(isolate, queryOperation, spec, parentId);
   }
   queryOperation->prepare(all[0]);
   args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
