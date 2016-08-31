@@ -255,7 +255,7 @@ Test.prototype.hasNoErrors = function() {
 Test.prototype.reset = function() {
   this.failed = null;
   this.result = null;
-}
+};
 
 /* Derived Classes */
 

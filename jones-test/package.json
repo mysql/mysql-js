@@ -2,15 +2,15 @@
 {
   "name"        : "jones-test"
   ,
-  "version"     : "1.3.0"
+  "version"     : "1.4.0"
   ,  
   "description" : "Asynchronous Test Harness"
   ,
   "keywords"    : ["test" , "harness" ]
   ,
-  "homepage"    : "http://github.com/jdduncan/jones-test/"
+  "homepage"    : "http://github.com/mysql/mysql-js/"
   ,
-  "bugs"        : { "url" : "http://github.com/jdduncan/jones-test/issues"}
+  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues"}
   ,
   "license"     : "GPL-2.0"
   ,
@@ -20,7 +20,7 @@
   "main"        : "jones-test"
   ,
   "repository"  : {  "type" : "git",
-                     "url": "https://github.com/jdduncan/jones-test.git"
+                     "url": "https://github.com/mysql/mysql-js.git"
                   }
   ,
   "scripts"     : { "test" : "node selftest/driver"

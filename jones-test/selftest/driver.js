@@ -33,5 +33,7 @@ driver.ignoreLint("Driver.js", 14,
 driver.ignoreLint("LintTest.js", 14,
   "Expected a conditional expression and instead saw an assignment.");
 
+driver.ignoreLint("Test.js", 21, "Expected a string and instead saw");
+
 driver.runAllTests();
 

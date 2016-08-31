@@ -44,7 +44,6 @@ function Driver(baseDirectory) {
   this.suitesToRun           = null;
   this.skipSmokeTest         = false;
   this.skipClearSmokeTest    = false;
-  this.onReportCallback      = null;    // callback at report 
   this.abortAndExit          = false;   // --help option
   this.timeoutMillis         = 0;       // no timeout
   this.numberOfRunningSuites = 0;
@@ -56,7 +55,9 @@ function Driver(baseDirectory) {
   this.setCommandLineFlags();
 }
 
-Driver.prototype.resetSuites = function() {this.suites = [];}
+Driver.prototype.resetSuites = function() {
+  this.suites = [];
+};
 
 Driver.prototype.addCommandLineOption = function(shortForm, longForm, helpText, callback) {
   this.flagHandler.addOption(new CommandLine.Option(shortForm, longForm, helpText, callback));
@@ -69,7 +70,7 @@ Driver.prototype.processCommandLineOptions = function() {
 };
 
 Driver.prototype.addLintTestsForDirectory = function(directory) {
-  var suite, tests, i, useFile;
+  var suite, tests, i;
 
   directory = path.resolve(this.baseDirectory, directory);
   for(i = 1 ; i < arguments.length ; i++) {

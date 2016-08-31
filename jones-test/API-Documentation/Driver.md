@@ -65,7 +65,7 @@ function runAllTests();
    Set driver.onAllTestsCompleteCallback() to an async function that will
    be called after all tests have run (but before results are reported).
 */
-Driver.prototype.onAllTestsCompleteCallback = function(userCallback) {
+function onAllTestsCompleteCallback(userCallback) {
   userCallback();
 };
 
@@ -73,7 +73,7 @@ Driver.prototype.onAllTestsCompleteCallback = function(userCallback) {
     will be called after all tests are complete and results have been
     reported.
 */
-Driver.prototype.onReportCallback = function() {
+function onReportCallback() {
   return;
 };
 

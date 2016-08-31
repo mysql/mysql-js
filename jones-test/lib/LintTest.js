@@ -24,6 +24,7 @@ var path   = require("path"),
     fs     = require("fs"),
     util   = require("util"),
     assert = require("assert"),
+    unified_debug = require("unified_debug"),
     udebug = unified_debug.getLogger("LintTest.js"),
     Test   = require("./Test");
 
@@ -104,15 +105,7 @@ LintSmokeTest.prototype.run = function() {
     // there is one copy of workingIgnoredErrors for all lint tests
     // so before each series of lint tests,
     // deep copy ignoredErrors to workingIgnoredErrors
-    workingIgnoredErrors = {};
-    for (var propName in ignoredErrors) {
-      var fromProp = ignoredErrors[propName];
-      var toProp = [];
-      for (var i = 0; i < fromProp.length; ++i) {
-        toProp.push(fromProp[i]);
-      }
-      workingIgnoredErrors[propName] = toProp;
-    }
+    workingIgnoredErrors = JSON.parse(JSON.stringify(ignoredErrors));
     this.pass();
   }
 };
@@ -156,7 +149,7 @@ LintTest.prototype.run = function() {
 
   try {
     nIgnored = ignoredErrors[this.sourceFileName].length;
-  } catch(e) { }
+  } catch(ignore) { }
 
   if(! ok) {
     udebug.log(this.sourceFileName, "errors:", errors.length, "ignored:", nIgnored);

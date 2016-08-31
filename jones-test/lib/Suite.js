@@ -111,11 +111,11 @@ Suite.prototype.createTests = function() {
       this.path = path.dirname(testFile);
       try {
         this.addTestsFromFile(path.join(this.path, "SmokeTest.js"), null);
-      } catch(e1) {}
+      } catch(ignore) {}
       this.addTestsFromFile(testFile, this.driver.testInFile);
       try {
         this.addTestsFromFile(path.join(this.path, "ClearSmokeTest.js"), null);
-      } catch(e2) {}
+      } catch(ignore) {}
     }
     else if(stat.isDirectory()) {
       var files = fs.readdirSync(this.path);
@@ -215,10 +215,11 @@ Suite.prototype.startConcurrentTests = function(result) {
   var skip = this.smokeTestHasFailed;
   if (this.firstConcurrentTestIndex !== -1) {
     this.concurrentTests.forEach(function(testCase) {
-      if(skip)
+      if(skip) {
         testCase.skip("(failed SmokeTest)", result);
-      else
+      } else {
         testCase.test(result);
+      }
     });
     return false;    
   } 
@@ -251,10 +252,11 @@ Suite.prototype.startClearSmokeTest = function(result) {
 
 Suite.prototype.startNextSerialTest = function(index, result) {
   var testCase = this.tests[index];
-  if(this.smokeTestHasFailed)
+  if(this.smokeTestHasFailed) {
     testCase.skip("(failed SmokeTest)", result);
-  else
+  } else {
     testCase.test(result);
+  }
 };
 
 
