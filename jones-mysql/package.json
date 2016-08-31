@@ -1,29 +1,33 @@
 
 {
-  "name"        : "beta-jones-mysql"
+  "name"        : "jones-mysql"
   ,
-  "version"     : "0.0.1"
+  "version"     : "1.0.0"
   ,  
-  "description" : "Lightweight database mapping"
+  "description" : "MySQL Service Provider for Database Jones"
   ,
   "keywords"    : ["mysql", "orm", "mapping" ]
   ,
   "homepage"    : "http://github.com/mysql/mysql-js/"
   ,
-  "bugs"        : { "url" : "http://github.com/jdduncan/beta-jones-mysql/issues"}
+  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues"}
   ,
   "license"     : "GPL-2.0"
   ,
-  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
-                    "Craig Russell <craig.russell@oracle.com>" ]
+  "contributors": [ "Craig Russell <craig.russell@oracle.com>" ,
+                    "John David Duncan <john.duncan@oracle.com>"
+                  ]
   ,
   "main"        : "impl/mysql_service_provider"
   ,
-  "dependencies": { "mysql" : ">=2.0.0"
+  "dependencies": { "mysql" : ">=2.0.0",
+                    "database-jones" : "*",
+                    "jones-test" : "*",
+                    "unified_debug" : "*"
                   }
   ,
   "repository"  : {  "type" : "git",
-                     "url": "https://github.com/jdduncan/beta-jones.git"
+                     "url": "https://github.com/mysql/mysql-js.git"
                   }
 }
 

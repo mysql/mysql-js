@@ -2,7 +2,7 @@
 {
   "name"        : "jones-promises"
   ,
-  "version"     : "1.1.0"
+  "version"     : "1.1.1"
   ,  
   "description" : "Promises Library"
   ,
@@ -10,12 +10,13 @@
   ,
   "homepage"    : "http://github.com/mysql/mysql-js/"
   ,
-  "bugs"        : { "url" : "http://github.com/jdduncan/jones-promise/issues"}
+  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues" }
   ,
   "license"     : "GPL-2.0"
   ,
-  "contributors": [ "John David Duncan <john.duncan@oracle.com>" ,
-                    "Craig Russell <craig.russell@oracle.com>" ]
+  "contributors": ["Craig Russell <craig.russell@oracle.com>" ,
+                   "John David Duncan <john.duncan@oracle.com>"
+                  ]
   ,
   "main"        : "lib/Promise.js"
   ,
@@ -25,12 +26,10 @@
   ,
   "readmeFilename": "README.md"
   ,
-  "dependencies" : {  "unified_debug" : "",
-                      "jones-test" : "" 
+  "dependencies" : {  "unified_debug" : ""
                    }
   ,
   "devDependencies" : { "promises-aplus-tests" : "" }
-
 }
 
 

@@ -1,10 +1,10 @@
 
 {
-  "name"        : "beta-jones-ndb"
+  "name"        : "jones-ndb"
   ,
-  "version"     : "0.0.1"
+  "version"     : "1.0.0"
   ,  
-  "description" : "NDB Backend for Jones"
+  "description" : "Native NDB (MySQL Cluster) Service Provider for Database Jones"
   ,
   "keywords"    : ["mysql", "cluster", "mysql cluster", "ndb", "mapping" ]
   ,
@@ -23,8 +23,13 @@
                   "preinstall" : "node configure && node-gyp rebuild"
                   }
   ,
+  "dependencies": { "database-jones" : "*",
+                    "jones-test" : "*",
+                    "unified_debug" : "*"
+                  }
+  ,
   "repository"  : {  "type" : "git",
-                     "url": "https://github.com/jdduncan/beta-jones-ndb.git"
+                     "url": "https://github.com/mysql/mysql-js.git"
                   }
 }
 
