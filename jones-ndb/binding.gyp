@@ -73,8 +73,7 @@
           {
             'libraries':
             [
-              '-l<(mysql_path)/lib/ndbclient_static.lib',
-              '-l<(mysql_path)/lib/mysqlclient.lib',
+              '-l<(mysql_path)/lib/ndbclient_static.lib'
             ],
             'msvs_settings':
             {
@@ -97,8 +96,7 @@
             [
               "-L<(mysql_path)/lib",
               "-L<(mysql_path)/lib/mysql",
-              "-lndbclient",
-              "-lmysqlclient"
+              "-lndbclient"
             ]
           }
         ]
