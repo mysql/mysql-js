@@ -38,6 +38,12 @@ var build = existsSync(build1) ? build1 : build2;
 
 binary_dir = path.join(build, "Release");
 
+// The Static build is linked with ndbclient_static and created by CMake
+if(existsSync(path.join(build, "Static", "ndb_adapter.node"))) {
+  binary_dir = path.join(build, "Static");
+}
+
+// Prefer the Debug build if one exists
 if(existsSync(path.join(build, "Debug", "ndb_adapter.node"))) {
   binary_dir = path.join(build, "Debug");
 }
