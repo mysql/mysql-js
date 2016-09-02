@@ -1,6 +1,5 @@
 
 /* This is the top level of the Database Storage Service Provider Interface.
-   Its methods correspond to top-level methods in the API. 
 */
 
 
@@ -8,7 +7,10 @@
    IMMEDIATE
    RETURNS an object containing all of the valid properties 
    for this service provider, all set to their default values.
- */   
+   By convention, the default connection properties are defined in a file
+   called DefaultConnectionProperties.js at the top level of the
+   service provider package.
+ */
   function getDefaultConnectionProperties() {};
 
 

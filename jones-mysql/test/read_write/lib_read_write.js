@@ -20,9 +20,18 @@
 
 "use strict";
 
-var udebug = unified_debug.getLogger("lib/read_write.js");
+var udebug = unified_debug.getLogger("lib_read_write.js");
 var mysql = require("mysql");
 var util = require("util");
+
+function t_read_write(number) {
+  if(number !== undefined) {
+    this.id = number;
+    this.name = "Employee " + number;
+    this.age = number;
+    this.magic = number;
+  }
+}
 
 /** This is the test for data conversions. It reads using one implementation
  * (either a mysql-js adapter or a sql driver) and writes using an
@@ -367,3 +376,5 @@ ReadWrite.prototype.writeSQLReadSQL = function() {
 };
 
 exports.ReadWrite = ReadWrite;
+exports.t_read_write = t_read_write;  // Domain Object Constructor
+

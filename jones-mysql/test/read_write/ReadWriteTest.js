@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -20,10 +20,8 @@
 
 "use strict";
 
-/*jslint newcap: true */
-/*global t_basic */
-
-var ReadWrite = require('../lib/read_write').ReadWrite;
+var ReadWrite = require('./lib_read_write').ReadWrite,
+    t_read_write = require('./lib_read_write').t_read_write;
 
 /** Data array */
 var data = [
@@ -36,7 +34,7 @@ var data = [
 var t1 = new harness.SerialTest("write adapter read adapter table name");
 t1.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = 't_basic';
+  var tableNameOrConstructor = 't_read_write';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
     var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
@@ -48,10 +46,10 @@ t1.run = function() {
 var t2 = new harness.SerialTest("write adapter read adapter constructor");
 t2.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = global.t_basic;
+  var tableNameOrConstructor = t_read_write;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_basic');
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_read_write');
     rw.writeAdapterReadAdapter();
   });
 };
@@ -60,7 +58,7 @@ t2.run = function() {
 var t3 = new harness.SerialTest("write sql read sql");
 t3.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = global.t_basic;
+  var tableNameOrConstructor = t_read_write;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
     var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
@@ -72,7 +70,7 @@ t3.run = function() {
 var t4 = new harness.SerialTest("write adapter read sql table name");
 t4.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = 't_basic';
+  var tableNameOrConstructor = 't_read_write';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
     var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
@@ -84,7 +82,7 @@ t4.run = function() {
 var t5 = new harness.SerialTest("write adapter read sql constructor");
 t5.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = global.t_basic;
+  var tableNameOrConstructor = t_read_write;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
     var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 'RowDataPacket');
@@ -96,7 +94,7 @@ t5.run = function() {
 var t6 = new harness.SerialTest("write sql read adapter table name");
 t6.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = 't_basic';
+  var tableNameOrConstructor = 't_read_write';
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
     var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session);
@@ -108,10 +106,10 @@ t6.run = function() {
 var t7 = new harness.SerialTest("write sql read adapter constructor");
 t7.run = function() {
   var testCase = this;
-  var tableNameOrConstructor = global.t_basic;
+  var tableNameOrConstructor = t_read_write;
   testCase.mappings = tableNameOrConstructor;
   fail_openSession(testCase, function(session) {
-    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_basic');
+    var rw = new ReadWrite(testCase, tableNameOrConstructor, data, session, 't_read_write');
     rw.writeSQLReadAdapter();
   });
 };
