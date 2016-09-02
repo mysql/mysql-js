@@ -25,6 +25,7 @@
                       }
   ,
   "devDevendencies" : { "jones-test" : "*"
+                      }
   ,
   "peerDependencies": { "database-jones" : "1.x"
                       }
