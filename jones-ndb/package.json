@@ -2,7 +2,7 @@
 {
   "name"            : "jones-ndb"
   ,
-  "version"         : "1.0.2"
+  "version"         : "1.0.3"
   ,  
   "description"     : "Native NDB (MySQL Cluster) Service Provider for Database Jones"
   ,
@@ -25,7 +25,7 @@
   "dependencies"    : { "unified_debug" : "*"
                       }
   ,
-  "devDevendencies" : { "jones-test" : "*"
+  "devDependencies" : { "jones-test" : "*"
                       }
   ,
   "peerDependencies": { "database-jones" : "1.x",

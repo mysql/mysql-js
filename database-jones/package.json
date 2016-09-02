@@ -1,33 +1,36 @@
 
 {
-  "name"        : "database-jones"
+  "name"            : "database-jones"
   ,
-  "version"     : "1.2.2"
+  "version"         : "1.2.3"
   ,  
-  "description" : "Lightweight database mapping"
+  "description"     : "Lightweight database mapping"
   ,
-  "keywords"    : ["mysql", "orm", "ndb", "mapping" ]
+  "keywords"        : ["mysql", "orm", "ndb", "mapping" ]
   ,
-  "homepage"    : "http://github.com/mysql/mysql-js/"
+  "homepage"        : "http://github.com/mysql/mysql-js/"
   ,
-  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues"}
+  "bugs"            : { "url" : "http://github.com/mysql/mysql-js/issues"
+                      }
   ,
-  "license"     : "GPL-2.0"
+  "license"         : "GPL-2.0"
   ,
-  "contributors": [ "Craig Russell <craig.russell@oracle.com>" ,
-                    "John David Duncan <john.duncan@oracle.com>"
-                  ]
+  "contributors"    : [ "Craig Russell <craig.russell@oracle.com>" ,
+                        "John David Duncan <john.duncan@oracle.com>"
+                      ]
   ,
-  "main"        : "Adapter/api/jones"
+  "main"            : "Adapter/api/jones"
   ,
-  "repository"  : {  "type" : "git",
-                     "url": "https://github.com/mysql/mysql-js.git"
-                  }
+  "repository"      : { "type" : "git",
+                        "url": "https://github.com/mysql/mysql-js.git"
+                      }
   ,
-  "dependencies": {  "jones-test" : "*",
-                     "jones-promises" : "*",
-                     "unified_debug" : "*"
-                  }
+  "dependencies"    : { "jones-promises" : "*",
+                        "unified_debug" : "*"
+                      }
+  ,
+  "devDependencies" : { "jones-test" : "*"
+                      }
 }
 
 

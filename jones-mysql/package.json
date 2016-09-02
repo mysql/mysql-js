@@ -2,7 +2,7 @@
 {
   "name"            : "jones-mysql"
   ,
-  "version"         : "1.0.2"
+  "version"         : "1.0.3"
   ,  
   "description"     : "MySQL Service Provider for Database Jones"
   ,
@@ -24,7 +24,7 @@
                         "unified_debug" : "*"
                       }
   ,
-  "devDevendencies" : { "jones-test" : "*"
+  "devDependencies" : { "jones-test" : "*"
                       }
   ,
   "peerDependencies": { "database-jones" : "1.x"
