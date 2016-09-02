@@ -35,6 +35,7 @@ module.exports = {
   "getLintTestsForDirectory" : LintTest.forDirectory,
   "LintSmokeTest"            : LintTest.LintSmokeTest,
   "ignoreLint"               : LintTest.ignore,
-  "predefineLint"            : LintTest.predefine
+  "predefineLint"            : LintTest.predefine,
+  "linterAvailable"          : LintTest.isAvailable
 };
 

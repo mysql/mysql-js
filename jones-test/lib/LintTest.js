@@ -226,3 +226,4 @@ exports.LintTest               = LintTest;
 exports.LintSmokeTest          = LintSmokeTest;
 exports.ignore                 = ignore;
 exports.predefine              = predefine;
+exports.isAvailable            = haveJsLint;
