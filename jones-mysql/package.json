@@ -1,34 +1,37 @@
 
 {
-  "name"        : "jones-mysql"
+  "name"            : "jones-mysql"
   ,
-  "version"     : "1.0.0"
+  "version"         : "1.0.1"
   ,  
-  "description" : "MySQL Service Provider for Database Jones"
+  "description"     : "MySQL Service Provider for Database Jones"
   ,
-  "keywords"    : ["mysql", "orm", "mapping" ]
+  "keywords"        : ["mysql", "orm", "mapping"]
   ,
-  "homepage"    : "http://github.com/mysql/mysql-js/"
+  "license"         : "GPL-2.0"
   ,
-  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues"}
+  "homepage"        : "http://github.com/mysql/mysql-js/"
   ,
-  "license"     : "GPL-2.0"
+  "main"            : "impl/mysql_service_provider"
   ,
-  "contributors": [ "Craig Russell <craig.russell@oracle.com>" ,
-                    "John David Duncan <john.duncan@oracle.com>"
-                  ]
+  "bugs"            : { "url" : "http://github.com/mysql/mysql-js/issues"}
   ,
-  "main"        : "impl/mysql_service_provider"
+  "contributors"    : [ "Craig Russell <craig.russell@oracle.com>" ,
+                        "John David Duncan <john.duncan@oracle.com>"
+                      ]
   ,
-  "dependencies": { "mysql" : ">=2.0.0",
-                    "database-jones" : "*",
-                    "jones-test" : "*",
-                    "unified_debug" : "*"
-                  }
+  "dependencies"    : { "mysql" : ">=2.0.0",
+                        "unified_debug" : "*"
+                      }
   ,
-  "repository"  : {  "type" : "git",
-                     "url": "https://github.com/mysql/mysql-js.git"
-                  }
+  "devDevendencies" : { "jones-test" : "*"
+  ,
+  "peerDependencies": { "database-jones" : "1.x"
+                      }
+  ,
+  "repository"      : { "type" : "git",
+                         "url": "https://github.com/mysql/mysql-js.git"
+                      }
 }
 
 
