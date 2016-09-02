@@ -18,16 +18,18 @@
  02110-1301  USA
  */
 
-var test = new harness.SmokeTest("SmokeTest");
+"use strict";
+
+var harness = require("jones-test"),
+    test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
-  var t = this;
   function onCreate(error) {
     if (error) {
-      t.fail('createSQL failed: ' + error);
+      test.fail('createSQL failed: ' + error);
     } 
     else {
-      t.pass();
+      test.pass();
     }
   }
 

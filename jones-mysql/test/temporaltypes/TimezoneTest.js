@@ -20,6 +20,8 @@
 
 "use strict";
 
+/*jslint newcap: true */
+
 /* Write MySQL, Read NDB Datetime
    Write NDB, Read MySQL Datetime
    Write MySQL, Read NDB Timestamp
@@ -87,14 +89,14 @@ function ReadNdbFunction(testCase) {
   return function onMysqlPersist(err) {
     testCase.errorIfError(err);
     testCase.ndbSession.find(testCase.tableName, testCase.data.id, testCase.verifier.run);
-  }
+  };
 }
 
 function ReadMysqlFunction(testCase) {
   return function onNdbPersist(err) {
     testCase.errorIfError(err);
     testCase.mysqlSession.find(testCase.tableName, testCase.data.id, testCase.verifier.run);
-  }
+  };
 }
 
 function InsertMysqlFunction(tableName, data) {
@@ -110,13 +112,15 @@ function InsertNdbFunction(tableName, data) {
     testCase.tableName = tableName;
     testCase.data = data;
     testCase.ndbSession.persist(tableName, data, ReadMysqlFunction(testCase));
-  }
+  };
 }
 
 // Domain Object Constructor
 function TestData(id) {
-  if(id) this.id = id;
-  this.cTimestamp = new Date();
+  if(id !== undefined) {
+    this.id = id;
+    this.cTimestamp = new Date();
+  }
 }
 
 // Timestamp NDB->MySQL
@@ -127,7 +131,7 @@ t1.run = function() {
   data.cNullableTimestamp = date1970;
   this.verifier = new ValueVerifier(this, "cNullableTimestamp", date1970);
   openSessions(this, InsertNdbFunction("temporaltypes", data));
-}
+};
 
 // Timestamp MySQL->NDB
 var t2 = new harness.ConcurrentTest("Timestamp-MySQL-NDB");
@@ -137,7 +141,7 @@ t2.run = function() {
   data.cNullableTimestamp = date1970;
   this.verifier = new ValueVerifier(this, "cNullableTimestamp", date1970);
   openSessions(this, InsertMysqlFunction("temporaltypes", data));
-}
+};
 
 // Datetime NDB->MySQL
 var t3 = new harness.ConcurrentTest("Datetime-NDB-MySQL");
@@ -147,7 +151,7 @@ t3.run = function() {
   data.cDatetime = date1970;
   this.verifier = new ValueVerifier(this, "cDatetime", date1970);
   openSessions(this, InsertNdbFunction("temporaltypes", data));
-}
+};
 
 // Datetime MySQL->NDB
 var t4 = new harness.ConcurrentTest("Datetime-MySQL-NDB");
@@ -157,7 +161,7 @@ t4.run = function() {
   data.cDatetime = date1970;
   this.verifier = new ValueVerifier(this, "cDatetime", date1970);
   openSessions(this, InsertMysqlFunction("temporaltypes", data));
-}
+};
 
 
 exports.tests = [ t1, t2, t3, t4 ];

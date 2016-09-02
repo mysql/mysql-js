@@ -96,7 +96,7 @@ SQLDriver.prototype.insert = function(tableMapping, element, callback, rw, index
   tableMapping.fields.forEach(function(field) {
     value = element[field.fieldName];
     // only send defined values (including explicit nulls)
-    if (typeof(value) !== 'undefined') {
+    if (value !== 'undefined') {
       insertClause += separator;
       insertClause += field.columnName;
       valueClause += separator;
@@ -250,7 +250,7 @@ ReadWrite.prototype.setUp = function(callback) {
         rw.sqlDriver = new SQLDriver(global.test_conn_properties);
         rw.sqlDriver.connect(onConnect);
       } else {
-        console.log('already set up sql driver')
+        console.log('already set up sql driver');
         // already set up sql driver
         onConnect(null);
       }

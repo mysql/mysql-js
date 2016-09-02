@@ -17,17 +17,16 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  02110-1301  USA
  */
- 
-var test = new harness.ClearSmokeTest("ClearSmokeTest");
+
+"use strict";
+
+var harness = require("jones-test"),
+    test = new harness.ClearSmokeTest("ClearSmokeTest");
 
 test.run = function() {
-  var t = this;
-
-  function onDrop() {
-    t.pass();
-  }
-
-  sqlDrop(this.suite, onDrop);
+  sqlDrop(this.suite, function() {
+    test.pass();
+  });
 };
 
 module.exports.tests = [test];

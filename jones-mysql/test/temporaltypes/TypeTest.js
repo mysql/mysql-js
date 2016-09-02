@@ -20,11 +20,13 @@
 
 "use strict";
 
+/*jslint newcap: true */
+
 var util = require("util");
 
 // Domain Object Constructor
 function TestData(id) {
-  if(id) {
+  if(id !== undefined) {
     this.id = id;
     this.cTimestamp = new Date();
   }
@@ -76,7 +78,7 @@ function ReadFunction(testCase, session) {
     else {
       session.find(TestData, testCase.data.id, testCase.verifier.run);
     }
-  }
+  };
 }
 
 function InsertFunction(data) {
@@ -97,7 +99,7 @@ t1.run = function() {
   data.cYear = 1989;
   this.verifier = new ValueVerifier(this, "cYear", 1989);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cDatetimeDefault
 var t2 = new harness.ConcurrentTest("VerifyDatetimeDefault");
@@ -106,7 +108,7 @@ t2.run = function() {
   var expect = new Date("Thu, 09 Nov 1989 17:00:00"); // the column default
   this.verifier = new ValueVerifier(this, "cDatetimeDefault", expect);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cDatetime
 var t3 = new harness.ConcurrentTest("VerifyDatetime");
@@ -117,7 +119,7 @@ t3.run = function() {
   data.cDatetime = now;
   this.verifier = new ValueVerifier(this, "cDatetime", now);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cTime
 var t4 = new harness.ConcurrentTest("VerifyTime");
@@ -126,7 +128,7 @@ t4.run = function() {
   data.cTime = "-00:10:00";
   this.verifier = new ValueVerifier(this, "cTime", "-00:10:00");
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cNullableTimestamp Thu, 01 Jan 1970 00:00:00 GMT
 var t5 = new harness.ConcurrentTest("TimestampZero");
@@ -136,7 +138,7 @@ t5.run = function() {
   data.cNullableTimestamp = dateZero;
   this.verifier = new ValueVerifier(this, "cNullableTimestamp", dateZero);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cNullableTimestamp 1969.
 // This should return 22007 INVALID DATETIME
@@ -147,7 +149,7 @@ t6.run = function() {
   data.cNullableTimestamp = date1969;
   this.insertErrorVerifier = new ErrorVerifier(this, "22007");
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cNullableTimestamp 1970
 var t7 = new harness.ConcurrentTest("Timestamp1970");
@@ -157,7 +159,7 @@ t7.run = function() {
   data.cNullableTimestamp = date1970;
   this.verifier = new ValueVerifier(this, "cNullableTimestamp", date1970);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cDate
 var t8 = new harness.ConcurrentTest("Date");
@@ -167,7 +169,7 @@ t8.run = function() {
   data.cDate = test_date;
   this.verifier = new ValueVerifier(this, "cDate", test_date);
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cTime: Special case 
 // "nn:nn" must be treated as "HH:MM"
@@ -177,7 +179,7 @@ t9.run = function() {
   data.cTime = "13:22";
   this.verifier = new ValueVerifier(this, "cTime", "13:22:00");
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 // cTime: 
 // String "nnnn" must be treated as "MM:SS"
@@ -187,6 +189,6 @@ t10.run = function() {
   data.cTime = "1322";
   this.verifier = new ValueVerifier(this, "cTime", "00:13:22");
   fail_openSession(this, InsertFunction(data));
-}
+};
 
 module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10];
