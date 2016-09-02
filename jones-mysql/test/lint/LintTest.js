@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Oracle and/or its affiliates. All rights
+Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights
 reserved.
 
 This program is free software; you can redistribute it and/or
@@ -22,17 +22,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
+var harness = require("jones-test");
 var config = require("jones-mysql").config;
 var test_root = config.suites_dir;
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
-  Array.prototype.push.apply(tests, more_tests);
+  if(harness.linterAvailable) {
+    Array.prototype.push.apply(tests, more_tests);
+  }
 }
 
 more(harness.getLintTestsForDirectory(config.impl_dir));
 more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
 more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
+more(harness.getLintTestsForDirectory(test_root, "temporaltypes"));
 
 //mysql
 harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");

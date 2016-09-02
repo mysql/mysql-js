@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Oracle and/or its affiliates. All rights
+Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights
 reserved.
 
 This program is free software; you can redistribute it and/or
@@ -22,10 +22,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 
 "use strict";
 
+var harness = require("jones-test");
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
-  Array.prototype.push.apply(tests, more_tests);
+  if(harness.linterAvailable) {
+    Array.prototype.push.apply(tests, more_tests);
+  }
 }
 
 harness.predefineLint(["unified_debug", "harness", "mynode", "adapter", "jones",
@@ -55,8 +58,10 @@ more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
 // more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "loader", "lib"));
 
 /* Files in samples/ */
-more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
-more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "DBServiceProvider", "impl"));
+try {
+  more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
+  more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "DBServiceProvider", "impl"));
+} catch(ignore) {}
 
 /**** ERRORS TO IGNORE:
  ignore(filename, startpos, message) 
