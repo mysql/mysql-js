@@ -2,7 +2,7 @@
 {
   "name"            : "jones-mysql"
   ,
-  "version"         : "1.0.1"
+  "version"         : "1.0.2"
   ,  
   "description"     : "MySQL Service Provider for Database Jones"
   ,

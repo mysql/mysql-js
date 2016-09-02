@@ -37,6 +37,7 @@ more(harness.getLintTestsForDirectory(config.impl_dir));
 more(harness.getLintTestsForDirectory(test_root, "stringtypes"));
 more(harness.getLintTestsForDirectory(test_root, "mysql56types"));
 more(harness.getLintTestsForDirectory(test_root, "temporaltypes"));
+more(harness.getLintTestsForDirectory(test_root, "read_write"));
 
 //mysql
 harness.ignoreLint("MySQLConnection.js", 9, "Unexpected 'continue'.");
