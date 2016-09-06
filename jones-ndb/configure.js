@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -19,12 +19,16 @@
 */
 
 // configure.js:
+//  If "-m /path/to/mysql/tree" is specified, configure jones-ndb to
+//  build with that mysql.
+//  Otherwise, run interactively:
 //    Try to find installed mysql that matches architecture of node
 //    Ask user for mysql pathname
-//    Write mysql pathname into config.gypi
+//
+//  Writes mysql pathname and other options into config.gypi
+//
 
 // TODO: Auto-detect mysql layout here, and write about it in config.gypi
-// TODO: Run in a non-interactive mode taking pathname on command line
 
 "use strict";
 
@@ -159,9 +163,8 @@ function testPath(mysqlPath) {
 function configure(mysql, layout) {
   if(mysql) {
     var gyp = {};
-    layout = "";  // fixme
     gyp.variables = { "mysql_path" : mysql,
-                      "mysql_layout" : layout,
+                      "mysql_layout" : layout || "",
                       "node_version" : process.versions.node
                     };
     fs.writeFileSync("config.gypi", JSON.stringify(gyp) + "\n", "ascii");
@@ -217,8 +220,8 @@ function completion(line) {
 }
 
 
-///// ****** MAIN ROUTINE STARTS HERE ****** /////
-function main() {
+///// ****** INTERACTIVE MAIN ROUTINE STARTS HERE ****** /////
+function interactive_main(options) {
   var candidates;
   if(process.platform == 'win32') {
     candidates = get_candidates_windows();
@@ -297,5 +300,34 @@ function main() {
   }
 }
  
- 
-main();
+function process_options() {
+  var i, len, opts;
+  len = process.argv.length;
+  opts = { "interactive" : true };
+  for(i = 2 ; i < len ; i++) {
+    if(process.argv[i] == "-m" && (i+1 < len)) {
+      opts.interactive = false;
+      opts.path = process.argv[i+1];
+    }
+  }
+  return opts;
+}
+
+function utility_main(options) {
+  if(verify(options.path)) {
+    configure(options.path);
+  } else {
+    console.log("ERROR: " + options.path + " is not a directory.");
+    process.exit(-1);
+  }
+}
+
+/* Script starts here: */
+var opts = process_options()
+
+if(opts.interactive) {
+  interactive_main(opts);
+} else {
+  utility_main(opts);
+}
+
