@@ -76,3 +76,12 @@ ForeignKeyMetadata = {
   targetColumnNames: null  ,  // an ordered array of target column names
 };
 
+/* Register a function to be called when this table metadata object is invalidated.
+ * This may be due to the session factory closing or the schema for the table
+ * changing.
+ */
+function registerInvalidateCallback(callback);
+
+/* Call the invalidate callbacks
+ */
+function invalidate();

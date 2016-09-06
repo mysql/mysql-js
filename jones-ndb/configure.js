@@ -323,7 +323,7 @@ function utility_main(options) {
 }
 
 /* Script starts here: */
-var opts = process_options()
+var opts = process_options();
 
 if(opts.interactive) {
   interactive_main(opts);

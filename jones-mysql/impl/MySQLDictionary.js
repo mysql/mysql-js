@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -133,8 +133,18 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
         'columns' : columns,
         'indexes' : indexes,
         'foreignKeys': foreignKeys,
-        'sparseContainer': null
-        };
+        'sparseContainer': null,
+        'invalidateCallbacks': [],
+        'registerInvalidateCallback': function(cb) {
+          result.invalidateCallbacks.push(cb);
+        },
+        'invalidate': function() {
+          result.invalidateCallbacks.forEach(function (cb) {
+            cb(result);
+          });
+          result.invalidateCallbacks = [];
+        }
+    };
     
     // split lines by '\n'
     var lines = statement.split('\n');

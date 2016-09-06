@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -21,13 +21,13 @@
 "use strict";
 
 var stats = {
-	"constructor_calls"      : 0,
-	"created"                : {},
-	"default_mappings"       : 0,
-	"explicit_mappings"      : 0,
-	"return_null"            : 0,
-	"result_objects_created" : 0,
-	"DBIndexHandler_created" : 0
+  "constructor_calls"      : 0,
+  "created"                : {},
+  "default_mappings"       : 0,
+  "explicit_mappings"      : 0,
+  "return_null"            : 0,
+  "result_objects_created" : 0,
+  "DBIndexHandler_created" : 0
 };
 
 var assert          = require("assert"),
@@ -423,6 +423,9 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
       foreignKey,      // foreign key object from dbTable
       priv;            // our DBTableHandlerPrivate
 
+  var dbTableHandler = this;
+  var invalidateCallback;
+
   stats.constructor_calls++;
 
   if(! ( dbtable && dbtable.columns)) {
@@ -431,10 +434,10 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   }
 
  if(stats.created[dbtable.name] === undefined) {
-		stats.created[dbtable.name] = 1;
-	} else { 
-		stats.created[dbtable.name]++;
-	}
+    stats.created[dbtable.name] = 1;
+  } else {
+    stats.created[dbtable.name]++;
+  }
   
   /* Default properties */
   priv                        = new DBTableHandlerPrivate(this, dbtable.columns.length);
@@ -452,7 +455,6 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
   this.sparseContainer        = null;
   this.is1to1                 = true;
   this.relationshipFields     = [];
-
   if(tablemapping) {
     if(tablemapping.isValid()) {
       stats.explicit_mappings++;
@@ -597,14 +599,14 @@ function DBTableHandler(dbtable, tablemapping, ctor) {
     this.foreignKeyMap[foreignKey.name] = foreignKey;
   }
 
-  if (ctor) {
-    // cache this in ctor.prototype.jones.dbTableHandler
-    if (!ctor.prototype.jones) {
-      ctor.prototype.jones = {};
-    }
-    if (!ctor.prototype.jones.dbTableHandler) {
-      ctor.prototype.jones.dbTableHandler = this;
-    }
+  // set the invalidate callback if this db table handler is valid
+  if (dbTableHandler.isValid) {
+    invalidateCallback = function() {
+      udebug.log('invalidateCallback called for dbTableHandler',
+          ctor?'for constructor '+ctor.name:'default', 'for table', dbtable.database+'.'+dbtable.name);
+      dbTableHandler.isValid = false;
+    };
+    dbtable.registerInvalidateCallback(invalidateCallback);
   }
   udebug.log("Constructor completed -- ", this);
 }
@@ -651,14 +653,18 @@ DBTableHandler.prototype.getColumnMaskForField = function(name) {
 
 
 DBTableHandler.prototype.inspect = function() {
-  var s, fields, ncol, columns;
+  var s, fields, ncol, columns, nrelationships, ctorName;
   if(this.isValid) {
     fields = this.getNumberOfFields() == 1 ? " field" : " fields";
     ncol = this._private.getNumberOfMappedColumns();
+    nrelationships = this.relationshipFields.length;
     columns =  (ncol == 1 ? " column" : " columns");
+    ctorName = this.newObjectConstructor? ' constructor: ' + this.newObjectConstructor.name: ' no constructor';
     s = "DBTableHandler for table " + this.dbTable.name +
         " with " + this.getNumberOfFields() + fields +
-        " mapped to " + ncol + columns;
+        " mapped to " + ncol + columns +
+        " and " + nrelationships + " relationships" +
+        ctorName;
     if(this.sparseContainer) {
       s += " and sparse column " + this.sparseContainer;
     }

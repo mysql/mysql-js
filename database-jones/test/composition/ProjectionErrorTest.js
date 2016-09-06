@@ -265,7 +265,7 @@ t8.run = function() {
 t9.run = function() {
   var testCase = this;
   var session;
-  var expectedErrorMessage = 'field discount is not mapped';
+  var expectedErrorMessage = 'relationship discount is not mapped';
   var badDiscountProjection = new mynode.Projection(lib.Discount);
   var badCustomerProjection = new mynode.Projection(lib.Customer);
   badCustomerProjection.addRelationship('discount', badDiscountProjection);

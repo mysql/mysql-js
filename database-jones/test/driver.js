@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -41,10 +41,11 @@ driver.addCommandLineOption("-a", "--adapter", "only run on the named comma-sepa
 function runAllTests(exitStatus) {
   var adapterWithExtra, split;
   var extra = '';
+  var status = 0;
 
    if (exitStatus) {
     console.log('Abnormal exit:', exitStatus);
-    process.exit(exitStatus);
+    status = exitStatus;
   }
   if (index < adapters.length) {
     console.log('driver run ' + index + ' using adapter ' + adapters[index]);
@@ -52,7 +53,7 @@ function runAllTests(exitStatus) {
   adapterWithExtra = adapters[index++];
   if (adapterWithExtra === undefined) {
     // all adapters complete; exit
-    process.exit(0);
+    process.exit(status);
   }
   split = adapterWithExtra.split('/');
   adapter = split[0];

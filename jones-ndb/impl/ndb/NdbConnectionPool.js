@@ -395,8 +395,29 @@ DBConnectionPool.prototype.listTables = function(databaseName, dictSession,
 
 
 function runGetTable(arg, callback) {
+
+  function onTableMetadata(err, tableMetadata) {
+    if (err) {
+      callback(err);
+    } else {
+    // add the callback handling to tableMetadata
+      tableMetadata.invalidateCallbacks = [];
+      tableMetadata.registerInvalidateCallback = function(cb) {
+        tableMetadata.invalidateCallbacks.push(cb);
+      };
+      tableMetadata.invalidate = function() {
+        tableMetadata.invalidateCallbacks.forEach(function (cb) {
+          cb(tableMetadata);
+        });
+        tableMetadata.invalidateCallbacks = [];
+      };
+      callback(err, tableMetadata);
+    }
+  }
+
+  // runGetTable starts here
   adapter.ndb.impl.DBDictionary.getTable(arg.impl, arg.dbName,
-                                         arg.tableName, callback);
+                                         arg.tableName, onTableMetadata);
 }
 
 DBConnectionPool.prototype.makeMasterCallback = function(key) {
