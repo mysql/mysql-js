@@ -380,11 +380,11 @@ getMapping(domainObjectTableNameOrConstructor, [callback], [...]);
  * following the Query.
  *
  * @method createQuery
- * @param table name, mapped instance, or constructor of a mapped class
+ * @param table name, mapped instance, projection, or constructor of a mapped class
  * @return promise
  * ASYNC
  */
-createQuery(domainObjectTableNameOrConstructor, [callback(err, query)], [...]);
+createQuery(domainObjectTableNameProjectionOrConstructor, [callback(err, query)], [...]);
 
 /** Create an empty batch.
  *
