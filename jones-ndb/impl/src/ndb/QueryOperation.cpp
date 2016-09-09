@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ void QueryOperation::createRowBuffer(int level, Record *record, int parent_table
   buffers[level].record = record;
   buffers[level].buffer = new char[record->getBufferSize()];
   buffers[level].size   = record->getBufferSize();
-  buffers[level].parent = parent_table;
+  buffers[level].parent = (short) parent_table;
 }
 
 void QueryOperation::levelIsJoinTable(int level) {
@@ -89,7 +89,7 @@ bool QueryOperation::isDuplicate(int level) {
   QueryBuffer & current = buffers[level];
   QueryBuffer & parent  = buffers[current.parent];
   char * & result       = current.buffer;
-  size_t & result_sz    = current.size;
+  uint32_t & result_sz  = current.size;
   int lastResult        = current.result;  // most recent result for this table
 
   /* If the parent is a known duplicate, and the current value matches the
@@ -153,7 +153,7 @@ bool QueryOperation::compareRowToAllPrevious() {
 }
 
 
-bool QueryOperation::pushResultForTable(int level) {
+bool QueryOperation::pushResultForTable(short level) {
   QueryBuffer & current = buffers[level];
   QueryBuffer & parent = buffers[current.parent];
 
@@ -195,9 +195,9 @@ bool QueryOperation::pushResultForTable(int level) {
   return ok;
 }
 
-bool QueryOperation::newResultForTable(int level) {
+bool QueryOperation::newResultForTable(short level) {
   bool ok = true;
-  size_t n = nresults;
+  int n = nresults;
 
   if(n == nheaders) {
     ok = growHeaderArray();
@@ -213,8 +213,8 @@ bool QueryOperation::newResultForTable(int level) {
   return ok;
 }
 
-bool QueryOperation::pushResultNull(int level) {
-  size_t n = nresults;
+bool QueryOperation::pushResultNull(short level) {
+  int n = nresults;
   bool ok = newResultForTable(level);
   if(ok) {
     DEBUG_PRINT("table %d NULL", level);
@@ -223,9 +223,9 @@ bool QueryOperation::pushResultNull(int level) {
   return ok;
 }
 
-bool QueryOperation::pushResultValue(int level) {
-  size_t n = nresults;
-  size_t & size = buffers[level].size;
+bool QueryOperation::pushResultValue(short level) {
+  int n = nresults;
+  uint32_t & size = buffers[level].size;
   char * & temp_result = buffers[level].buffer;
   bool ok = newResultForTable(level);
   if(ok) {
@@ -241,7 +241,7 @@ bool QueryOperation::pushResultValue(int level) {
   return ok;
 }
 
-QueryResultHeader * QueryOperation::getResult(size_t id) {
+QueryResultHeader * QueryOperation::getResult(int id) {
 //  DEBUG_PRINT_DETAIL("R %d : TABLE %d TAG %d PARENT %d", id,
 //                     results[id].sector, results[id].tag, results[id].parent);
   return (id < nresults) ?  & results[id] : 0;
@@ -268,7 +268,7 @@ int QueryOperation::fetchAllResults() {
       case NdbQuery::NextResult_gotRow:
         /* New results at every level */
         DEBUG_PRINT_DETAIL("NextResult_gotRow");
-        for(int level = 0 ; level < size ; level++) {
+        for(short level = 0 ; level < size ; level++) {
           if(! pushResultForTable(level)) return -1;
         }
         break;

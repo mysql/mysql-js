@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -123,11 +123,11 @@ void isfalse(const Arguments & args) {
 */
 void cmp(const Arguments &args) {
   NdbScanFilter * filter = unwrapPointer<NdbScanFilter *>(args.Holder());
-  int condition = args[0]->Int32Value();
-  int columnId  = args[1]->Uint32Value();
-  char * buffer = node::Buffer::Data(args[2]->ToObject());
-  size_t offset = args[3]->Uint32Value();
-  size_t length = args[4]->Uint32Value();
+  int condition   = args[0]->Int32Value();
+  int columnId    = args[1]->Uint32Value();
+  char * buffer   = node::Buffer::Data(args[2]->ToObject());
+  uint32_t offset = args[3]->Uint32Value();
+  uint32_t length = args[4]->Uint32Value();
 
   int rval = filter->cmp(NdbScanFilter::BinaryCondition(condition), 
                          columnId, buffer + offset, length);

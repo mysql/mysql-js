@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -36,10 +36,10 @@
 CachedTransactionsAccountant::CachedTransactionsAccountant(Ndb_cluster_connection *conn,
                                                            int maxTransactions):
   tc_bitmap(0),
-  nDataNodes(conn->no_db_nodes()),
+  nDataNodes(static_cast<unsigned short>(conn->no_db_nodes())),
   concurrency(0),
   cacheConcurrency(0),
-  maxConcurrency(maxTransactions)
+  maxConcurrency(static_cast<unsigned short>(maxTransactions))
 {
   assert(nDataNodes > 0);
 }

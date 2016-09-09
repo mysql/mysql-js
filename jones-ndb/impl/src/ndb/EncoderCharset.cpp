@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -66,8 +66,8 @@ EncoderCharset * createEncoderCharset(const NdbDictionary::Column *col) {
   
   csinfo->name = col->getCharset()->csname;
   csinfo->collationName = col->getCharset()->name;
-  csinfo->minlen = col->getCharset()->mbminlen;
-  csinfo->maxlen = col->getCharset()->mbmaxlen;
+  csinfo->minlen = (short) col->getCharset()->mbminlen;
+  csinfo->maxlen = (short) col->getCharset()->mbmaxlen;
   csinfo->isMultibyte = colIsMultibyte(col);
   csinfo->isAscii = colIsAscii(col);
   csinfo->isUnicode = colIsUnicode(col);

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 class Record {
 private:
   NdbDictionary::Dictionary *dict;
-  size_t ncolumns, 
+  Uint32 ncolumns,
          n_nullable, 
          nblobs,
          index,
@@ -60,11 +60,11 @@ public:
   Uint32 getNoOfBlobColumns() const;
   Uint32 getPkColumnMask() const;
   Uint32 getAllColumnMask() const;
-  size_t getColumnOffset(int idx) const;
+  Uint32 getColumnOffset(int idx) const;
   const NdbDictionary::Column * getColumn(int idx) const;
-  size_t getBufferSize() const;
-  size_t getValueLength(int idx, const char *data) const;
-  size_t getValueOffset(int idx) const;
+  Uint32 getBufferSize() const;
+  Uint32 getValueLength(int idx, const char *data) const;
+  Uint32 getValueOffset(int idx) const;
 
   void setNull(int idx, char *data) const;
   void setNotNull(int idx, char *data) const;
@@ -85,7 +85,7 @@ inline Uint32 Record::getNoOfBlobColumns() const {
   return nblobs;
 }
 
-inline size_t Record::getColumnOffset(int idx) const {
+inline Uint32 Record::getColumnOffset(int idx) const {
   return specs[idx].offset;
 }
 
@@ -93,21 +93,21 @@ inline const NdbDictionary::Column * Record::getColumn(int idx) const {
   return specs[idx].column;
 }
 
-inline size_t Record::getBufferSize() const {
+inline Uint32 Record::getBufferSize() const {
   return rec_size;
 }
 
 inline void Record::setNull(int idx, char * data) const {
   if(specs[idx].column->getNullable()) {
     *(data + specs[idx].nullbit_byte_offset) |= 
-      (1 << specs[idx].nullbit_bit_in_byte);
+      (char) (1 << specs[idx].nullbit_bit_in_byte);
   }
 }
 
 inline void Record::setNotNull(int idx, char * data) const {
   if(specs[idx].column->getNullable()) {
     *(data +specs[idx].nullbit_byte_offset) &=
-      (0xFF ^ (1 << specs[idx].nullbit_bit_in_byte));
+      (char) (0xFF ^ (1 << specs[idx].nullbit_bit_in_byte));
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -59,13 +59,13 @@ private:
 
 inline void NdbRecordObject::maskIn(unsigned int nField) {
   assert(nField < ncol);
-  u.row_mask[nField >> 3] |= (1 << (nField & 7));
+  u.row_mask[nField >> 3] |= static_cast<uint8_t>(1 << (nField & 7));
 }
 
   
 inline bool NdbRecordObject::isMaskedIn(unsigned int nField) {
   assert(nField < ncol);
-  return (u.row_mask[nField >> 3] & (1<<(nField & 7)));
+  return (u.row_mask[nField >> 3] & static_cast<uint8_t>(1<<(nField & 7)));
 }
 
 

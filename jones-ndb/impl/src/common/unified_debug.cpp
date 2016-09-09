@@ -73,7 +73,7 @@ inline const char * udeb_basename(const char *path) {
 
 
 // Bernstein hash
-inline int udeb_hash(const char *name) {
+inline unsigned short udeb_hash(const char *name) {
   const unsigned char *p;
   unsigned int h = 5381;
   
@@ -82,24 +82,24 @@ inline int udeb_hash(const char *name) {
 
   h = h % UDEB_SOURCE_FILE_BITMASK_BITS;
 
-  return h;
+  return (unsigned short) h;
 }
 
-inline int index_read(unsigned int bit_number) {
+inline int index_read(unsigned short bit_number) {
   unsigned short byte = bit_number / 8;
-  unsigned char  mask = 1 << ( bit_number % 8);
+  unsigned char  mask = static_cast<unsigned char>(1U << ( bit_number % 8));
   return bit_index[byte] & mask;
 }
 
-inline void index_set(unsigned int bit_number) {
+inline void index_set(unsigned short bit_number) {
   unsigned short byte = bit_number / 8;
-  unsigned char  mask = 1 << ( bit_number % 8);
+  unsigned char  mask = static_cast<unsigned char>(1U << ( bit_number % 8));
   bit_index[byte] |= mask;
 }
 
-inline void index_clear(unsigned int bit_number) {
+inline void index_clear(unsigned short bit_number) {
   unsigned short byte = bit_number / 8;
-  unsigned char  mask = ((1 << ( bit_number % 8)) ^ 0xFF);
+  unsigned char  mask = static_cast<unsigned char>(1 << ( bit_number % 8)) ^ 0xFF;
   bit_index[byte] &= mask;
 }
 

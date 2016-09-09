@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -190,19 +190,6 @@ inline Local<Value> toJS<unsigned int>(Isolate * isolate, unsigned int cval) {
 template <>
 inline Local<Value> toJS<unsigned short>(Isolate * isolate, unsigned short cval) {
   return v8::Integer::NewFromUnsigned(isolate, cval);
-}
-
-// unsigned long
-template <>
-inline Local<Value> toJS<unsigned long >(Isolate * isolate, unsigned long cval) {
-  return v8::Integer::NewFromUnsigned(isolate, cval);
-}
-
-// unsigned long long 
-// (the value may actually be too large to represent in JS!?)
-template <>
-inline Local<Value> toJS<unsigned long long>(Isolate * isolate, unsigned long long cval) {
-  return v8::Integer::NewFromUnsigned(isolate, (uint32_t) cval);
 }
 
 // double

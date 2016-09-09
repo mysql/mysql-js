@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ public:
   // Select columns
   void useSelectedColumns();
   void useAllColumns();
-  void useColumn(int id);
+  void useColumn(unsigned int id);
   void setRowMask(uint32_t);
 
   // Prepare operation
@@ -105,8 +105,8 @@ inline void KeyOperation::useAllColumns() {
   read_mask_ptr = 0;
 }
 
-inline void KeyOperation::useColumn(int col_id) {
-  u.row_mask[col_id >> 3] |= (1 << (col_id & 7));
+inline void KeyOperation::useColumn(unsigned int col_id) {
+  u.row_mask[col_id >> 3] |= static_cast<uint8_t>(1U << (col_id & 7));
 }
 
 inline void KeyOperation::setRowMask(const uint32_t newMaskValue) {

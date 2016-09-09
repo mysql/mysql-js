@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -77,9 +77,9 @@ Isolate * isolate;
 
 #define DECLARE_ENCODER_TEMPLATES(TYPE) \
   template <typename T> Local<Value> TYPE##Reader(const NdbDictionary::Column *,\
-    char *, size_t); \
+    char *, uint32_t); \
   template <typename T> Local<Value> TYPE##Writer(const NdbDictionary::Column *, \
-    Handle<Value>, char *, size_t);
+    Handle<Value>, char *, uint32_t);
 
 DECLARE_ENCODER(UnsupportedType);
 
@@ -196,7 +196,7 @@ void encoderWrite(const Arguments & args) {
     unwrapPointer<const NdbDictionary::Column *>(args[0]->ToObject());
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
   char * buffer = node::Buffer::Data(args[2]->ToObject());
-  size_t offset = args[3]->Uint32Value();
+  uint32_t offset = args[3]->Uint32Value();
 
   args.GetReturnValue().Set(
     scope.Escape(encoder->write(col, args[1], buffer, offset)));
@@ -354,7 +354,7 @@ template <typename INTSZ> bool checkIntValue(int);
 
 template <typename INTSZ> inline Local<Value> getStatusForValue(double d) {
   if(isfinite(d)) {
-    return checkIntValue<INTSZ>(d) ? writerOK : K_22003_OutOfRange.Get(isolate);
+    return checkIntValue<INTSZ>(static_cast<INTSZ>(d)) ? writerOK : K_22003_OutOfRange.Get(isolate);
   }
   return K_HY000.Get(isolate);
 }
@@ -448,28 +448,28 @@ void pack_bigendian(uint64_t val, char * buf, unsigned int len) {
 
 // UnsupportedType
 Local<Value> UnsupportedTypeReader(const NdbDictionary::Column *col, 
-                                    char *buffer, size_t offset) {
+                                    char *buffer, uint32_t offset) {
   //TODO EXCEPTION
   return writerOK;
 }
 
 Local<Value> UnsupportedTypeWriter(const NdbDictionary::Column * col,
                                     Handle<Value> value, 
-                                    char *buffer, size_t offset) {
+                                    char *buffer, uint32_t offset) {
   //TODO EXCEPTION
   return writerOK;
 }
 
 // Int
 Local<Value> IntReader(const NdbDictionary::Column *col, 
-                        char *buffer, size_t offset) {
+                        char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(int, i, buffer+offset);
   return Integer::New(isolate, i);
 }                        
 
 Local<Value> IntWriter(const NdbDictionary::Column * col,
                         Handle<Value> value, 
-                        char *buffer, size_t offset) {
+                        char *buffer, uint32_t offset) {
   int *ipos = (int *) (buffer+offset);
   Local<Value> status;
 
@@ -488,14 +488,14 @@ Local<Value> IntWriter(const NdbDictionary::Column * col,
 
 // Unsigned Int
 Local<Value> UnsignedIntReader(const NdbDictionary::Column *col, 
-                                char *buffer, size_t offset) {
+                                char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(uint32_t, i, buffer+offset);
   return Integer::NewFromUnsigned(isolate, i);
 }                        
 
 Local<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
                                 Handle<Value> value, 
-                                char *buffer, size_t offset) {
+                                char *buffer, uint32_t offset) {
   Local<Value> status;
   uint32_t *ipos = (uint32_t *) (buffer+offset);
   if(value->IsUint32()) {
@@ -513,7 +513,7 @@ Local<Value> UnsignedIntWriter(const NdbDictionary::Column * col,
 // Templated encoder for TINY and SMALL int types
 template <typename INTSZ>
 Local<Value> smallintReader(const NdbDictionary::Column *col, 
-                             char *buffer, size_t offset) {
+                             char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(INTSZ, i, buffer+offset);
   return Integer::New(isolate, i);
 }
@@ -521,12 +521,13 @@ Local<Value> smallintReader(const NdbDictionary::Column *col,
 
 template <typename INTSZ> 
 Local<Value> smallintWriter(const NdbDictionary::Column * col,
-                             Handle<Value> value, char *buffer, size_t offset) {
+                             Handle<Value> value, char *buffer, uint32_t offset) {
   INTSZ *ipos = (INTSZ *) (buffer+offset);
   Handle<Value> status;
   if(value->IsInt32()) {
-    *ipos = value->Int32Value();
-    status = checkIntValue<INTSZ>(*ipos) ? writerOK : K_22003_OutOfRange.Get(isolate);
+    int32_t ival = value->Int32Value();
+    *ipos = static_cast<INTSZ>(ival);
+    status = checkIntValue<INTSZ>(ival) ? writerOK : K_22003_OutOfRange.Get(isolate);
   } else {
     double dval = value->ToNumber()->Value();
     *ipos = static_cast<INTSZ>(dval);
@@ -538,14 +539,14 @@ Local<Value> smallintWriter(const NdbDictionary::Column * col,
 
 // Medium signed & unsigned int types
 Local<Value> MediumReader(const NdbDictionary::Column *col, 
-                           char *buffer, size_t offset) {
+                           char *buffer, uint32_t offset) {
   char * cbuf = buffer+offset;
   int i = sint3korr(cbuf);
   return Integer::New(isolate, i);
 }
 
 Local<Value> MediumWriter(const NdbDictionary::Column * col,
-                           Handle<Value> value, char *buffer, size_t offset) {  
+                           Handle<Value> value, char *buffer, uint32_t offset) {
   int8_t *cbuf = (int8_t *) (buffer+offset);
   Local<Value> status;
   double dval;
@@ -564,7 +565,7 @@ Local<Value> MediumWriter(const NdbDictionary::Column * col,
 }                        
 
 Local<Value> MediumUnsignedReader(const NdbDictionary::Column *col, 
-                                   char *buffer, size_t offset) {
+                                   char *buffer, uint32_t offset) {
   char * cbuf = buffer+offset;
   int i = uint3korr(cbuf);
   return Integer::New(isolate, i);
@@ -572,7 +573,7 @@ Local<Value> MediumUnsignedReader(const NdbDictionary::Column *col,
 
 Local<Value> MediumUnsignedWriter(const NdbDictionary::Column * col,
                                    Handle<Value> value, 
-                                   char *buffer, size_t offset) {
+                                   char *buffer, uint32_t offset) {
   uint8_t *cbuf = (uint8_t *) (buffer+offset);
   Local<Value> status;
   double dval;
@@ -651,7 +652,7 @@ template<> inline void bigintToString<uint64_t>(char * strbuf, uint64_t bigint) 
 
 template <typename BIGT>
 Local<Value> bigintReader(const NdbDictionary::Column *col, 
-                            char *buffer, size_t offset) {
+                            char *buffer, uint32_t offset) {
   char strbuf[32];
   LOAD_ALIGNED_DATA(BIGT, bigint, buffer+offset);
   bigintToString(strbuf, bigint);
@@ -660,7 +661,7 @@ Local<Value> bigintReader(const NdbDictionary::Column *col,
 
 template <typename BIGT>
 Local<Value> bigintWriter(const NdbDictionary::Column *col, 
-                           Handle<Value> value, char *buffer, size_t offset) {
+                           Handle<Value> value, char *buffer, uint32_t offset) {
   unsigned char strbuf[32];
   BIGT *ipos = (BIGT *) (buffer+offset);
   bool valid = writeBigint(value, ipos);  // try fast track
@@ -673,7 +674,7 @@ Local<Value> bigintWriter(const NdbDictionary::Column *col,
 
 // Decimal.  JS Value to and from decimal types is treated as a string.
 Local<Value> DecimalReader(const NdbDictionary::Column *col,
-                            char *buffer, size_t offset) {
+                            char *buffer, uint32_t offset) {
   char strbuf[96];
   int scale = col->getScale();
   int prec  = col->getPrecision();
@@ -684,7 +685,7 @@ Local<Value> DecimalReader(const NdbDictionary::Column *col,
 }
 
 Local<Value> DecimalWriter(const NdbDictionary::Column *col,
-                            Handle<Value> value, char *buffer, size_t offset) {
+                            Handle<Value> value, char *buffer, uint32_t offset) {
   unsigned char strbuf[96];
   if(! (isfinite(value->NumberValue()))) {
     return K_HY000.Get(isolate);
@@ -700,7 +701,7 @@ Local<Value> DecimalWriter(const NdbDictionary::Column *col,
 // Unsigned Decimal.  Writer adds boundary checking.
 Local<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
                                     Handle<Value> value, char *buffer, 
-                                    size_t offset) {
+                                    uint32_t offset) {
   return value->NumberValue() >= 0 ?
     DecimalWriter(col, value, buffer, offset) :
     K_22003_OutOfRange.Get(isolate);
@@ -710,7 +711,7 @@ Local<Value> UnsignedDecimalWriter(const NdbDictionary::Column *col,
 // Templated encoder for float and double
 template<typename FPT> 
 Local<Value> fpReader(const NdbDictionary::Column *col, 
-                       char *buffer, size_t offset) {
+                       char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(FPT, value, buffer+offset);
   return Number::New(isolate, value);
 }
@@ -718,7 +719,7 @@ Local<Value> fpReader(const NdbDictionary::Column *col,
 template<typename FPT>
 Local<Value> fpWriter(const NdbDictionary::Column * col,
                        Handle<Value> value, 
-                       char *buffer, size_t offset) {
+                       char *buffer, uint32_t offset) {
   double dval = value->ToNumber()->NumberValue();
   bool valid = isfinite(dval);
   if(valid) {
@@ -730,18 +731,18 @@ Local<Value> fpWriter(const NdbDictionary::Column * col,
 /****** Binary & Varbinary *******/
 
 Local<Value> BinaryReader(const NdbDictionary::Column *col, 
-                           char *buffer, size_t offset) {
+                           char *buffer, uint32_t offset) {
   return LOCAL_BUFFER(node::Buffer::New(isolate, buffer + offset, col->getLength()));
 }
 
 Local<Value> BinaryWriter(const NdbDictionary::Column * col,
-                           Handle<Value> value, char *buffer, size_t offset) {
+                           Handle<Value> value, char *buffer, uint32_t offset) {
   bool valid = node::Buffer::HasInstance(value);
   if(valid) {
     Handle<Object> obj = value->ToObject();
-    size_t col_len = col->getLength();
-    size_t data_len = node::Buffer::Length(obj);
-    size_t ncopied = col_len > data_len ? data_len : col_len;
+    uint32_t col_len = col->getLength();
+    uint32_t data_len = node::Buffer::Length(obj);
+    uint32_t ncopied = col_len > data_len ? data_len : col_len;
     memmove(buffer+offset, node::Buffer::Data(obj), ncopied);
     if(ncopied < col_len) {
       memset(buffer+offset+ncopied, 0, col_len - ncopied); // padding
@@ -752,7 +753,7 @@ Local<Value> BinaryWriter(const NdbDictionary::Column * col,
 
 template<typename LENGTHTYPE>
 Local<Value> varbinaryReader(const NdbDictionary::Column *col, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * data = buffer+offset+sizeof(length);
   return LOCAL_BUFFER(node::Buffer::New(isolate, data, length));
@@ -761,12 +762,12 @@ Local<Value> varbinaryReader(const NdbDictionary::Column *col,
 template<typename LENGTHTYPE>
 Local<Value> varbinaryWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   bool valid = node::Buffer::HasInstance(value);
   if(valid) {
-    size_t col_len = col->getLength();
+    LENGTHTYPE col_len = static_cast<LENGTHTYPE>(col->getLength());
     Handle<Object> obj = value->ToObject();
-    LENGTHTYPE data_len = node::Buffer::Length(obj);
+    LENGTHTYPE data_len = static_cast<LENGTHTYPE>(node::Buffer::Length(obj));
     if(data_len > col_len) data_len = col_len;  // truncate
     STORE_ALIGNED_DATA(LENGTHTYPE, data_len, buffer+offset);
     char * data = buffer+offset+sizeof(data_len);
@@ -797,7 +798,7 @@ Local<Value> varbinaryWriter(const NdbDictionary::Column * col,
  * it requires some new interfaces from ColumnProxy to TypeEncoder 
  */
 
-inline bool stringIsAscii(const unsigned char *str, size_t len) {
+inline bool stringIsAscii(const unsigned char *str, uint32_t len) {
   for(unsigned int i = 0 ; i < len ; i++) 
     if(str[i] & 128) 
       return false;
@@ -807,10 +808,10 @@ inline bool stringIsAscii(const unsigned char *str, size_t len) {
 class ExternalizedAsciiString : public String::ExternalOneByteStringResource {
 public:
   char * buffer;
-  size_t len; 
+  uint32_t len;
   bool isAscii;
   Persistent<Value> ref;
-  ExternalizedAsciiString(char *_buffer, size_t _len) : 
+  ExternalizedAsciiString(char *_buffer, uint32_t _len) :
     buffer(_buffer), len(_len), isAscii(true)
   {
     ref.Reset();
@@ -822,10 +823,10 @@ public:
 class ExternalizedUnicodeString : public String::ExternalStringResource { 
 public:
   uint16_t * buffer;
-  size_t len;  /* The number of two-byte characters in the string */
+  uint32_t len;  /* The number of two-byte characters in the string */
   bool isAscii;
   Persistent<Value> ref;
-  ExternalizedUnicodeString(uint16_t *_buffer, size_t _len) : 
+  ExternalizedUnicodeString(uint16_t *_buffer, uint32_t _len) :
     buffer(_buffer), len(_len), isAscii(false)
   {
     ref.Reset();
@@ -875,9 +876,9 @@ inline CharsetWriter * getWriterForColumn(const NdbDictionary::Column *col) {
 int writeUtf16le(const NdbDictionary::Column * column,
                  Handle<String> strval, char * buffer, bool pad) {
   stats.direct_writes++;
-  size_t bufsz = column->getLength() / 2;  /* Work in 16-byte characters */
+  int bufsz = column->getLength() / 2;  /* Work in 16-byte characters */
   uint16_t * str = (uint16_t *) buffer;
-  if(pad) for(size_t i = 0; i < bufsz ; i ++) str[i] = ' ';  
+  if(pad) for(int i = 0; i < bufsz ; i ++) str[i] = ' ';
   int charsWritten = strval->Write(str, 0, bufsz, String::NO_NULL_TERMINATION); 
   int sz = charsWritten * 2;
   return sz;
@@ -886,8 +887,8 @@ int writeUtf16le(const NdbDictionary::Column * column,
 int writeUtf8(const NdbDictionary::Column * column,
                Handle<String> strval, char * buffer, bool pad) {
   stats.direct_writes++;
-  const size_t & bufsz = column->getLength();
-  size_t sz = strval->WriteUtf8(buffer, bufsz, NULL, String::NO_NULL_TERMINATION);
+  const int & bufsz = column->getLength();
+  int sz = strval->WriteUtf8(buffer, bufsz, NULL, String::NO_NULL_TERMINATION);
   if(pad) 
     while(sz < bufsz) buffer[sz++] = ' ';
   return sz;
@@ -896,8 +897,8 @@ int writeUtf8(const NdbDictionary::Column * column,
 int writeAscii(const NdbDictionary::Column * column,
                Handle<String> strval, char * buffer, bool pad) {
   stats.direct_writes++;
-  const size_t & bufsz = column->getLength();
-  size_t sz = strval->WriteOneByte((uint8_t*) buffer, 0, bufsz, String::NO_NULL_TERMINATION);
+  const int & bufsz = column->getLength();
+  int sz = strval->WriteOneByte((uint8_t*) buffer, 0, bufsz, String::NO_NULL_TERMINATION);
   if(pad)
     while(sz < bufsz) buffer[sz++] = ' ';
   return sz;
@@ -972,7 +973,7 @@ void bufferForText(const Arguments & args) {
 Local<Object> getBufferForText(const NdbDictionary::Column *col,
                                Handle<String> str) {
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
-  size_t length, utf8Length;
+  int length, utf8Length;
   Local<Object> buffer;
   char * data;
 
@@ -1011,10 +1012,10 @@ Local<Object> getBufferForText(const NdbDictionary::Column *col,
     stats.recode_writes++;
     char * recode_buffer = new char[utf8Length];    
     str->WriteUtf8(recode_buffer, utf8Length, 0, String::NO_NULL_TERMINATION);
-    size_t buflen = getRecodeBufferSize(length, utf8Length, csinfo);
+    int buflen = getRecodeBufferSize(length, utf8Length, csinfo);
     data = (char *) malloc(buflen);
-    size_t result_len = recodeFromUtf8(recode_buffer, utf8Length,
-                                       data, buflen, col->getCharsetNumber());
+    int result_len = recodeFromUtf8(recode_buffer, utf8Length,
+                                    data, buflen, col->getCharsetNumber());
     buffer = LOCAL_BUFFER(node::Buffer::New(isolate, data, result_len, freeBufferContentsFromJs, 0));
     delete[] recode_buffer;
   }
@@ -1041,7 +1042,7 @@ void textFromBuffer(const Arguments & args) {
 Local<String> getTextFromBuffer(const NdbDictionary::Column *col,
                                  Handle<Object> bufferObj) {
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
-  size_t len = node::Buffer::Length(bufferObj);
+  uint32_t len = node::Buffer::Length(bufferObj);
   char * str = node::Buffer::Data(bufferObj);
 
   Local<String> string;
@@ -1086,10 +1087,10 @@ Local<String> getTextFromBuffer(const NdbDictionary::Column *col,
 // CHAR
 
 Local<Value> CharReader(const NdbDictionary::Column *col, 
-                         char *buffer, size_t offset) {
+                         char *buffer, uint32_t offset) {
   char * str = buffer+offset;
   Local<String> string;
-  size_t len = col->getLength();
+  int len = col->getLength();
   const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
 
   if(csinfo->isAscii || 
@@ -1120,7 +1121,7 @@ Local<Value> CharReader(const NdbDictionary::Column *col,
     stats.read_strings_created++;
     stats.read_strings_recoded++;
     CharsetMap csmap;
-    size_t recode_size = getUtf8BufferSizeForColumn(len, csinfo);
+    int recode_size = getUtf8BufferSizeForColumn(len, csinfo);
     char * recode_buffer = new char[recode_size];
 
     /* Recode from the buffer into the UTF8 stack */
@@ -1147,7 +1148,7 @@ Local<Value> CharReader(const NdbDictionary::Column *col,
 
 Local<Value> CharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
-                            char *buffer, size_t offset) {
+                            char *buffer, uint32_t offset) {
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
   writer(col, strval, buffer+offset, true);
@@ -1157,7 +1158,7 @@ Local<Value> CharWriter(const NdbDictionary::Column * col,
 // Templated encoder for Varchar and LongVarchar
 template<typename LENGTHTYPE>
 Local<Value> varcharReader(const NdbDictionary::Column *col, 
-                            char *buffer, size_t offset) {
+                            char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(LENGTHTYPE, length, buffer+offset);
   char * str = buffer+offset+sizeof(length);
   Local<String> string;
@@ -1186,7 +1187,7 @@ Local<Value> varcharReader(const NdbDictionary::Column *col,
     stats.read_strings_created++;
     stats.read_strings_recoded++;
     CharsetMap csmap;
-    size_t recode_size = getUtf8BufferSizeForColumn(length, csinfo);
+    int recode_size = getUtf8BufferSizeForColumn(length, csinfo);
     char * recode_buffer = new char[recode_size];
     int32_t lengths[2];
     lengths[0] = length;
@@ -1204,11 +1205,12 @@ Local<Value> varcharReader(const NdbDictionary::Column *col,
 template<typename LENGTHTYPE>
 Local<Value> varcharWriter(const NdbDictionary::Column * col,
                             Handle<Value> value, 
-                            char *buffer, size_t offset) {  
+                            char *buffer, unsigned int offset) {
   Handle<String> strval = value->ToString();
   CharsetWriter * writer = getWriterForColumn(col);
 
-  LENGTHTYPE len = writer(col, strval, buffer+offset+sizeof(len), false);
+  LENGTHTYPE len = static_cast<LENGTHTYPE>
+                    (writer(col, strval, buffer+offset+sizeof(len), false));
   STORE_ALIGNED_DATA(LENGTHTYPE, len, buffer+offset);
 
   return (strval->Length() > col->getLength()) ? K_22001_StringTooLong.Get(isolate) : writerOK;
@@ -1301,12 +1303,12 @@ TimeHelper::TimeHelper(Handle<Value> mysqlTime) :
 
 /* readFraction() returns value in microseconds
 */
-int readFraction(const NdbDictionary::Column *col, char *buf) {
+unsigned int readFraction(const NdbDictionary::Column *col, char *buf) {
   int prec  = col->getPrecision();
-  int usec = 0;
+  unsigned int usec = 0;
   if(prec > 0) {
     int bufsz = (1 + prec) / 2;
-    usec = unpack_bigendian(buf, bufsz);
+    usec = (unsigned int) unpack_bigendian(buf, bufsz);
     while(prec < 5) usec *= 100, prec += 2;
   }
   return usec;
@@ -1325,7 +1327,7 @@ void writeFraction(const NdbDictionary::Column *col, int usec, char *buf) {
 
 // Timstamp
 Local<Value> TimestampReader(const NdbDictionary::Column *col, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(uint32_t, timestamp, buffer+offset);
   double jsdate = timestamp * 1000;  // unix seconds-> js milliseconds
   return Date::New(isolate, jsdate);
@@ -1333,7 +1335,7 @@ Local<Value> TimestampReader(const NdbDictionary::Column *col,
 
 Local<Value> TimestampWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   uint32_t *tpos = (uint32_t *) (buffer+offset);
   double dval;
   bool valid = value->IsDate();
@@ -1351,8 +1353,8 @@ Local<Value> TimestampWriter(const NdbDictionary::Column * col,
    If col->getPrecision() > 3, some precision is lost.
 */
 Local<Value> Timestamp2Reader(const NdbDictionary::Column *col, 
-                               char *buffer, size_t offset) {
-  uint32_t timeSeconds = unpack_bigendian(buffer+offset, 4);
+                               char *buffer, uint32_t offset) {
+  uint32_t timeSeconds = (uint32_t) unpack_bigendian(buffer+offset, 4);
   int timeMilliseconds = readFraction(col, buffer+offset+4) / 1000;
   double jsdate = ((double) timeSeconds * 1000) + timeMilliseconds;
   return Date::New(isolate, jsdate);
@@ -1360,7 +1362,7 @@ Local<Value> Timestamp2Reader(const NdbDictionary::Column *col,
  
 Local<Value> Timestamp2Writer(const NdbDictionary::Column * col,
                                Handle<Value> value, 
-                               char *buffer, size_t offset) {
+                               char *buffer, uint32_t offset) {
   bool valid = value->IsDate();
   if(valid) {
     double jsdate = Date::Cast(*value)->NumberValue();
@@ -1368,7 +1370,7 @@ Local<Value> Timestamp2Writer(const NdbDictionary::Column * col,
     int64_t timeSeconds = timeMilliseconds / 1000;
     timeMilliseconds %= 1000;
     pack_bigendian(timeSeconds, buffer+offset, 4);
-    writeFraction(col, timeMilliseconds * 1000, buffer+offset+4);
+    writeFraction(col, static_cast<int>(timeMilliseconds * 1000), buffer+offset+4);
     valid = (timeSeconds >= 0);   // MySQL does not accept dates before 1970
   }
   return valid ? writerOK : K_22007_InvalidDatetime.Get(isolate);
@@ -1378,18 +1380,21 @@ Local<Value> Timestamp2Writer(const NdbDictionary::Column * col,
    Interfaces with JavaScript via TimeHelper
 */
 Local<Value> DatetimeReader(const NdbDictionary::Column *col, 
-                             char *buffer, size_t offset) {
+                             char *buffer, uint32_t offset) {
   TimeHelper tm;
   LOAD_ALIGNED_DATA(uint64_t, int_datetime, buffer+offset);
-  int int_date = int_datetime / 1000000;
+  int int_date = static_cast<int>(int_datetime / 1000000);
   tm.factor_YYYYMMDD(int_date);
-  tm.factor_HHMMSS(int_datetime - (uint64_t) int_date * 1000000);
+  int int_time = static_cast<int>(int_datetime - (int_date * 1000000));
+  // The time part of a stored datetime is non-negative
+  assert(int_time >= 0);
+  tm.factor_HHMMSS(int_time);
   return tm.toJs();
 }
 
 Local<Value> DatetimeWriter(const NdbDictionary::Column * col,
                               Handle<Value> value, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   TimeHelper tm(value);
   uint64_t dtval = 0;
   if(tm.valid) {
@@ -1420,7 +1425,7 @@ Local<Value> DatetimeWriter(const NdbDictionary::Column * col,
   40 bits = 5 bytes
 */
 Local<Value> Datetime2Reader(const NdbDictionary::Column *col, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   TimeHelper tm;
   uint64_t packedValue = unpack_bigendian(buffer+offset, 5);
   tm.microsec = readFraction(col, buffer+offset+5);
@@ -1437,7 +1442,7 @@ Local<Value> Datetime2Reader(const NdbDictionary::Column *col,
 
 Local<Value> Datetime2Writer(const NdbDictionary::Column * col,
                               Handle<Value> value, 
-                              char *buffer, size_t offset) {
+                              char *buffer, uint32_t offset) {
   TimeHelper tm(value);
   uint64_t packedValue = 0;
   if(tm.valid) {
@@ -1456,14 +1461,14 @@ Local<Value> Datetime2Writer(const NdbDictionary::Column * col,
 
 // Year
 Local<Value> YearReader(const NdbDictionary::Column *col, 
-                         char *buffer, size_t offset) {
+                         char *buffer, uint32_t offset) {
   LOAD_ALIGNED_DATA(uint8_t, myr, buffer+offset);
   int year = 1900 + myr;
   return Number::New(isolate, year);
 }
 
 Local<Value> YearWriter(const NdbDictionary::Column * col,
-                         Handle<Value> value, char *buffer, size_t offset) {
+                         Handle<Value> value, char *buffer, uint32_t offset) {
   bool valid = value->IsInt32();
   if(valid) {
     int chkv = value->Int32Value() - 1900;
@@ -1476,7 +1481,7 @@ Local<Value> YearWriter(const NdbDictionary::Column * col,
 
 // Time.  Uses TimeHelper.
 Local<Value> TimeReader(const NdbDictionary::Column *col, 
-                         char *buffer, size_t offset) {
+                         char *buffer, uint32_t offset) {
   TimeHelper tm;
   char * cbuf = buffer+offset;
   int sqlTime = sint3korr(cbuf);
@@ -1485,7 +1490,7 @@ Local<Value> TimeReader(const NdbDictionary::Column *col,
 }
 
 Local<Value> TimeWriter(const NdbDictionary::Column * col,
-                         Handle<Value> value, char *buffer, size_t offset) {
+                         Handle<Value> value, char *buffer, uint32_t offset) {
   TimeHelper tm(value);
   int dtval = 0;
   if(tm.valid) {
@@ -1513,14 +1518,14 @@ Local<Value> TimeWriter(const NdbDictionary::Column * col,
   cannot be used.
 */
 Local<Value> Time2Reader(const NdbDictionary::Column *col, 
-                          char *buffer, size_t offset) {
+                          char *buffer, uint32_t offset) {
   TimeHelper tm;
   int prec = col->getPrecision();
   int fsp_size = (1 + prec) / 2;
   int buf_size = 3 + fsp_size;
   int fsp_bits = fsp_size * 8;
-  int fsp_mask = (1UL << fsp_bits) - 1;
   int sign_pos = fsp_bits + 23;
+  uint64_t fsp_mask = (1ULL << fsp_bits) - 1;
   uint64_t sign_val = 1ULL << sign_pos;
   uint64_t packedValue = unpack_bigendian(buffer+offset, buf_size);
 
@@ -1532,10 +1537,10 @@ Local<Value> Time2Reader(const NdbDictionary::Column *col,
     packedValue = sign_val - packedValue;   // two's complement
   }
   tm.fsp      = prec;
-  tm.microsec = (packedValue & fsp_mask);   packedValue >>= fsp_bits;
-  tm.second   = (packedValue & 0x3F);       packedValue >>= 6;
-  tm.minute   = (packedValue & 0x3F);       packedValue >>= 6;
-  tm.hour     = (packedValue & 0x03FF);     packedValue >>= 10;
+  tm.microsec = (int) (packedValue & fsp_mask);   packedValue >>= fsp_bits;
+  tm.second   =       (packedValue & 0x3F);       packedValue >>= 6;
+  tm.minute   =       (packedValue & 0x3F);       packedValue >>= 6;
+  tm.hour     =       (packedValue & 0x03FF);     packedValue >>= 10;
 
   while(prec < 5) tm.microsec *= 100, prec += 2;
 
@@ -1543,7 +1548,7 @@ Local<Value> Time2Reader(const NdbDictionary::Column *col,
 }
 
 Local<Value> Time2Writer(const NdbDictionary::Column * col,
-                          Handle<Value> value, char *buffer, size_t offset) {
+                          Handle<Value> value, char *buffer, uint32_t offset) {
   TimeHelper tm(value);
   int prec = col->getPrecision();
   int fsp_size = (1 + prec) / 2;
@@ -1577,7 +1582,7 @@ Local<Value> Time2Writer(const NdbDictionary::Column * col,
 
 // Date
 Local<Value> DateReader(const NdbDictionary::Column *col, 
-                         char *buffer, size_t offset) {
+                         char *buffer, uint32_t offset) {
   TimeHelper tm;
   char * cbuf = buffer+offset;
   int encodedDate = uint3korr(cbuf);
@@ -1588,7 +1593,7 @@ Local<Value> DateReader(const NdbDictionary::Column *col,
 }
 
 Local<Value> DateWriter(const NdbDictionary::Column * col,
-                         Handle<Value> value, char *buffer, size_t offset) {
+                         Handle<Value> value, char *buffer, uint32_t offset) {
   TimeHelper tm(value);
   int encodedDate = 0;
   if(tm.valid) {
@@ -1602,13 +1607,13 @@ Local<Value> DateWriter(const NdbDictionary::Column * col,
 
 // BLOB
 // BlobReader is a no-op
-Local<Value> BlobReader(const NdbDictionary::Column *, char *, size_t) {
+Local<Value> BlobReader(const NdbDictionary::Column *, char *, uint32_t) {
   return writerOK;
 }
 
 // The BlobWriter does write anything, but it does verify that the 
 // intended value is a Node Buffer.
 Local<Value> BlobWriter(const NdbDictionary::Column *, Handle<Value> value,
-                        char *, size_t) {
+                        char *, uint32_t) {
   return node::Buffer::HasInstance(value) ? writerOK : K_0F001_Bad_BLOB.Get(isolate);
 }

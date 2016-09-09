@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@
 using namespace v8;
 
 typedef Local<Value> EncoderReader(const NdbDictionary::Column *,
-                                   char *, size_t);
+                                   char *, uint32_t);
 
 typedef Local<Value> EncoderWriter(const NdbDictionary::Column *,
-                                   Handle<Value>, char *, size_t);
+                                   Handle<Value>, char *, uint32_t);
 
 typedef struct {
   EncoderReader * read;

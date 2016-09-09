@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -35,12 +35,12 @@ public:
   /* Set at initialization time: */
   Record      * record;
   char        * buffer;
-  size_t        size;          // size of buffer
-  size_t        parent;        // index of parent in all QueryBuffers
+  uint32_t      size;          // size of buffer
+  short         parent;        // index of parent in all QueryBuffers
   uint16_t      static_flags;
   /* Used in result construction: */
   uint16_t      result_flags;
-  size_t        result;        // index of current result in all ResultHeaders
+  uint32_t      result;        // index of current result in all ResultHeaders
   QueryBuffer() : record(0), buffer(0), size(0), parent(0),
                   static_flags(0), result_flags(0), result(0)   {};
   ~QueryBuffer()  { if(size) delete[] buffer; };
@@ -49,8 +49,8 @@ public:
 class QueryResultHeader {
 public:
   char        * data;
-  size_t        parent;    // index of current ResultHeader for parent sector
-  size_t        previous;  // index of previous ResultHeader for this sector
+  uint32_t      parent;    // index of current ResultHeader for parent sector
+  uint32_t      previous;  // index of previous ResultHeader for this sector
   uint16_t      sector;
   uint16_t      tag;
 };
@@ -70,17 +70,17 @@ public:
   const NdbQueryOperationDef * defineOperation(const NdbDictionary::Index * index,
                                                const NdbDictionary::Table * table,
                                                const NdbQueryOperand* const keys[]);
-  QueryResultHeader * getResult(size_t);
-  size_t getResultRowSize(int depth);
+  QueryResultHeader * getResult(int);
+  uint32_t getResultRowSize(int depth);
   void close();
   const NdbError & getNdbError();
 
 protected:
   bool growHeaderArray();
-  bool pushResultValue(int);
-  bool pushResultNull(int);
-  bool pushResultForTable(int);
-  bool newResultForTable(int);
+  bool pushResultValue(short);
+  bool pushResultNull(short);
+  bool pushResultForTable(short);
+  bool newResultForTable(short);
   bool compareTwoResults(int, int, int);
   bool compareFullRows(int, int, int);
   bool isDuplicate(int);
@@ -96,11 +96,11 @@ private:
   TransactionImpl             * transaction;
   QueryResultHeader           * results;
   const NdbError              * latest_error;
-  size_t                        nresults, nheaders;
-  size_t                        nextHeaderAllocationSize;
+  int                           nresults, nheaders;
+  uint32_t                      nextHeaderAllocationSize;
 };
 
-inline size_t QueryOperation::getResultRowSize(int depth) {
+inline uint32_t QueryOperation::getResultRowSize(int depth) {
   return buffers[depth].size;
 };
 

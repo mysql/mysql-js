@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ void getColumnOffset_wrapper(const Arguments &args) {
   
   REQUIRE_ARGS_LENGTH(1);
 
-  typedef NativeConstMethodCall_1_<size_t, const Record, int> NCALL;
+  typedef NativeConstMethodCall_1_<uint32_t, const Record, int> NCALL;
 
   NCALL ncall(& Record::getColumnOffset, args);
   ncall.run();
@@ -82,7 +82,7 @@ void getBufferSize_wrapper(const Arguments &args) {
   
   REQUIRE_ARGS_LENGTH(0);
 
-  typedef NativeConstMethodCall_0_<size_t, const Record> NCALL;
+  typedef NativeConstMethodCall_0_<uint32_t, const Record> NCALL;
 
   NCALL ncall(& Record::getBufferSize, args);
   ncall.run();
@@ -128,7 +128,7 @@ void record_encoderRead(const Arguments & args) {
   char * buffer = node::Buffer::Data(args[1]->ToObject());
 
   const NdbDictionary::Column * col = record->getColumn(columnNumber);
-  size_t offset = record->getColumnOffset(columnNumber);
+  uint32_t offset = record->getColumnOffset(columnNumber);
 
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
   Local<Value> read = encoder->read(col, buffer, offset);
@@ -149,7 +149,7 @@ void record_encoderWrite(const Arguments & args) {
   record->setNotNull(columnNumber, buffer);
 
   const NdbDictionary::Column * col = record->getColumn(columnNumber);
-  size_t offset = record->getColumnOffset(columnNumber);
+  uint32_t offset = record->getColumnOffset(columnNumber);
 
   const NdbTypeEncoder * encoder = getEncoderForColumn(col);
   Local<Value> error = encoder->write(col, args[2], buffer, offset);

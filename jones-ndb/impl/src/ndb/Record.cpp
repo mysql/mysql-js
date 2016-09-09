@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -72,10 +72,13 @@ void Record::addColumn(const NdbDictionary::Column *column) {
     specs[index].nullbit_bit_in_byte = 0;
   }
 
-  /* Maintain smask of all columns and of PK columns */
-  allColumnMask.array[index >> 3] |= (1 << (index & 7));
+  /* Maintain masks of all columns and of PK columns */
+  unsigned char mask_bit = (unsigned char) (1U << (index & 7));
+  int mask_byte = index >> 3;
+  assert(mask_byte < 4);
+  allColumnMask.array[mask_byte] |= mask_bit;
   if(column->getPrimaryKey()) {
-    pkColumnMask.array[index >> 3] |= (1 << (index & 7));
+    pkColumnMask.array[mask_byte] |= mask_bit;
   }
 
   /* Track the number of blob columns in the record */
@@ -164,10 +167,10 @@ void Record::pad_offset_for_alignment() {
     For VARCHAR and VARBINARY, this returns the actual length.
     Otherwise it returns the full length allocated to the value.
 */
-size_t Record::getValueLength(int idx, const char *data) const {
+Uint32 Record::getValueLength(int idx, const char *data) const {
   DEBUG_MARKER(UDEB_DEBUG);
   assert((size_t) idx < ncolumns);
-  size_t size;
+  Uint32 size;
   const NdbDictionary::Column * col = specs[idx].column;
 
   if(col->getType() == NdbDictionary::Column::Varchar ||
@@ -190,10 +193,10 @@ size_t Record::getValueLength(int idx, const char *data) const {
     For all columns other than VARCHAR and VARBINARY, this returns 0.
     For VARCHAR and VARBINARY, this returns the number of length bytes.
 */
-size_t Record::getValueOffset(int idx) const {
+Uint32 Record::getValueOffset(int idx) const {
   DEBUG_MARKER(UDEB_DEBUG);
   assert((size_t) idx < ncolumns);
-  size_t offset = 0;
+  Uint32 offset = 0;
   const NdbDictionary::Column * col = specs[idx].column;
 
   if(col->getType() == NdbDictionary::Column::Varchar ||

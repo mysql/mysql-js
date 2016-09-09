@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -67,10 +67,7 @@ private:
 
   /* Data Members */
   uint64_t tc_bitmap;
-  short nDataNodes;
-  short concurrency;
-  short cacheConcurrency;
-  short maxConcurrency;
+  unsigned short nDataNodes, concurrency, cacheConcurrency, maxConcurrency;
 };
 
 

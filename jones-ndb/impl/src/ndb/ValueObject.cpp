@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ void getValueObjectConstructor(const Arguments &args) {
   ColumnHandlerSet *columnHandlers = new ColumnHandlerSet(ncol);
   for(unsigned int i = 0 ; i < ncol ; i++) {
     const NdbDictionary::Column * col = record->getColumn(i);
-    size_t offset = record->getColumnOffset(i);
+    uint32_t offset = record->getColumnOffset(i);
     ColumnHandler * handler = columnHandlers->getHandler(i);
     handler->init(args.GetIsolate(), col, offset);
   }

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ class ColumnHandler {
 public:
   ColumnHandler();
   ~ColumnHandler();
-  void init(v8::Isolate *, const NdbDictionary::Column *, size_t);
+  void init(v8::Isolate *, const NdbDictionary::Column *, uint32_t);
   Handle<Value> read(char *, Handle<Object>) const;
   Handle<Value> write(Handle<Value>, char *) const;
   BlobWriteHandler * createBlobWriteHandle(Local<Value>, int fieldNo) const;
@@ -41,7 +41,7 @@ public:
 public:
   const NdbDictionary::Column *column;
 private: 
-  size_t offset;
+  uint32_t offset;
   const NdbTypeEncoder *encoder;
   bool isLob, isText;
 };

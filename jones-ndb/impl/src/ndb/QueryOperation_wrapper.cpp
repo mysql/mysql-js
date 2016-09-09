@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -148,8 +148,8 @@ const NdbQueryOperationDef * createTopLevelQuery(Isolate * isolate,
 
   DEBUG_PRINT("Creating root QueryOperationDef for table: %s", table->getName());
   for(int i = 0; i < nKeyParts ; i++) {
-    size_t offset = keyRecord->getColumnOffset(i);
-    size_t length = keyRecord->getValueLength(i, key_buffer + offset);
+    uint32_t offset = keyRecord->getColumnOffset(i);
+    uint32_t length = keyRecord->getValueLength(i, key_buffer + offset);
     offset += keyRecord->getValueOffset(i);  // accounts for length bytes
     key_parts[i] = builder->constValue(key_buffer + offset, length);
     DEBUG_PRINT_DETAIL("Key part %d: %s", i, keyRecord->getColumn(i)->getName());
@@ -299,7 +299,7 @@ void queryGetResult(const Arguments & args) {
   v8::Isolate * isolate = args.GetIsolate();
 
   QueryOperation * op = unwrapPointer<QueryOperation *>(args.Holder());
-  size_t id = args[0]->Uint32Value();
+  uint32_t id = args[0]->Uint32Value();
   Handle<Object> wrapper = args[1]->ToObject();
 
   QueryResultHeader * header = op->getResult(id);

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ ColumnHandler::~ColumnHandler() {
 
 void ColumnHandler::init(v8::Isolate * isolate,
                          const NdbDictionary::Column *_column,
-                         size_t _offset) {
+                         uint32_t _offset) {
   column = _column;
   encoder = getEncoderForColumn(column);
   offset = _offset;
