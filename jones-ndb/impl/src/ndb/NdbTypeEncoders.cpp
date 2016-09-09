@@ -935,13 +935,8 @@ int writeRecode(const NdbDictionary::Column *col,
   int columnSizeInBytes = col->getLength();
   int utf8bufferSize = getUtf8BufferSizeForColumn(columnSizeInBytes, csinfo);
  
-#ifdef WIN32
   /* Write to the heap */
   char * recode_stack = new char[utf8bufferSize];
-#else
-  /* Write the JavaScript string onto the stack as UTF-8 */
-  char recode_stack[utf8bufferSize];
-#endif
   int recodeSz = strval->WriteUtf8(recode_stack, utf8bufferSize,
                                    NULL, String::NO_NULL_TERMINATION);
   if(pad) {
@@ -952,9 +947,7 @@ int writeRecode(const NdbDictionary::Column *col,
   int bytesWritten = recodeFromUtf8(recode_stack, recodeSz, 
                                     buffer, columnSizeInBytes,
                                     col->getCharsetNumber());
-#ifdef WIN32
   delete[] recode_stack;
-#endif
   return bytesWritten; 
 }
 
@@ -1128,11 +1121,7 @@ Local<Value> CharReader(const NdbDictionary::Column *col,
     stats.read_strings_recoded++;
     CharsetMap csmap;
     size_t recode_size = getUtf8BufferSizeForColumn(len, csinfo);
-#ifdef WIN32
     char * recode_buffer = new char[recode_size];
-#else
-    char recode_buffer[recode_size];
-#endif
 
     /* Recode from the buffer into the UTF8 stack */
     int32_t lengths[2];
@@ -1148,9 +1137,7 @@ Local<Value> CharReader(const NdbDictionary::Column *col,
     /* Create a new JS String from the UTF-8 recode buffer */
     string = String::NewFromUtf8(isolate, recode_buffer, String::kNormalString, len);
 
-#ifdef WIN32
     delete[] recode_buffer;
-#endif
 
     //DEBUG_PRINT("(D.2): Recode to UTF-8 and create new");
   }
@@ -1200,11 +1187,7 @@ Local<Value> varcharReader(const NdbDictionary::Column *col,
     stats.read_strings_recoded++;
     CharsetMap csmap;
     size_t recode_size = getUtf8BufferSizeForColumn(length, csinfo);
-#ifdef WIN32
     char * recode_buffer = new char[recode_size];
-#else
-    char recode_buffer[recode_size];
-#endif
     int32_t lengths[2];
     lengths[0] = length;
     lengths[1] = recode_size;
@@ -1212,9 +1195,7 @@ Local<Value> varcharReader(const NdbDictionary::Column *col,
                  col->getCharsetNumber(), csmap.getUTF8CharsetNumber(),
                  str, recode_buffer);
     string = String::NewFromUtf8(isolate, recode_buffer, String::kNormalString, lengths[1]);
-#ifdef WIN32
     delete[] recode_buffer;
-#endif
     //DEBUG_PRINT("(D.2): Recode to UTF-8 and create new [size %d]", length);
   }
   return string;

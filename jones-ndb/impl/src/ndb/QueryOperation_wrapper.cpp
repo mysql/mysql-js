@@ -36,6 +36,8 @@ using namespace v8;
 #define SET_KEY(X,Y) X.Set(isolate, String::NewFromUtf8(isolate, Y))
 #define GET_KEY(X) X.Get(isolate)
 
+#define MAX_KEY_PARTS 8
+
 Eternal<String>    /* keys of NdbProjection */
   K_next,
   K_root,
@@ -141,7 +143,8 @@ const NdbQueryOperationDef * createTopLevelQuery(Isolate * isolate,
 
   /* Build the key */
   int nKeyParts = keyRecord->getNoOfColumns();
-  const NdbQueryOperand * key_parts[nKeyParts+1];
+  assert(nKeyParts <= MAX_KEY_PARTS);
+  const NdbQueryOperand * key_parts[MAX_KEY_PARTS + 1];
 
   DEBUG_PRINT("Creating root QueryOperationDef for table: %s", table->getName());
   for(int i = 0; i < nKeyParts ; i++) {
@@ -197,7 +200,8 @@ const NdbQueryOperationDef * createNextLevel(Isolate * isolate,
 
   /* Build the key */
   int nKeyParts = joinColumns->Length();
-  const NdbQueryOperand * key_parts[nKeyParts+1];
+  assert(nKeyParts <= MAX_KEY_PARTS);
+  const NdbQueryOperand * key_parts[MAX_KEY_PARTS + 1];
 
   for(int i = 0 ; i < nKeyParts ; i++) {
     String::Utf8Value column_name(joinColumns->Get(i));
@@ -220,7 +224,7 @@ void createQueryOperation(const Arguments & args) {
   int currentId = 0;
   int parentId;
   const NdbQueryOperationDef * current;
-  const NdbQueryOperationDef * all[size];
+  const NdbQueryOperationDef ** all = new const NdbQueryOperationDef * [size];
   QueryOperation * queryOperation = new QueryOperation(size);
 
   Local<Value> v;
@@ -240,6 +244,7 @@ void createQueryOperation(const Arguments & args) {
     setRowBuffers(isolate, queryOperation, spec, parentId);
   }
   queryOperation->prepare(all[0]);
+  delete[] all;
   args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
 }
 
