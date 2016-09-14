@@ -19,7 +19,7 @@
  */
 
 #include <string.h>
-#include <pthread.h>
+#include <uv.h>
 
 #include <NdbApi.hpp>
 #include <mysql.h>
@@ -88,14 +88,14 @@ public:
 };
 
 ThdIdNode * initializedThreadIds = 0;
-pthread_mutex_t threadListMutex = PTHREAD_MUTEX_INITIALIZER;
+uv_mutex_t threadListMutex;
 
 void require_thread_specific_initialization() {
   uv_thread_t thd_id = uv_thread_self();
   bool isInitialized = false;
   ThdIdNode * list;
 
-  pthread_mutex_lock(& threadListMutex);
+  uv_mutex_lock(& threadListMutex);
   {
     list = initializedThreadIds;
 
@@ -112,7 +112,7 @@ void require_thread_specific_initialization() {
       initializedThreadIds = new ThdIdNode(thd_id, initializedThreadIds);
     }
   }
-  pthread_mutex_unlock(& threadListMutex);
+  uv_mutex_unlock(& threadListMutex);
 }
 
 
@@ -877,5 +877,7 @@ void DBDictionaryImpl_initOnLoad(Handle<Object> target) {
   DEFINE_JS_FUNCTION(dbdict_obj, "getRecordForMapping", getRecordForMapping);
 
   target->Set(NEW_SYMBOL("DBDictionary"), dbdict_obj);
+
+  uv_mutex_init(& threadListMutex);
 }
 
