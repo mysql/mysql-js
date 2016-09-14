@@ -20,7 +20,7 @@
 
 #include <NdbApi.hpp>
 #include "compat_ndb.h"
-#include "ndb_util/NdbWaitGroup.hpp"
+#include "NdbWaitGroup.hpp"
 #include "SharedList.h"
 #include "ConcurrentFlag.h"
 #include "TransactionImpl.h"

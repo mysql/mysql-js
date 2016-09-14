@@ -19,7 +19,9 @@
 */
 
 #include <NdbApi.hpp>
-#include "ndb_util/NdbQueryOperation.hpp"
+
+#include "NdbQueryBuilder.hpp"
+#include "NdbQueryOperation.hpp"
 
 #include <node.h>
 

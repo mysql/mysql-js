@@ -18,7 +18,9 @@
  02110-1301  USA
 */
 
-#include "ndb_util/NdbQueryOperation.hpp"
+#include <NdbApi.hpp>
+#include "NdbQueryBuilder.hpp"
+#include "NdbQueryOperation.hpp"
 
 #include "adapter_global.h"
 #include "TransactionImpl.h"

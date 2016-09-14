@@ -23,7 +23,8 @@
         '<(mysql_path)/include/storage/ndb',
         '<(mysql_path)/include/storage/ndb/ndbapi',
         'impl/include/common',
-        'impl/include/ndb'
+        'impl/include/ndb',
+        'impl/include/ndb/ndb_util'
       ],
         
       'sources': 

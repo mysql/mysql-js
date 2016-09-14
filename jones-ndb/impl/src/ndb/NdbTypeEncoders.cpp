@@ -36,8 +36,8 @@
 #include "node.h"
 #include "node_buffer.h"
 
-#include "ndb_util/CharsetMap.hpp"
-#include "ndb_util/decimal_utils.hpp"
+#include "CharsetMap.hpp"
+#include "decimal_utils.hpp"
 #include "EncoderCharset.h"
 
 using namespace v8;

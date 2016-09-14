@@ -19,7 +19,9 @@
 */
 
 #include <NdbApi.hpp>
-#include "ndb_util/NdbQueryOperation.hpp"
+
+#include "NdbQueryBuilder.hpp"
+#include "NdbQueryOperation.hpp"
 
 #include "adapter_global.h"
 #include "js_wrapper_macros.h"

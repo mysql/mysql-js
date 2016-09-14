@@ -28,9 +28,7 @@
 #include "NativeCFunctionCall.h"
 #include "NativeMethodCall.h"
 
-#include "ndb_util/CharsetMap.hpp"
 
-using namespace v8;
 
 
 void CharsetMap_init_wrapper(const Arguments &args) {
@@ -47,8 +45,8 @@ void CharsetMap_unload_wrapper(const Arguments &args) {
 }
 
 
-void Ndb_util_initOnLoad(Handle<Object> target) {
-  Local<FunctionTemplate> JSCharsetMap;
+void Ndb_util_initOnLoad(v8::Handle<v8::Object> target) {
+  v8::Local<v8::FunctionTemplate> JSCharsetMap;
 
   DEFINE_JS_FUNCTION(target, "CharsetMap_init", CharsetMap_init_wrapper);
   DEFINE_JS_FUNCTION(target, "CharsetMap_unload", CharsetMap_unload_wrapper);
