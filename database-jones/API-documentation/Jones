@@ -13,8 +13,8 @@
  * adapter (e.g. "mysql"), or a ConnectionProperties object.
  *   - If it is a string naming a backend adapter, then the default
  *     ConnectionProperties for that adapter will be fetched.
- *   - If it is an object, the object must contain a member property
- *     "implementation".  The default ConnectionProperties for
+ *   - If it is an object, and contains a member property
+ *     "implementation", the default ConnectionProperties for
  *     adapter <implementation> are fetched, and then overridden by
  *     the properties specified in the object.
  *
@@ -27,10 +27,18 @@
  *      holding a ConnectionProperties object.  The function may modify the
  *      object in place, or it may return a new object.  The new object or
  *      modified properties will be the return value of ConnectionProperties().
- *    - If it is a string, Jones will search for a jones_deployments.js file as
- *      described below.  The file will be expected to export a function whose
- *      name matches the string value.  If found, this function will be called
- *      with a single parameter as above.
+ *    - If it is a string, Jones will search all jones_deployments.js files
+ *      found in the search path described below.  For the first file found
+ *      to export a function whose name matches the string value, that function
+ *      will be called with a single parameter as above.  If the named
+ *      deployment function is not found in any file, an AssertionError is
+ *      thrown.
+ *
+ *  After any supplied deployment function has been called, but before
+ *  being returned to the user, the ConnectionProperties object is tested
+ *  for a string member named "implementation".  If this property does not
+ *  exist, or if it exists but does not name a Jones DBServiceProvider,
+ *  an AssertionError is thrown.
  *
  *    jones_deployments.js seach path
  *    -------------------------------

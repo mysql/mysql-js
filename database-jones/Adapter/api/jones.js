@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -29,10 +29,12 @@ var path           = require("path"),
     UserContext    = null,   // loaded later to prevent circular dependency
 
     unified_debug  = require("unified_debug"),
+    stats_module   = require("./stats"),
     udebug         = unified_debug.getLogger("jones.js"),
     existsSync     = fs.existsSync || path.existsSync,
 
     privateModuleRegistry  = {},
+    deploymentSearchPath   = [],
     resolvedDeployments    = {};
 
 function common(file) { return path.join(conf.spi_common_dir, file); }
@@ -82,7 +84,10 @@ exports.TableMapping = require("./TableMapping").TableMapping;
 
 exports.Projection   = require("./Projection").Projection;
 
-stats_module.register(resolvedDeployments, "api", "ResolvedDeployments");
+stats_module.register(resolvedDeployments,
+  "api", "ConnectionProperties", "ResolvedDeployments");
+stats_module.register(deploymentSearchPath,
+  "api", "ConnectionProperties", "DeploymentSearchPath");
 
 /* getDBServiceProviderModule()
    The usual way to load SPI module "x" is to require("jones-x").
@@ -131,108 +136,142 @@ exports.converters = {
   "SerializedObjectConverter" : require(converter("SerializedObjectConverter"))
 };
 
-
-/* Find jones_deployments.js
-     Read a deployments.js file from the same directory as the top-level
-     executable.
-     If none, read one from the directory of a required module, descending
-     through modules to the same directory as this module (jones.js).
-     If none, read one from the current working directory.
+/* Build the jones_deployment.js search path.
+   This is done once at startup time.
 */
+function buildSearchPath() {
+  var mod, sourceDir, oldDir;
+  assert(deploymentSearchPath.length === 0);
 
-function findDeploymentsFile() {
-  var depFile, depObject, mod, sourceDir, oldDir;
-  depObject = {};
-  mod = module.parent;
-
-  function findFile(dir) {
-    var file = path.join(dir, "jones_deployments.js");
-    return existsSync(file) ? file : undefined;
-  }
-
-  // Look in source directory, iteratating module -> parent module -> ...
-  while(mod) {
-    sourceDir = path.dirname(mod.filename);
-    depFile = findFile(sourceDir) || depFile;
-    mod = mod.parent;
-  }
-
-  // From top-level source module, walk path towards root.
+  // (1) Look in the same directory as the main JS script (require.main)
+  // (2) Walk the chain of required modules from the main script towards jones.js
+  mod = module;  // node.js file-scope "module"
   do {
+    sourceDir = path.dirname(mod.filename);
+    deploymentSearchPath.unshift(sourceDir);
+    mod = mod.parent;
+  } while(mod);
+
+  // (3) Walk the filesystem from the main script to the root directory
+  // TODO: Test this on Windows
+  sourceDir = path.dirname(sourceDir);
+  while(oldDir !== sourceDir) {  // these become equal at "/"
+    deploymentSearchPath.push(sourceDir);
     oldDir = sourceDir;
     sourceDir = path.dirname(sourceDir);
-    depFile = depFile || findFile(sourceDir);
-  } while(oldDir !== sourceDir);   // these become equal at "/"
-
-  // Finally look in CWD
-  depFile = depFile || findFile(process.env.PWD);
-
-  /* Load the file */
-  if(depFile) {
-    depObject = require(depFile);
   }
 
-  return depObject;
+  // (4) Finally look in the current working directory
+  if(deploymentSearchPath.indexOf(process.env.PWD) < 0) {
+    deploymentSearchPath.push(process.env.PWD);
+  }
 }
 
+buildSearchPath();   // once at startup
 
-exports.ConnectionProperties = function(nameOrProperties, deployment) {
-  var serviceProvider, defaultProps, newProps, key, impl, mergeProps;
-  var deploymentFn, deploymentModule;
+function DeploymentPathIterator() {
+  this.index = 0;
+}
 
-  assert(typeof nameOrProperties === 'string' || typeof nameOrProperties === 'object');
-  if(typeof nameOrProperties === 'string') {
-    impl = nameOrProperties;
-    mergeProps = {};
-  } else {
-    assert(typeof nameOrProperties.implementation === 'string');
-    impl = nameOrProperties.implementation;
-    mergeProps = nameOrProperties;
+DeploymentPathIterator.prototype.next = function() {
+  var file;
+  while(this.index < deploymentSearchPath.length) {
+    file = path.join(deploymentSearchPath[this.index++], "jones_deployments.js");
+    if(existsSync(file)) {
+      return file;
+    }
+  } // fall through, return undefined
+};
+
+function findNamedDeployment(deploymentName) {
+  var iter, deploymentFile, deploymentModule, deploymentFn;
+
+  iter = new DeploymentPathIterator();
+  while((deploymentFile = iter.next()) !== undefined) {
+    deploymentModule = require(deploymentFile);
+    deploymentFn = deploymentModule[deploymentName];
+    if(typeof deploymentFn === 'function') {
+      resolvedDeployments[deploymentName] = deploymentFile;  // global stat
+      return deploymentFn;
+    }
   }
-  udebug.log("ConnectionProperties", impl);
+  assert(false, "Named deployment " + deploymentName + " not found in "
+    + deploymentSearchPath.join(":"));
+}
 
-  /* Fetch the Service Provider */
+function getDeploymentsFunction(deployment) {
+  switch(typeof deployment) {
+    case 'string':
+      return findNamedDeployment(deployment);
+
+    case 'function':
+      return deployment;
+
+    default:
+      assert(false, "deployment must be a string or function");
+  }
+}
+
+function mergeSuppliedProperties(newProperties, propertiesToMerge) {
+  var key;
+  for(key in propertiesToMerge) {
+    if(propertiesToMerge.hasOwnProperty(key)) {
+      newProperties[key] = propertiesToMerge[key];
+    }
+  }
+}
+
+function cloneDefaultPropertiesForServiceProvider(impl) {
+  var serviceProvider, defaultProperties;
+
+  /* Fetch the default connection properties */
   serviceProvider = getDBServiceProviderModule(impl);
+  defaultProperties = serviceProvider.getDefaultConnectionProperties();
 
-  /* Fetch the default connection properties for the service provider */
-  defaultProps = serviceProvider.getDefaultConnectionProperties();
-  assert.strictEqual(defaultProps.implementation, impl,
+  /* Sanity Check */
+  assert.strictEqual(defaultProperties.implementation, impl,
                      "invalid implementation name in default connection properties");
 
   /* Clone them */
-  newProps = JSON.parse(JSON.stringify(defaultProps));
+  return JSON.parse(JSON.stringify(defaultProperties));
+}
 
-  /* Merge with the supplied properties */
-  for(key in mergeProps) {
-    if(mergeProps.hasOwnProperty(key)) {
-      newProps[key] = mergeProps[key];
+exports.ConnectionProperties = function(nameOrProperties, deployment) {
+  var impl, properties, deploymentFn;
+
+  if(typeof nameOrProperties === 'string') {
+    impl = nameOrProperties;
+    properties = cloneDefaultPropertiesForServiceProvider(impl);
+  } else if(typeof nameOrProperties === 'object') {
+    impl = nameOrProperties.implementation;
+    if(impl) {
+      properties = cloneDefaultPropertiesForServiceProvider(impl);
+      mergeSuppliedProperties(properties, nameOrProperties);
+    } else {
+      properties = nameOrProperties;
     }
+  } else {
+    assert.ok(false,
+      "ConnectionProperties() first parameter must be an adapter name or properties object");
   }
-  udebug.log(newProps);
+  udebug.log("ConnectionProperties", impl || "impl deferred to deployment");
 
+  /* Apply deployment */
   if(deployment !== undefined) {
-    switch(typeof deployment) {
-      case 'string':
-        deploymentModule = findDeploymentsFile();
-        deploymentFn = deploymentModule[deployment];
-        assert.equal(typeof deploymentFn, 'function',
-                     "deployment string must name a function from jones_deployments.js");
-        break;
-
-      case 'function':
-        deploymentFn = deployment;
-        break;
-
-      default:
-        assert(false, "deployment must be a string or function");
-    }
-
-    // Use Properties if returned
-    newProps = deploymentFn(newProps) || newProps;
+    deploymentFn = getDeploymentsFunction(deployment);
+    properties = deploymentFn(properties) || properties; // Use properties if returned
   }
+
+  /* After applying deployment, check that properties.implementation is set 
+     and that the DBServiceProvider module can be loaded
+  */
+  impl = properties.implementation;
+  assert.equal(typeof impl, 'string', "Properties object must include implementation name");
+  getDBServiceProviderModule(impl);
 
   /* "Normally constructors don't return a value, but they can choose to" */
-  return newProps;
+  udebug.log_detail(properties);
+  return properties;
 };
 
 
