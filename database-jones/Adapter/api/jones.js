@@ -28,10 +28,12 @@ var path           = require("path"),
     conf           = require("../adapter_config"),
     UserContext    = null,   // loaded later to prevent circular dependency
 
+    unified_debug  = require("unified_debug"),
     udebug         = unified_debug.getLogger("jones.js"),
     existsSync     = fs.existsSync || path.existsSync,
-    registry       = {};
 
+    privateModuleRegistry  = {},
+    resolvedDeployments    = {};
 
 function common(file) { return path.join(conf.spi_common_dir, file); }
 function api_dir(file) { return path.join(conf.api_dir, file); }
@@ -80,11 +82,20 @@ exports.TableMapping = require("./TableMapping").TableMapping;
 
 exports.Projection   = require("./Projection").Projection;
 
+stats_module.register(resolvedDeployments, "api", "ResolvedDeployments");
+
+/* getDBServiceProviderModule()
+   The usual way to load SPI module "x" is to require("jones-x").
+
+   For bootstrapping during development of x, though, it is possible to use
+   jones.registerDBServiceProvider("x", x_module);
+   getDBServiceProviderModule() will then return the registered object.
+*/
 function getDBServiceProviderModule(impl_name) {
-  var externalModule = "jones-" + impl_name;
-  var service;
-  
-  service = registry[impl_name];
+  var externalModule, service;
+
+  externalModule = "jones-" + impl_name;
+  service = privateModuleRegistry[impl_name];
   if(! service) {
     try {
       service = require(externalModule);
@@ -99,7 +110,7 @@ function getDBServiceProviderModule(impl_name) {
 }
 
 exports.registerDBServiceProvider = function(name, module) {
-  registry[name] = module;
+  privateModuleRegistry[name] = module;
 };
 
 function getDBServiceProvider(impl_name) {
