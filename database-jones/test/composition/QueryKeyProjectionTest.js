@@ -20,9 +20,14 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var lib = require('./lib.js');
 var udebug = unified_debug.getLogger("QueryKeyProjectionTest.js");
+
 lib.mapShop();
+
 var t1 = new harness.ConcurrentTest('t1 Query IdProjectionTest');
 var t2 = new harness.ConcurrentTest('t2 Query IdProjectionTestDefaultNull');
 var t3 = new harness.ConcurrentTest('t3 Query IdProjectionTestDefaultEmptyArray');
@@ -207,10 +212,10 @@ t7.run = function() {
   var expectedDiscount1 = new lib.Discount(1, 'good customer');
   var expectedDiscount3 = new lib.Discount(3, 'internet special');
   var expectedDiscount4 = new lib.Discount(4, 'closeout');
-  var t7discountProjection = new mynode.Projection(lib.Discount)
+  var t7discountProjection = new jones.Projection(lib.Discount)
     .addFields('description');
   t7discountProjection.name = 't7discountProjection';
-  var t7customerProjection = new mynode.Projection(lib.Customer)
+  var t7customerProjection = new jones.Projection(lib.Customer)
     .addFields('id', 'firstName', 'lastName')
     .addRelationship('discounts', t7discountProjection);
   t7customerProjection.name = 't7customerProjection';

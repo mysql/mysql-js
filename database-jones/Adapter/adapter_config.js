@@ -53,10 +53,6 @@ if(typeof global.setImmediate !== 'function') {
 /* Export the filesystem config */
 module.exports = jones.fs;
 
-/* Also make it available globally */
-if(!global.jones) { global.jones = {} };
-global.jones.fs = jones.fs;
-
 /* And export unified_debug globally */
 global.unified_debug   = require("unified_debug");
 

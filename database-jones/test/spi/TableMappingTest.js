@@ -20,6 +20,9 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var harness = require("jones-test");
+
 var tbl1A = function(i, j) {
   if (i) {this.i = i;}
   if (j) {this.j = j;}
@@ -28,7 +31,7 @@ var tbl1A = function(i, j) {
 var t1 = new harness.ConcurrentTest("MissingColumnMapping");
 t1.run = function() {
   var testCase = this;
-  var tablemapping = new mynode.TableMapping('tbl1');
+  var tablemapping = new jones.TableMapping('tbl1');
   tablemapping.mapAllColumns = false;
   tablemapping.mapField('i');
   tablemapping.mapField('bad_field', 'missing_column');

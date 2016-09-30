@@ -20,9 +20,12 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var spi_lib = require("./lib.js");
-var dbtablehandler = require(mynode.common.DBTableHandler);
-var TableMapping   = require(mynode.api.TableMapping).TableMapping;
+var dbtablehandler = require(jones.common.DBTableHandler);
+var TableMapping   = require(jones.api.TableMapping).TableMapping;
 var udebug         = unified_debug.getLogger("NoCommitTest.js");
 
 var dbSession = null;

@@ -21,6 +21,8 @@
 /*jslint newcap: true */
 /*global t_basic, verify_t_basic, fail_verify_t_basic */
 
+var jones = require("database-jones");
+
 /***** Load by primary key ***/
 var t1 = new harness.ConcurrentTest("testLoad");
 t1.run = function() {

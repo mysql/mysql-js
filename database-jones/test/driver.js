@@ -88,7 +88,6 @@ function runAllTests(exitStatus) {
   }
 
   /* Set globals */
-  global.mynode               = jones;
   global.adapter              = adapter;
   global.test_conn_properties = properties;
 

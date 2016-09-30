@@ -19,6 +19,9 @@
  */
 
 "use strict";
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var util    = require("util");
 var udebug  = unified_debug.getLogger("json/WriteReadTest.js");
 
@@ -39,7 +42,7 @@ var hybrids =
 	 new Hybrid(103, 103.333, 103.333), // number
 	 new Hybrid(104, '104', '104'), // string
 	 new Hybrid(105, ['105', 105], ['105', 105]), // array
-	 new Hybrid(106, {'106': 106}, {'106': 106}), // object
+	 new Hybrid(106, {'106': 106}, {'106': 106})  // object
   ];
 
 /** Try to write JavaScript objects and read back using both a varchar column and a json column.
@@ -57,10 +60,10 @@ var hybrids =
 var t1 = new harness.SerialTest("WriteReadTest");
 t1.run = function() {
   var testCase = this;
-  var hybridMapping = new mynode.TableMapping('json_hybrid');
+  var hybridMapping = new jones.TableMapping('json_hybrid');
   hybridMapping.mapField('id');
   hybridMapping.mapField('unstruct_json');
-  hybridMapping.mapField('unstruct_varchar', mynode.converters.JSONConverter);
+  hybridMapping.mapField('unstruct_varchar', jones.converters.JSONConverter);
   hybridMapping.mapSparseFields('SPARSE_FIELDS');
   hybridMapping.applyToClass(Hybrid);
 
@@ -83,7 +86,7 @@ t1.run = function() {
     return batch.execute();
   })
   .then(function() {
-  	udebug.log_detail('WriteReadTest.createQuery')
+  	udebug.log_detail('WriteReadTest.createQuery');
   	return testCase.session.createQuery(Hybrid);
   })
   .then(function(q) {

@@ -18,7 +18,6 @@
  02110-1301  USA
  */
 
-/*global harness */
 
 "use strict";
 

@@ -22,6 +22,9 @@
 /*global fail_openSession */
 /*jslint unparam: true */
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var assert = require("assert");
 
 var good_properties = global.test_conn_properties;
@@ -59,7 +62,7 @@ t_222.run = function() {
     });
   }
   
-  p = mynode.openSession(good_properties, null);
+  p = jones.openSession(good_properties, null);
   if(typeof p === 'object' && typeof p.then === 'function') {
     p.then(onSession, function(err) { test.fail(err); });
   } else {
@@ -95,7 +98,7 @@ t_223.run = function() {
     test.failOnError();
   }
   
-  p = mynode.openSession(bad_properties, null);
+  p = jones.openSession(bad_properties, null);
   if(typeof p === 'object' && typeof p.then === 'function') {
     p.then(onSession, onError);
   } else {
@@ -128,7 +131,7 @@ t_2261.run = function() {
     s.close(function() { test.failOnError(); });
   }
 
-  p = mynode.openSession(good_properties, null);
+  p = jones.openSession(good_properties, null);
   if(typeof p === 'object' && typeof p.then === 'function') {
     p.then(onSession_1, function(err) { test.fail(err); });
     p.then(onSession_2, function(err) { test.fail(err); });
@@ -160,7 +163,7 @@ t_2262.run = function() {
     test.failOnError();
   }
 
-  p = mynode.openSession(bad_properties, null);
+  p = jones.openSession(bad_properties, null);
   if(typeof p === 'object') {
     p.then(onSession, onErr_1);
     p.then(onSession, onErr_2);
@@ -182,7 +185,7 @@ t_227.run = function() {
     s.close(function() { test.failOnError(); });
   }
 
-  p1 = mynode.openSession(good_properties, null);
+  p1 = jones.openSession(good_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
   } else {
@@ -212,7 +215,7 @@ t_2271fv.run = function() {
     test.failOnError();
   }
 
-  p1 = mynode.openSession(good_properties, null);
+  p1 = jones.openSession(good_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
   } else {
@@ -248,7 +251,7 @@ t_2271rv.run = function() {
     test.fail('t_2271rv should not reject because onRejected returned a value.');
   }
 
-  p1 = mynode.openSession(bad_properties, null);
+  p1 = jones.openSession(bad_properties, null);
   p1.name = 'p1';
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
@@ -287,7 +290,7 @@ t_2272fe.run = function() {
     test.failOnError();
   }
 
-  p1 = mynode.openSession(good_properties, null);
+  p1 = jones.openSession(good_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_2272fe p1 not thenable");
   } else {
@@ -322,7 +325,7 @@ t_2272re.run = function() {
     test.failOnError();
   }
 
-  p1 = mynode.openSession(bad_properties, null);
+  p1 = jones.openSession(bad_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_2272re p1 not thenable");
   } else {
@@ -347,7 +350,7 @@ t_2273.run = function() {
     v.close(function(){test.failOnError();});
   }
 
-  p1 = mynode.openSession(good_properties, null);
+  p1 = jones.openSession(good_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_2273 p1 not thenable");
   } else {
@@ -377,7 +380,7 @@ t_2274.run = function() {
     test.failOnError();
   }
 
-  p1 = mynode.openSession(bad_properties, null);
+  p1 = jones.openSession(bad_properties, null);
   if(typeof p1 !== 'object' || typeof p1.then !== 'function') {
     this.fail("PromisesTest.t_227 p1 not thenable");
   } else {
@@ -415,7 +418,7 @@ t_23f.run = function() {
   }
   
   // t_23 begins here
-  p1 = mynode.openSession(good_properties);
+  p1 = jones.openSession(good_properties);
   p2 = p1.then(onSession);
   p2.then(reportSuccess, reportFailure);
 };
@@ -454,7 +457,7 @@ t_23r.run = function() {
   }
   
   // t_23 begins here
-  p1 = mynode.openSession(bad_properties);
+  p1 = jones.openSession(bad_properties);
   p2 = p1.then(onSession);
   p2.then(reportSuccess, reportFailure);
 };
@@ -524,7 +527,7 @@ function createHelpers(testCase, session, errorSqlStateMatch, errorMessageMatch)
 var testIdleCommit = new harness.ConcurrentTest('Idle commit must fail');
 testIdleCommit.run = function() {
   var testCase = this;
-  mynode.openSession(good_properties, null, function(err, session) {
+  jones.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
     if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'Idle cannot commit');
@@ -537,7 +540,7 @@ tests.push(testIdleCommit);
 var testIdleRollback = new harness.ConcurrentTest('Idle rollback must fail');
 testIdleRollback.run = function() {
   var testCase = this;
-  mynode.openSession(good_properties, null, function(err, session) {
+  jones.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
     if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'Idle cannot rollback');
@@ -550,7 +553,7 @@ tests.push(testIdleRollback);
 var testActiveBegin = new harness.ConcurrentTest('Active begin must fail');
 testActiveBegin.run = function() {
   var testCase = this;
-  mynode.openSession(good_properties, null, function(err, session) {
+  jones.openSession(good_properties, null, function(err, session) {
     if (err) { throw err; }
     testCase.session = session;
     var helpers = createHelpers(testCase, session, '2500', 'Active cannot begin');
@@ -566,7 +569,7 @@ tests.push(testActiveBegin);
 var testRollbackOnlyBegin = new harness.ConcurrentTest('RollbackOnly begin must fail');
 testRollbackOnlyBegin.run = function() {
   var testCase = this;
-  mynode.openSession(good_properties, null, function(err, session) {
+  jones.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
     if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'RollbackOnly cannot begin');
@@ -581,7 +584,7 @@ tests.push(testRollbackOnlyBegin);
 var testRollbackOnlyCommit = new harness.ConcurrentTest('RollbackOnly commit must fail');
 testRollbackOnlyCommit.run = function() {
   var testCase = this;
-  mynode.openSession(good_properties, null, function(err, session) {
+  jones.openSession(good_properties, null, function(err, session) {
     testCase.session = session;
     if (err) { throw err; }
     var helpers = createHelpers(testCase, session, '2500', 'RollbackOnly cannot commit');

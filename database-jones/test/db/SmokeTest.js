@@ -25,14 +25,16 @@
 var test = new harness.SmokeTest("SmokeTest");
 
 test.run = function() {
-
 // THIS SUITE IS DISABLED:
   return this.skip("db suite is disabled");
+};
 
+test.__run = function() {
+  var t;
 
-  var t = this;
+  t = this;
   try {
-    var p = Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
+    Proxy.create(t);  // If Proxy is not available, fail the SmokeTest
   } catch(e) {
     t.appendErrorMessage("Proxy is not available (use node --harmony)");
     return true;

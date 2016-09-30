@@ -20,7 +20,10 @@
 
 "use strict";
 
-var t1 = new harness.DocsTest(mynode.api_doc.Jones);
-t1.addTestObject(mynode);
+var jones = require("database-jones");
+var harness = require("jones-test");
+
+var t1 = new harness.DocsTest(jones.api_doc.Jones);
+t1.addTestObject(jones);
 
 module.exports.tests = [t1];

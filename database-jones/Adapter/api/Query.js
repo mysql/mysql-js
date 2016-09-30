@@ -21,6 +21,7 @@
 "use strict";
 
 var        util    = require("util");
+var       jones    = require("database-jones");
 var     BitMask    = require(jones.common.BitMask);
 var      udebug    = unified_debug.getLogger("Query.js");
 var userContext    = require("./UserContext.js");

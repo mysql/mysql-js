@@ -18,12 +18,16 @@
  02110-1301  USA
  */
 
-/*global unified_debug, mynode, verify_integraltypes_keyword, harness,
+/*global verify_integraltypes_keyword, 
   fail_openSession, fail_verify_integraltypes_keyword_array 
  */
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var udebug = unified_debug.getLogger("QueryKeywordTest.js");
+
 var IntegraltypesKeywordId = function(id) {
   if(id !== undefined) {
     // name the id field 'where'
@@ -36,7 +40,7 @@ var IntegraltypesKeywordId = function(id) {
 
 var mapIntegraltypesKeyword = function() {
   // map special domain type
-  var tablemapping = new mynode.TableMapping("test.integraltypes");
+  var tablemapping = new jones.TableMapping("test.integraltypes");
   tablemapping.mapField('where', 'id');
   tablemapping.mapField('execute', 'ttinyint');
   tablemapping.mapField('count', 'tsmallint');

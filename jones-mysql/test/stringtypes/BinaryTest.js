@@ -19,6 +19,7 @@
  */
 
 "use strict";
+var jones = require("database-jones");
 
 var ValueVerifier = require("./lib.js").ValueVerifier;
 var ErrorVerifier = require("./lib.js").ErrorVerifier;
@@ -47,7 +48,7 @@ function InsertFunction(data) {
   };
 }
 
-var mapping = new mynode.TableMapping("test.binary_test");
+var mapping = new jones.TableMapping("test.binary_test");
 mapping.mapAllColumns = true;
 mapping.applyToClass(TestData);
 

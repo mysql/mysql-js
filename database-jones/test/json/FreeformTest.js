@@ -19,6 +19,9 @@
  */
 
 "use strict";
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var util    = require("util");
 var udebug  = unified_debug.getLogger("json/FreeformTest.js");
 
@@ -34,7 +37,7 @@ function Freeform(id, name, number, a) {
 var t1 = new harness.SerialTest("ReadFreeformTest");
 t1.run = function() {
   var testCase = this;
-  var freeformMapping = new mynode.TableMapping('json_freeform');
+  var freeformMapping = new jones.TableMapping('json_freeform');
   freeformMapping.mapField('id');
   freeformMapping.mapSparseFields('SPARSE_FIELDS');
   freeformMapping.applyToClass(Freeform);
@@ -75,7 +78,7 @@ t1.run = function() {
 var t2 = new harness.SerialTest("WriteFreeformTest");
 t2.run = function() {
   var testCase = this;
-  var freeformMapping = new mynode.TableMapping('json_freeform');
+  var freeformMapping = new jones.TableMapping('json_freeform');
   freeformMapping.mapField('id');
   freeformMapping.mapSparseFields('SPARSE_FIELDS');  // fixme
   freeformMapping.applyToClass(Freeform);

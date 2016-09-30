@@ -20,12 +20,9 @@
 
 "use strict";
 
-// Setup globals:
-global.mynode     = require("database-jones");
-global.adapter    = "mysql";
-
+var jones         = require("database-jones");
 var jonesMysql    = require("jones-mysql");
-var driver        = require(mynode.fs.test_driver);
+var driver        = require(jones.fs.test_driver);
 var storageEngine = null;
 var properties;
 
@@ -47,12 +44,11 @@ if(storageEngine) {
 
 /* Set globals */
 global.test_conn_properties = properties;
-global.mynode               = jones;
 global.adapter              = "mysql";
 
 
 /* Find and run all tests */
-driver.addSuitesFromDirectory(mynode.fs.suites_dir);
+driver.addSuitesFromDirectory(jones.fs.suites_dir);
 driver.addSuitesFromDirectory(jonesMysql.config.suites_dir);
 driver.runAllTests();
 

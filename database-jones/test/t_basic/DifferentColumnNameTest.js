@@ -19,7 +19,10 @@
  */
 "use strict";
 
-var udebug = unified_debug.getLogger("t_basic/DifferentColumnName.js");
+var unified_debug = require("unified_debug"),
+    harness = require("jones-test"),
+    jones = require("database-jones"),
+    udebug = unified_debug.getLogger("t_basic/DifferentColumnName.js");
 
 // Map a domain class with field names different from column names
 var Different = function(id, name, age, magic) {
@@ -71,7 +74,7 @@ var fail_verify_Different = function(err, instance, id, testCase, domainObject) 
 };
 
 var mapDifferent = function() {
-  var mapping = new mynode.TableMapping('t_basic');
+  var mapping = new jones.TableMapping('t_basic');
   mapping.mapField('fid', 'id');
   mapping.mapField('fname', 'name');
   mapping.mapField('fage', 'age');

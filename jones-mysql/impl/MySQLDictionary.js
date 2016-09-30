@@ -18,8 +18,6 @@
  02110-1301  USA
 */
 
-/*global unified_debug, exports */
-
 "use strict";
 
 

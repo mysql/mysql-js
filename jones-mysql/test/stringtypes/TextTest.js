@@ -20,6 +20,8 @@
 
 "use strict";
 
+var jones = require("database-jones");
+
 // Domain Object Constructors
 var test_id = 1;
 
@@ -36,8 +38,8 @@ function TextCharsetData() {        // id, ascii_text, latin1_txt, utf16_text
   if(this.id === undefined) { this.id = test_id++; }
 }
 
-new mynode.TableMapping("test.text_blob_test").applyToClass(TextBlobData);
-new mynode.TableMapping("test.text_charset_test").applyToClass(TextCharsetData);
+new jones.TableMapping("test.text_blob_test").applyToClass(TextBlobData);
+new jones.TableMapping("test.text_charset_test").applyToClass(TextCharsetData);
 
 
 // Insert and Read a blob

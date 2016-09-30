@@ -20,8 +20,11 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var lib = require('./lib.js');
 var udebug = unified_debug.getLogger("QueryScanProjectionTest.js");
+
 lib.mapShop();
 var t1 = new harness.ConcurrentTest('t1 Query IndexScanProjectionTest');
 var t2 = new harness.ConcurrentTest('t2 Query PartialIndexScanProjectionTestDefaultNull');
@@ -163,15 +166,15 @@ t6.run = function() {
   var testCase = this;
   var session;
 
-  var t6lineItemProjection = new mynode.Projection(lib.LineItem)
+  var t6lineItemProjection = new jones.Projection(lib.LineItem)
   .addField('line');
-var t6shoppingCartProjection = new mynode.Projection(lib.ShoppingCart)
+var t6shoppingCartProjection = new jones.Projection(lib.ShoppingCart)
   .addField('id')
   .addRelationship('lineItems', t6lineItemProjection);
-var t6customerProjection = new mynode.Projection(lib.Customer)
+var t6customerProjection = new jones.Projection(lib.Customer)
   .addField('id', 'lastName', 'firstName')
   .addRelationship('shoppingCart', t6shoppingCartProjection);
-var t6discountProjection = new mynode.Projection(lib.Discount)
+var t6discountProjection = new jones.Projection(lib.Discount)
   .addField('id', 'description', 'percent')
   .addRelationship('customers', t6customerProjection);
 
@@ -275,18 +278,18 @@ t9.run = function() {
   var testCase = this;
   var session;
 
-  var t9itemProjection = new mynode.Projection(lib.Item)
+  var t9itemProjection = new jones.Projection(lib.Item)
   .addField('id');
-  var t9lineItemProjection = new mynode.Projection(lib.LineItem)
+  var t9lineItemProjection = new jones.Projection(lib.LineItem)
   .addField('line')
   .addRelationship('item', t9itemProjection);
-var t9shoppingCartProjection = new mynode.Projection(lib.ShoppingCart)
+var t9shoppingCartProjection = new jones.Projection(lib.ShoppingCart)
   .addField('id')
   .addRelationship('lineItems', t9lineItemProjection);
-var t9customerProjection = new mynode.Projection(lib.Customer)
+var t9customerProjection = new jones.Projection(lib.Customer)
   .addField('id', 'lastName', 'firstName')
   .addRelationship('shoppingCart', t9shoppingCartProjection);
-var t9discountProjection = new mynode.Projection(lib.Discount)
+var t9discountProjection = new jones.Projection(lib.Discount)
   .addField('id', 'description', 'percent')
   .addRelationship('customers', t9customerProjection);
 

@@ -20,9 +20,11 @@
 
 "use strict";
 
-var udebug       = unified_debug.getLogger("Projection.js"),
-    path         = require("path"),
-    doc          = require(path.join(jones.fs.api_doc_dir, "Projection"));
+var unified_debug = require("unified_debug"),
+    udebug        = unified_debug.getLogger("Projection.js"),
+    path          = require("path"),
+    jones         = require("database-jones"),
+    doc           = require(path.join(jones.fs.api_doc_dir, "Projection"));
 
 function Projection(domainObject) {
   if (typeof domainObject === 'function' && domainObject.prototype.jones && domainObject.prototype.jones.mapping) {

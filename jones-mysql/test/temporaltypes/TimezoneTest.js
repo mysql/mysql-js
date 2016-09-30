@@ -33,9 +33,11 @@
 
 // http://dev.mysql.com/doc/refman/5.6/en/time-zone-support.html
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var propsMysql = JSON.parse(JSON.stringify(global.test_conn_properties));
 propsMysql.implementation = "mysql";
-propsMysql = new mynode.ConnectionProperties(propsMysql);
+propsMysql = new jones.ConnectionProperties(propsMysql);
 
 function openSessions(testCase, callback) {
   function onOpen2(err, session) {
@@ -54,11 +56,11 @@ function openSessions(testCase, callback) {
     }
     else {
       testCase.ndbSession = session;
-      mynode.openSession(propsMysql, testCase.mappings, onOpen2);
+      jones.openSession(propsMysql, testCase.mappings, onOpen2);
     }
   }
   
-  mynode.openSession(global.test_conn_properties, testCase.mappings, onOpen1);
+  jones.openSession(global.test_conn_properties, testCase.mappings, onOpen1);
 }
 
 

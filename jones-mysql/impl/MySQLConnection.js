@@ -48,7 +48,9 @@ var op_stats = {
 	"scan_delete" : 0
 };
 
-var mysql  = require("mysql"),
+var jones = require("database-jones"),
+    mysql  = require("mysql"),
+    unified_debug = require("unified_debug"),
     udebug = unified_debug.getLogger("MySQLConnection.js"),
     stats_module  = require(jones.api.stats),
     mysql_code_to_sqlstate_map = require("./MysqlErrToSQLStateMap"),

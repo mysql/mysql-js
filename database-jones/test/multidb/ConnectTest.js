@@ -19,7 +19,9 @@
  */
 "use strict";
 
-var util    = require("util");
+var util    = require("util"),
+    jones   = require("database-jones"),
+    harness = require("jones-test");
 
 var mindb = 1;
 var maxdb = 8;
@@ -30,14 +32,14 @@ var badtbl8 = function(i, j) {
   this.i = i;
   this.j = j;
 };
-new mynode.TableMapping('tbl8').applyToClass(badtbl8);
+new jones.TableMapping('tbl8').applyToClass(badtbl8);
 
 // badtesttbl8 is mapped to a non-existent table
 var badtesttbl8 = function(i, j) {
   this.i = i;
   this.j = j;
 };
-new mynode.TableMapping('mysqljs_multidb_test.tbl8').applyToClass(badtesttbl8);
+new jones.TableMapping('mysqljs_multidb_test.tbl8').applyToClass(badtesttbl8);
 
 // badtbl9 is not mapped
 var badtbl9 = function(i, j) {
@@ -57,7 +59,7 @@ for (p = mindb; p < mindb + numberOfDBs; ++p) {
 var connectWithDefaultDb = function(testCase, db, callback) {
   console.log('ConnectTest openSession with', propertiesList[db].database);
   var tbl = 'tbl' + db;
-  mynode.openSession(propertiesList[db], tbl, function(err, session) {
+  jones.openSession(propertiesList[db], tbl, function(err, session) {
     if (err) {
       testCase.appendErrorMessage('error opening session ' + db);
     } else {
@@ -101,7 +103,7 @@ var verifyConstructorMetadataCached = function(testCase, sessionFactory, qualifi
 var t1 = new harness.ConcurrentTest('testOpenSessionExplicitTable');
 t1.run = function() {
   var testCase = this;
-  mynode.openSession(propertiesList[1], 'mysqljs_multidb_test1.tbl1', function(err, session) {
+  jones.openSession(propertiesList[1], 'mysqljs_multidb_test1.tbl1', function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t1 error on openSession with mysqljs_multidb_test1.tbl1');
     } else {
@@ -115,7 +117,7 @@ t1.run = function() {
 var t2 = new harness.ConcurrentTest('testConnectExplicitTable');
 t2.run = function() {
   var testCase = this;
-  mynode.connect(propertiesList[2], 'mysqljs_multidb_test2.tbl2', function(err, sessionFactory) {
+  jones.connect(propertiesList[2], 'mysqljs_multidb_test2.tbl2', function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t2 error on connect with mysqljs_multidb_test2.tbl2');
     } else {
@@ -132,8 +134,8 @@ t3.run = function() {
     this.i = i;
     this.j = j;
   };
-  new mynode.TableMapping('mysqljs_multidb_test3.tbl3').applyToClass(tbl3);
-  mynode.openSession(propertiesList[3], tbl3, function(err, session) {
+  new jones.TableMapping('mysqljs_multidb_test3.tbl3').applyToClass(tbl3);
+  jones.openSession(propertiesList[3], tbl3, function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t3 error on openSession with mysqljs_multidb_test3.tbl3');
     } else {
@@ -151,8 +153,8 @@ t4.run = function() {
     this.i = i;
     this.j = j;
   };
-  new mynode.TableMapping('mysqljs_multidb_test4.tbl4').applyToClass(tbl4);
-  mynode.connect(propertiesList[4], tbl4, function(err, sessionFactory) {
+  new jones.TableMapping('mysqljs_multidb_test4.tbl4').applyToClass(tbl4);
+  jones.connect(propertiesList[4], tbl4, function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t4 error on connect with mysqljs_multidb_test4.tbl4 ' + err);
     } else {
@@ -165,7 +167,7 @@ t4.run = function() {
 var t5 = new harness.ConcurrentTest('testOpenSessionImplicitTable');
 t5.run = function() {
   var testCase = this;
-  mynode.openSession(propertiesList[5], 'tbl5', function(err, session) {
+  jones.openSession(propertiesList[5], 'tbl5', function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t5 error on openSession with tbl5 with properties ' + 
           '\n' + util.inspect(propertiesList[5]) + '\n' + err);
@@ -180,7 +182,7 @@ t5.run = function() {
 var t6 = new harness.ConcurrentTest('testConnectImplicitTable');
 t6.run = function() {
   var testCase = this;
-  mynode.connect(propertiesList[6], 'tbl6', function(err, sessionFactory) {
+  jones.connect(propertiesList[6], 'tbl6', function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t6 error on connect with tbl6 with properties ' + 
           '\n' + util.inspect(propertiesList[6]) + '\n' + err);
@@ -198,8 +200,8 @@ t7.run = function() {
     this.i = i;
     this.j = j;
   };
-  new mynode.TableMapping('tbl7').applyToClass(tbl7);
-  mynode.openSession(propertiesList[7], tbl7, function(err, session) {
+  new jones.TableMapping('tbl7').applyToClass(tbl7);
+  jones.openSession(propertiesList[7], tbl7, function(err, session) {
     if (err) {
       testCase.appendErrorMessage('t7 error on openSession with tbl7 with properties ' + 
           '\n' + util.inspect(propertiesList[7]) + '\n' + err);
@@ -218,8 +220,8 @@ t8.run = function() {
     this.i = i;
     this.j = j;
   };
-  new mynode.TableMapping('tbl8').applyToClass(tbl8);
-  mynode.connect(propertiesList[8], tbl8, function(err, sessionFactory) {
+  new jones.TableMapping('tbl8').applyToClass(tbl8);
+  jones.connect(propertiesList[8], tbl8, function(err, sessionFactory) {
     if (err) {
       testCase.appendErrorMessage('t8 error on connect with tbl8 ' + err);
     } else {
@@ -240,35 +242,35 @@ t9.run = function() {
   var testCase = this;
   testCase.expectedResultCount = 1;
   testCase.actualResultCount = 0;
-  mynode.connect(global.test_conn_properties, 'tbl8', function(err) {
+  jones.connect(global.test_conn_properties, 'tbl8', function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on tbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(global.test_conn_properties, 'mysqljs_multidb_test.tbl8', function(err) {
+  jones.connect(global.test_conn_properties, 'mysqljs_multidb_test.tbl8', function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on mysqljs_multidb_test.tbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(global.test_conn_properties, badtbl8, function(err) {
+  jones.connect(global.test_conn_properties, badtbl8, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(global.test_conn_properties, badtesttbl8, function(err) {
+  jones.connect(global.test_conn_properties, badtesttbl8, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtesttbl8');
     }
     reportResults(testCase);
   });
   ++testCase.expectedResultCount;
-  mynode.connect(global.test_conn_properties, badtbl9, function(err) {
+  jones.connect(global.test_conn_properties, badtbl9, function(err) {
     if (!err) {
       testCase.appendErrorMessage('t9 failed to return error on badtbl9');
     }

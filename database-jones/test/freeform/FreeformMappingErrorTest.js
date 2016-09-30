@@ -19,6 +19,9 @@
  */
 
 "use strict";
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var util    = require("util");
 var udebug  = unified_debug.getLogger("FreeformMappingErrorTest.js");
 
@@ -46,7 +49,7 @@ function checkErrorMessage(tc, tm, msg) {
 var t1 = new harness.ConcurrentTest('t1SparseMappingNoColumn');
 t1.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields();
   checkErrorMessage(testCase, tableMapping, 'valid arguments list with column name as the first argument');
@@ -55,7 +58,7 @@ t1.run = function() {
 var t2 = new harness.ConcurrentTest('t2SparseMappingNonStringColumnName');
 t2.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields(10);
   checkErrorMessage(testCase, tableMapping, 'valid arguments list with column name as the first argument');
@@ -64,7 +67,7 @@ t2.run = function() {
 var t3 = new harness.ConcurrentTest('t3SparseMappingNonStringFieldName');
 t3.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', 1);
   checkErrorMessage(testCase, tableMapping, 'Argument must be a meta or converter object');
@@ -73,7 +76,7 @@ t3.run = function() {
 var t4 = new harness.ConcurrentTest('t4SparseMappingNumberInArrayOfFieldNames');
 t4.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', ['a', 'b', 1]);
   checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');
@@ -82,7 +85,7 @@ t4.run = function() {
 var t5 = new harness.ConcurrentTest('t5SparseMappingObjectInArrayOfFieldNames');
 t5.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', ['a', 'b', {f:9}]);
   checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');
@@ -91,7 +94,7 @@ t5.run = function() {
 var t6 = new harness.ConcurrentTest('t6SparseMappingNonConverterObjectParameter');
 t6.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('freeform');
+  var tableMapping = new jones.TableMapping('freeform');
   tableMapping.mapField('id');
   tableMapping.mapSparseFields('SPARSE', {f:9});
   checkErrorMessage(testCase, tableMapping, 'is not a meta or a converter object');

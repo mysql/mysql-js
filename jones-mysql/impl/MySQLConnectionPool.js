@@ -18,8 +18,6 @@
  02110-1301  USA
 */
 
-/*global unified_debug, exports */
-
 "use strict";
 
 /* Requires version 2.0 of Felix Geisendoerfer's MySQL client */
@@ -32,6 +30,7 @@ var stats = {
 };
 
 var mysql = require("mysql");
+var jones = require("database-jones");
 var mysqlConnection = require("./MySQLConnection.js");
 var mysqlDictionary = require("./MySQLDictionary.js");
 var udebug = unified_debug.getLogger("MySQLConnectionPool.js");

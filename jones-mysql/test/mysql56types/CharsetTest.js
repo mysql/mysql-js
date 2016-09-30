@@ -23,6 +23,8 @@
 
 "use strict";
 
+var jones = require("database-jones");
+
 // Domain Object Constructor
 var test_id = 1;
 function TestData() {
@@ -82,7 +84,7 @@ function getInsertFunction(data) {
   };
 }
 
-var mapping = new mynode.TableMapping("test.mysql56strings");
+var mapping = new jones.TableMapping("test.mysql56strings");
 mapping.mapAllColumns = true;
 mapping.applyToClass(TestData);
 

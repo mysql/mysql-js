@@ -29,14 +29,16 @@ var stats = {
   "tables_created" : 0
 };
 
-var session     = require("./Session.js"),
-    udebug      = unified_debug.getLogger("SessionFactory.js"),  
-    UserContext = require("./UserContext.js"),
+var session        = require("./Session.js"),
+    jones          = require("database-jones"),
+    unified_debug  = require("unified_debug"),
+    udebug         = unified_debug.getLogger("SessionFactory.js"),
+    UserContext    = require("./UserContext.js"),
     meta           = require("./Meta.js"),
     TableMapping   = require("./TableMapping.js"),
     DBTableHandler = require(jones.common.DBTableHandler).DBTableHandler,
     stats_module   = require(jones.api.stats),
-    Db          = require("./Db.js");
+    Db             = require("./Db.js");
 
 stats_module.register(stats, "api", "SessionFactory");
 

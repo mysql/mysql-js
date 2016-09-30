@@ -20,7 +20,8 @@
 
 'use strict';
 
-var util = require('util');
+var jones = require("database-jones");
+var harness = require("jones-test");
 
 /** Error conditions tested:
  * t1 table not found on persist domainObject
@@ -54,7 +55,7 @@ var DomainClass = function(id, name) {
   this.name = name;
 };
 
-var tableMapping = new mynode.TableMapping('test.DoesNotExist');
+var tableMapping = new jones.TableMapping('test.DoesNotExist');
 tableMapping.applyToClass(DomainClass);
 
 var t1 = new harness.ConcurrentTest('t1 table not found on persist domainObject');

@@ -20,6 +20,9 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var harness = require("jones-test");
+
 /* You could also test that writing a negative value to a "float unsigned"
    or "double unsigned" column returns an error, but those tests are not 
    included here because NDBAPI has no way to distinguish between signed 
@@ -56,7 +59,7 @@ function shouldGetError(test, sqlstate, promise) {
 }
 
 function Numerictypes() {}
-var mapping = new mynode.TableMapping("test.numerictypes");
+var mapping = new jones.TableMapping("test.numerictypes");
 mapping.applyToClass(Numerictypes);
 
 

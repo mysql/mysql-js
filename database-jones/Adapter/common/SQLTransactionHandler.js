@@ -27,7 +27,9 @@ var stats = {
 	"rollback"  : 0
 };
 
-var udebug        = unified_debug.getLogger("SQLTransactionHandler.js"),
+var jones         = require("database-jones"),
+    unified_debug = require("unified_debug"),
+    udebug        = unified_debug.getLogger("SQLTransactionHandler.js"),
     stats_module  = require(jones.api.stats);
 
 stats_module.register(stats, "spi", "SQLTransactionHandler");

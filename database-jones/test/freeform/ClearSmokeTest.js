@@ -19,6 +19,8 @@
  */
 "use strict";
 
+var harness = require("jones-test");
+
 /** This is the clear smoke test for the freeform suite.
  */
 var test = new harness.ClearSmokeTest("ClearSmokeTest");

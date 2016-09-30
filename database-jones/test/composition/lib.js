@@ -19,6 +19,8 @@
  */
 
 "use strict";
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var udebug = unified_debug.getLogger("composition/lib.js");
 var util = require("util");
 
@@ -72,7 +74,7 @@ function Shipment(id, customerid, value) {
 
 function mapCustomer() {
   // map customer
-  var customerMapping = new mynode.TableMapping('customer');
+  var customerMapping = new jones.TableMapping('customer');
   customerMapping.mapField('id');
   customerMapping.mapField('unikey');
   customerMapping.mapField('firstName', 'firstname');
@@ -97,9 +99,9 @@ function mapCustomer() {
 }
 
 function mapShipment() {
-  var shipmentMapping = new mynode.TableMapping('shipment');
+  var shipmentMapping = new jones.TableMapping('shipment');
   shipmentMapping.mapField('id');
-  shipmentMapping.mapField('value', mynode.converters.NumericConverter);
+  shipmentMapping.mapField('value', jones.converters.NumericConverter);
   shipmentMapping.mapManyToOne( {
     fieldName:  'customer',
     foreignKey: 'fkshipmentcustomerid',
@@ -111,7 +113,7 @@ function mapShipment() {
 
 function mapShoppingCart() {
   // map shopping cart
-  var shoppingCartMapping = new mynode.TableMapping('shoppingcart');
+  var shoppingCartMapping = new jones.TableMapping('shoppingcart');
   shoppingCartMapping.mapField('id');
 
   shoppingCartMapping.mapOneToOne( { 
@@ -131,7 +133,7 @@ function mapShoppingCart() {
 
 function mapLineItem() {
   // map line item
-  var lineItemMapping = new mynode.TableMapping('lineitem');
+  var lineItemMapping = new jones.TableMapping('lineitem');
   lineItemMapping.mapField('line');
   lineItemMapping.mapField('quantity');
   lineItemMapping.mapField('shoppingcartid');
@@ -153,7 +155,7 @@ function mapLineItem() {
 }
 
 function mapItem() {
-  var itemMapping = new mynode.TableMapping('item');
+  var itemMapping = new jones.TableMapping('item');
   itemMapping.mapField('id');
   itemMapping.mapField('description');
 
@@ -167,7 +169,7 @@ function mapItem() {
 }
 
 function mapDiscount() {
-  var discountMapping = new mynode.TableMapping('discount');
+  var discountMapping = new jones.TableMapping('discount');
   discountMapping.mapField('id');
   discountMapping.mapField('description');
   discountMapping.mapField('percent');
@@ -189,7 +191,7 @@ function CustomerDiscount(customerid, discountid) {
 }
 
 function mapCustomerDiscount() {
-  var customerDiscountMapping = new mynode.TableMapping('customerdiscount');
+  var customerDiscountMapping = new jones.TableMapping('customerdiscount');
   customerDiscountMapping.mapField('customerid');
   customerDiscountMapping.mapField('discountid');
   customerDiscountMapping.applyToClass(CustomerDiscount);
@@ -202,7 +204,7 @@ function FkDifferentDb(id) {
 }
 
 function mapFkDifferentDb() {
-  var fkDifferentDbMapping = new mynode.TableMapping('testfk.fkdifferentdb');
+  var fkDifferentDbMapping = new jones.TableMapping('testfk.fkdifferentdb');
   fkDifferentDbMapping.mapField('id');
   fkDifferentDbMapping.applyToClass(FkDifferentDb);
 }
@@ -395,57 +397,57 @@ function verifyProjection(tc, p, e, a) {
 mapShop();
 
 // Simple Customer projection
-var simpleShoppingCartProjection = new mynode.Projection(ShoppingCart).
+var simpleShoppingCartProjection = new jones.Projection(ShoppingCart).
   addField('id');
-var simpleCustomerProjection = new mynode.Projection(Customer).
+var simpleCustomerProjection = new jones.Projection(Customer).
   addFields('id', 'unikey', 'firstName', 'lastName').
   addRelationship('shoppingCart', simpleShoppingCartProjection);
 
 
 // Complex Customer projection
-var itemProjection = new mynode.Projection(Item)
+var itemProjection = new jones.Projection(Item)
 .addFields('id', 'description');
 //LineItem -> Item
-var lineItemProjection = new mynode.Projection(LineItem)
+var lineItemProjection = new jones.Projection(LineItem)
 .addFields('line', ['quantity', 'itemid'])
 .addRelationship('item', itemProjection);
 //ShoppingCart -> LineItem -> Item
-var shoppingCartProjection = new mynode.Projection(ShoppingCart)
+var shoppingCartProjection = new jones.Projection(ShoppingCart)
 .addFields('id')
 .addRelationship('lineItems', lineItemProjection);
 //Discount
-var discountProjection = new mynode.Projection(Discount)
+var discountProjection = new jones.Projection(Discount)
 .addField('id', 'description');
 //Shipment
-var shipmentProjection = new mynode.Projection(Shipment)
+var shipmentProjection = new jones.Projection(Shipment)
 .addField('id', 'value');
 //Customer -> ShoppingCart -> LineItem -> Item
 //        \-> Discount
 //        \-> Shipment
-var complexCustomerProjection = new mynode.Projection(Customer)
+var complexCustomerProjection = new jones.Projection(Customer)
 .addFields('id', 'unikey', 'firstName', 'lastName')
 .addRelationship('shoppingCart', shoppingCartProjection)
 .addRelationship('discounts', discountProjection)
 .addRelationship('shipments', shipmentProjection);
 
 // Complex Discount projection
-var discountItemProjection = new mynode.Projection(Item)
+var discountItemProjection = new jones.Projection(Item)
 .addFields('id', 'description');
 //LineItem -> Item
-var discountLineItemProjection = new mynode.Projection(LineItem)
+var discountLineItemProjection = new jones.Projection(LineItem)
 .addFields('line', ['quantity', 'itemid'])
 .addRelationship('item', discountItemProjection);
 //ShoppingCart -> LineItem -> Item
-var discountShoppingCartProjection = new mynode.Projection(ShoppingCart)
+var discountShoppingCartProjection = new jones.Projection(ShoppingCart)
 .addFields('id')
 .addRelationship('lineItems', discountLineItemProjection);
 //Customer -> ShoppingCart -> LineItem -> Item
-var discountCustomerProjection = new mynode.Projection(Customer)
+var discountCustomerProjection = new jones.Projection(Customer)
 .addField('id', 'firstName', 'lastName')
 .addRelationship('shoppingCart', discountShoppingCartProjection);
 //Discount -> Customer -> ShoppingCart -> LineItem -> Item
 
-var complexDiscountProjection = new mynode.Projection(Discount)
+var complexDiscountProjection = new jones.Projection(Discount)
 .addField('id', 'description', 'percent')
 .addRelationship('customers',discountCustomerProjection);
 

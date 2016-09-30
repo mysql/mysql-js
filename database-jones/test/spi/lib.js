@@ -19,13 +19,13 @@
  */
 
 "use strict";
+var jones         = require("database-jones"),
+    unified_debug = require("unified_debug"),
+    service       = jones.getDBServiceProvider(global.adapter),
+    properties    = global.test_conn_properties;
 
-var service    = mynode.getDBServiceProvider(global.adapter),
-    properties = global.test_conn_properties;
-    
 var spi_test_connection = null,
     sessionSlot = 0;
-
 
 function getConnectionPool(userCallback) {
   function onConnect(err, conn) {

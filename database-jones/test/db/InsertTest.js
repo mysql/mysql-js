@@ -18,9 +18,14 @@
  02110-1301  USA
  */
 
+/*global fail_connect*/
+
 "use strict";
 
-var meta = mynode.meta;
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
+var meta = jones.meta;
 var udebug = unified_debug.getLogger("db.InsertTest.js");
 function Counter() {
   this.number = 0;
@@ -34,8 +39,8 @@ function verify(err, instance, id, testCase, domainObject) {
     testCase.fail(err);
     return;
   }
-  if (typeof(instance) !== 'object') {
-    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof(instance)));
+  if (typeof instance !== 'object') {
+    testCase.fail(new Error('Result for id ' + id + ' is not an object; actual type: ' + typeof instance));
     return;
   }
   if (instance === null) {
@@ -81,7 +86,7 @@ t1.run = function() {
   var object4 = {id:4074, name:'Employee 4074', age:4074, magic:4074}; ++count;
   var object5 = {id:4075, name:'Employee 4075', age:4075, magic:4075}; ++count;
   function check(err) {
-    if (err) testCase.appendErrorMessage(err.message);
+    if (err) { testCase.appendErrorMessage(err.message); }
     if (--count == 0) {
       // all done with insert
       testCase.failOnError();
@@ -133,7 +138,7 @@ t2.run = function() {
 var t3 = new harness.SerialTest("testDbInsertWithMetaTableMappingAndLiteral");
 t3.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('db_new_schema2', meta.index('cage'), meta.uniqueIndex('cmagic'));
+  var tableMapping = new jones.TableMapping('db_new_schema2', meta.index('cage'), meta.uniqueIndex('cmagic'));
   tableMapping.mapField('id', 'cid', meta.int(32).primaryKey());
   tableMapping.mapField('name', 'cname', meta.varchar(32));
   tableMapping.mapField('age', 'cage', meta.int(32));
@@ -158,7 +163,7 @@ t3.run = function() {
 var t4 = new harness.SerialTest("testPersistWithMetaTableMappingAndLiteral");
 t4.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('db_new_schema3');
+  var tableMapping = new jones.TableMapping('db_new_schema3');
   tableMapping.mapField('id', 'cid', meta.int(32).primaryKey());
   tableMapping.mapField('name', 'cname', meta.varchar(32));
   tableMapping.mapField('age', 'cage', meta.int(32));

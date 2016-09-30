@@ -19,6 +19,8 @@
  */
 "use strict";
 
+var jones = require("database-jones");
+
 /** The t_basic domain object */
 global.converter = function(id, name, status, magic) {
   if (id !== undefined)     { this.id = id; }
@@ -55,7 +57,7 @@ var statusConverter = {
 };
 
 //map t_basic domain object
-var tablemapping = new mynode.TableMapping('test.t_basic');
+var tablemapping = new jones.TableMapping('test.t_basic');
 tablemapping.mapAllColumns = false;
 tablemapping.mapField('id');
 tablemapping.mapField('status', 'age', statusConverter);

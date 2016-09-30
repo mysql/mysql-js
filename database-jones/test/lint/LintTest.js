@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 "use strict";
 
 var harness = require("jones-test");
+var jones = require("database-jones");
 var tests = [ new harness.LintSmokeTest() ];
 
 function more(more_tests) {
@@ -31,36 +32,38 @@ function more(more_tests) {
   }
 }
 
-harness.predefineLint(["unified_debug", "harness", "mynode", "adapter", "jones",
+harness.predefineLint(["unified_debug", "harness", "adapter",
                       "fail_openSession", "sqlCreate", "sqlDrop"]);
 
-more(harness.getLintTestsForDirectory(mynode.fs.api_dir));
-more(harness.getLintTestsForDirectory(mynode.fs.spi_common_dir));
+more(harness.getLintTestsForDirectory(jones.fs.api_dir));
+more(harness.getLintTestsForDirectory(jones.fs.spi_common_dir));
 
 /* Standard Converters */
-more(harness.getLintTestsForDirectory(mynode.fs.converters_dir));
+more(harness.getLintTestsForDirectory(jones.fs.converters_dir));
 
 /* Files in database-jones/test */
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "api"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "autoincrement"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "composition"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "freeform"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "issues"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "meta"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multidb"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "multipartkeys"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "numerictypes"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "spi"));
-more(harness.getLintTestsForDirectory(mynode.fs.suites_dir, "t_basic"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "api"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "autoincrement"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "composition"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "freeform"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "issues"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "meta"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "multidb"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "multipartkeys"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "numerictypes"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "spi"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "t_basic"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "json"));
+more(harness.getLintTestsForDirectory(jones.fs.suites_dir, "db"));
 
 /* Files in loader/ */
-// more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "loader", "lib"));
+// more(harness.getLintTestsForDirectory(jones.fs.super_dir, "loader", "lib"));
 
 /* Files in samples/ */
 try {
-  more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "tweet"));
-  more(harness.getLintTestsForDirectory(mynode.fs.super_dir, "samples", "DBServiceProvider", "impl"));
+  more(harness.getLintTestsForDirectory(jones.fs.super_dir, "samples", "tweet"));
+  more(harness.getLintTestsForDirectory(jones.fs.super_dir, "samples", "DBServiceProvider", "impl"));
 } catch(ignore) {}
 
 /**** ERRORS TO IGNORE:

@@ -21,6 +21,7 @@
 "use strict";
 var util    = require("util");
 var udebug  = unified_debug.getLogger("IncludeFieldTest.js");
+var jones   = require("database-jones");
 var Meta    = require(jones.api.Meta);
 
 function Semistruct(id, name, number, a, c) {
@@ -38,7 +39,7 @@ function Semistruct(id, name, number, a, c) {
 var t2 = new harness.ConcurrentTest("WriteSemistructIncludeTest");
 t2.run = function() {
   var testCase = this;
-  var semistructMapping = new mynode.TableMapping('semistruct');
+  var semistructMapping = new jones.TableMapping('semistruct');
   semistructMapping.mapField('id');
   semistructMapping.mapField('name');
   semistructMapping.mapField('number');

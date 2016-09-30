@@ -20,9 +20,12 @@
 
 "use strict";
 
-var path = require("path"),
+var jones = require("database-jones"),
+    unified_debug = require("unified_debug"),
+    harness = require("jones-test"),
+    path = require("path"),
     spi_lib = require("./lib.js"),
-    dbt     = require(mynode.common.DBTableHandler),
+    dbt     = require(jones.common.DBTableHandler),
     udebug  = unified_debug.getLogger("InsertAndDeleteIntTest.js");
 
 var dbSession = null,

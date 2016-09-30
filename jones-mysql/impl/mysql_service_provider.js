@@ -20,7 +20,8 @@
 
 "use strict";
 
-var udebug = unified_debug.getLogger("mysql_service_provider.js"),
+var unified_debug = require("unified_debug"),
+    udebug = unified_debug.getLogger("mysql_service_provider.js"),
     path   = require("path"),
     config = require("./path_config"),
     saved_err,

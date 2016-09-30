@@ -20,6 +20,10 @@
 
 'use strict';
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
+
 /** Error conditions tested:
  * t1 mapField with no parameters
  * t2 mapField with empty string
@@ -56,7 +60,7 @@ var domainClass = function(id, name, age, magic) {
 var t1 = new harness.ConcurrentTest('t1FieldMappingNoParameters');
 t1.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField();
   checkErrorMessage(testCase, tableMapping, 'literal FieldMapping or valid arguments list');
 };
@@ -64,7 +68,7 @@ t1.run = function() {
 var t2 = new harness.ConcurrentTest('t2FieldMappingInvalidBlankFieldName');
 t2.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField('');
   checkErrorMessage(testCase, tableMapping, 'property fieldName invalid');
 };
@@ -72,7 +76,7 @@ t2.run = function() {
 var t3 = new harness.ConcurrentTest('t3FieldMappingInvalidNumericFieldName');
 t3.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField(3);
   checkErrorMessage(testCase, tableMapping, 'literal FieldMapping or valid arguments list');
 };
@@ -80,7 +84,7 @@ t3.run = function() {
 var t4 = new harness.ConcurrentTest('t4FieldMappingInvalidNumericParameter');
 t4.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField('id', 3);
   checkErrorMessage(testCase, tableMapping, 'Invalid argument 3');
 };
@@ -88,7 +92,7 @@ t4.run = function() {
 var t5 = new harness.ConcurrentTest('t5FieldMappingInvalidEmptyStringParameter');
 t5.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapOneToOne('');
   checkErrorMessage(testCase, tableMapping, 'mapOneToOne supports only literal field mapping');
 };
@@ -96,7 +100,7 @@ t5.run = function() {
 var t6 = new harness.ConcurrentTest('t6FieldMappingInvalidMissingFieldName');
 t6.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapOneToOne({});
   checkErrorMessage(testCase, tableMapping, "Required property 'fieldName' is missing");
 };
@@ -104,7 +108,7 @@ t6.run = function() {
 var t7 = new harness.ConcurrentTest('t7FieldMappingInvalidMissingTargetField');
 t7.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapOneToOne({
     fieldName: 'r1'
   });
@@ -114,7 +118,7 @@ t7.run = function() {
 var t8 = new harness.ConcurrentTest('t8FieldMappingInvalidMissingTarget');
 t8.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapOneToOne({
     fieldName: 'r1',
     targetField: 't1'
@@ -125,7 +129,7 @@ t8.run = function() {
 var t9 = new harness.ConcurrentTest('t9FieldMappingDuplicateFieldName');
 t9.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField({fieldName: 'name'});
   tableMapping.mapField({fieldName: 'name'});
   checkErrorMessage(testCase, tableMapping, '"name" is duplicated');
@@ -135,7 +139,7 @@ var t10 = new harness.ConcurrentTest('t10FieldMappingRelationshipNameDuplicatesF
 t10.run = function() {
   var testCase = this;
   var relatedDomainObject = function() {};
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapField({fieldName: 'name'});
   tableMapping.mapOneToOne({
     fieldName: 'name',
@@ -149,7 +153,7 @@ var t11 = new harness.ConcurrentTest('t11FieldMappingFieldNameDuplicatesRelation
 t11.run = function() {
   var testCase = this;
   var relatedDomainObject = function() {};
-  var tableMapping = new mynode.TableMapping('t_basic');
+  var tableMapping = new jones.TableMapping('t_basic');
   tableMapping.mapOneToOne({
     fieldName: 'name',
     target: relatedDomainObject,

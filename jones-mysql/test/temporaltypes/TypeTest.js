@@ -22,6 +22,7 @@
 
 /*jslint newcap: true */
 
+var jones = require("database-jones");
 var util = require("util");
 
 // Domain Object Constructor
@@ -88,7 +89,7 @@ function InsertFunction(data) {
   };
 }
 
-var mapping = new mynode.TableMapping("test.temporaltypes");
+var mapping = new jones.TableMapping("test.temporaltypes");
 mapping.mapAllColumns = true;
 mapping.applyToClass(TestData);
 

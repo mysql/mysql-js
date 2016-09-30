@@ -22,6 +22,7 @@
 /** This is the clear smoke test for the t_basic suite.
  */
 var test = new harness.ClearSmokeTest("ClearSmokeTest");
+var jones          = require("database-jones");
 
 test.run = function() {
   jones.connect(global.test_conn_properties).

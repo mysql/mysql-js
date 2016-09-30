@@ -10,7 +10,6 @@ var jones       = require("database-jones"),
 // Setup globals:
 global.adapter       = "sample";
 global.this_module   = this_module;
-global.mynode        = jones;
 
 jones.registerDBServiceProvider(global.adapter, this_module);
 

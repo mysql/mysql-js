@@ -20,6 +20,10 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
+
 var domainClass = function(id, name, age, magic) {
   this.id = id;
   this.name = name;
@@ -29,7 +33,7 @@ var domainClass = function(id, name, age, magic) {
 
 var t1 = new harness.ConcurrentTest("NewTableMappingFromLiteral");
 t1.run = function() {
-  var tablemapping = new mynode.TableMapping(
+  var tablemapping = new jones.TableMapping(
     {
     "table" : "t_basic",
     "database" : "test",
@@ -45,7 +49,7 @@ t1.run = function() {
   return true; // test is complete
 };
 
-var t2 = new harness.DocsTest(mynode.api_doc.TableMapping);
-t2.addTestObject(new mynode.TableMapping("t_basic"));
+var t2 = new harness.DocsTest(jones.api_doc.TableMapping);
+t2.addTestObject(new jones.TableMapping("t_basic"));
 
 module.exports.tests = [t1,t2];

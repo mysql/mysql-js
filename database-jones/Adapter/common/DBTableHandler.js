@@ -31,11 +31,13 @@ var stats = {
 };
 
 var assert          = require("assert"),
+    util            = require("util"),
+    jones           = require("database-jones"),
+    unified_debug   = require("unified_debug"),
     TableMapping    = jones.TableMapping,
     FieldMapping    = require(jones.api.TableMapping).FieldMapping,
     stats_module    = require(jones.api.stats),
     BitMask         = require(jones.common.BitMask),
-    util            = require("util"),
     udebug          = unified_debug.getLogger("DBTableHandler.js");
 
 var DBIndexHandler;

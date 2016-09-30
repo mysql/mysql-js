@@ -307,6 +307,3 @@ exports.closeAllOpenSessionFactories = function() {
   return context.closeAllOpenSessionFactories();
 };
 
-
-/* Make it all global */
-global.jones = exports;

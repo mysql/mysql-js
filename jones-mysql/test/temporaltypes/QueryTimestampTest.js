@@ -20,8 +20,10 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var udebug = unified_debug.getLogger("integraltypes/QueryTimestampTest.js");
-var QueryTest = require(mynode.fs.test_lib_dir + "/QueryTestLib.js");
+var QueryTest = require(jones.fs.test_lib_dir + "/QueryTestLib.js");
 
 /** equal query should use index scan */
 var q1 = {name: 'q1', p1: new Date('2001-01-01 01:01:01'), expected: [1], queryType: 2, ordered: false, predicate: function(qdt) {
@@ -48,7 +50,7 @@ var queryTests = [q1, q2, q3, q4];
 
 /** Set up domain type */
 var temporaltypes = function temporaltypes() {};
-new mynode.TableMapping('temporaltypes').applyToClass(temporaltypes);
+new jones.TableMapping('temporaltypes').applyToClass(temporaltypes);
 
 /** Define test */
 var testQueries = new QueryTest("testTimestampQueries", temporaltypes, queryTests);

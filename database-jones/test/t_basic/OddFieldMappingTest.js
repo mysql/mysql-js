@@ -19,6 +19,7 @@
  */
 "use strict";
 
+var jones = require("database-jones");
 
 /* Mapping1:
      fields are deliberately not mapped in column order.
@@ -27,6 +28,7 @@
      "misc" is a non-persistent field.
 */
 function Mapping1() {}
+
 var mapping = new jones.TableMapping("t_basic");
 mapping.mapAllColumns = false;
 mapping.mapField("oneToTwo", ["magic","name"]);  // one field to many columns

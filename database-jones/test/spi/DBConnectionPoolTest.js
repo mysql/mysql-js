@@ -20,6 +20,7 @@
 
 "use strict";
 
+var jones = require("database-jones");
 var fs   = require("fs");
 var spi_lib    = require("./lib.js");
     
@@ -31,7 +32,7 @@ var spi_lib    = require("./lib.js");
 
 var t1 = new harness.ConcurrentTest("connect");
 var t2 = new harness.ConcurrentTest("openDBSession");
-var t3 = new harness.DocsTest(mynode.spi_doc.DBConnectionPool);
+var t3 = new harness.DocsTest(jones.spi_doc.DBConnectionPool);
 
 
 t1.run = function() {  

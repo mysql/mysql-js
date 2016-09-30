@@ -23,6 +23,7 @@
 global.harness   = require("jones-test");
 var driver       = new harness.Driver();
 var utilities    = require("./utilities");
+var jones        = require("database-jones");
 var stats_module = require(jones.api.stats);
 var cmdLineProperties;
 var deployment   = "test";

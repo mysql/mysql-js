@@ -20,6 +20,9 @@
 
 'use strict';
 
+var jones = require("database-jones");
+var harness = require("jones-test");
+
 /** Error conditions tested:
  * t1 missing table in TableMapping constructor using literal
  * t2 TableMapping constructor with bad table 'a.b.c'
@@ -51,7 +54,7 @@ var domainClass = function(id, name, age, magic) {
 var t1 = new harness.ConcurrentTest('t1NewTableMappingFromLiteralMissingTable');
 t1.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping(
+  var tableMapping = new jones.TableMapping(
     {
     'database' : 'test',
     'mapAllColumns' : false,
@@ -67,35 +70,35 @@ t1.run = function() {
 var t2 = new harness.ConcurrentTest('t2NewTableMappingBadTable');
 t2.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('a.b.c');
+  var tableMapping = new jones.TableMapping('a.b.c');
   checkErrorMessage(testCase, tableMapping, 'tableName must contain one or two parts: [database.]table');
 };
 
 var t3 = new harness.ConcurrentTest('t3NewTableMappingNonString');
 t3.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping(99);
+  var tableMapping = new jones.TableMapping(99);
   checkErrorMessage(testCase, tableMapping, 'string tableName or literal tableMapping is a required parameter');
 };
 
 var t4 = new harness.ConcurrentTest('t4NewTableMappingNoParameter');
 t4.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping();
+  var tableMapping = new jones.TableMapping();
   checkErrorMessage(testCase, tableMapping, 'string tableName or literal tableMapping is a required parameter');
 };
 
 var t5 = new harness.ConcurrentTest('t5NewTableMappingBadTableContainsBlanks');
 t5.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('a b');
+  var tableMapping = new jones.TableMapping('a b');
   checkErrorMessage(testCase, tableMapping, 'tableName must contain one or two parts: [database.]table');
 };
 
 var t6 = new harness.ConcurrentTest('t6NewTableMappingBadTable');
 t6.run = function() {
   var testCase = this;
-  var tableMapping = new mynode.TableMapping('a.b');
+  var tableMapping = new jones.TableMapping('a.b');
   var clazz = 'not a class';
   tableMapping.applyToClass(clazz);
   checkErrorMessage(testCase, tableMapping, 'parameter must be constructor');

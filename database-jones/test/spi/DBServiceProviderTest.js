@@ -22,7 +22,9 @@
 
 "use strict";
 
-var service = mynode.getDBServiceProvider(global.adapter);
+var jones = require("database-jones");
+var harness = require("jones-test");
+var service = jones.getDBServiceProvider(global.adapter);
 
 var t1 = new harness.ConcurrentTest("getDefaultConnectionProperties");
 t1.run = function() {
@@ -42,7 +44,7 @@ t2.run = function() {
 /* TEST THAT ALL FUNCTIONS PUBLISHED IN THE DOCUMENTATION 
    ACTUALLY EXIST IN THE IMPLEMENTATION
 */
-var t3 = new harness.DocsTest(mynode.spi_doc.DBServiceProvider);
+var t3 = new harness.DocsTest(jones.spi_doc.DBServiceProvider);
 t3.addTestObject(service);
 
 module.exports.tests = [t1, t2, t3];

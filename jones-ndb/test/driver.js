@@ -34,7 +34,6 @@ driver.name = "ndb";
 
 // Setup globals:
 global.test_conn_properties = properties;
-global.mynode               = jones;
 global.adapter              = "ndb";
 
 /* Find and run all tests */

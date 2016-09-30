@@ -20,12 +20,15 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var assert = require("assert");
 var util = require("util");
 var spi_lib = require("./lib.js");
-var dbtablehandler = require(mynode.common.DBTableHandler);
+var dbtablehandler = require(jones.common.DBTableHandler);
 var udebug = unified_debug.getLogger("UniqueKeyTest.js");
-var TableMapping = require(mynode.api.TableMapping).TableMapping;
+var TableMapping = require(jones.api.TableMapping).TableMapping;
 
 var dbSession = null;
 var table = null;

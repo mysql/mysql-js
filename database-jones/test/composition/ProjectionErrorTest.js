@@ -20,6 +20,8 @@
 
 "use strict";
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var util = require("util");
 var lib = require('./lib.js');
 
@@ -68,7 +70,7 @@ t1.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'unmappedField is not mapped';
-  var customerProjection = new mynode.Projection(lib.Customer);
+  var customerProjection = new jones.Projection(lib.Customer);
   customerProjection.addFields('unmappedField');
 
   fail_openSession(testCase, function(s) {
@@ -90,8 +92,8 @@ t2.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'unmappedRelationship is not mapped';
-  var customerProjection = new mynode.Projection(lib.Customer);
-  var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
+  var customerProjection = new jones.Projection(lib.Customer);
+  var shoppingCartProjection = new jones.Projection(lib.ShoppingCart);
   customerProjection.addRelationship('unmappedRelationship', shoppingCartProjection);
 
   fail_openSession(testCase, function(s) {
@@ -113,7 +115,7 @@ t3.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
-  var customerProjection = new mynode.Projection(lib.Customer);
+  var customerProjection = new jones.Projection(lib.Customer);
   customerProjection.addField('shoppingCart');
 
   fail_openSession(testCase, function(s) {
@@ -135,7 +137,7 @@ t4.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'shoppingCart must not be a relationship';
-  var customerProjection = new mynode.Projection(lib.Customer);
+  var customerProjection = new jones.Projection(lib.Customer);
   customerProjection.addField('shoppingCart');
 
   fail_openSession(testCase, function(s) {
@@ -157,8 +159,8 @@ t5.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'Recursive projection for Customer';
-  var customerProjection = new mynode.Projection(lib.Customer);
-  var shoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
+  var customerProjection = new jones.Projection(lib.Customer);
+  var shoppingCartProjection = new jones.Projection(lib.ShoppingCart);
   customerProjection.addRelationship('shoppingCart', shoppingCartProjection);
   shoppingCartProjection.addRelationship('customer', customerProjection);
 
@@ -183,7 +185,7 @@ t6.run = function() {
   var unmapped;
   function Unmapped() {}
   try {
-    unmapped = new mynode.Projection(Unmapped);
+    unmapped = new jones.Projection(Unmapped);
     testCase.fail('unexpected success for unmapped domain object: ' + unmapped);
   } catch(err) {
     // good catch; make sure error message is right
@@ -200,7 +202,7 @@ t7.run = function() {
   var session;
   var expectedErrorMessage = 'field discounts join table customerdishcount failed';
   function BadCustomer() {}
-  var badCustomerMapping = new mynode.TableMapping('customer');
+  var badCustomerMapping = new jones.TableMapping('customer');
   badCustomerMapping.mapField('id');
   badCustomerMapping.mapManyToMany( {
     fieldName:   'discounts',
@@ -210,7 +212,7 @@ t7.run = function() {
 
   badCustomerMapping.applyToClass(BadCustomer);
 
-  var badCustomerProjection = new mynode.Projection(BadCustomer);
+  var badCustomerProjection = new jones.Projection(BadCustomer);
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -232,7 +234,7 @@ t8.run = function() {
   var session;
   var expectedErrorMessage = 'targetField, foreignKey, or joinTable is a required field';
   function BadCustomer() {}
-  var badCustomerMapping = new mynode.TableMapping('customer');
+  var badCustomerMapping = new jones.TableMapping('customer');
   badCustomerMapping.mapField('id');
   badCustomerMapping.mapManyToMany( {
     fieldName:   'discounts',
@@ -241,7 +243,7 @@ t8.run = function() {
 
   badCustomerMapping.applyToClass(BadCustomer);
 
-  var badCustomerProjection = new mynode.Projection(BadCustomer);
+  var badCustomerProjection = new jones.Projection(BadCustomer);
 
   fail_openSession(testCase, function(s) {
     session = s;
@@ -266,8 +268,8 @@ t9.run = function() {
   var testCase = this;
   var session;
   var expectedErrorMessage = 'relationship discount is not mapped';
-  var badDiscountProjection = new mynode.Projection(lib.Discount);
-  var badCustomerProjection = new mynode.Projection(lib.Customer);
+  var badDiscountProjection = new jones.Projection(lib.Discount);
+  var badCustomerProjection = new jones.Projection(lib.Customer);
   badCustomerProjection.addRelationship('discount', badDiscountProjection);
 
   fail_openSession(testCase, function(s) {
@@ -291,14 +293,14 @@ t10.run = function() {
   var expectedErrorMessage = 'neither side defined the join table';
   function BadCustomer() {}
   function BadDiscount() {}
-  var badCustomerMapping = new mynode.TableMapping('customer');
+  var badCustomerMapping = new jones.TableMapping('customer');
   badCustomerMapping.mapField('id');
   badCustomerMapping.mapManyToMany( {
     fieldName:   'discounts',
     targetField: 'customers',
     target:      BadDiscount
   } );
-  var badDiscountMapping = new mynode.TableMapping('discount');
+  var badDiscountMapping = new jones.TableMapping('discount');
   badDiscountMapping.mapField('id');
   badDiscountMapping.mapManyToMany( {
     fieldName:   'customers',
@@ -308,8 +310,8 @@ t10.run = function() {
 
   badCustomerMapping.applyToClass(BadCustomer);
   badDiscountMapping.applyToClass(BadDiscount);
-  var badDiscountProjection = new mynode.Projection(BadDiscount);
-  var badCustomerProjection = new mynode.Projection(BadCustomer);
+  var badDiscountProjection = new jones.Projection(BadDiscount);
+  var badCustomerProjection = new jones.Projection(BadCustomer);
   badCustomerProjection.addRelationship('discounts', badDiscountProjection);
 
   fail_openSession(testCase, function(s) {
@@ -333,14 +335,14 @@ t11.run = function() {
   var expectedErrorMessage = 'neither side defined the foreign key';
   function BadCustomer() {}
   function BadShoppingCart() {}
-  var badCustomerMapping = new mynode.TableMapping('customer');
+  var badCustomerMapping = new jones.TableMapping('customer');
   badCustomerMapping.mapField('id');
   badCustomerMapping.mapOneToOne( {
     fieldName:   'shoppingCart',
     targetField: 'customer',
     target:      BadShoppingCart
   } );
-  var badShoppingCartMapping = new mynode.TableMapping('shoppingcart');
+  var badShoppingCartMapping = new jones.TableMapping('shoppingcart');
   badShoppingCartMapping.mapField('id');
   badShoppingCartMapping.mapManyToMany( {
     fieldName:   'customer',
@@ -350,8 +352,8 @@ t11.run = function() {
 
   badCustomerMapping.applyToClass(BadCustomer);
   badShoppingCartMapping.applyToClass(BadShoppingCart);
-  var badShoppingCartProjection = new mynode.Projection(BadShoppingCart);
-  var badCustomerProjection = new mynode.Projection(BadCustomer);
+  var badShoppingCartProjection = new jones.Projection(BadShoppingCart);
+  var badCustomerProjection = new jones.Projection(BadCustomer);
   badCustomerProjection.addRelationship('shoppingCart', badShoppingCartProjection);
 
   fail_openSession(testCase, function(s) {
@@ -374,9 +376,9 @@ t12.run = function() {
   var session;
   var expectedErrorMessage = 'in use by a different projection';
 
-  var badShoppingCartProjection = new mynode.Projection(lib.ShoppingCart);
-  var badCustomerProjection1 = new mynode.Projection(lib.Customer);
-  var badCustomerProjection2 = new mynode.Projection(lib.Customer);
+  var badShoppingCartProjection = new jones.Projection(lib.ShoppingCart);
+  var badCustomerProjection1 = new jones.Projection(lib.Customer);
+  var badCustomerProjection2 = new jones.Projection(lib.Customer);
   badCustomerProjection1.addRelationship('shoppingCart', badShoppingCartProjection);
   badCustomerProjection2.addRelationship('shoppingCart', badShoppingCartProjection);
 

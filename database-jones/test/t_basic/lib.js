@@ -19,7 +19,8 @@
  */
 
 "use strict";
-
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
 var udebug = unified_debug.getLogger("t_basic/lib.js");
 
 /** The t_basic domain object */
@@ -43,7 +44,7 @@ global.t_basic_magic_key = function(id) {
 };
 
 //map t_basic domain object
-var tablemapping = new mynode.TableMapping("test.t_basic");
+var tablemapping = new jones.TableMapping("test.t_basic");
 tablemapping.mapField("id");
 tablemapping.mapField("age");
 tablemapping.mapField("name");

@@ -19,6 +19,9 @@
  */
 
 "use strict";
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var util    = require("util");
 var udebug  = unified_debug.getLogger("json/DefaultFieldSemistructTest.js");
 
@@ -34,7 +37,7 @@ function Semistruct(id, name, number, a) {
 var t1 = new harness.SerialTest("ReadDefaultFieldSemistructTest");
 t1.run = function() {
   var testCase = this;
-  var semistructMapping = new mynode.TableMapping('json_semistruct');
+  var semistructMapping = new jones.TableMapping('json_semistruct');
   semistructMapping.mapSparseFields('SPARSE_FIELDS');
   semistructMapping.applyToClass(Semistruct);
 
@@ -75,13 +78,13 @@ t1.run = function() {
 var t2 = new harness.SerialTest("WriteDefaultFieldSemistructTest");
 t2.run = function() {
   var testCase = this;
-  var semistructMapping = new mynode.TableMapping('json_semistruct');
+  var semistructMapping = new jones.TableMapping('json_semistruct');
   semistructMapping.mapSparseFields('SPARSE_FIELDS');
   semistructMapping.applyToClass(Semistruct);
 
   function Sparse(id) {}
 
-  var sparseMapping = new mynode.TableMapping('json_semistruct');
+  var sparseMapping = new jones.TableMapping('json_semistruct');
   sparseMapping.mapField({fieldName: 'sparse', columnName: 'SPARSE_FIELDS'});
   sparseMapping.applyToClass(Sparse);
   

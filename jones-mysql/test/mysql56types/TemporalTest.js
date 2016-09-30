@@ -20,7 +20,7 @@
 
 "use strict";
 
-
+var jones = require("database-jones");
 
 // Domain Object Constructor
 function TestData(id) {
@@ -29,7 +29,7 @@ function TestData(id) {
   }
 }
 
-var mapping = new mynode.TableMapping("mysql56times");
+var mapping = new jones.TableMapping("mysql56times");
 mapping.mapField("id");
 mapping.mapField("Time1", "a");
 mapping.mapField("Datetime2", "b");

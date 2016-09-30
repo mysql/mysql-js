@@ -26,8 +26,9 @@
 "use strict";
 
 var http = require("http");
-
-var stats_module = require(mynode.api.stats);
+var jones = require("database-jones");
+var harness = require("jones-test");
+var stats_module = require(jones.api.stats);
 
 var test = new harness.SerialTest("statsServer");
 

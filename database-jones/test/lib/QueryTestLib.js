@@ -20,6 +20,7 @@
 
 "use strict";
 
+var harness = require("jones-test");
 var unified_debug = require("unified_debug");
 var udebug = unified_debug.getLogger("lib/QueryTestLib.js");
 
@@ -27,7 +28,7 @@ var udebug = unified_debug.getLogger("lib/QueryTestLib.js");
  * 
  * To use this as the run method in a test case, use linkage:
  * var temporaltypes = function temporaltypes() {};
- * new mynode.TableMapping('temporaltypes').applyToClass(temporaltypes);
+ * new jones.TableMapping('temporaltypes').applyToClass(temporaltypes);
  * var queryTests = [q1, q2];
  * var testQueries = new QueryTest("testTimestampQueries", temporaltypes, queryTests);
  * module.exports.tests = [testQueries];

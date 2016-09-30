@@ -21,6 +21,9 @@
 "use strict";
 /*global integraltypes,verify_integraltypes,fail_verify_integraltypes*/
 
+var jones = require("database-jones");
+var unified_debug = require("unified_debug");
+var harness = require("jones-test");
 var udebug = unified_debug.getLogger("integraltypes/lib.js");
 
 /** The integraltypes domain object */
@@ -39,7 +42,7 @@ global.integraltypes_key = function(id) {
 };
 
 /** map integraltypes domain object */
-var tablemapping = new mynode.TableMapping("test.integraltypes");
+var tablemapping = new jones.TableMapping("test.integraltypes");
 tablemapping.mapField("id");
 tablemapping.mapField("ttinyint", "ttinyint");
 tablemapping.mapField("tsmallint", "tsmallint");
