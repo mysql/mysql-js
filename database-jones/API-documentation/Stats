@@ -15,9 +15,6 @@
    
    The application code itself can also make use of the statistics API to
    record app-level information.
-
-   HOW TO ACCESS THE STATS API:
-   var stats_module = require(path.join(api_dir, "stats.js"));
 */
   
 
@@ -26,7 +23,7 @@
  *  
  *  No return value
  */
- stats_module.peek();
+ jones.stats.peek();
  
 
 /** Return an object containing a statistics tree.
@@ -38,7 +35,7 @@
  *  query(["spi","ndb"]);    // return only statistics under spi.ndb
  *
  */
- stats_module.query(domain);
+ jones.stats.query(domain);
  
  
  /** Start a web server to service statistics queries over HTTP.
@@ -51,7 +48,7 @@
   *
   *  RETURNS an http.server referring to the running server.
   */
-  stats_module.startStatsServer(port, host, callback); 
+  jones.stats.startServer(port, host, callback);
   
 
  /** Stop all running statistics web servers.
@@ -60,7 +57,7 @@
   *  Each server will emit a "close" event when finished.
   *
   */
-  stats_module.stopStatsServers();
+  jones.stats.stopServers();
   
 
 /********* WRITING APPLICATION-LEVEL STATISTICS **********/
@@ -73,8 +70,8 @@
  *  IMMEDIATE
  *
  *  EXAMPLES:
- *    stats_module.register(my_stats, "app");
- *    stats_module.register(module_stats, "app","sub_module_1");
+ *    jones.stats.register(my_stats, "app");
+ *    jones.stats.register(module_stats, "app","sub_module_1");
  *
  */
   register(stats_container, domain_part, ... );

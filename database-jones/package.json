@@ -2,7 +2,7 @@
 {
   "name"            : "database-jones"
   ,
-  "version"         : "1.2.4"
+  "version"         : "1.2.5"
   ,  
   "description"     : "Lightweight database mapping"
   ,

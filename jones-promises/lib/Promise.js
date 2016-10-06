@@ -211,6 +211,7 @@ Promise.prototype.fulfill = function(result) {
   var name; 
   if (udebug.is_detail()) {
     name = this?this.name: 'no this'; 
+    udebug.log_detail("<-- Text below is not an actual Error, just an informative stack trace -->");
     udebug.log_detail(new Error(name, 'Promise.fulfill').stack);
   }
   if (this.resolved) {

@@ -84,10 +84,10 @@ exports.TableMapping = require("./TableMapping").TableMapping;
 
 exports.Projection   = require("./Projection").Projection;
 
-stats_module.register(resolvedDeployments,
-  "api", "ConnectionProperties", "ResolvedDeployments");
-stats_module.register(deploymentSearchPath,
-  "api", "ConnectionProperties", "DeploymentSearchPath");
+exports.stats        = stats_module;
+
+stats_module.register(resolvedDeployments, "api", "deployments", "resolved");
+stats_module.register(deploymentSearchPath, "api", "deployments", "searchPath");
 
 /* getDBServiceProviderModule()
    The usual way to load SPI module "x" is to require("jones-x").

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -28,30 +28,20 @@
 var http = require("http");
 var jones = require("database-jones");
 var harness = require("jones-test");
-var stats_module = require(jones.api.stats);
 
 var test = new harness.SerialTest("statsServer");
 
 var stats_server_port = 15301;
 
 test.run = function() {
-  var t = this;
-  var response;
 
   function onClose() {
-    if(response.statusCode === 200) {
-      t.pass();
-    }
-    else {
-      t.fail(response.statusCode);
-    }
-    /* To go an extra step here, use response.on('data') to validate the 
-       response body */
+    test.failOnError();
   }
 
-  function onResult(resp) {
-    response = resp;
-    stats_module.stopStatsServers(onClose);
+  function onResult(response) {
+    test.errorIfNotEqual("statusCode", response.statusCode, 200);
+    jones.stats.stopServers(onClose);
   }
 
   function statsQuery() {
@@ -62,14 +52,13 @@ test.run = function() {
     };
 
     var req = http.get(requestParams, onResult);
-    req.on('error', function() { t.fail("connect error"); });
+    req.on('error', function() {
+      test.appendErrorMessage("connect error");
+      jones.stats.stopServers(onClose);
+    });
   }
 
-  stats_module.startStatsServer(stats_server_port, "localhost", statsQuery);
-};
-
-test.cleanup = function() {
-  stats_module.stopStatsServers();
+  jones.stats.startServer(stats_server_port, "localhost", statsQuery);
 };
 
 module.exports.tests = [ test ] ;

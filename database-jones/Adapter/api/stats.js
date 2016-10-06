@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2015 Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2016 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ var assert    = require("assert"),
 var global_stats;
 var running_servers = {};
 var udebug = unified_debug.getLogger("STATS");
-var DETAIL = udebug.is_detail();
 
 /* Because modules are cached, this initialization should happen only once. 
    If you try to do it twice the assert will fail.
@@ -36,33 +35,18 @@ assert(global_stats === undefined);
 global_stats = {};
 
 
-function getStatsDomain(root, keys, nparts) {
+function getStatsDomain(root, keys, nparts, register) {
   var i, key;
   var stat = root;
 
   for(i = 0 ; i < nparts; i++) {
     key = keys[i];
-    if(stat[key] === undefined) {
+    if(register && (stat[key] === undefined)) {
       stat[key] = {};
     }
     stat = stat[key];
   }
   return stat;
-}
-
-function dot(argsList, length) {
-  var i, r = "";
-  for (i = 0 ; i < length ; i++) {
-    if(argsList[i] !== undefined) {
-      if(i > 0) {r += ".";}
-      r += argsList[i];
-    }
-  }
-  return r;
-}
-
-function dotted_name(base, keyPath) { 
-  return base + "." + dot(keyPath, keyPath.length);
 }
 
 
@@ -77,13 +61,14 @@ exports.register = function(userStatsContainer) {
 	statsDomain = arguments[i];  // the final part of the domain
 	
 	assert(typeof userStatsContainer === 'object');
-	globalStatsNode = getStatsDomain(global_stats, statParts, statParts.length);
+	globalStatsNode = getStatsDomain(global_stats, statParts, statParts.length, true);
 	globalStatsNode[statsDomain] = userStatsContainer;
 	return this;
 };
 
 
 exports.query = function(path) {
+  assert.ok(Array.isArray(path), "query() parameter must be an array");
   return getStatsDomain(global_stats, path, path.length);
 };
 
@@ -112,9 +97,9 @@ exports.peek = function(query) {
 };
 
 
-exports.startStatsServer = function(port, host, callback) {
+exports.startServer = function(port, host, callback) {
   var key = host + ":" + port;
-  udebug.log_detail('startStatsServer', key);
+  udebug.log('startStatsServer', key);
   var server;
 
   function onStatsRequest(req, res) {
@@ -140,10 +125,11 @@ exports.startStatsServer = function(port, host, callback) {
 };
 
 
-exports.stopStatsServers = function(userCallback) {
+exports.stopServers = function(userCallback) {
   var serverCount = 0;
 
   function stopCallback() {
+    udebug.log('stopStatsServers closed ', serverCount);
     if (--serverCount == 0) {
       running_servers = {};
       userCallback();
@@ -153,7 +139,7 @@ exports.stopStatsServers = function(userCallback) {
   var key;
   for(key in running_servers) {
     if(running_servers.hasOwnProperty(key)) {
-      udebug.log_detail('stopStatsServers closing ', key);
+      udebug.log('stopStatsServers closing ', key);
       serverCount++;
       running_servers[key].close(stopCallback);
     }
