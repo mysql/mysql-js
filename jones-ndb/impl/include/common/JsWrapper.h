@@ -180,7 +180,7 @@ public:
   void addMethod(const char *name, V8WrapperFn wrapper) {
     stencil.Get(isolate)->Set(
       String::NewFromUtf8(isolate, name, v8::String::kInternalizedString),
-      FunctionTemplate::New(isolate, wrapper)->GetFunction()
+      FunctionTemplate::New(isolate, wrapper)
     );
   }
 
