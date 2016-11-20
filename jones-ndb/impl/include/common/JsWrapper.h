@@ -170,7 +170,7 @@ public:
     isVO(false)
   {
     EscapableHandleScope scope(isolate);
-    Local<ObjectTemplate> proto = ObjectTemplate::New();
+    Local<ObjectTemplate> proto = ObjectTemplate::New(isolate);
     proto->SetInternalFieldCount(2);
     stencil.Set(isolate, proto);
   }
