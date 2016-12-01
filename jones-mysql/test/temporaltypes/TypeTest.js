@@ -192,4 +192,28 @@ t10.run = function() {
   fail_openSession(this, InsertFunction(data));
 };
 
-module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10];
+// cYear
+// String "2001" should be treated as 2001
+var t11 = new harness.ConcurrentTest("VerifyStringYear");
+t11.run = function() {
+  var data = new TestData(21);
+  data.cYear = "2001";
+  this.verifier = new ValueVerifier(this, "cYear", 2001);
+  fail_openSession(this, InsertFunction(data));
+};
+
+// cYear
+// Error 22007 on attempt to store string "" in year column
+var t12 = new harness.ConcurrentTest("VerifyEmptyStringYear");
+t12.run = function() {
+  var data = new TestData(22);
+  data.cYear = "";
+  var verifier = new ErrorVerifier(this, "22007");
+  fail_openSession(this, function(session) {
+    session.persist(data, function(err) {
+      verifier.run(err);
+    });
+  });
+};
+
+module.exports.tests = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12];
