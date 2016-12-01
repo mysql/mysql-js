@@ -356,7 +356,7 @@ var DBOperationError = function(cause) {
   this.code = mysql_code_to_sqlstate_map[cause.code];
   if (this.code === undefined) {
     this.code = 0;
-    this.sqlstate = 'HY000';
+    this.sqlstate = mysql_code_to_sqlstate_map[cause.errno] || 'HY000';
   } else {
     this.sqlstate = mysql_code_to_sqlstate_map[this.code];
     cause.sqlstate = this.sqlstate;
