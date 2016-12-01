@@ -203,15 +203,15 @@ t11.run = function() {
 };
 
 // cYear
-// Error 22007 on attempt to store string "" in year column
+// Error on attempt to store string "" in year column
 var t12 = new harness.ConcurrentTest("VerifyEmptyStringYear");
 t12.run = function() {
   var data = new TestData(22);
   data.cYear = "";
-  var verifier = new ErrorVerifier(this, "22007");
   fail_openSession(this, function(session) {
     session.persist(data, function(err) {
-      verifier.run(err);
+      t12.errorIfUnset("Expected error", err);
+      t12.failOnError();
     });
   });
 };
