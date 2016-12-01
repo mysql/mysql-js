@@ -38,5 +38,7 @@
           }
           errno++
         }
+ /^WARN/ { errno++
+        }
  END    { print "};" }
  
