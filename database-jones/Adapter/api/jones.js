@@ -346,3 +346,4 @@ exports.closeAllOpenSessionFactories = function() {
   return context.closeAllOpenSessionFactories();
 };
 
+exports.isMappings = isMappings;

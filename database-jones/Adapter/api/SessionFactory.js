@@ -65,29 +65,6 @@ SessionFactory.prototype.inspect = function() {
   numberOfMappings + " mappings, " + numberOfSessions + " sessions.]]\n";
 };
 
-/** Determine if a parameter is a possible mappings. Possible mappings include null, undefined,
- * array, string, mapped constructor function, or TableMapping object.
- * @param fn possible mapping
- * @return true if the parameter may be a mappings
- */
-function isMappings(fn) {
-  if (fn === null) {return true;}
-  if (fn === undefined) {return true;}
-  if (Array.isArray(fn)) {return true;}
-  if (typeof fn === 'string') {return true;}
-  if (typeof fn === 'function') {
-    if (fn.prototype.jones) {
-      return true;
-    }
-  }
-  if (typeof fn === 'object') {
-    if (fn.constructor && fn.constructor.name === 'TableMapping') {
-      return true;
-    }
-  }
-  return false;
-}
-
 /** openSession(Object mappings, Function(Object error, Session session, ...) callback, ...);
  * Open new session or get one from a pool.
  * @param mappings a table name, mapped constructor, or array of them
@@ -96,7 +73,7 @@ function isMappings(fn) {
 SessionFactory.prototype.openSession = function(mappings, callback) {
   // if only one argument, it might be a mappings or a callback
   var args = arguments;
-  if (arguments.length === 1 && !isMappings(mappings)) {
+  if (arguments.length === 1 && !jones.isMappings(mappings)) {
     args[1] = mappings;
     args[0] = null;
   }
