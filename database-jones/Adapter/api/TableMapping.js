@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2106, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -537,6 +537,7 @@ TableMapping.prototype.fieldIsNotSparse = function(fieldName) {
   if (this.excludedFieldNames.indexOf(fieldName) === -1) {
     this.excludedFieldNames.push(fieldName);
   }
+  return this;
 };
 
 /** excludeFields(fieldNames)
@@ -563,6 +564,7 @@ TableMapping.prototype.excludeFields = function() {
           fieldNames + '\"';
     }
   }
+  return this;
 };
 
 

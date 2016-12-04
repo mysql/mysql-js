@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2016 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ function Session(index, sessionFactory, dbSession) {
   this.closed = false;
   this.tx = new transaction.Transaction(this);
   this.projections = {};
+  this.tableHandlers = {};
 }
 
 

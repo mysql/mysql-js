@@ -65,11 +65,46 @@ SessionFactory.prototype.inspect = function() {
   numberOfMappings + " mappings, " + numberOfSessions + " sessions.]]\n";
 };
 
-//openSession(Function(Object error, Session session, ...) callback, ...);
-// Open new session or get one from a pool
-SessionFactory.prototype.openSession = function() {
-  var context = new UserContext.UserContext(arguments, 2, 2, null, this);
+/** Determine if a parameter is a possible mappings. Possible mappings include null, undefined,
+ * array, string, mapped constructor function, or TableMapping object.
+ * @param fn possible mapping
+ * @return true if the parameter may be a mappings
+ */
+function isMappings(fn) {
+  if (fn === null) {return true;}
+  if (fn === undefined) {return true;}
+  if (Array.isArray(fn)) {return true;}
+  if (typeof fn === 'string') {return true;}
+  if (typeof fn === 'function') {
+    if (fn.prototype.jones) {
+      return true;
+    }
+  }
+  if (typeof fn === 'object') {
+    if (fn.constructor && fn.constructor.name === 'TableMapping') {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** openSession(Object mappings, Function(Object error, Session session, ...) callback, ...);
+ * Open new session or get one from a pool.
+ * @param mappings a table name, mapped constructor, or array of them
+ * @return promise
+ */
+SessionFactory.prototype.openSession = function(mappings, callback) {
+  // if only one argument, it might be a mappings or a callback
+  var args = arguments;
+  if (arguments.length === 1 && !isMappings(mappings)) {
+    args[1] = mappings;
+    args[0] = null;
+  }
+  var context = new UserContext.UserContext(args, 2, 2, null, this);
+  context.cacheTableHandlerInSession = true;
+  context.user_mappings = args[0];
   // delegate to context for execution
+  if(udebug.is_detail()) {udebug.log_detail('SessionFactory.openSession with mappings ', context.user_mappings);}
   return context.openSession();
 };
 
@@ -301,6 +336,8 @@ function createTableInternal(tableMapping, sessionFactory, session, callback) {
  *         otherwise, error.
  * - Domain Object:
  *     get constructor from domain object prototype. goto constructor algorithm.
+ * - TableMapping:
+ *     get table name from mapping. get metadata for table. get DBTableHandler for mapping.
  */
 SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTableNameOrConstructor, session, onTableHandler) {
   var sessionFactory = this;
@@ -339,25 +376,40 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
         tableMetadata.registerInvalidateCallback(invalidateCallback);
       }
       // we have the table metadata; now create the default table handler if not cached
-      if (sessionFactory.tableHandlers[tableKey] === undefined) {
+      // do not use the existing cached table handler if processing a new table mapping
+      if (userContext.tableIndicatorType === 'tablemapping' ||
+          (session.tableHandlers[tableKey] === undefined &&
+          sessionFactory.tableHandlers[tableKey] === undefined)) {
         if(udebug.is_detail()) { udebug.log_detail('creating the default table handler for ', tableKey); }
         dbTableHandler = new DBTableHandler(tableMetadata, tableMapping);
         if (dbTableHandler.isValid) {
-          // cache the table handler for the table name case
-          udebug.log('caching the default table handler in the session factory for', tableKey);
-          sessionFactory.tableHandlers[tableKey] = dbTableHandler;
-          invalidateCallback = function() {
-            // use " = undefined" here to keep tableKey in the tableHandlers object
-            udebug.log('invalidateCallback called for session factory default table handlers for', tableKey);
-            sessionFactory.tableHandlers[tableKey] = undefined;
-          };
-          tableMetadata.registerInvalidateCallback(invalidateCallback);
+          // cache the table handler for the table name and table mapping cases
+          if (userContext.cacheTableHandlerInSessionFactory) {
+            udebug.log('caching the default table handler in the session factory for', tableKey);
+            sessionFactory.tableHandlers[tableKey] = dbTableHandler;
+            invalidateCallback = function() {
+              // use " = undefined" here to keep tableKey in the tableHandlers object
+              udebug.log('invalidateCallback called for session factory default table handlers for', tableKey);
+              sessionFactory.tableHandlers[tableKey] = undefined;
+            };
+            tableMetadata.registerInvalidateCallback(invalidateCallback);
+          }
+          if (userContext.cacheTableHandlerInSession) {
+            udebug.log('caching the default table handler in the session for', tableKey);
+            session.tableHandlers[tableKey] = dbTableHandler;
+            invalidateCallback = function() {
+              // use " = undefined" here to keep tableKey in the tableHandlers object
+              udebug.log('invalidateCallback called for session default table handlers for', tableKey);
+              session.tableHandlers[tableKey] = undefined;
+            };
+            tableMetadata.registerInvalidateCallback(invalidateCallback);
+          }
         } else {
           err = new Error(dbTableHandler.errorMessages);
           udebug.log('onExistingTableMetadata got invalid dbTableHandler', dbTableHandler.errorMessages);
         }
       } else {
-        dbTableHandler = sessionFactory.tableHandlers[tableKey];
+        dbTableHandler = session.tableHandlers[tableKey] || sessionFactory.tableHandlers[tableKey];
         udebug.log('onExistingTableMetadata got default dbTableHandler but' +
             ' someone else put it in the cache first for ', tableKey);
       }
@@ -413,8 +465,9 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
 
   function onTableMetadata(err, tableMetadata) {
     if (err) {
+      // get default tableMapping if not already specified
+      tableMapping = tableMapping || sessionFactory.tableMappings[tableSpecification.qualifiedTableName];
       // create the schema if it does not already exist and user flag allows it
-      tableMapping = sessionFactory.tableMappings[tableSpecification.qualifiedTableName];
       if (!tableMapping && session.allowCreateUnmappedTable) {
         udebug.log('getTableHandler.onTableMetadata creating table for',tableSpecification.qualifiedTableName);
         // create the table from the default table mapping
@@ -456,8 +509,8 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
 
     tableSpecification = getTableSpecification(sessionFactory.properties.database, domainObjectTableNameOrConstructor);
     tableKey = tableSpecification.qualifiedTableName;
-    // look up in table name to default table handler hash
-    dbTableHandler = sessionFactory.tableHandlers[tableKey];
+    // look up in table name to default table handler hash in session and session factory
+    dbTableHandler = session.tableHandlers[tableKey] || sessionFactory.tableHandlers[tableKey];
     if (dbTableHandler === undefined) {
       if(udebug.is_detail()) {
         udebug.log_detail('tableIndicatorTypeString for table name did not find cached dbTableHandler for table', tableKey);
@@ -472,6 +525,21 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
       // send back the dbTableHandler to the caller
       onTableHandler(null, dbTableHandler);
     }
+  }
+
+  // handle the case where the parameter is the user-defined TableMapping
+  function tableIndicatorTypeTableMapping() {
+    if(udebug.is_detail()) { udebug.log_detail('tableIndicatorTypeTableMapping for', domainObjectTableNameOrConstructor); }
+    tableMapping = domainObjectTableNameOrConstructor;
+    if (tableMapping.database) {
+      databaseDotTable = tableMapping.database + '.' + tableMapping.table;
+    } else {
+      databaseDotTable = tableMapping.table;
+    }
+    tableSpecification = getTableSpecification(sessionFactory.properties.database, databaseDotTable);
+    tableKey = tableSpecification.qualifiedTableName;
+    // create a new table handler for the table with the user-defined TableHandler
+    createTableHandler(tableSpecification, session.dbSession, onTableHandler);
   }
 
   function tableIndicatorTypeFunction() {
@@ -509,6 +577,10 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
 
   // start of getTableHandler
   tableIndicatorType = typeof domainObjectTableNameOrConstructor;
+  if (tableIndicatorType === 'object' && domainObjectTableNameOrConstructor.constructor.name === 'TableMapping') {
+    tableIndicatorType = 'tablemapping';
+  }
+  userContext.tableIndicatorType = tableIndicatorType;
   if (tableIndicatorType === 'string') {
     userContext.handlerCtor = undefined;
     tableIndicatorTypeString();
@@ -518,8 +590,11 @@ SessionFactory.prototype.getTableHandler = function(userContext, domainObjectTab
   } else if (tableIndicatorType === 'object') {
     userContext.handlerCtor = domainObjectTableNameOrConstructor.constructor;
     tableIndicatorTypeFunction();
+  } else if (tableIndicatorType === 'tablemapping') {
+    userContext.handlerCtor = undefined;
+    tableIndicatorTypeTableMapping();
   } else {
-    err = new Error('User error: parameter must be a domain object, string, or constructor function.');
+    err = new Error('User error: parameter must be a domain object, string, TableMapping or constructor function.');
     onTableHandler(err, null);
   }
 };

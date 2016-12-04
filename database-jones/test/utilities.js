@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2013, 2014 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2013, 2016 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -81,14 +81,17 @@ global.fail_openSession = function(testCase, callback) {
   if (arguments.length < 1 || arguments.length > 2) {
     throw new Error('Fatal internal exception: fail_openSession must have  1 or 2 parameters: testCase, callback');
   }
-  promise = jones.openSession(test_conn_properties, testCase.mappings, function(err, session) {
+  function onSession(err, session) {
     if (callback && err) {
       testCase.fail(err);
-      return;   // why?
+    } else {
+      testCase.session = session;
+      tryCallback(session, testCase, callback);
     }
-    testCase.session = session;
-    tryCallback(session, testCase, callback);
-  });
+  }
+
+  // fail_openSession starts here
+  promise = jones.openSession(test_conn_properties, testCase.mappings, onSession);
   return promise;
 };
 

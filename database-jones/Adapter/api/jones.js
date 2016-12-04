@@ -281,17 +281,56 @@ function requireUserContext() {
   }
 }
 
+/** Determine if a parameter is a possible mappings. Possible mappings include null, undefined,
+ * array, string, mapped constructor function, or TableMapping object.
+ * @param fn possible mapping
+ * @return true if the parameter may be a mappings
+ */
+function isMappings(fn) {
+  if (fn === null) {return true;}
+  if (fn === undefined) {return true;}
+  if (Array.isArray(fn)) {return true;}
+  if (typeof fn === 'string') {return true;}
+  if (typeof fn === 'function') {
+    if (fn.prototype.jones) {
+      return true;
+    }
+  }
+  if (typeof fn === 'object') {
+    if (fn.constructor && fn.constructor.name === 'TableMapping') {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Methods implemented in UserContext **/
 
-exports.connect = function(properties, annotations, user_callback) {
+exports.connect = function(properties, mappings, user_callback) {
+  // copy arguments so they can be changed
+  // if optional annotations argument is skipped, set it to null and set callback from second argument
+  var args = arguments;
+  if (arguments.length == 2 && !isMappings(mappings)) {
+    args[2] = mappings;
+    args[1] = null;
+  }
   requireUserContext();
-  var context = new UserContext(arguments, 3, 2, null, null);
+  var context = new UserContext(args, 3, 2, null, null);
+  context.cacheTableHandlerInSessionFactory = true;
   return context.connect();
 };
 
-exports.openSession = function() {
+exports.openSession = function(properties, mappings, user_callback) {
+  // copy arguments so they can be changed
+  // if optional annotations argument is skipped, set it to null and set callback from second argument
+  var args = arguments;
+  if (arguments.length == 2 && !isMappings(mappings)) {
+    args[2] = mappings;
+    args[1] = null;
+  }
   requireUserContext();
-  var context = new UserContext(arguments, 3, 2, null, null);
+  var context = new UserContext(args, 3, 2, null, null);
+  context.cacheTableHandlerInSession = true;
   return context.openSession();
 };
 

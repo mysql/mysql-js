@@ -281,11 +281,129 @@ var resolveProperties = function(properties) {
   return properties;
 };
 
+/** Construct an error by copying the first error in the user context object.
+ * @param user context
+ * @return a new Error with the first error reported
+ */
+function reportFirstError(userContext) {
+  var err = null;
+  var firstError = userContext.firstError;
+  // if any errors during table mapping, report them
+  if (userContext.errorMessages) {
+    err = new Error(userContext.errorMessages);
+    // fill in the Error detail from the first error
+    err.sqlstate =       firstError.sqlstate;
+    err.code =           firstError.code;
+    err.classification = firstError.classification;
+    err.status =         firstError.status;
+  }
+  return err;
+}
+
 /** Get the table handler for a table name, constructor, or domain object.
  * Delegate this to SessionFactory.
  */
 function getTableHandler(userContext, domainObjectTableNameOrConstructor, session, onTableHandler) {
-  session.sessionFactory.getTableHandler(userContext, domainObjectTableNameOrConstructor, session, onTableHandler);
+  var param = domainObjectTableNameOrConstructor;
+  session.sessionFactory.getTableHandler(userContext, param, session, onTableHandler);
+}
+
+function resolveTableMappings(userContext, factory, session, tableMappings, onMappingsResolvedCallback) {
+  var mappings = [];
+  var mappingBeingResolved = 0;
+  var currentTableMapping, currentTableMappingType, currentTableMappingName, currentTableName;
+  var message;
+
+  function resolveTableMappingsOnTableHandler(err, tableHandler) {
+    if(udebug.is_detail()) {
+      udebug.log('UserContext.resolveTableMappinsgOnTableHandler got err', err, 'tableHandler', tableHandler,
+        '\nfor', mappingBeingResolved + 1, 'of', mappings.length, '\n', mappings[mappingBeingResolved]);
+    }
+    if (err) {
+      userContext.firstError = userContext.firstError || err;
+      // what were we resolving?
+      currentTableMapping = mappings[mappingBeingResolved];
+      currentTableMappingType = typeof currentTableMapping;
+      currentTableName = currentTableMapping;
+      message = currentTableName;
+      if (currentTableMappingType === 'function') {
+        currentTableMappingName = currentTableMapping.prototype.constructor.name;
+        if (currentTableMapping.prototype.jones !== undefined) {
+          currentTableName = currentTableMapping.prototype.jones.mapping.table;
+          message = currentTableName + ' for domain object ' + currentTableMappingName;
+        }
+      }
+      userContext.appendErrorMessage('Error resolving table ' + message + ': ' + util.inspect(err));
+    }
+    if (++mappingBeingResolved === mappings.length || mappingBeingResolved > 20) {
+      onMappingsResolvedCallback();
+    } else {
+      // get the table handler for the next one, and so on until all are done
+      getTableHandler(userContext, mappings[mappingBeingResolved], session, resolveTableMappingsOnTableHandler);
+    }
+  }
+
+  function typeofTableMapping(mapping) {
+    var type = typeof mapping;
+    if (type == 'object') {
+      if (Array.isArray(mapping)) {
+        type = 'array';
+      } else if (tableMappings.constructor && tableMappings.constructor.name === 'TableMapping') {
+        type = 'tablemapping';
+      } else {
+        type = 'illegal';
+      }
+    }
+    return type;
+  }
+
+  // resolveTableMappings begins here
+
+  var tableMappingsType = typeofTableMapping(tableMappings);
+  var tableMapping;
+  var tableMappingType;
+  var m;
+  switch (tableMappingsType) {
+  case 'string':
+    mappings.push(tableMappings);
+    break;
+  case 'function':
+    mappings.push(tableMappings);
+    break;
+  case 'array':
+    if (tableMappings.length) {
+      for (m = 0; m < tableMappings.length; ++m) {
+        tableMapping = tableMappings[m];
+        tableMappingType = typeofTableMapping(tableMapping);
+        if (tableMappingType === 'function' ||
+            tableMappingType === 'string' ||
+            tableMappingType === 'tableMapping') {
+          mappings.push(tableMapping);
+        } else {
+          userContext.appendErrorMessage('unknown table mapping' + util.inspect(tableMapping));
+        }
+      }
+    } else {
+      userContext.appendErrorMessage('unknown table mappings' + util.inspect(tableMappings));
+    }
+    break;
+  case 'tablemapping':
+    mappings.push(tableMappings);
+    break;
+  case 'illegal':
+    break;
+  default:
+    userContext.appendErrorMessage('unknown table mappings' + util.inspect(tableMappings));
+    break;
+  }
+  if (mappings.length === 0) {
+    if(udebug.is_detail()) { udebug.log('resolveTableMappingsOnSession no mappings!'); }
+    onMappingsResolvedCallback();
+  } else {
+    // get table handler for the first; the callback will then do the next one...
+    if(udebug.is_detail()) { udebug.log('getSessionFactory resolving mappings:', mappings); }
+    getTableHandler(userContext, mappings[0], session, resolveTableMappingsOnTableHandler);
+  }
 }
 
 /** Try to find an existing session factory by looking up the connection string
@@ -302,8 +420,6 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
   var newSession;
   var sp;
   var i;
-  var m;
-  var firstError;
 
   function Connection(connectionKey) {
     this.connectionKey = connectionKey;
@@ -341,104 +457,30 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
     }
   }
 
-  var resolveTableMappingsOnSession = function(err, session) {
-    var mappings = [];
-    var mappingBeingResolved = 0;
-    var currentTableMapping, currentTableMappingType, currentTableMappingName, currentTableName, message;
-
-    var resolveTableMappingsOnTableHandler = function(err, tableHandler) {
-      if(udebug.is_detail()) {
-        udebug.log('UserContext.resolveTableMappinsgOnTableHandler', mappingBeingResolved + 1,
-                   'of', mappings.length, mappings[mappingBeingResolved]);
-      }
-      if (err) {
-        firstError = firstError || err;
-        // what were we resolving?
-        currentTableMapping = mappings[mappingBeingResolved];
-        currentTableMappingType = typeof currentTableMapping;
-        currentTableName = currentTableMapping;
-        message = currentTableName;
-        if (currentTableMappingType === 'function') {
-          currentTableMappingName = currentTableMapping.prototype.constructor.name;
-          if (currentTableMapping.prototype.jones !== undefined) {
-            currentTableName = currentTableMapping.prototype.jones.mapping.table;
-            message = currentTableName + ' for domain object ' + currentTableMappingName;
-          }
-        }
-        userContext.appendErrorMessage('Error resolving table ' + message + ': ' + util.inspect(err));
-      }
-      if (++mappingBeingResolved === mappings.length || mappingBeingResolved > 10) {
-        // close the session the hard way (not using UserContext)
-        session.dbSession.close(function(err) {
-          if (err) {
+  function resolveTableMappingsAndCallback() {
+    function onMappingsResolved() {
+      // close the session the hard way (not using UserContext)
+      newSession.dbSession.close(function(err) {
+        if (err) {
+          callback(err, null);
+        } else {
+          // now remove the session from the session factory's open connections
+          newSession.sessionFactory.closeSession(newSession.index);
+          // mark this session as unusable
+          newSession.closed = true;
+          // if any errors during table mapping, report them
+          if (userContext.errorMessages) {
+            err = reportFirstError(userContext);
             callback(err, null);
           } else {
-            // now remove the session from the session factory's open connections
-            session.sessionFactory.closeSession(session.index);
-            // mark this session as unusable
-            session.closed = true;
-            // if any errors during table mapping, report them
-            if (userContext.errorMessages) {
-              err = new Error(userContext.errorMessages);
-              // fill in the Error detail from the first error
-              err.sqlstate =       firstError.sqlstate;
-              err.code =           firstError.code;
-              err.classification = firstError.classification;
-              err.status =         firstError.status;
-              callback(err, null);
-            } else {
-              // no errors
-              callback(null, factory);
-            }
-          }
-        });
-      } else {
-        // get the table handler for the next one, and so on until all are done
-        getTableHandler(userContext, mappings[mappingBeingResolved], session, resolveTableMappingsOnTableHandler);
-      }
-    };
-
-    // resolveTableMappingsOnSession begins here
-    
-    var tableMappingsType = typeof tableMappings;
-    var tableMapping;
-    var tableMappingType;
-    switch (tableMappingsType) {
-    case 'string': 
-      mappings.push(tableMappings); 
-      break;
-    case 'function': 
-      mappings.push(tableMappings);
-      break;
-    case 'object': 
-      if (tableMappings.length) {
-        for (m = 0; m < tableMappings.length; ++m) {
-          tableMapping = tableMappings[m];
-          tableMappingType = typeof tableMapping;
-          if (tableMappingType === 'function' || tableMappingType === 'string') {
-            mappings.push(tableMapping);
-          } else {
-            userContext.appendErrorMessage('unknown table mapping' + util.inspect(tableMapping));
+            // no errors
+            callback(null, factory);
           }
         }
-      } else {
-        userContext.appendErrorMessage('unknown table mappings' + util.inspect(tableMappings));
-      }
-      break;
-    default:
-      userContext.appendErrorMessage('unknown table mappings' + util.inspect(tableMappings));
-      break;
+      });
     }
-    if (mappings.length === 0) {
-      if(udebug.is_detail()) { udebug.log('resolveTableMappingsOnSession no mappings!'); }
-      callback(null, factory);
-    }
-    // get table handler for the first; the callback will then do the next one...
-    if(udebug.is_detail()) { udebug.log('getSessionFactory resolving mappings:', mappings); }
-    getTableHandler(userContext, mappings[0], session, resolveTableMappingsOnTableHandler);
-  };
 
-  var resolveTableMappingsAndCallback = function() {
+    // resolveTableMappingsAndCallback starts here
     if (!tableMappings) {
       callback(null, factory);
     } else {
@@ -453,21 +495,21 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
         } else {
           newSession = new apiSession.Session(sessionSlot, factory, dbSession);
           factory.sessions[sessionSlot] = newSession;
-          resolveTableMappingsOnSession(err, newSession);
+          resolveTableMappings(userContext, factory, newSession, tableMappings, onMappingsResolved);
         }
       });
     }
-  };
+  }
 
-  var createFactory = function(dbConnectionPool) {
+  function createFactory(dbConnectionPool) {
     var newFactory;
     udebug.log('connect createFactory creating factory for', connectionKey, 'database', database);
     newFactory = new sessionFactory.SessionFactory(connectionKey, dbConnectionPool,
         properties, tableMappings, deleteFactory);
     return newFactory;
-  };
+  }
   
-  var dbConnectionPoolCreated_callback = function(error, dbConnectionPool) {
+  function dbConnectionPoolCreated_callback(error, dbConnectionPool) {
     if (connection.isConnecting) {
       // the first requester for this connection
       connection.isConnecting = false;
@@ -503,7 +545,7 @@ var getSessionFactory = function(userContext, properties, tableMappings, callbac
         resolveTableMappingsAndCallback();
       }
     }
-  };
+  }
 
   // getSessionFactory starts here
   database = properties.database;
@@ -551,9 +593,9 @@ exports.UserContext.prototype.connect = function() {
   // properties might be null, a name, or a properties object
   this.user_arguments[0] = resolveProperties(this.user_arguments[0]);
 
-  var connectOnSessionFactory = function(err, factory) {
+  function connectOnSessionFactory(err, factory) {
     userContext.applyCallback(err, factory);
-  };
+  }
 
   getSessionFactory(this, this.user_arguments[0], this.user_arguments[1], connectOnSessionFactory);
   return userContext.promise;
@@ -2036,7 +2078,6 @@ exports.UserContext.prototype.rollback = function() {
   return userContext.promise;
 };
 
-
 /** Open a session. Allocate a slot in the session factory sessions array.
  * Call the DBConnectionPool to create a new DBSession.
  * Wrap the DBSession in a new Session and return it to the user.
@@ -2045,16 +2086,32 @@ exports.UserContext.prototype.rollback = function() {
  */
 exports.UserContext.prototype.openSession = function() {
   var userContext = this;
+  var err;
 
-  var openSessionOnSession = function(err, dbSession) {
+  function openSessionOnResolvedMappings() {
+    if (userContext.firstError) {
+      err = reportFirstError(userContext);
+      userContext.applyCallback(err, null);
+    } else {
+      userContext.applyCallback(null, userContext.session);
+    }
+  }
+
+  function openSessionOnSession(err, dbSession) {
     if (err) {
       userContext.applyCallback(err, null);
     } else {
       userContext.session = new apiSession.Session(userContext.session_index, userContext.session_factory, dbSession);
       userContext.session_factory.sessions[userContext.session_index] = userContext.session;
-      userContext.applyCallback(err, userContext.session);
+      // if the user specified mappings, resolve them now
+      if (userContext.cacheTableHandlerInSession && userContext.user_mappings) {
+        resolveTableMappings(userContext, userContext.session_factory, userContext.session,
+            userContext.user_mappings, openSessionOnResolvedMappings);
+      } else {
+        userContext.applyCallback(err, userContext.session);
+      }
     }
-  };
+  }
 
   var openSessionOnSessionFactory = function(err, factory) {
     if (err) {

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -449,15 +449,16 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
   udebug.log_detail('sqlForTableCreation tableMapping', tableMapping, engine);
   var i, field, delimiter = '';
   var fieldMeta, tableMeta, columnMeta;
+  var sparseField;
   var sql = 'CREATE TABLE ';
   sql += tableMapping.database;
   sql += '.';
   sql += tableMapping.table;
   sql += '(';
-  for (i = 0; i < tableMapping.fields.length; ++i) {
+  // append SQL for a field
+  function appendFieldDefinition(field) {
     sql += delimiter;
     delimiter = ', ';
-    field = tableMapping.fields[i];
     sql += field.columnName || field.fieldName;
     sql += ' ';
     fieldMeta = field.meta;
@@ -477,6 +478,16 @@ SQLBuilder.prototype.getSqlForTableCreation = function (tableMapping, engine) {
     } else {
       sql += defaultFieldMeta(field);
     }
+  }
+  // append SQL for each defined field
+  for (i = 0; i < tableMapping.fields.length; ++i) {
+    field = tableMapping.fields[i];
+    appendFieldDefinition(field);
+  }
+  // append SQL for the optional sparse field container
+  sparseField = tableMapping.sparseContainer;
+  if (sparseField) {
+    appendFieldDefinition(sparseField);
   }
   // process meta for the table
   // need to support PRIMARY and HASH
