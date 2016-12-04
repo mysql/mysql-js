@@ -80,13 +80,107 @@ function TableMapping(tableName_or_tableMapping) {};
 */
   function mapField(fieldName, columnName, converter, persistent) {};
 
+/* @method mapOneToOne(Object mapping)
+   IMMEDIATE
+
+   Create a mapping for a named one to one relationship of a mapped object.
+   There must exist a foreign key in the underlying table that associates the
+     columns mapped to the fields of the relationship.
+   @param mapping is a literal with properties:
+     fieldName required; the field name in this object
+     columnName optional; if omitted, use fieldName
+     target required; the name of the target (constructor) function
+     targetField required; the field name in the target
+     foreignKey optional; the name of the foreign key; one side of the relationship
+       must define the foreign key in the underlying table
+
+    @return {TableMapping} @chainable
+    mapOneToOne() returns the current TableMapping object, so that method
+    invocations can be chained.
+*/
+  function mapOneToOne(Object mapping) {};
+
+/* @method mapOneToMany(Object mapping)
+   IMMEDIATE
+
+   Create a mapping for a named one to many relationship of a mapped object.
+   There must exist a foreign key in the underlying table that associates the
+     columns mapped to the fields of the relationship.
+   @param mapping is a literal with properties:
+     fieldName required; the field name in this object
+     columnName optional; if omitted, use fieldName
+     target required; the name of the target (constructor) function
+     targetField required; the field name in the target
+     foreignKey optional; the name of the foreign key; one side of the relationship
+       must define the foreign key in the underlying table
+
+    @return {TableMapping} @chainable
+    mapOneToMany() returns the current TableMapping object, so that method
+    invocations can be chained.
+*/
+  function mapOneToMany(Object mapping) {};
+
+/* @method mapManyToOne(Object mapping)
+   IMMEDIATE
+
+   Create a mapping for a named many to one relationship of a mapped object.
+   There must exist a foreign key in the underlying table that associates the
+     columns mapped to the fields of the relationship.
+   @param mapping is a literal with properties:
+     fieldName required; the field name in this object
+     columnName optional; if omitted, use fieldName
+     target required; the name of the target (constructor) function
+     targetField required; the field name in the target
+     foreignKey optional; the name of the foreign key; one side of the relationship
+       must define the foreign key in the underlying table
+
+    @return {TableMapping} @chainable
+    mapManyToOne() returns the current TableMapping object, so that method
+    invocations can be chained.
+*/
+  function mapManyToOne(Object mapping) {};
+
+/* @method mapManyToMany(Object mapping)
+   IMMEDIATE
+
+   Create a mapping for a named many to many relationship of a mapped object.
+   There must exist a foreign key in the underlying table to the join table
+     that associates the columns mapped to the fields of the relationship.
+   @param mapping is a literal with properties:
+     fieldName required; the field name in this object
+     columnName optional; if omitted, use fieldName
+     target required; the name of the target (constructor) function
+     targetField required; the field name in the target
+     foreignKey optional; the name of the foreign key; one side of the relationship
+       must define the foreign key in the underlying table
+     joinTable optional; the name of the join table associating the two mapped tables;
+       one side of the relationship must define the join table
+
+    @return {TableMapping} @chainable
+    mapManyToMany() returns the current TableMapping object, so that method
+    invocations can be chained.
+*/
+  function mapManyToMany(Object mapping) {};
+
+/* @method mapSparseFields(columnName, converter)
+   IMMEDIATE
+
+   Map a column used to store multiple fields that are not mapped to their own columns.
+   @param columnName required; the name of the column in the table
+   @param converter optional; the default is a built-in JSON serializer
+
+    @return {TableMapping} @chainable
+    mapSparseFields() returns the current TableMapping object, so that method
+    invocations can be chained.
+*/
+  mapSparseFields(columnName, properties...)
 
 /* @method applyToClass
    applyToClass(constructor)
    IMMEDIATE 
-   
+
    Attach a TableMapping to the constructor for mapped objects.
-   
+
    After this is done, any object created from the constructor will qualify
    as a "mapped instance."  With mapped instances, several idiomatic forms 
    of the Session and Batch methods can be used.  For example, an application
