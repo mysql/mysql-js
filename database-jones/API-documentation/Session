@@ -135,7 +135,7 @@ persist(Function constructor, Object values, [callback], [...]);
  * ASYNC
  *
  * This function returns a promise.  On success, the promise will be fulfilled.
- * The optional callback receives only an error value.  Any extra arguments 
+ * The optional callback receives only an error value.  Any extra arguments
  * passed after the callback will be passed to the callback function verbatim
  * as parameters following the error value.
  *
@@ -148,6 +148,23 @@ persist(Function constructor, Object values, [callback], [...]);
  */
 persist(String tableName, Object values, [callback]. [...]);
   
+/** Insert the instance into the database. See the other variant for semantics.
+ * ASYNC
+ *
+ * This function returns a promise.  On success, the promise will be fulfilled.
+ * The optional callback receives only an error value.  Any extra arguments
+ * passed after the callback will be passed to the callback function verbatim
+ * as parameters following the error value.
+ *
+ * @param tableMapping the TableMapping
+ * @param values: values for the new instance
+ * @param callback function to be called when operation has completed,
+ *                 with parameters:
+ *                   err: the node.js Error object
+ * @return promise
+ */
+persist(TableMapping tableMapping, Object values, [callback], [...]);
+
 /** Delete an instance of a class from the database by a primary or unique key.
  * ASYNC
  * The key values in the object must uniquely identify
@@ -156,7 +173,7 @@ persist(String tableName, Object values, [callback]. [...]);
  * an error is reported in the callback.
  *
  * This function returns a promise.  On success, the promise will be fulfilled.
- * The optional callback receives only an error value.  Any extra arguments 
+ * The optional callback receives only an error value.  Any extra arguments
  * passed after the callback will be passed to the callback function verbatim
  * as parameters following the error value.
  * 
@@ -213,6 +230,24 @@ remove(Function constructor, Object keys, [callback], [...]);
  * @return promise
  */
 remove(String tableName, Object keys, [callback], [...]);
+
+/** Delete a row from the database by a unique or primary key.
+ * ASYNC
+ * See other variant for semantics.
+ *
+ * This function returns a promise.  On success, the promise will be fulfilled.
+ * The optional callback receives only an error value.  Any extra arguments
+ * passed after the callback will be passed to the callback function verbatim
+ * as parameters following the error value.
+ *
+ * @param tableMapping the TableMapping
+ * @param keys object containing the keys of the object to delete
+ * @param callback function to be called when operation has completed,
+ *                 with parameters:
+ *                   err: the node.js Error object
+ * @return promise
+ */
+remove(TableMapping tableMapping, Object keys, [callback], [...]);
 
 /** Update the instance in the database without necessarily retrieving it.
  * The primary key field is used to determine which instance is to be updated.
@@ -281,6 +316,25 @@ update(Function constructor, keys, values,  [callback], [...]);
  */
 update(String tableName, keys, values, [callback], [...]);
 
+/** Update the instance in the database without necessarily retrieving it.
+ * See other variant for semantics.
+ *
+ * This function returns a promise.  On success, the promise will be fulfilled.
+ * The optional callback receives only an error value.  Any extra arguments
+ * passed after the callback will be passed to the callback function verbatim
+ * as parameters following the error value.
+ *
+ * @param tableMapping the TableMapping
+ * @param keys an object containing unique keys for the instance to update
+ * @param values an object containing values to update
+ * @param callback function to be called when operation has completed,
+ *                 with parameters:
+ *                   err: the node.js Error object
+ * @return promise
+ * ASYNC
+ */
+update(TableMapping tableMapping, keys, values, [callback], [...]);
+
 /** Save the instance in the database without checking for existence.
  * The id field is used to determine which instance is to be saved.
  * If the instance exists in the database it will be updated.
@@ -335,6 +389,24 @@ save(Function constructor, Object values,  [callback], [...]);
  * ASYNC
  */
 save(String tableName, Object values, [callback], [...]);
+
+/** Save the instance in the database without checking for existence.
+ * See other variant for semantics.
+ *
+ * This function returns a promise.  On success, the promise will be fulfilled.
+ * The optional callback receives only an error value.  Any extra arguments
+ * passed after the callback will be passed to the callback function verbatim
+ * as parameters following the error value.
+ *
+ * @param tableMapping the TableMapping
+ * @param values the values to insert or update
+ * @param callback function to be called when operation has completed,
+ *                 with parameters:
+ *                   err: the node.js Error object
+ * @return promise
+ * ASYNC
+ */
+save(TableMapping tableMapping, Object values, [callback], [...]);
 
 /** Is this context a batch?
  * @return true if this context is a batch; false if this context is a session

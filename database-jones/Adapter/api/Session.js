@@ -36,6 +36,9 @@ function Session(index, sessionFactory, dbSession) {
   this.tableHandlers = {};
 }
 
+function isObjectNotTableMapping(fn) {
+	return typeof fn === 'object' && fn.constructor.name !== 'TableMapping';
+}
 
 exports.Session = Session;
 
@@ -74,7 +77,7 @@ exports.Session.prototype.load = function() {
 
 exports.Session.prototype.persist = function(tableIndicator) {
   var context;
-  if (typeof tableIndicator === 'object') {
+  if (isObjectNotTableMapping(tableIndicator)) {
     // persist(domainObject, callback)
     context = new userContext.UserContext(arguments, 2, 1, this, this.sessionFactory);
   } else {
@@ -88,7 +91,7 @@ exports.Session.prototype.persist = function(tableIndicator) {
 
 exports.Session.prototype.remove = function(tableIndicator) {
   var context;
-  if (typeof tableIndicator === 'object') {
+  if (isObjectNotTableMapping(tableIndicator)) {
     // remove(domainObject, callback)
     context = new userContext.UserContext(arguments, 2, 1, this, this.sessionFactory);
   } else {
@@ -102,7 +105,7 @@ exports.Session.prototype.remove = function(tableIndicator) {
 
 exports.Session.prototype.update = function(tableIndicator) {
   var context;
-  if (typeof tableIndicator === 'object') {
+  if (isObjectNotTableMapping(tableIndicator)) {
     // update(domainObject, callback)
     context = new userContext.UserContext(arguments, 2, 1, this, this.sessionFactory);
   } else {
@@ -116,7 +119,7 @@ exports.Session.prototype.update = function(tableIndicator) {
 
 exports.Session.prototype.save = function(tableIndicator) {
   var context;
-  if (typeof tableIndicator === 'object') {
+  if (isObjectNotTableMapping(tableIndicator)) {
     // save(domainObject, callback)
     context = new userContext.UserContext(arguments, 2, 1, this, this.sessionFactory);
   } else {
