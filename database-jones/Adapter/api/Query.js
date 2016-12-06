@@ -49,6 +49,10 @@ var where = function(predicate) {
 
 /** QueryDomainType function execute */
 var execute = function(queryParameters, callback) {
+	// if no where function, use the default (table scan)
+	if (this.jones_query_domain_type.queryHandler === undefined) {
+		this.jones_query_domain_type.queryHandler = new QueryHandler(this.jones_query_domain_type.dbTableHandler);
+	}
   var session = this.jones_query_domain_type.session;
   var context = new userContext.UserContext(arguments, 2, 2, session, session.sessionFactory);
   // if the user did not specify any arguments, default queryParameters to {}
