@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2017 Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ if(WITH_NODEJS_INCLUDE_PATH)
   MESSAGE(STATUS "Building jones-ndb to install in share/nodejs")
   MESSAGE(STATUS "Using node.js from " ${WITH_NODEJS_INCLUDE_PATH})
 else()
-  MESSAGE(STATUS "Skipping jones-ndb")
   RETURN()
 endif()
 
@@ -86,6 +85,9 @@ set(ADAPTER_SOURCE_FILES
   ../impl/src/ndb/QueryOperation_wrapper.cpp
 )
 
+
+###### COMPILER AND LINKER OPTIONS
+
 # Enable asserts:
 remove_definitions(-DNDEBUG)
 
@@ -97,9 +99,9 @@ if(WIN32)
   add_definitions(-DWIN32)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
   if(CMAKE_CL_64)
-    link_directories(${NODE_GYP}/x64)
+    link_directories(${NODE_LIBRARIES}/win-x64)
   else()
-    link_directories(${NODE_GYP}/ia32) 
+    link_directories(${NODE_LIBRARIES}/win-x86)
   endif()
 else()
   set(ADAPTER_REQUIRED_LIBS ndbclient)
@@ -112,10 +114,13 @@ add_library(ndb_adapter MODULE ${ADAPTER_SOURCE_FILES})
 target_link_libraries(ndb_adapter ${ADAPTER_REQUIRED_LIBS})
 
 
-if(APPLE) 
+# non-gcc linker flags to deal with undefined & multiply-defined symbols
+if(APPLE)
   set(FINAL_LINK_FLAGS "-undefined dynamic_lookup")
 elseif(WIN32)
   set(FINAL_LINK_FLAGS "/FORCE:MULTIPLE")
+elseif(CMAKE_C_COMPILER_ID MATCHES "SunPro")
+  set(FINAL_LINK_FLAGS "-z muldefs")
 endif()
 
 set_target_properties(ndb_adapter PROPERTIES
