@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -113,6 +113,7 @@ private:
   friend class TransactionImpl;
   friend class ListTablesCall;
   friend class GetTableCall;
+  friend class QueryOperation;
 
   int maxNdbTransactions;
   int nContexts;

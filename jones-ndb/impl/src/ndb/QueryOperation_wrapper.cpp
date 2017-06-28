@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -219,10 +219,12 @@ const NdbQueryOperationDef * createNextLevel(Isolate * isolate,
 */
 void createQueryOperation(const Arguments & args) {
   DEBUG_MARKER(UDEB_DEBUG);
-  REQUIRE_ARGS_LENGTH(3);
+  REQUIRE_ARGS_LENGTH(4);
   Isolate * isolate = args.GetIsolate();
 
   int size = args[2]->Int32Value();
+  SessionImpl * sessionImpl = unwrapPointer<SessionImpl *>(args[3]->ToObject());
+
   int currentId = 0;
   int parentId;
   const NdbQueryOperationDef * current;
@@ -245,7 +247,7 @@ void createQueryOperation(const Arguments & args) {
     assert(current->getOpNo() == spec->Get(GET_KEY(K_serial))->Uint32Value());
     setRowBuffers(isolate, queryOperation, spec, parentId);
   }
-  queryOperation->prepare(all[0]);
+  queryOperation->prepare(all[0], sessionImpl);
   delete[] all;
   args.GetReturnValue().Set(QueryOperation_Wrapper(queryOperation));
 }

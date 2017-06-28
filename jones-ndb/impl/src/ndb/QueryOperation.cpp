@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include "QueryOperation.h"
 #include "TransactionImpl.h"
+#include "SessionImpl.h"
 
 enum {
   flag_row_is_null          = 1,
@@ -72,10 +73,15 @@ void QueryOperation::levelIsJoinTable(int level) {
   buffers[level].static_flags |= flag_table_is_join_table;
 }
 
-void QueryOperation::prepare(const NdbQueryOperationDef * root) {
+void QueryOperation::prepare(const NdbQueryOperationDef * root,
+                             const SessionImpl * sessionImpl) {
   DEBUG_MARKER(UDEB_DEBUG);
   operationTree = root;
+#ifdef NDBD_SPJ_MULTIFRAG_SCAN
+  definedQuery = ndbQueryBuilder->prepare(sessionImpl->ndb);
+#else
   definedQuery = ndbQueryBuilder->prepare();
+#endif
 }
 
 int QueryOperation::prepareAndExecute() {

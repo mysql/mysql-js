@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,11 +19,13 @@
 
 #include <stdlib.h>
 #include <ndb_types.h>
+#include <ndb_version.h>
 
 // this file is currently not located in include/ndbapi
 // skip includes...and require them to be included first
 // BUH!
 
+class Ndb;
 class NdbQueryDef;
 class NdbQueryDefImpl;
 class NdbQueryBuilderImpl;
@@ -386,8 +388,14 @@ public:
    */
   void destroy();
 
-  const NdbQueryDef* prepare();    // Complete building a queryTree from 'this' NdbQueryBuilder
-
+  /**
+   * Complete building a queryTree from 'this' NdbQueryBuilder
+   */
+#ifdef NDBD_SPJ_MULTIFRAG_SCAN
+  const NdbQueryDef* prepare(const Ndb *ndb);
+#else
+  const NdbQueryDef* prepare();
+#endif
   // NdbQueryOperand builders:
   //
   // ::constValue constructors variants, considder to added/removed variants

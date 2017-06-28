@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2016 Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2017 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -947,7 +947,7 @@ function newProjectionOperation(sessionImpl, tx, indexHandler, keys, projection)
     op.result.error = new DBOperationError(op.query.error);
     op.result.success = false;
   } else {
-    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, op.query.size);
+    op.scanOp = adapter.impl.QueryOperation.create(op.query, op.buffers.key, op.query.size, sessionImpl);
   }
   return op;
 }

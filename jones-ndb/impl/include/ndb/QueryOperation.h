@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ class NdbQueryOperationDef;
 class NdbQueryDef;
 class TransactionImpl;
 class NdbQueryOperand;
+class SessionImpl;
 
 class QueryBuffer {
 public:
@@ -64,7 +65,7 @@ public:
   int prepareAndExecute();
   void setTransactionImpl(TransactionImpl *);
   bool createNdbQuery(NdbTransaction *);
-  void prepare(const NdbQueryOperationDef * root);
+  void prepare(const NdbQueryOperationDef * root, const SessionImpl *);
   int fetchAllResults();
   NdbQueryBuilder * getBuilder() { return ndbQueryBuilder; }
   const NdbQueryOperationDef * defineOperation(const NdbDictionary::Index * index,
