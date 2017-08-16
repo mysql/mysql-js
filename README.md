@@ -53,12 +53,6 @@ the C++ source code under jones-ndb.
 
 Sample applications 
 
-Git Branches
-------------
-The C++ code under jones-ndb code is specific to particular versions of node.js.
-Currently the *master* branch runs under Node.js 0.12. 
-The *nodejs-0.10* branch runs with Node.js 0.10.
-
 More information
 ----------------
 See the complete README.md file under [database-jones](database-jones/README.md)

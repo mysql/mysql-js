@@ -52,7 +52,7 @@ void work_thd_run(uv_work_t *req) {
 void main_thd_complete_async_call(AsyncCall *m) {
   v8::Isolate * isolate = Isolate::GetCurrent();
   HandleScope scope(isolate);
-  v8::TryCatch try_catch;
+  v8::TryCatch try_catch(isolate);
   try_catch.SetVerbose(true);
 
   m->doAsyncCallback(isolate->GetCurrentContext()->Global());

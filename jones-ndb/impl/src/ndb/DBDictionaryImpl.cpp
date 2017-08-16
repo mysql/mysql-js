@@ -453,7 +453,7 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
         dict->getIndex(idx_list.elements[i].name, arg2);
       js_indexes->Set(i+1, buildDBIndex(idx));
     }    
-    table->ForceSet(SYMBOL(isolate, "indexes"), js_indexes, ReadOnly);
+    SET_RO_PROPERTY(table, SYMBOL(isolate, "indexes"), js_indexes);
 
     // foreign keys (only foreign keys for which this table is the child)
     // now create the javascript foreign key metadata objects for dictionary objects cached earlier
@@ -474,7 +474,7 @@ void GetTableCall::doAsyncCallback(Local<Object> ctx) {
         }
       }
     }
-    table->ForceSet(SYMBOL(isolate, "foreignKeys"), js_fks, ReadOnly);
+    SET_RO_PROPERTY(table, SYMBOL(isolate, "foreignKeys"), js_fks);
 
     // Autoincrement Cache Impl (also not part of spec)
     if(per_table_ndb) {
@@ -506,10 +506,10 @@ Handle<Object> GetTableCall::buildDBIndex_PK() {
   
   Local<Object> obj = Object::New(isolate);
 
-  obj->ForceSet(SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, "PRIMARY_KEY"));
-  obj->ForceSet(SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, true), ReadOnly);
-  obj->ForceSet(SYMBOL(isolate, "isUnique"),     Boolean::New(isolate, true), ReadOnly);
-  obj->ForceSet(SYMBOL(isolate, "isOrdered"),    Boolean::New(isolate, false), ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, "PRIMARY_KEY"));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, true));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isUnique"),     Boolean::New(isolate, true));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isOrdered"),    Boolean::New(isolate, false));
 
   /* Loop over the columns of the key. 
      Build the "columnNumbers" array and the "record" object, then set both.
@@ -527,8 +527,8 @@ Handle<Object> GetTableCall::buildDBIndex_PK() {
   pk_record->completeTableRecord(ndb_table);
 
   obj->Set(SYMBOL(isolate, "columnNumbers"), idx_columns);
-  obj->ForceSet(SYMBOL(isolate, "record"), Record_Wrapper(pk_record), ReadOnly);
- 
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "record"), Record_Wrapper(pk_record));
+
   return scope.Escape(obj);
 }
 
@@ -539,14 +539,12 @@ Handle<Object> GetTableCall::buildDBIndex(const NdbDictionary::Index *idx) {
   Local<Object> obj = NdbDictIndexEnv.newWrapper();
   wrapPointerInObject(idx, NdbDictIndexEnv, obj);
 
-  obj->ForceSet(SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, idx->getName()));
-  obj->ForceSet(SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, false), ReadOnly);
-  obj->ForceSet(SYMBOL(isolate, "isUnique"),
-                Boolean::New(isolate, idx->getType() == NdbDictionary::Index::UniqueHashIndex),
-                ReadOnly);
-  obj->ForceSet(SYMBOL(isolate, "isOrdered"),
-                Boolean::New(isolate, idx->getType() == NdbDictionary::Index::OrderedIndex),
-                ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "name"), String::NewFromUtf8(isolate, idx->getName()));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isPrimaryKey"), Boolean::New(isolate, false));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isUnique"),
+                Boolean::New(isolate, idx->getType() == NdbDictionary::Index::UniqueHashIndex));
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isOrdered"),
+                Boolean::New(isolate, idx->getType() == NdbDictionary::Index::OrderedIndex));
   
   /* Loop over the columns of the key. 
      Build the "columns" array and the "record" object, then set both.
@@ -562,7 +560,7 @@ Handle<Object> GetTableCall::buildDBIndex(const NdbDictionary::Index *idx) {
     idx_record->addColumn(col);
   }
   idx_record->completeIndexRecord(idx);
-  obj->ForceSet(SYMBOL(isolate, "record"), Record_Wrapper(idx_record), ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "record"), Record_Wrapper(idx_record));
   obj->Set(SYMBOL(isolate, "columnNumbers"), idx_columns);
   
   return scope.Escape(obj);
@@ -635,113 +633,91 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
 
   /* Required Properties */
 
-  obj->ForceSet(SYMBOL(isolate, "name"),
-           String::NewFromUtf8(isolate, col->getName()),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "name"),
+           String::NewFromUtf8(isolate, col->getName()));
   
-  obj->ForceSet(SYMBOL(isolate, "columnNumber"),
-           v8::Int32::New(isolate, col->getColumnNo()),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "columnNumber"),
+           v8::Int32::New(isolate, col->getColumnNo()));
   
-  obj->ForceSet(SYMBOL(isolate, "columnType"),
-           String::NewFromUtf8(isolate, getColumnType(col)),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "columnType"),
+           String::NewFromUtf8(isolate, getColumnType(col)));
 
-  obj->ForceSet(SYMBOL(isolate, "isIntegral"),
-           Boolean::New(isolate, is_int),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isIntegral"),
+           Boolean::New(isolate, is_int));
 
-  obj->ForceSet(SYMBOL(isolate, "isNullable"),
-           Boolean::New(isolate, col->getNullable()),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isNullable"),
+           Boolean::New(isolate, col->getNullable()));
 
-  obj->ForceSet(SYMBOL(isolate, "isInPrimaryKey"),
-           Boolean::New(isolate, col->getPrimaryKey()),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isInPrimaryKey"),
+           Boolean::New(isolate, col->getPrimaryKey()));
 
-  obj->ForceSet(SYMBOL(isolate, "columnSpace"),
-           v8::Int32::New(isolate, col->getSizeInBytes()),
-           ReadOnly);           
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "columnSpace"),
+           v8::Int32::New(isolate, col->getSizeInBytes()));
 
   /* Implementation-specific properties */
   
-  obj->ForceSet(SYMBOL(isolate, "ndbTypeId"),
-           v8::Int32::New(isolate, static_cast<int>(col->getType())),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbTypeId"),
+           v8::Int32::New(isolate, static_cast<int>(col->getType())));
 
-  obj->ForceSet(SYMBOL(isolate, "ndbRawDefaultValue"),
-           getDefaultValue(isolate, col),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbRawDefaultValue"),
+           getDefaultValue(isolate, col));
 
   if(is_lob) {
-    obj->ForceSet(SYMBOL(isolate, "ndbInlineSize"),
-            v8::Int32::New(isolate, col->getInlineSize()),
-            ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbInlineSize"),
+            v8::Int32::New(isolate, col->getInlineSize()));
 
-    obj->ForceSet(SYMBOL(isolate, "ndbPartSize"),
-            v8::Int32::New(isolate, col->getPartSize()),
-            ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbPartSize"),
+            v8::Int32::New(isolate, col->getPartSize()));
   }
 
 
   /* Optional Properties, depending on columnType */
   /* Group A: Numeric */
   if(is_int || is_dec) {
-    obj->ForceSet(SYMBOL(isolate, "isUnsigned"),
-             Boolean::New(isolate, getIntColumnUnsigned(col)),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "isUnsigned"),
+             Boolean::New(isolate, getIntColumnUnsigned(col)));
   }
   
   if(is_int) {    
-    obj->ForceSet(SYMBOL(isolate, "intSize"),
-             v8::Int32::New(isolate, col->getSizeInBytes()),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "intSize"),
+             v8::Int32::New(isolate, col->getSizeInBytes()));
   }
   
   if(is_dec) {
-    obj->ForceSet(SYMBOL(isolate, "scale"),
-             v8::Int32::New(isolate, col->getScale()),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "scale"),
+             v8::Int32::New(isolate, col->getScale()));
     
-    obj->ForceSet(SYMBOL(isolate, "precision"),
-             v8::Int32::New(isolate, col->getPrecision()),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "precision"),
+             v8::Int32::New(isolate, col->getPrecision()));
   }
 
-  obj->ForceSet(SYMBOL(isolate, "isAutoincrement"),
-           Boolean::New(isolate, col->getAutoIncrement()),
-           ReadOnly);
+  SET_RO_PROPERTY(obj, SYMBOL(isolate, "isAutoincrement"),
+           Boolean::New(isolate, col->getAutoIncrement()));
    
   /* Group B: Non-numeric */
   if(is_binary || is_char) {
-    obj->ForceSet(SYMBOL(isolate, "isBinary"),
-             Boolean::New(isolate, is_binary),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "isBinary"),
+             Boolean::New(isolate, is_binary));
   
-    obj->ForceSet(SYMBOL(isolate, "isLob"),
-             Boolean::New(isolate, is_lob),
-             ReadOnly);
+    SET_RO_PROPERTY(obj, SYMBOL(isolate, "isLob"),
+             Boolean::New(isolate, is_lob));
 
     if(is_binary) {
-      obj->ForceSet(SYMBOL(isolate, "length"),
-               v8::Int32::New(isolate, col->getLength()),
-               ReadOnly);
+      SET_RO_PROPERTY(obj, SYMBOL(isolate, "length"),
+               v8::Int32::New(isolate, col->getLength()));
     }
 
     if(is_char) {
       const EncoderCharset * csinfo = getEncoderCharsetForColumn(col);
 
-      obj->ForceSet(SYMBOL(isolate, "length"),
-               v8::Int32::New(isolate, col->getLength() / csinfo->maxlen),
-               ReadOnly);
+      SET_RO_PROPERTY(obj, SYMBOL(isolate, "length"),
+               v8::Int32::New(isolate, col->getLength() / csinfo->maxlen));
 
-      obj->ForceSet(SYMBOL(isolate, "charsetName"),
-               String::NewFromUtf8(isolate, csinfo->name),
-               ReadOnly);
+      SET_RO_PROPERTY(obj, SYMBOL(isolate, "charsetName"),
+               String::NewFromUtf8(isolate, csinfo->name));
 
-      obj->ForceSet(SYMBOL(isolate, "collationName"),
-               String::NewFromUtf8(isolate, csinfo->collationName),
-               ReadOnly);
+      SET_RO_PROPERTY(obj, SYMBOL(isolate, "collationName"),
+               String::NewFromUtf8(isolate, csinfo->collationName));
     }
   }
     
