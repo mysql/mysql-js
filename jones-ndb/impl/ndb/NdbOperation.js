@@ -1008,6 +1008,14 @@ function newScanOperation(tx, QueryTree, properties) {
 }
 
 
+function setLockMode(ndbSession, lockMode) {
+  if(doc.LockModes.indexOf(lockMode) !== -1) {
+    return new DBOperationError("Invalid Lock Mode");
+  }
+  ndbSession.lockMode = lockMode;
+  return null;
+}
+
 exports.DBOperation         = DBOperation;
 exports.DBOperationError    = DBOperationError;
 exports.newReadOperation    = newReadOperation;
@@ -1021,3 +1029,4 @@ exports.completeExecutedOps = completeExecutedOps;
 exports.getScanResults      = getScanResults;
 exports.prepareOperations   = prepareOperations;
 exports.getQueryResults     = getQueryResults;
+exports.setLockMode         = setLockMode;

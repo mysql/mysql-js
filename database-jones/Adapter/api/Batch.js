@@ -162,7 +162,6 @@ exports.Batch.prototype.execute = function() {
 };
 
 exports.Batch.prototype.isBatch = function() {
-  this.assertOpen();
   return true;
 };
 
