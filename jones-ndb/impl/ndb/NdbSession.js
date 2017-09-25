@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 "use strict";
 
 var stats = {
-	"created" : 0,
+  "created" : 0,
   "seizeTransactionContext" : { 
     "immediate" : 0 , "queued" : 0 
   },
@@ -74,6 +74,7 @@ NdbSession = function(pool) {
   this.maxTxContexts         = pool.properties.ndb_session_concurrency;  
   this.openTxContexts        = 0;  // currently opened
   this.isOpenNdbSession      = false;
+  this.lockMode              = "SHARED";
 };
 
 /* fetch SessionImpl. Undocumented - private to NdbConnectionPool. 
@@ -183,8 +184,8 @@ NdbSession.prototype.buildReadOperation = function(dbIndexHandler, keys,
                dbIndexHandler.tableHandler.dbTable.name,
                "using", dbIndexHandler.dbIndex.name);
   }
-  var lockMode = "SHARED";
-  var op = ndboperation.newReadOperation(tx, dbIndexHandler, keys, lockMode, isLoad);
+  var op = ndboperation.newReadOperation(tx, dbIndexHandler, keys,
+                                         this.lockMode, isLoad);
   op.userCallback = callback;
   return op;
 };
@@ -360,6 +361,15 @@ NdbSession.prototype.commit = function(userCallback) {
 */
 NdbSession.prototype.rollback = function (userCallback) {
   this.tx.rollback(userCallback);
+};
+
+/* setLockMode(lockMode)
+   IMMEDIATE
+   
+   Set Lock Mode for subsequent read operations
+*/
+NdbSession.prototype.setLockMode = function (lockMode) {
+  return ndboperation.setLockMode(this, lockMode);
 };
 
 

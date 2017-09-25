@@ -550,10 +550,11 @@ Error setPartitionKey(mapping, keys);
  * and will remain in effect until this session is closed or this method
  * is called again.
  * @param lockmode the LockMode: 'EXCLUSIVE', 'SHARED', or 'NONE'
+ * @return an Error object or null if no error
  *
  * IMMEDIATE
  */
-void setLockMode(lockmode);
+Error setLockMode(lockmode);
 
 
 /** listTables(database, callback) 

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2016 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2017 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -149,7 +149,6 @@ exports.Session.prototype.createBatch = function() {
 };
 
 exports.Session.prototype.isBatch = function() {
-  this.assertOpen();
   return false;
 };
 
@@ -158,7 +157,13 @@ exports.Session.prototype.isClosed = function() {
   return this.closed;
 };
 
+
 exports.Session.prototype.currentTransaction = function() {
   return this.tx;
 };
 
+
+/* setLockMode() immediate */
+exports.Session.prototype.setLockMode = function(lockMode) {
+  return this.dbSession.setLockMode(lockMode);
+};
