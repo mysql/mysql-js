@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License, version 2.0,
@@ -91,8 +91,8 @@
 #if NODE_MAJOR_VERSION > 3
 #define SET_RO_PROPERTY(target, symbol, value) \
   (target)->DefineOwnProperty((target)->CreationContext(), \
-                               symbol, value, \
-                               static_cast<PropertyAttribute>(ReadOnly|DontDelete))
+                               symbol, value, static_cast<PropertyAttribute>\
+                               (ReadOnly|DontDelete)).IsJust()
 #else
 #define SET_RO_PROPERTY(target, symbol, value) \
   (target)->ForceSet(symbol, value, \
