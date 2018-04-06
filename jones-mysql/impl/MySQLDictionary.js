@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -26,9 +26,11 @@
 var util   = require('util'),
     path   = require("path"),
     fs     = require("fs"),
+    assert = require("assert"),
     config = require("./path_config"),
     jones  = require("database-jones"),
     child_process = require("child_process"),
+    existsSync = fs.existsSync || path.existsSync,
     udebug = unified_debug.getLogger("MySQLDictionary.js");
 
 exports.DataDictionary = function(pooledConnection, dbConnectionPool) {
@@ -470,69 +472,57 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
 /* SQL DDL Utilities
 */
-exports.MetadataManager = function(connectionProperties) {
+exports.MetadataManager = function(properties) {
+  return new MySQLMetadataManager(properties);
+}
 
-  function runSQL(sqlPath, callback) {
-    /* prepend the file containing the engine.sql (ndb.sql or innodb.sql)
-       to the file containing the sql commands  */
-    var engine = "ndb";
-    if(connectionProperties.mysql_storage_engine) {
-      engine = connectionProperties.mysql_storage_engine;
+function runSQL(connectionProperties, sqlPath, callback) {
+  var p = connectionProperties;
+  var engine = connectionProperties.mysql_storage_engine || "ndb";
+  var statement = "set default_storage_engine=" + engine + ";\n";
+  statement += fs.readFileSync(sqlPath, "ASCII");
+
+  jones.openSession(connectionProperties, function(err, session) {
+    udebug.log("MySQLMetadataManager::onSession");
+    if(session) {
+      var driver = session.dbSession.pooledConnection;
+      assert(driver);
+      driver.query(statement, function(err) {
+        udebug.log("MySQLMetadataManager::onQuery // err:", err);
+        session.close();
+        callback(err);
+      });
     }
-    var enginesqlPath = path.join(config.suites_dir, engine + '.sql ');
-    var cmd = 'cat ' + enginesqlPath + ' ' + sqlPath + ' | mysql';
-    var p = connectionProperties;
+    else callback(err);
+  });
+}
 
-    function childProcess(error, stdout, stderr) {
-      udebug.log_detail('child process completed.');
-      udebug.log_detail('stdout: ' + stdout);
-      udebug.log_detail('stderr: ' + stderr);
-      if (error !== null) {
-        udebug.log('exec error: ' + error);
-      } else {
-        udebug.log_detail('exec OK');
-      }
-      if(callback) {
-        callback(error);
-      }
-    }
+function findMetadataScript(suiteName, suitePath, file) {
+  var path1, path2, path3;
+  path1 = path.join(config.suites_dir, "standard", suiteName + "-" + file);
+  path2 = path.join(config.suites_dir, suiteName, file);
+  path3 = path.join(suitePath, file);
+  if(existsSync(path1)) {return path1;}
+  if(existsSync(path2)) {return path2;}
+  if(existsSync(path3)) {return path3;}
 
-    if(p) {
-      if(p.mysql_socket)     { cmd += " --socket=" + p.mysql_socket; }
-      else if(p.mysql_port)  { cmd += " --port=" + p.mysql_port; }
-      if(p.mysql_host)       { cmd += " -h " + p.mysql_host; }
-      if(p.mysql_user)       { cmd += " -u " + p.mysql_user; }
-      if(p.mysql_password)   { cmd += " --password=" + p.mysql_password; }
-    }
-    udebug.log_detail('harness runSQL forking process...' + cmd);
-    var child = child_process.exec(cmd, childProcess);
-    return child;
-  }
+  console.log("No path to:", suiteName, file);
+}
 
-  var existsSync = fs.existsSync || path.existsSync;
+function MySQLMetadataManager(properties) {
+  this.sqlConnectionProperties = new jones.ConnectionProperties(properties);
+  this.sqlConnectionProperties.isMetadataOnlyConnection = true;
+};
 
-  function findMetadataScript(suiteName, suitePath, file) {
-    var path1, path2, path3;
-    path1 = path.join(config.suites_dir, "standard", suiteName + "-" + file);
-    path2 = path.join(config.suites_dir, suiteName, file);
-    path3 = path.join(suitePath, file);
-    if(existsSync(path1)) {return path1;}
-    if(existsSync(path2)) {return path2;}
-    if(existsSync(path3)) {return path3;}
+MySQLMetadataManager.prototype.createTestTables = function(suiteName, suitePath, callback) {
+  udebug.log("createTestTables", suiteName);
+  var sqlPath = findMetadataScript(suiteName, suitePath, 'create.sql');
+  runSQL(this.sqlConnectionProperties, sqlPath, callback);
+};
 
-    console.log("No path to:", suiteName, file);
-  }
-
-  this.createTestTables = function(suiteName, suitePath, callback) {
-    udebug.log("createTestTables", suiteName);
-    var sqlPath = findMetadataScript(suiteName, suitePath, 'create.sql');
-    runSQL(sqlPath, callback);
-  };
-
-  this.dropTestTables = function(suiteName, suitePath, callback) {
-    udebug.log("dropTestTables", suiteName);
-    var sqlPath = findMetadataScript(suiteName, suitePath, 'drop.sql');
-    runSQL(sqlPath, callback);
-  };
+MySQLMetadataManager.prototype.dropTestTables = function(suiteName, suitePath, callback) {
+  udebug.log("dropTestTables", suiteName);
+  var sqlPath = findMetadataScript(suiteName, suitePath, 'drop.sql');
+  runSQL(this.sqlConnectionProperties, sqlPath, callback);
 };
 
