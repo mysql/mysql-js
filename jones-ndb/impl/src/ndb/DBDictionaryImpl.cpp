@@ -663,8 +663,8 @@ Handle<Object> GetTableCall::buildDBColumn(const NdbDictionary::Column *col) {
   SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbTypeId"),
            v8::Int32::New(isolate, static_cast<int>(col->getType())));
 
-  SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbRawDefaultValue"),
-           getDefaultValue(isolate, col));
+  SET_PROPERTY(obj, SYMBOL(isolate, "ndbRawDefaultValue"),
+           getDefaultValue(isolate, col), v8::ReadOnly);
 
   if(is_lob) {
     SET_RO_PROPERTY(obj, SYMBOL(isolate, "ndbInlineSize"),

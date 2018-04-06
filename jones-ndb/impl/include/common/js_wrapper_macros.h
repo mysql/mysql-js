@@ -89,15 +89,17 @@
 
 /* Some compatibility */
 #if NODE_MAJOR_VERSION > 3
-#define SET_RO_PROPERTY(target, symbol, value) \
+#define SET_PROPERTY(target, symbol, value, flags) \
   (target)->DefineOwnProperty((target)->CreationContext(), \
                                symbol, value, static_cast<v8::PropertyAttribute>\
-                               (v8::ReadOnly|v8::DontDelete)).IsJust()
+                               (flags)).IsJust()
 #else
-#define SET_RO_PROPERTY(target, symbol, value) \
-  (target)->ForceSet(symbol, value, static_cast<v8::PropertyAttribute>\
-                     (v8::ReadOnly|v8::DontDelete))
+#define SET_RO_PROPERTY(target, symbol, value, flags) \
+  (target)->ForceSet(symbol, value, static_cast<v8::PropertyAttribute>(flags));
 #endif
+
+#define SET_RO_PROPERTY(target, symbol, value) \
+  SET_PROPERTY(target, symbol, value, (v8::ReadOnly|v8::DontDelete))
 
 #define DEFINE_JS_INT(TARGET, name, value) \
   SET_RO_PROPERTY(TARGET, NEW_SYMBOL(name), \
