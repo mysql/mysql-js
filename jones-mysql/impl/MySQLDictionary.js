@@ -472,12 +472,7 @@ exports.DataDictionary.prototype.getTableMetadata = function(databaseName, table
 
 /* SQL DDL Utilities
 */
-exports.MetadataManager = function(properties) {
-  return new MySQLMetadataManager(properties);
-}
-
 function runSQL(connectionProperties, sqlPath, callback) {
-  var p = connectionProperties;
   var engine = connectionProperties.mysql_storage_engine || "ndb";
   var statement = "set default_storage_engine=" + engine + ";\n";
   statement += fs.readFileSync(sqlPath, "ASCII");
@@ -493,7 +488,9 @@ function runSQL(connectionProperties, sqlPath, callback) {
         callback(err);
       });
     }
-    else callback(err);
+    else {
+      callback(err);
+    }
   });
 }
 
@@ -512,7 +509,7 @@ function findMetadataScript(suiteName, suitePath, file) {
 function MySQLMetadataManager(properties) {
   this.sqlConnectionProperties = new jones.ConnectionProperties(properties);
   this.sqlConnectionProperties.isMetadataOnlyConnection = true;
-};
+}
 
 MySQLMetadataManager.prototype.createTestTables = function(suiteName, suitePath, callback) {
   udebug.log("createTestTables", suiteName);
@@ -526,3 +523,6 @@ MySQLMetadataManager.prototype.dropTestTables = function(suiteName, suitePath, c
   runSQL(this.sqlConnectionProperties, sqlPath, callback);
 };
 
+exports.MetadataManager = function(properties) {
+  return new MySQLMetadataManager(properties);
+};
