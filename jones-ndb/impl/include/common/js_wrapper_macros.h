@@ -80,16 +80,22 @@
 #define DEFINE_JS_FUNCTION(TARGET, NAME, FN) \
   TARGET->Set(NEW_SYMBOL(NAME), NEW_FN_TEMPLATE(FN)->GetFunction())
 
-#define DEFINE_JS_ACCESSOR(TARGET, property, getter)                 \
-  (TARGET)->SetAccessor(NEW_SYMBOL(property), getter)
 
 /* Some compatibility */
 #if NODE_MAJOR_VERSION > 3
+#define V8_PROPERTY_NAME_T Local<Name>
+#define DEFINE_JS_ACCESSOR(isolate, TARGET, property, getter)   \
+  (TARGET)->SetAccessor((target)->CreationContext(),            \
+                        SYMBOL(isolate, property),              \
+                        getter).IsJust()
 #define SET_PROPERTY(target, symbol, value, flags) \
   (target)->DefineOwnProperty((target)->CreationContext(), \
                                symbol, value, static_cast<v8::PropertyAttribute>\
                                (flags)).IsJust()
 #else
+#define V8_PROPERTY_NAME_T Local<String>
+#define DEFINE_JS_ACCESSOR(isolate, TARGET, property, getter)                 \
+  (TARGET)->SetAccessor(SYMBOL(isolate, property), getter)
 #define SET_RO_PROPERTY(target, symbol, value, flags) \
   (target)->ForceSet(symbol, value, static_cast<v8::PropertyAttribute>(flags));
 #endif

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License, version 2.0,
@@ -225,27 +225,27 @@ struct encoder_stats_t {
 
 /* Exports to JavaScript 
 */
-void GET_read_strings_externalized(Local<String>, const AccessorInfo & info) {
+void GET_read_strings_externalized(V8_PROPERTY_NAME_T, const AccessorInfo & info) {
   info.GetReturnValue().Set(stats.read_strings_externalized);
 }
 
-void GET_read_strings_created(Local<String>, const AccessorInfo & info) {
+void GET_read_strings_created(V8_PROPERTY_NAME_T, const AccessorInfo & info) {
   info.GetReturnValue().Set(stats.read_strings_created);
 }
 
-void GET_read_strings_recoded(Local<String>, const AccessorInfo & info) {
+void GET_read_strings_recoded(V8_PROPERTY_NAME_T, const AccessorInfo & info) {
   info.GetReturnValue().Set(stats.read_strings_recoded);
 }
 
-void GET_externalized_text_writes(Local<String>, const AccessorInfo & info){
+void GET_externalized_text_writes(V8_PROPERTY_NAME_T, const AccessorInfo & info){
   info.GetReturnValue().Set(stats.externalized_text_writes);
 }
 
-void GET_direct_writes(Local<String>, const AccessorInfo & info) {
+void GET_direct_writes(V8_PROPERTY_NAME_T, const AccessorInfo & info) {
   info.GetReturnValue().Set(stats.direct_writes);
 }
 
-void GET_recode_writes(Local<String>, const AccessorInfo & info) {
+void GET_recode_writes(V8_PROPERTY_NAME_T, const AccessorInfo & info) {
   info.GetReturnValue().Set(stats.recode_writes);
 }
 
@@ -280,13 +280,16 @@ void NdbTypeEncoders_initOnLoad(Handle<Object> target) {
 
   Local<Object> s = Object::New(isolate);
   target->Set(NEW_SYMBOL("encoder_stats"), s);
-  DEFINE_JS_ACCESSOR(s, "read_strings_externalized", 
+  DEFINE_JS_ACCESSOR(isolate, s, "read_strings_externalized",
                      GET_read_strings_externalized);
-  DEFINE_JS_ACCESSOR(s, "read_strings_created", GET_read_strings_created);
-  DEFINE_JS_ACCESSOR(s, "read_strings_recoded", GET_read_strings_recoded);
-  DEFINE_JS_ACCESSOR(s, "externalized_text_writes", GET_externalized_text_writes);
-  DEFINE_JS_ACCESSOR(s, "direct_writes", GET_direct_writes);
-  DEFINE_JS_ACCESSOR(s, "recode_writes", GET_recode_writes);
+  DEFINE_JS_ACCESSOR(isolate, s, "read_strings_created",
+                     GET_read_strings_created);
+  DEFINE_JS_ACCESSOR(isolate, s, "read_strings_recoded",
+                     GET_read_strings_recoded);
+  DEFINE_JS_ACCESSOR(isolate, s, "externalized_text_writes",
+                     GET_externalized_text_writes);
+  DEFINE_JS_ACCESSOR(isolate, s, "direct_writes", GET_direct_writes);
+  DEFINE_JS_ACCESSOR(isolate, s, "recode_writes", GET_recode_writes);
 }
 
 
