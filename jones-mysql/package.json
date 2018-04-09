@@ -2,7 +2,7 @@
 {
   "name"            : "jones-mysql"
   ,
-  "version"         : "1.0.5"
+  "version"         : "1.0.6"
   ,  
   "description"     : "MySQL Service Provider for Database Jones"
   ,
@@ -16,7 +16,7 @@
   ,
   "bugs"            : { "url" : "http://github.com/mysql/mysql-js/issues"}
   ,
-  "contributors"    : [ "Craig Russell <craig.russell@oracle.com>" ,
+  "contributors"    : [ "Craig Russell <papajdo@gmail.com>" ,
                         "John David Duncan <john.duncan@oracle.com>"
                       ]
   ,
