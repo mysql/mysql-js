@@ -80,10 +80,6 @@
 #define DEFINE_JS_FUNCTION(TARGET, NAME, FN) \
   TARGET->Set(NEW_SYMBOL(NAME), NEW_FN_TEMPLATE(FN)->GetFunction())
 
-/* For SetInternalFieldCount() , see:
- http://groups.google.com/group/v8-users/browse_thread/thread/d8bcb33178a55223
-*/  
-
 #define DEFINE_JS_ACCESSOR(TARGET, property, getter)                 \
   (TARGET)->SetAccessor(NEW_SYMBOL(property), getter)
 
