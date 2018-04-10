@@ -4,12 +4,14 @@ var deployments = {};
 /* The test deployment is used in automated testing of the Jones projects
 */
 deployments.test = function(properties) {
-  if(process.env["PORT_SQL1"]) {
-    properties.mysql_host = process.env["HOSTNAME"];
-    properties.mysql_port = process.env["PORT_SQL1"];
-    properties.ndb_connectstring =
-      process.env["HOSTNAME"] + ":" + process.env["PORT_MGMD"];
-  }
+  var hostname, mgmport, sqlport;
+  hostname =  process.env["HOSTNAME"] || "localhost";
+  mgmport = process.env["PORT_MGMD"] || "1186";
+  sqlport = process.env["PORT_SQL1"] || "3306";
+
+  properties.mysql_host = hostname;
+  properties.mysql_port = sqlport;
+  properties.ndb_connectstring = hostname + ":" + mgmport;
 };
 
 /* This deployment uses an environment set up by mysql-test-run:
