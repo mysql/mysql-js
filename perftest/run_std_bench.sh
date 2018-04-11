@@ -13,7 +13,7 @@ usage () {
   echo "-s  summary file";
 }
 
-options=":c:l:m:n:s:";
+options=":E:l:n:s:h";
 while getopts $options option; do
   case $option in
       E  ) DEPLOYMENT=$OPTARG;;
