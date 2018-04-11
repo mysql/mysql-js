@@ -32,46 +32,26 @@
 
 #define NEW_SYMBOL(S) SYMBOL(v8::Isolate::GetCurrent(), S)
 
-#define THROW_ERROR(MESSAGE) \
-  ThrowException(Exception::Error(NEW_STRING(MESSAGE))))
-  
-#define THROW_TYPE_ERROR(MESSAGE) \
-  Isolate::GetCurrent()->ThrowException(Exception::TypeError(NEW_STRING(MESSAGE)))
-  
-/*#define REQUIRE_ARGS_LENGTH(N) \
+#define REQUIRE_ARGS_LENGTH(N) \
   if(args.Length() != N) { \
-    THROW_TYPE_ERROR("Requires " #N " arguments"); \
-    return scope.Close(Undefined()); \
+    args.GetIsolate()->ThrowException(Exception::TypeError( \
+      STRING(args.GetIsolate(), "Requires " #N " arguments"))); \
   }
-*/
-#define REQUIRE_ARGS_LENGTH(N) assert(args.Length() == N);
-
 
 #define REQUIRE_MIN_ARGS(N) \
   if(args.Length() < N) { \
-    THROW_TYPE_ERROR("Requires at least " #N " arguments"); \
+    args.GetIsolate()->ThrowException(Exception::TypeError( \
+      STRING(args.GetIsolate(), "Requires at least " #N " arguments"))); \
   }
 
 #define REQUIRE_MAX_ARGS(N) \
   if(args.Length() > N) { \
-    THROW_TYPE_ERROR("Requires no more than " #N " arguments"); \
+    args.GetIsolate()->ThrowException(Exception::TypeError( \
+      STRING(args.GetIsolate(), "Requires no more than " #N " arguments"))); \
   }
 
-/* #define REQUIRE_CONSTRUCTOR_CALL() \
-  if(! args.IsConstructCall()) { \
-    THROW_ERROR("Must be called as a Constructor call"); \
-    return scope.Close(Undefined()); \
-  }
-*/
 #define REQUIRE_CONSTRUCTOR_CALL() assert(args.IsConstructCall()) 
 
-
-/* #define PROHIBIT_CONSTRUCTOR_CALL() \
-  if(args.IsConstructCall()) { \
-    THROW_ERROR("May not be used as a Constructor call"); \
-    return scope.Close(Undefined()); \
-  }
-*/
 #define PROHIBIT_CONSTRUCTOR_CALL() assert(! args.IsConstructCall())
 
 #define NEW_FN_TEMPLATE(FN) \
