@@ -1,5 +1,5 @@
-/*
- Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
+ /*
+ Copyright (c) 2012, 2018 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@ function Suite(driver, name, suiteDir) {
   this.path = "";
 
   this.tests = [];
+  this.disabledTests = {};
   this.smokeTest = {};
   this.smokeTestHasFailed = null;
   this.serialTests = [];
@@ -63,16 +64,23 @@ Suite.prototype.addTest = function(filename, test) {
   test.filename = path.resolve(this.path, filename);
   test.suite = this;
   test.reset();
-  this.tests.push(test);  // should check if test has been disabled
+  this.tests.push(test);
+  if(this.disabledTests[filename] &&
+     this.disabledTests[filename].test(test.name))
+        test.enabled = false;
+ };
+
+Suite.prototype.disableTest = function(fileName, testNamePattern) {
+  this.disabledTests[fileName] = testNamePattern;
 };
 
-/* addTestsFromFile(f, onlyTests)
-   f is a fully resolved pathname
-   onlyTests is a string containing a comma separated list of 
+/* addTestsFromFile(fileName, onlyTests)
+   onlyTests is a string containing a comma separated list of
    test numbers.  If set, only those elements of the test array are added.
 */
-Suite.prototype.addTestsFromFile = function(f, onlyTests) {
-  var t, i, j, k, testList, testHash;
+Suite.prototype.addTestsFromFile = function(fileName, onlyTests) {
+  var f, t, i, j, k, testList, testHash;
+  f = path.join(this.path, fileName);
   if(onlyTests) {
     onlyTests = String(onlyTests);
     testList = onlyTests.split(",");
@@ -82,17 +90,17 @@ Suite.prototype.addTestsFromFile = function(f, onlyTests) {
       testHash[k] = 1;
     }
   }
-  if(re_matching_test_case.test(f)) {
+  if(re_matching_test_case.test(fileName)) {
     t = require(f);
     if(typeof(t.tests) === 'object' && t.tests instanceof Array) {
       for(j = 0 ; j < t.tests.length ; j++) {
         if(onlyTests === null || testHash[j] === 1) {
-          this.addTest(f, t.tests[j]);
+          this.addTest(fileName, t.tests[j]);
         }
       }
     }      
     else if(typeof(t.isTest) === 'function' && t.isTest()) {
-      this.addTest(f, t);
+      this.addTest(fileName, t);
     }
     else { 
       console.log("Warning: " + f + " does not export a Test.");
@@ -110,17 +118,17 @@ Suite.prototype.createTests = function() {
       var testFile = this.path;
       this.path = path.dirname(testFile);
       try {
-        this.addTestsFromFile(path.join(this.path, "SmokeTest.js"), null);
+        this.addTestsFromFile("SmokeTest.js", null);
       } catch(ignore) {}
       this.addTestsFromFile(testFile, this.driver.testInFile);
       try {
-        this.addTestsFromFile(path.join(this.path, "ClearSmokeTest.js"), null);
+        this.addTestsFromFile("ClearSmokeTest.js", null);
       } catch(ignore) {}
     }
     else if(stat.isDirectory()) {
       var files = fs.readdirSync(this.path);
       for(i = 0; i < files.length ; i++) {
-        this.addTestsFromFile(path.join(this.path, files[i]), null);
+        this.addTestsFromFile(files[i], null);
       }
     }
   }

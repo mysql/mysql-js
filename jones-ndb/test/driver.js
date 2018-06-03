@@ -1,5 +1,10 @@
 /*
- Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; version 2 of
+ the License.
  
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License, version 2.0,
@@ -40,9 +45,14 @@ driver.name = "ndb";
 global.test_conn_properties = properties;
 global.adapter              = "ndb";
 
-/* Find and run all tests */
+/* Find all tests */
 driver.addSuitesFromDirectory(jones.fs.suites_dir);
 driver.addSuitesFromDirectory(jonesMysql.config.suites_dir);
 driver.addSuitesFromDirectory(jonesNdb.config.suites_dir);
+
+/* Disable some tests */
+driver.disableTestsFromFile(jonesNdb.config.suites_dir, "disabled-tests.js");
+
+/* Run tests */
 driver.runAllTests();
 

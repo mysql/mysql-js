@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2018 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -37,11 +37,18 @@ function Test() {
   this.failed   = null;     // will be set to true by fail(), or false by pass()
   this.skipped  = false;
   this.result   = null;     // will be set by Test.test()
+  this.enabled  = true;
 }
 
 Test.prototype.test = function(result) {
   var runReturnCode;
   this.result = result;
+
+  if(! this.enabled) {
+    this.result.skipNotStarted(this, "disabled");
+    return;
+  }
+
   result.startTest(this);
 
   udebug.log("Starting test", this.name);

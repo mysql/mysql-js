@@ -93,6 +93,22 @@ function addSuiteFromFile(suitename, filename);
 function addSuitesFromDirectory(directory);
 ```
 
+### Disabling tests
+```JavaScript
+/* In file testFileName in suite suiteName,
+   disable all tests matching testNamePattern (which must be a RegExp)
+*/
+function disableTest(suiteName, testFileName, testNamePattern);
+
+
+/* Specify disabled tests in a file.
+   The file is a JavaScript source file read using require().
+   It should export a single function which calls driver.disableTest()
+   for each test to be disabled.
+*/
+function disableTestsFromFile(directoryName, fileName);
+```
+
 
 ### Creating Lint Tests
 ```JavaScript

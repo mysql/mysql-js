@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2012, 2015 Oracle and/or its affiliates. All rights
+ Copyright (c) 2012, 2018 Oracle and/or its affiliates. All rights
  reserved.
  
  This program is free software; you can redistribute it and/or
@@ -158,6 +158,20 @@ Driver.prototype.listSuites = function() {
     var component = path.basename(path.dirname(path.dirname(s.path)));
     console.log(component,"\t\t",s.name);
   });
+};
+
+Driver.prototype.disableTest = function(suiteName, fileName, testNamePattern) {
+  this.suites.forEach(function(s) {
+    if(s.name == suiteName) {
+      s.disableTest(fileName, testNamePattern);
+    }
+  });
+};
+
+Driver.prototype.disableTestsFromFile = function(dir, f) {
+  var file = path.join(dir, f);
+  var disablerFunction = require(file);
+  disablerFunction(this);
 };
 
 Driver.prototype.testCompleted = function(testCase) {
