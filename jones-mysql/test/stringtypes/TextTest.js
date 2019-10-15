@@ -47,7 +47,7 @@ var t1 = new harness.ConcurrentTest("t1:WriteAndReadBlob");
 t1.run = function() {
   var data, value, i, verifier;
   data = new TextBlobData();
-  value = new Buffer(20000);
+  value = Buffer.alloc(20000);
   for(i = 0 ; i < 20000 ; i++) {
     value[i] = Math.ceil(Math.random() * 256);
   }
@@ -79,7 +79,7 @@ t2.run = function() {
 var t3 = new harness.ConcurrentTest("t3:TextAndBlob");
 t3.run = function() { 
   var data = new TextBlobData();
-  data.blob_col = new Buffer([1,2,3,4,5,6,7,8,9,10,90,89,88,87,86,85,84]);
+  data.blob_col = Buffer.from([1,2,3,4,5,6,7,8,9,10,90,89,88,87,86,85,84]);
   data.text_col = "// {{ ?? }} \\";
   fail_openSession(this, function(session, testCase) {
     session.persist(data, function(err) {

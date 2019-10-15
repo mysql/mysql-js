@@ -100,7 +100,7 @@ function Binary(type, jsValue, buffer) {
    size ::= uint16 | uint32
 */
 Binary.prototype.writeHeader = function(count, size) {
-  var buffer = new Buffer(this.isLarge ? 8 : 4);
+  var buffer = Buffer.alloc(this.isLarge ? 8 : 4);
   if(this.isLarge) {
     buffer.writeUInt32LE(count, 0);
     buffer.writeUInt32LE(size, 4);
@@ -160,7 +160,7 @@ Binary.prototype.setLarge = function() {
 
 Binary.prototype.write = function() {
   return this.isUndefined ? null :
-    Buffer.concat([new Buffer([this.type]), this.buffer], this.buffer.length+1);
+    Buffer.concat([Buffer.from([this.type]), this.buffer], this.buffer.length+1);
 };
 
 
@@ -197,7 +197,7 @@ VariableLength.prototype.serialize = function() {
     lengthArray.push(byte);
   } while(length);
 
-  return new Buffer(lengthArray);
+  return Buffer.from(lengthArray);
 };
 
 
@@ -206,7 +206,7 @@ function serializeString(jsString) {
   var stringBuffer, lengthBuffer, binary, vlen;
 
   binary = new Binary(TYPE_STRING, jsString);
-  stringBuffer = new Buffer(jsString, 'utf8');
+  stringBuffer = Buffer.from(jsString, 'utf8');
   vlen = new VariableLength(stringBuffer.length);
   lengthBuffer = vlen.serialize();
   binary.buffer = Buffer.concat([ lengthBuffer, stringBuffer ]);
@@ -214,13 +214,13 @@ function serializeString(jsString) {
 }
 
 function serializeDouble(jsNumber) {
-  var binary = new Binary(TYPE_DOUBLE, jsNumber, new Buffer(8));
+  var binary = new Binary(TYPE_DOUBLE, jsNumber, Buffer.alloc(8));
   binary.buffer.writeDoubleLE(jsNumber, 0);
   return binary;
 }
 
 function serializeInt16(jsNumber) {
-  var binary = new Binary(TYPE_INT16, jsNumber, new Buffer(2));
+  var binary = new Binary(TYPE_INT16, jsNumber, Buffer.alloc(2));
   if(jsNumber < 32768) {
     binary.buffer.writeInt16LE(jsNumber, 0);
   } else {
@@ -231,7 +231,7 @@ function serializeInt16(jsNumber) {
 }
 
 function serializeInt32(jsNumber) {
-  var binary = new Binary(TYPE_INT32, jsNumber, new Buffer(4));
+  var binary = new Binary(TYPE_INT32, jsNumber, Buffer.alloc(4));
   if(jsNumber < 2147483648) {
     binary.buffer.writeInt32LE(jsNumber, 0);
   } else {
@@ -243,7 +243,7 @@ function serializeInt32(jsNumber) {
 
 function serializeInt64(jsNumber) {
   var binary = new Binary(TYPE_INT64, jsNumber);
-  binary.buffer = new Buffer([0,0,0,0, 0,0,0,0]);
+  binary.buffer = Buffer.from([0,0,0,0, 0,0,0,0]);
   if(jsNumber < 0) {
     assert.ifError("Encoding of large negative values is not implemented");
   } else {
@@ -350,7 +350,7 @@ function List(binary, entrySizeArray, itemConstructor, dataBuffer) {
   this.entrySize = entrySizeArray[this.parent.type];
   this.ItemConstructor = itemConstructor;
   this.entries = [];
-  this.data = dataBuffer || new Buffer("");
+  this.data = dataBuffer || Buffer.from("");
 }
 
 List.prototype.push = function(binaryForm) {
@@ -363,7 +363,7 @@ List.prototype.writeEntries = function(dataStartPos) {
   var buffer, elemSize, cursor, isLarge;
 
   elemSize = this.entrySize;
-  buffer = new Buffer(this.entries.length * elemSize);
+  buffer = Buffer.alloc(this.entries.length * elemSize);
   cursor = 0;
   isLarge = this.parent.isLarge;
 
@@ -448,7 +448,7 @@ function sortKeys(a,b) {
 
 /* key ::= utf8-data */
 function serializeKey(jsString) {
-  return new Binary(BINARY_KEY, jsString, new Buffer(jsString, 'utf8'));
+  return new Binary(BINARY_KEY, jsString, Buffer.from(jsString, 'utf8'));
 }
 
 function serializeObject(jsObject) {
@@ -509,9 +509,9 @@ function serializeObject(jsObject) {
 
 
 /* Some pre-fabricated Binary values */
-binaryNull =  new Binary(TYPE_LITERAL, null,  new Buffer( [LITERAL_NULL]  ));
-binaryTrue =  new Binary(TYPE_LITERAL, true,  new Buffer( [LITERAL_TRUE]  ));
-binaryFalse = new Binary(TYPE_LITERAL, false, new Buffer( [LITERAL_FALSE] ));
+binaryNull =  new Binary(TYPE_LITERAL, null,  Buffer.from( [LITERAL_NULL]  ));
+binaryTrue =  new Binary(TYPE_LITERAL, true,  Buffer.from( [LITERAL_TRUE]  ));
+binaryFalse = new Binary(TYPE_LITERAL, false, Buffer.from( [LITERAL_FALSE] ));
 binaryUndefined = new Binary(TYPE_LITERAL);
 
 

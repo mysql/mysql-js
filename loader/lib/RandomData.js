@@ -78,7 +78,7 @@ function RandomVarbinaryGenerator(length) {
   this.next = function() {
     var i,
         sz = lengthGenerator.next(),
-        buffer = new Buffer(sz);
+        buffer = Buffer.alloc(sz);
     for(i = 0; i < sz ; i++) { buffer[i] = byteGenerator.next(); }
     return buffer;
   };
@@ -100,7 +100,7 @@ function RandomBinaryGenerator(length) {
   var byteGenerator = new RandomIntGenerator(0, 255);
   this.next = function() {
     var i,
-        buffer = new Buffer(length);
+        buffer = Buffer.alloc(length);
     for(i = 0; i < length ; i++) { buffer[i] = byteGenerator.next(); }
     return buffer;
   };

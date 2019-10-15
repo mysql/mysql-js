@@ -27,7 +27,7 @@ var jones          = require("database-jones"),
     udebug         = unified_debug.getLogger('jscrund_null.js');
 
 function implementation() {
-  var b = new Buffer(4);
+  var b = Buffer.alloc(4);
   this.inBatchMode   = false;
   this.batch         = null;
   this.buffers       = null;
@@ -87,7 +87,7 @@ implementation.prototype.execOneOperation = function(callback, value) {
 
   /* Buffers */
   for(n = 0 ; n < this.properties.new_buffers ; n++) {
-    b = new Buffer(this.properties.new_buffer_size);
+    b = Buffer.alloc(this.properties.new_buffer_size);
     if(this.inBatchMode) {
       this.buffers.push(b);
     }

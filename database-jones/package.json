@@ -1,36 +1,33 @@
-
 {
-  "name"            : "database-jones"
-  ,
-  "version"         : "1.2.7"
-  ,  
-  "description"     : "Lightweight database mapping"
-  ,
-  "keywords"        : ["mysql", "orm", "ndb", "mapping" ]
-  ,
-  "homepage"        : "http://github.com/mysql/mysql-js/"
-  ,
-  "bugs"            : { "url" : "http://github.com/mysql/mysql-js/issues"
-                      }
-  ,
-  "license"         : "GPL-2.0"
-  ,
-  "contributors"    : [ "Craig Russell <papajdo@gmail.com>" ,
-                        "John David Duncan <john.duncan@oracle.com>"
-                      ]
-  ,
-  "main"            : "Adapter/api/jones"
-  ,
-  "repository"      : { "type" : "git",
-                        "url": "https://github.com/mysql/mysql-js.git"
-                      }
-  ,
-  "dependencies"    : { "jones-promises" : "*",
-                        "unified_debug" : "*"
-                      }
-  ,
-  "devDependencies" : { "jones-test" : "*"
-                      }
+          "name": "database-jones",
+          "version": "1.2.7",
+          "description": "Lightweight database mapping",
+          "keywords": [
+                    "mysql",
+                    "orm",
+                    "ndb",
+                    "mapping"
+          ],
+          "homepage": "http://github.com/mysql/mysql-js/",
+          "bugs": {
+                    "url": "http://github.com/mysql/mysql-js/issues"
+          },
+          "license": "GPL-2.0",
+          "contributors": [
+                    "Craig Russell <papajdo@gmail.com>",
+                    "John David Duncan <john.duncan@oracle.com>"
+          ],
+          "main": "Adapter/api/jones",
+          "repository": {
+                    "type": "git",
+                    "url": "https://github.com/mysql/mysql-js.git"
+          },
+          "dependencies": {
+                    "jones-promises": "*",
+                    "mysql": "^2.17.1",
+                    "unified_debug": "*"
+          },
+          "devDependencies": {
+                    "jones-test": "*"
+          }
 }
-
-

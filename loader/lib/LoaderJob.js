@@ -138,7 +138,7 @@ LoaderJob.prototype.initializeFromFile = function(filename) {
   // Get the SQL text.  The control file may also contain data.
   var ctlMaxReadLen, ctlReadBuffer, size, sqlText;
   ctlMaxReadLen = 16 * 1024;
-  ctlReadBuffer = new Buffer(ctlMaxReadLen);
+  ctlReadBuffer = Buffer.alloc(ctlMaxReadLen);
   this.ctlFileDescriptor = fs.openSync(filename, 'r');
   size = fs.readSync(this.ctlFileDescriptor, ctlReadBuffer, 0, ctlMaxReadLen);
   sqlText = ctlReadBuffer.toString('utf8', 0, size);

@@ -371,7 +371,7 @@ function ResultLog(enabled) {
 
 ResultLog.prototype.write = function(message) {
   if(this.enabled) {
-    var buffer = new Buffer(message);
+    var buffer = Buffer.from(message);
     fs.writeSync(this.fd, buffer, 0, buffer.length);
   } else {
     this.message += message;

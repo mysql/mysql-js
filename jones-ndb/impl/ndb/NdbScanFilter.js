@@ -73,7 +73,7 @@ BufferSchema.prototype.encode = function(params) {
   buffer = null;
 
   if(this.size > 0) {
-    buffer = new Buffer(this.size);
+    buffer = Buffer.alloc(this.size);
     for(i = 0; i < this.layout.length ; i++) {
       this.layout[i].encode(buffer, params);
     }

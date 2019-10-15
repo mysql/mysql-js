@@ -206,7 +206,7 @@ var DBOperation = function(opcode, tx, indexHandler, tableHandler) {
 
 function allocateKeyBuffer(op) {
   assert(op.buffers.key === null);
-  op.buffers.key = new Buffer(op.index.record.getBufferSize());	
+  op.buffers.key = Buffer.alloc(op.index.record.getBufferSize());
 }
 
 function releaseKeyBuffer(op) {
@@ -281,7 +281,7 @@ function defineBlobs(ncolumns, metadata, values) {
 
 function allocateRowBuffer(op) {
   assert(op.buffers.row === null);
-  op.buffers.row = new Buffer(op.tableHandler.resultRecord.getBufferSize());
+  op.buffers.row = Buffer.alloc(op.tableHandler.resultRecord.getBufferSize());
 }  
 
 function releaseRowBuffer(op) {
@@ -406,7 +406,7 @@ DBOperation.prototype.buildBoundHelpers = function(indexBounds) {
   n  = indexBounds.length;
   if(sz && n) {
     allHelpers = [];
-    mainBuffer = new Buffer(sz * n * 2);
+    mainBuffer = Buffer.alloc(sz * n * 2);
     offset = 0;
     this.scan.bound_param_buffer = mainBuffer; // maintain a reference!
     for(i = 0 ; i < n ; i++) {
@@ -672,7 +672,7 @@ function getScanResults(scanop, userCallback) {
   }
 
   function fetch() {
-    buffer = new Buffer(recordSize);
+    buffer = Buffer.alloc(recordSize);
     fetchResults(dbSession, scanop.scanOp, buffer);  // gather() is the callback
   }
 
@@ -690,7 +690,7 @@ function getScanResults(scanop, userCallback) {
     /* Gather more results. */
     while(status === 0 && results.length < maxRow) {
       pushNewResult();
-      buffer = new Buffer(recordSize);
+      buffer = Buffer.alloc(recordSize);
       status = scanop.scanOp.nextResult(buffer);
     }
     

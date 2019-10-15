@@ -122,7 +122,7 @@ RandomDataSource.prototype.Record.prototype.logger = function(fd, callback) {
   var message =
      "/* " + this.error.message + " */\n" +
      JSON.stringify(this.row) + "\n";
-  var buffer = new Buffer(message);
+  var buffer = Buffer.from(message);
   fs.write(fd, buffer, 0, buffer.length, null, callback);
 };
 
@@ -220,7 +220,7 @@ FileDataSource.prototype.Record.prototype.logger = function(fd, callback) {
               theDataSource.options.lineEndString;
   }
   message += this.source.substring(this.start, this.end);
-  var buffer = new Buffer(message);
+  var buffer = Buffer.from(message);
   fs.write(fd, buffer, 0, buffer.length, null, callback);
 };
 
@@ -239,7 +239,7 @@ FileDataSource.prototype.onFileOpen = function(err, fd) {
 FileDataSource.prototype.read = function() {
   udebug.log("read");
   var buffer, readLen;
-  buffer = new Buffer(this.bufferSize);
+  buffer = Buffer.alloc(this.bufferSize);
 
   /* Rewrite partial last record into new buffer */
   if(this.bufferDesc && ! (this.bufferDesc.lineEnd < this.bufferDesc.lineStart)) {

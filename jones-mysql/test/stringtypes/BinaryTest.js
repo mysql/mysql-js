@@ -56,7 +56,7 @@ var t1 = new harness.ConcurrentTest("t1:binary_full_length");
 t1.run = function() {
   var data, value, i;
   data = new TestData();
-  value = new Buffer(20);
+  value = Buffer.alloc(20);
   for(i = 0 ; i < 20 ; i ++) {
     value[i] = i;
   }
@@ -70,8 +70,8 @@ var t2 = new harness.ConcurrentTest("t2:binary_zero_padded");
 t2.run = function() {
   var data, value, expected;
   data = new TestData();
-  value     = new Buffer([1,2,3,4,5,6,7,8,9,10]);
-  expected  = new Buffer([1,2,3,4,5,6,7,8,9,10,0,0,0,0,0,0,0,0,0,0]);
+  value     = Buffer.from([1,2,3,4,5,6,7,8,9,10]);
+  expected  = Buffer.from([1,2,3,4,5,6,7,8,9,10,0,0,0,0,0,0,0,0,0,0]);
 
   data.bin_fix = value;
   this.verifier = new BufferVerifier(this, "bin_fix", expected);
@@ -82,7 +82,7 @@ var t3 = new harness.ConcurrentTest("t3:varbinary");
 t3.run = function() {
   var data, value, i;
   data = new TestData();
-  value = new Buffer(120);
+  value = Buffer.alloc(120);
   for(i = 0 ; i < 120 ; i ++) {
     value[i] = i;
   }
@@ -96,7 +96,7 @@ var t4 = new harness.ConcurrentTest("t4:longvarbinary");
 t4.run = function() {
   var data, value, i;
   data = new TestData();
-  value = new Buffer(320);
+  value = Buffer.alloc(320);
   for(i = 0 ; i < 320 ; i ++) {
     value[i] = 32 + (i % 90);
   }
@@ -126,7 +126,7 @@ t5.run = function() {
 var t6 = new harness.ConcurrentTest("t6:InsertBLOB");
 t6.run = function() {
   var data = new TestData();
-  data.bin_lob = new Buffer(20000);
+  data.bin_lob = Buffer.alloc(20000);
   fail_openSession(this, function(session, testCase) {
     session.persist(data, function(err) {
       testCase.errorIfError(err);
@@ -157,7 +157,7 @@ var t8 = new harness.ConcurrentTest("t8:WriteAndReadBlob");
 t8.run = function() {
   var data, value, i;
   data = new TestData();
-  value = new Buffer(20000);
+  value = Buffer.alloc(20000);
   for(i = 0 ; i < 20000 ; i++) {
     value[i] = Math.ceil(Math.random() * 256);
   }
@@ -170,8 +170,8 @@ var t9 = new harness.ConcurrentTest("t9:ReadModifyUpdate");
 t9.run = function() {
   var data, value1, value2, i;
   data = new TestData();
-  value1 = new Buffer(320);
-  value2 = new Buffer(320);
+  value1 = Buffer.alloc(320);
+  value2 = Buffer.alloc(320);
   for(i = 0 ; i < 320 ; i ++) {
     value1[i] = 32 + (i % 90);
     value2[i] = 119 - (i % 80);
