@@ -48,7 +48,7 @@ function DbImpl(sessionFactory, db_name) {
   this.currentTransaction = function() {
     return this.session.currentTransaction();
   };
-  this.inspect = function() {
+  this[util.inspect.custom] = function(depth, options) {
     var index = this.session?this.session.index : 'not assigned';
     return 'DbImpl session ' + index;
   };

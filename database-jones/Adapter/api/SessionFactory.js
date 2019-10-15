@@ -30,6 +30,7 @@ var stats = {
 };
 
 var session        = require("./Session.js"),
+    util           = require("util"),
     jones          = require("database-jones"),
     unified_debug  = require("unified_debug"),
     udebug         = unified_debug.getLogger("SessionFactory.js"),
@@ -58,7 +59,7 @@ stats_module.register(stats, "api", "SessionFactory");
   this.capabilities = dbConnectionPool.getCapabilities();
 };
 
-SessionFactory.prototype.inspect = function() {
+SessionFactory.prototype[util.inspect.custom] = function() {
   var numberOfMappings = this.mappings? this.mappings.length: 0;
   var numberOfSessions = this.sessions? this.sessions.length: 0;
   return "[[API SessionFactory with key:" + this.key + ", " + 
@@ -587,7 +588,6 @@ SessionFactory.prototype.userSessionFactory = function() {
     close:                   function() {return sf.close.apply(sf, arguments);},
     mapTable:                function() {return sf.mapTable.apply(sf, arguments);},
     getTableMetadata:        function() {return sf.getTableMetadata.apply(sf, arguments);},
-    inspect:                 function() {return sf.inspect.apply(sf, arguments);},
     openSession:             function() {return sf.openSession.apply(sf, arguments);},
     registerTypeConverter:   function() {return sf.registerTypeConverter.apply(sf, arguments);}
   };

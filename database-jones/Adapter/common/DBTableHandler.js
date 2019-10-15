@@ -299,7 +299,7 @@ function DBTableHandlerPrivate(dbTableHandler, maxColumns) {
   };
 }
 
-DBTableHandlerPrivate.prototype.inspect = function() {
+DBTableHandlerPrivate.prototype[util.inspect.custom] = function() {
   return "";
 };
 
@@ -654,7 +654,7 @@ DBTableHandler.prototype.getColumnMaskForField = function(name) {
 };
 
 
-DBTableHandler.prototype.inspect = function() {
+DBTableHandler.prototype[util.inspect.custom] = function() {
   var s, fields, ncol, columns, nrelationships, ctorName;
   if(this.isValid) {
     fields = this.getNumberOfFields() == 1 ? " field" : " fields";
@@ -1024,7 +1024,7 @@ DBIndexHandler.prototype = {
   appendErrorMessage     : DBTableHandler.prototype.appendErrorMessage
 };
 
-DBIndexHandler.prototype.inspect = function() {
+DBIndexHandler.prototype[util.inspect.custom] = function() {
   return "DBIndexHandler for" +
          (this.dbIndex.isUnique ? " unique" : "") +
          (this.dbIndex.isOrdered ? " ordered" : "") +

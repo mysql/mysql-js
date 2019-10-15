@@ -195,7 +195,7 @@ IndexValue.prototype.isFinite = function() {
   return (typeof v === 'number') ?  isFinite(v) : true;
 };
 
-IndexValue.prototype.inspect = function() {
+IndexValue.prototype[util.inspect.custom] = function() {
   var i, result;
   result = "idx" + this.size + "pt:";
   for(i = 0 ; i < this.size ; i++) {
@@ -244,7 +244,7 @@ Endpoint.prototype.toIndexValueEndpoint = function() {
   return new Endpoint(new IndexValue(this.value), this.inclusive, this.isLow);
 };
 
-Endpoint.prototype.inspect = function() {
+Endpoint.prototype[util.inspect.custom] = function() {
   var s = "";
   var value = util.inspect(this.value);
   if(this.isLow === false) {
@@ -359,8 +359,8 @@ function Segment(point1, point2) {
 
 Segment.prototype.isSegment = true;
 
-Segment.prototype.inspect = function() {
-  return this.low.inspect() + " -- " + this.high.inspect();
+Segment.prototype[util.inspect.custom] = function() {
+  return util.inspect(this.low) + " -- " + util.inspect(this.high);
 };
 
 Segment.prototype.copy = function() {
@@ -443,7 +443,7 @@ NumberLine = function() {
 
 NumberLine.prototype.isNumberLine = true;
 
-NumberLine.prototype.inspect = function() {
+NumberLine.prototype[util.inspect.custom] = function() {
   var it, str, segment;
   it = this.getIterator();
   str = "{ ";
@@ -900,7 +900,7 @@ function IndexBoundEndpoint(endpoint) {
   this.key = endpoint.value.parts;
 }
 
-IndexBoundEndpoint.prototype.inspect = function() {
+IndexBoundEndpoint.prototype[util.inspect.custom] = function() {
   var i, str = "";
   for(i = 0 ; i < this.key.length ; i++) {
     if(i) {str += ",";}
@@ -914,9 +914,9 @@ function IndexBound(segment) {
   this.high = new IndexBoundEndpoint(segment.high);
 }
 
-IndexBound.prototype.inspect = function() {
+IndexBound.prototype[util.inspect.custom] = function() {
   var str = this.low.inclusive ? "[" : "(";
-  str += this.low.inspect() + " -- " + this.high.inspect();
+  str += util.inspect(this.low) + " -- " + util.inspect(this.high);
   str += this.high.inclusive ? "]" : ")";
   return str;
 };

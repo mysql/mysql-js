@@ -20,6 +20,8 @@
 
 "use strict";
 
+var util            = require("util");
+
 /* BitMask is implemented as an array.
    Each array element holds 24 bits.
    Inside V8, array elements are SMIs.
@@ -41,7 +43,7 @@ function greater(x, y) {
   return x > y ? x : y;
 }
 
-BitMask.prototype.inspect = function() {
+BitMask.prototype[util.inspect.custom] = function() {
   var i, str = "";
   for(i = 0 ; i < this.displaySize ; i++) {
     str += this.bitIsSet(i) ? "1" : "0";

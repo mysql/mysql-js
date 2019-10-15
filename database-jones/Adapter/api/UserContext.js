@@ -648,7 +648,7 @@ function Sector() {
   this.childSectorIndexes = [];
 }
 
-Sector.prototype.inspect = function() {
+Sector.prototype[util.inspect.custom] = function() {
   var s = "Sector " + this.index + " for " + this.tableHandler.dbTable.name;
   if(this.joinTableHandler) {
     s += " with join table " + this.joinTableHandler.dbTable.name;

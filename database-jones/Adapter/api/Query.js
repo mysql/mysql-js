@@ -125,7 +125,7 @@ QueryField.prototype.isNotNull = function() {
   return new QueryIsNotNull(this);
 };
 
-QueryField.prototype.inspect = function() {
+QueryField.prototype[util.inspect.custom] = function(depth, options) {
   return this.field.fieldName;
 };
 
@@ -218,7 +218,7 @@ QueryRelationship.prototype['in'] = function() {
   throw new Error('illegal operation in for relationship ' + this.field.fieldName);
 };
 
-QueryRelationship.prototype.inspect = function() {
+QueryRelationship.prototype[util.inspect.custom] = function(depth, options) {
   return this.field.fieldName;
 };
 
@@ -374,7 +374,7 @@ var QueryDomainType = function(session, dbTableHandler, domainObject) {
 // give QueryProjectionDomainType the same behavior as QueryDomainType
 QueryProjectionDomainType.prototype = QueryDomainType.prototype;
 
-QueryDomainType.prototype.inspect = function() { 
+QueryDomainType.prototype[util.inspect.custom] = function(depth, options) {
   var jones = this.jones_query_domain_type;
   return "[[API Query on table: " + jones.dbTableHandler.dbTable.name + 
     ", type: " + jones.queryType + ", predicate: " + 
@@ -398,7 +398,7 @@ QueryParameter = function QueryParameter(queryDomainType, name) {
   this.name = name;
 };
 
-QueryParameter.prototype.inspect = function() {
+QueryParameter.prototype[util.inspect.custom] = function(depth, options) {
   return '?' + this.name;
 };
 
@@ -591,7 +591,7 @@ var AbstractQueryPredicate = function() {
   this.constants = 0;
 };
 
-AbstractQueryPredicate.prototype.inspect = function() {
+AbstractQueryPredicate.prototype[util.inspect.custom] = function(depth, opt) {
   var str = this.operator + "(";
   this.predicates.forEach(function(value,index) { 
     if(index) {str += " , ";}
@@ -680,7 +680,7 @@ var AbstractQueryComparator = function() {
 /** AbstractQueryComparator inherits AbstractQueryPredicate */
 AbstractQueryComparator.prototype = new AbstractQueryPredicate();
 
-AbstractQueryComparator.prototype.inspect = function() {
+AbstractQueryComparator.prototype[util.inspect.custom] = function() {
   var parameterValue = this.parameter;
   if (typeof this.parameter === 'object' && this.parameter.constructor.name == 'QueryParameter') {
     parameterValue = this.parameter.inspect();
@@ -769,17 +769,17 @@ QueryBetween = function(queryField, parameter1, parameter2) {
 
 QueryBetween.prototype = new AbstractQueryComparator();
 
-QueryBetween.prototype.inspect = function() {
+QueryBetween.prototype[util.inspect.custom] = function() {
   var parameterValue1 = this.parameter1;
   var parameterValue2 = this.parameter2;
   if (typeof this.parameter1 === 'object' && this.parameter1.constructor.name == 'QueryParameter') {
-    parameterValue1 = this.parameter1.inspect();
+    parameterValue1 = util.inspect(this.parameter1);
   }
   if (typeof this.parameter2 === 'object' && this.parameter1.constructor.name == 'QueryParameter') {
-    parameterValue1 = this.parameter1.inspect();
+    parameterValue1 = util.inspect(this.parameter1);
   }
 
-  return this.queryField.inspect() + ' BETWEEN ' + parameterValue1 + ' AND ' + parameterValue2;
+  return util.inspect(this.queryField) + ' BETWEEN ' + parameterValue1 + ' AND ' + parameterValue2;
 };
 
 QueryBetween.prototype.visit = function(visitor) {
@@ -820,8 +820,8 @@ var AbstractQueryUnaryOperator = function() {
 
 AbstractQueryUnaryOperator.prototype = new AbstractQueryPredicate();
 
-AbstractQueryUnaryOperator.prototype.inspect = function() {
-  return this.queryField.inspect() + this.operator;
+AbstractQueryUnaryOperator.prototype[util.inspect.custom] = function() {
+  return util.inspect(this.queryField) + this.operator;
 };
 
 AbstractQueryUnaryOperator.prototype.visit = function(visitor) {
