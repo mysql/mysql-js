@@ -57,6 +57,12 @@ More information
 ----------------
 See the complete README.md file under [database-jones](database-jones/README.md)
 
+Copyright (C) 2013, 2025 Oracle and/or its affiliates.
+
+License information can be found in the LICENSE.md file.
+
+Database Jones is brought to you by the MySQL team at Oracle.
+
 
 Directory Structure
 -------------------
