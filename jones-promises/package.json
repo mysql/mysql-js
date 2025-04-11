@@ -1,35 +1,32 @@
-
 {
-  "name"        : "jones-promises"
-  ,
-  "version"     : "1.1.1"
-  ,  
-  "description" : "Promises Library"
-  ,
-  "keywords"    : ["promise" , "promises" , "promises/a+" ]
-  ,
-  "homepage"    : "http://github.com/mysql/mysql-js/"
-  ,
-  "bugs"        : { "url" : "http://github.com/mysql/mysql-js/issues" }
-  ,
-  "license"     : "GPL-2.0"
-  ,
-  "contributors": ["Craig Russell <craig.russell@oracle.com>" ,
-                   "John David Duncan <john.duncan@oracle.com>"
-                  ]
-  ,
-  "main"        : "lib/Promise.js"
-  ,
-  "repository"  : {  "type" : "git",
-                     "url": "https://github.com/mysql/mysql-js.git"
-                  }
-  ,
-  "readmeFilename": "README.md"
-  ,
-  "dependencies" : {  "unified_debug" : ""
-                   }
-  ,
-  "devDependencies" : { "promises-aplus-tests" : "" }
+  "name": "jones-promises",
+  "version": "1.1.1",
+  "description": "Promises Library",
+  "keywords": [
+    "promise",
+    "promises",
+    "promises/a+"
+  ],
+  "homepage": "http://github.com/mysql/mysql-js/",
+  "bugs": {
+    "url": "http://github.com/mysql/mysql-js/issues"
+  },
+  "license": "GPL-2.0",
+  "contributors": [
+    "Craig Russell <craig.russell@oracle.com>",
+    "John David Duncan <john.duncan@oracle.com>"
+  ],
+  "main": "lib/Promise.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mysql/mysql-js.git"
+  },
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "unified_debug": ""
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "promises-aplus-tests": ""
+  }
 }
-
-

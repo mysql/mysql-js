@@ -24,10 +24,11 @@
           },
           "dependencies": {
                     "jones-promises": "*",
-                    "mysql": "^2.17.1",
+                    "mysql": ">=2.18.1",
                     "unified_debug": "*"
           },
           "devDependencies": {
+                    "@cyclonedx/cyclonedx-npm": "^1.19.3",
                     "jones-test": "*"
           }
 }

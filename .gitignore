@@ -1,7 +1,10 @@
+.DS_Store
+artifactSBOM.json
+package-lock.json
 jones-ndb/build/
 jones-ndb/config.gypi
 jones-ndb/impl/test/build/
 jones-ndb/config.waf
-**/.DS_Store
 node_modules/nan
+*/node_modules
 

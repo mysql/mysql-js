@@ -1,38 +1,35 @@
-
 {
-  "name"            : "jones-mysql"
-  ,
-  "version"         : "1.0.6"
-  ,  
-  "description"     : "MySQL Service Provider for Database Jones"
-  ,
-  "keywords"        : ["mysql", "orm", "mapping"]
-  ,
-  "license"         : "GPL-2.0"
-  ,
-  "homepage"        : "http://github.com/mysql/mysql-js/"
-  ,
-  "main"            : "impl/mysql_service_provider"
-  ,
-  "bugs"            : { "url" : "http://github.com/mysql/mysql-js/issues"}
-  ,
-  "contributors"    : [ "Craig Russell <papajdo@gmail.com>" ,
-                        "John David Duncan <john.duncan@oracle.com>"
-                      ]
-  ,
-  "dependencies"    : { "mysql" : ">=2.0.0",
-                        "unified_debug" : "*"
-                      }
-  ,
-  "devDependencies" : { "jones-test" : "*"
-                      }
-  ,
-  "peerDependencies": { "database-jones" : "1.x"
-                      }
-  ,
-  "repository"      : { "type" : "git",
-                         "url": "https://github.com/mysql/mysql-js.git"
-                      }
+  "name": "jones-mysql",
+  "version": "1.0.6",
+  "description": "MySQL Service Provider for Database Jones",
+  "keywords": [
+    "mysql",
+    "orm",
+    "mapping"
+  ],
+  "license": "GPL-2.0",
+  "homepage": "http://github.com/mysql/mysql-js/",
+  "main": "impl/mysql_service_provider",
+  "bugs": {
+    "url": "http://github.com/mysql/mysql-js/issues"
+  },
+  "contributors": [
+    "Craig Russell <papajdo@gmail.com>",
+    "John David Duncan <john.duncan@oracle.com>"
+  ],
+  "dependencies": {
+    "mysql": ">=2.18.1",
+    "unified_debug": "*"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "jones-test": "*"
+  },
+  "peerDependencies": {
+    "database-jones": "1.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mysql/mysql-js.git"
+  }
 }
-
-
