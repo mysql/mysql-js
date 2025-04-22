@@ -19,7 +19,7 @@ steps:
     name: "Generate SBOM for unified_debug"
     command: |
         pushd unified_debug
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
@@ -27,7 +27,7 @@ steps:
     name: "Generate SBOM for jones-test"
     command: |
         pushd jones-test
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
@@ -35,7 +35,7 @@ steps:
     name: "Generate SBOM for jones-promises"
     command: |
         pushd jones-promises
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
@@ -43,7 +43,7 @@ steps:
     name: "Generate SBOM for jones-ndb"
     command: |
         pushd jones-ndb
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
@@ -51,7 +51,7 @@ steps:
     name: "Generate SBOM for jones-mysql"
     command: |
         pushd jones-mysql
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
@@ -59,7 +59,7 @@ steps:
     name: "Generate SBOM for database-jones"
     command: |
         pushd database-jones
-        npm install && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
+        npm install --ignore-scripts && npm install --save-dev @cyclonedx/cyclonedx-npm@1.19.3
         npx @cyclonedx/cyclonedx-npm --omit dev --output-format JSON --output-file artifactSBOM.json --spec-version 1.4 --flatten-components
         popd
 
