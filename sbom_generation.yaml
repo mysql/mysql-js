@@ -68,7 +68,7 @@ steps:
     command: |
       # For more details, visit https://github.com/CycloneDX/cyclonedx-cli/blob/main/README.md
       chmod +x cyclonedx-linux-x64
-      ./cyclonedx-linux-x64 merge --input-files database-jones/artifactSBOM.json jones-mysql/artifactSBOM.json jones-ndb/artifactSBOM.json jones-promises/artifactSBOM.json jones-test/artifactSBOM.json unified_debug/artifactSBOM.json --output-file  artifactSBOM.json --output-version v1_4
+      ./cyclonedx-linux-x64 merge --input-files database-jones/artifactSBOM.json jones-mysql/artifactSBOM.json jones-ndb/artifactSBOM.json jones-promises/artifactSBOM.json jones-test/artifactSBOM.json unified_debug/artifactSBOM.json --output-file  artifactSBOM.json
 
 outputArtifacts:
   - name: artifactSBOM
